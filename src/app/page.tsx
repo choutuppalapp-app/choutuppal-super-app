@@ -34,11 +34,11 @@ function HomeView() {
       transition={{ duration: 0.3 }}
       className="space-y-4 md:space-y-6"
     >
-      <HeroSection />
       <StoriesSection />
-      <DailySpinSection />
-      <SosBanner />
       <BannerAds />
+      <HeroSection />
+      <SosBanner />
+      <DailySpinSection />
       <CategoriesSection />
       <FeaturedListings />
       <RealEstateSection />
