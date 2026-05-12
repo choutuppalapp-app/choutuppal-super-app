@@ -32,7 +32,7 @@ function HomeView() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-4 md:space-y-6"
+      className="space-y-4 md:space-y-8"
     >
       <StoriesSection />
       <BannerAds />
@@ -76,8 +76,8 @@ export default function Home() {
   }
 
   return (
-    <div className={isDetailPage ? 'pb-24 md:pb-8' : 'pb-20 md:pb-8'}>
-      <div className="max-w-6xl mx-auto px-3 md:px-6 py-3 md:py-4">
+    <div className={`w-full max-w-7xl mx-auto ${isDetailPage ? 'pb-24 md:pb-8' : 'pb-20 md:pb-8'}`}>
+      <div className="px-3 md:px-6 py-3 md:py-6">
         <AnimatePresence mode="wait">
           {renderView()}
         </AnimatePresence>

@@ -134,13 +134,27 @@
    These rules remove the "web feel" completely.
    ═══════════════════════════════════════════════ */
 
-/* Prevent rubber-band / bounce scrolling and pull-to-refresh */
-html, body {
+/* Prevent rubber-band / bounce scrolling and pull-to-refresh — MOBILE ONLY */
+html {
   -webkit-tap-highlight-color: transparent;   /* Removes blue flash on tap */
   -webkit-touch-callout: none;                /* Prevents callout menu on long press */
-  overscroll-behavior: none;                   /* Prevents pull-to-refresh and rubber-band */
-  height: 100%;
-  overflow: hidden;
+}
+
+/* Mobile: lock viewport, Desktop: normal scrollable page */
+@media (max-width: 767px) {
+  html, body {
+    overscroll-behavior: none;
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 768px) {
+  html, body {
+    overscroll-behavior: auto;
+    height: auto;
+    overflow: auto;
+  }
 }
 
 body {

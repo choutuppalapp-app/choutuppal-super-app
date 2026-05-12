@@ -28,19 +28,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* Mobile: locked app height. Desktop: normal scrollable web page */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-[100dvh] w-screen overflow-hidden bg-gray-50 flex flex-col overscroll-none`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-[100dvh] md:h-auto md:min-h-screen w-screen md:w-full overflow-hidden md:overflow-auto bg-gray-50 flex md:flex flex-col overscroll-none md:overscroll-auto`}
       >
-        {/* Header: Fixed at top, never scrolls */}
-        <Header className="flex-none z-50" />
+        {/* Header: Flex-none on both, sticky on desktop */}
+        <Header className="flex-none md:flex-none z-50" />
 
-        {/* Main Content: ONLY this section scrolls */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+        {/* Main Content: Scroll container on mobile, normal block on desktop */}
+        <main className="flex-1 md:flex-none overflow-y-auto md:overflow-y-auto overflow-x-hidden scroll-smooth">
           {children}
         </main>
 
-        {/* Bottom Nav / CTA: Fixed at bottom, never scrolls */}
-        <MobileBottomWrapper className="flex-none z-50" />
+        {/* Bottom Wrapper: Only exists on mobile */}
+        <MobileBottomWrapper className="flex-none z-50 md:hidden" />
 
         {/* Floating overlays (position:fixed, z-indexed) */}
         <FloatingOverlays />

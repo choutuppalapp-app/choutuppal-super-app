@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { MapPin, Phone, Mail, Heart } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
@@ -8,7 +7,7 @@ export function Footer() {
   const { selectedCityName } = useAppStore()
 
   return (
-    <footer className="hidden md:block bg-white/40 backdrop-blur-2xl border-t border-white/30 mt-auto">
+    <footer className="hidden md:block border-t border-gray-100 bg-white mt-auto">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
@@ -59,7 +58,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-6 pt-4 border-t border-white/30 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-gray-400">
             &copy; {new Date().getFullYear()} Choutuppal 2.0. All rights reserved.
           </p>
