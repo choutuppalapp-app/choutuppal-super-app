@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GlassCard } from '@/components/glass-card'
-import { ChevronLeft, ChevronRight, Tag } from 'lucide-react'
 
 interface BannerAd {
   id: string
@@ -13,6 +11,7 @@ interface BannerAd {
   isActive: boolean
 }
 
+// Fallback ads with realistic shop data
 const FALLBACK_ADS = [
   {
     id: 'fallback-1',
@@ -20,25 +19,38 @@ const FALLBACK_ADS = [
     imageUrl: null,
     linkUrl: null,
     isActive: true,
+    shopName: 'Choutuppal Super App',
+    offerText: 'Reach 10,000+ locals daily — Advertise now!',
   },
   {
     id: 'fallback-2',
-    title: '🏠 Premium Real Estate Listings — Explore Now!',
+    title: '🏠 Premium Real Estate Listings',
     imageUrl: null,
     linkUrl: null,
     isActive: true,
+    shopName: 'Royal Properties',
+    offerText: '3BHK flats from ₹45L — Limited units!',
   },
   {
     id: 'fallback-3',
-    title: '📢 Advertise With Us — Reach 10,000+ Locals!',
+    title: '📱 Get Your Business Online',
     imageUrl: null,
     linkUrl: null,
     isActive: true,
+    shopName: 'Digital Choutuppal',
+    offerText: 'Free listing for first 100 businesses!',
   },
 ]
 
+// Gradient backgrounds for fallback ads (when no image)
+const AD_GRADIENTS = [
+  'from-[#D4AF37]/30 via-[#4169E1]/10 to-[#D4AF37]/20',
+  'from-[#4169E1]/30 via-[#D4AF37]/10 to-[#4169E1]/20',
+  'from-[#D4AF37]/20 via-[#4169E1]/20 to-[#D4AF37]/30',
+]
+
 export function BannerAds() {
-  const [ads, setAds] = useState<BannerAd[]>(FALLBACK_ADS)
+  const [ads, setAds] = useState(FALLBACK_ADS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -48,8 +60,7 @@ export function BannerAds() {
       try {
         const res = await fetch('/api/settings')
         if (res.ok) {
-          // We don't have a dedicated ads API, so use fallback
-          // In a real app, this would be /api/banner-ads
+          // No dedicated ads API yet — use fallback
         }
       } catch {
         // Use fallback
@@ -60,105 +71,94 @@ export function BannerAds() {
     fetchAds()
   }, [])
 
-  // Auto-scroll
+  // Auto-scroll logic (3 seconds interval)
+  const adsCount = ads.length
   const goToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % ads.length)
-  }, [ads.length])
+    setCurrentIndex((prev) => (prev + 1) % adsCount)
+  }, [adsCount])
 
   useEffect(() => {
     const interval = setInterval(goToNext, 3000)
     return () => clearInterval(interval)
   }, [goToNext])
 
-  const goToPrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + ads.length) % ads.length)
-  }
-
   if (loading) {
     return (
-      <section className="px-4 py-3">
-        <div className="h-32 rounded-2xl bg-white/30 backdrop-blur-xl border border-white/30 animate-pulse" />
-      </section>
+      <div className="w-full bg-white py-3">
+        <div className="px-4">
+          <div className="w-full aspect-[2/1] rounded-2xl bg-gray-100 animate-pulse" />
+        </div>
+      </div>
     )
   }
 
+  const currentAd = ads[currentIndex]
+  const hasImage = currentAd?.imageUrl
+
   return (
-    <section className="px-4 py-3">
-      <div className="relative">
+    <div className="w-full bg-white py-3">
+      <div className="relative w-full overflow-hidden px-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.4 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            className="w-full aspect-[2/1] rounded-2xl overflow-hidden relative shadow-sm cursor-pointer"
           >
-            <GlassCard className="!p-0 overflow-hidden">
-              <div className="relative h-28 sm:h-32 md:h-36 bg-gradient-to-r from-[#D4AF37]/20 via-[#4169E1]/10 to-[#D4AF37]/20 flex items-center justify-between px-6">
-                {/* Decorative background pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute inset-0" style={{
-                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.3) 10px, rgba(212,175,55,0.3) 11px)',
-                  }} />
-                </div>
-
-                <div className="relative z-10 flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Tag className="size-4 text-[#D4AF37]" />
-                    <span className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
-                      Featured
-                    </span>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-bold text-gray-800 leading-tight">
-                    {ads[currentIndex]?.title}
-                  </h3>
-                </div>
-
-                {/* Price badge */}
-                <div className="relative z-10 flex-shrink-0 ml-4">
-                  <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-bold text-sm shadow-lg">
-                    ₹99/Day
-                  </div>
+            {/* Image or gradient background */}
+            {hasImage ? (
+              <img
+                src={currentAd.imageUrl!}
+                alt="Promotion"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>
+                {/* Decorative diagonal lines */}
+                <div className="absolute inset-0 opacity-10" style={{
+                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.3) 10px, rgba(212,175,55,0.3) 11px)',
+                }} />
+                <div className="relative z-10 text-center px-6">
+                  <p className="text-sm sm:text-base font-bold text-gray-800 leading-tight">
+                    {currentAd?.title}
+                  </p>
                 </div>
               </div>
-            </GlassCard>
+            )}
+
+            {/* ₹99/Day Badge */}
+            <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+              ₹99/Day
+            </div>
+
+            {/* Glassmorphism Bottom Bar for Shop Name */}
+            <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md p-2">
+              <p className="text-xs font-bold text-gray-900 truncate">
+                {currentAd?.shopName || currentAd?.title}
+              </p>
+              <p className="text-[10px] text-gray-700 truncate">
+                {currentAd?.offerText || 'Promoted listing on Choutuppal'}
+              </p>
+            </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Navigation arrows */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={goToPrev}
-          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/60 backdrop-blur-sm border border-white/40 flex items-center justify-center shadow-sm hover:bg-white/80 transition-colors"
-          aria-label="Previous ad"
-        >
-          <ChevronLeft className="size-4 text-gray-600" />
-        </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={goToNext}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/60 backdrop-blur-sm border border-white/40 flex items-center justify-center shadow-sm hover:bg-white/80 transition-colors"
-          aria-label="Next ad"
-        >
-          <ChevronRight className="size-4 text-gray-600" />
-        </motion.button>
-
-        {/* Dots indicator */}
-        <div className="flex justify-center gap-1.5 mt-2">
-          {ads.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'w-5 bg-[#D4AF37]'
-                  : 'bg-gray-300 hover:bg-gray-400'
-              }`}
-              aria-label={`Go to ad ${index + 1}`}
-            />
-          ))}
-        </div>
       </div>
-    </section>
+
+      {/* Subtle Dot Indicators */}
+      <div className="flex justify-center items-center gap-1 mt-2">
+        {ads.map((_, index) => (
+          <div
+            key={index}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              index === currentIndex
+                ? 'w-4 bg-[#D4AF37]'
+                : 'w-1.5 bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
   )
 }
