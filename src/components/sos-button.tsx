@@ -52,7 +52,7 @@ export function SosButton() {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 z-40 md:hidden w-14 h-14 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] text-white shadow-lg flex items-center justify-center"
+        className="fixed bottom-[72px] right-4 z-40 md:hidden w-14 h-14 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] text-white shadow-lg flex items-center justify-center"
         animate={{
           boxShadow: [
             '0 0 0 0 rgba(212, 175, 55, 0.4)',

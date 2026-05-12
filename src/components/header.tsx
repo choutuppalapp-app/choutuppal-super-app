@@ -2,21 +2,15 @@
 
 import { motion } from 'framer-motion'
 import {
-  MapPin,
-  Search,
-  Mic,
-  Bell,
-  Menu,
+  MapPin, Search, Mic, Bell, Home, Compass, Newspaper,
+  LayoutDashboard, Shield, User,
 } from 'lucide-react'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
+import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
 
 const CITIES = [
@@ -25,127 +19,133 @@ const CITIES = [
   { slug: 'warangal', name: 'Warangal' },
 ]
 
+const NAV_LINKS: Array<{ view: ViewType; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean }> = [
+  { view: 'home', label: 'Home', icon: Home },
+  { view: 'explore', label: 'Explore', icon: Compass },
+  { view: 'news', label: 'News', icon: Newspaper },
+  { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
+]
+
 export function Header() {
   const {
-    selectedCity,
-    setCity,
-    isSearchOpen,
-    setSearchOpen,
-    searchQuery,
-    setSearchQuery,
+    selectedCity, setCity, setSearchOpen, currentView, navigateTo, currentUser,
   } = useAppStore()
+
+  const isAdmin = currentUser?.role === 'admin'
 
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="sticky top-0 z-50 w-full bg-white/40 backdrop-blur-2xl border-b border-white/30 shadow-lg"
+      className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60"
     >
-      <div className="flex items-center justify-between px-4 py-3 md:px-6 lg:px-8">
-        {/* Logo & City Selector */}
-        <div className="flex items-center gap-3">
-          <motion.div whileTap={{ scale: 0.95 }} className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg leading-none">C</span>
+      {/* Desktop Header */}
+      <div className="hidden md:flex items-center justify-between h-14 px-6">
+        {/* Left: Logo + City */}
+        <div className="flex items-center gap-4">
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigateTo('home')} className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-sm leading-none">C</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent hidden sm:inline">
+            <span className="text-lg font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent">
               Choutuppal
             </span>
-          </motion.div>
+          </motion.button>
 
-          <div className="hidden md:flex items-center">
-            <Select
-              value={selectedCity}
-              onValueChange={(val) => {
-                const city = CITIES.find((c) => c.slug === val)
-                if (city) setCity(city.slug, city.name)
-              }}
-            >
-              <SelectTrigger className="w-[160px] bg-white/30 border-white/40 text-sm">
-                <MapPin className="size-4 text-[#D4AF37] mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CITIES.map((city) => (
-                  <SelectItem key={city.slug} value={city.slug}>
-                    {city.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="h-6 w-px bg-gray-200" />
+
+          <Select value={selectedCity} onValueChange={(val) => {
+            const city = CITIES.find((c) => c.slug === val)
+            if (city) setCity(city.slug, city.name)
+          }}>
+            <SelectTrigger className="w-[140px] h-8 text-xs bg-transparent border-gray-200 hover:border-[#D4AF37]/40 transition-colors">
+              <MapPin className="size-3.5 text-[#D4AF37] mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CITIES.map((city) => (
+                <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Search Bar - Desktop */}
-        <div className="hidden md:flex flex-1 max-w-md mx-6">
-          <motion.div whileTap={{ scale: 0.98 }} className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search businesses, news, services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchOpen(true)}
-              className="w-full h-10 pl-10 pr-10 rounded-xl bg-white/50 border border-white/40 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37]/50 transition-all"
-            />
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setSearchOpen(true)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4169E1] hover:text-[#D4AF37] transition-colors"
-              aria-label="Voice search"
-            >
-              <Mic className="size-4" />
-            </motion.button>
-          </motion.div>
-        </div>
+        {/* Center: Nav Links */}
+        <nav className="flex items-center gap-1">
+          {NAV_LINKS.map((item) => {
+            if (item.adminOnly && !isAdmin) return null
+            const isActive = currentView === item.view
+            return (
+              <motion.button
+                key={item.view}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigateTo(item.view)}
+                className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  isActive
+                    ? 'text-[#D4AF37]'
+                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="desktopNavIndicator"
+                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#D4AF37] rounded-full"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            )
+          })}
+        </nav>
 
-        {/* Right side actions */}
+        {/* Right: Search + Notifications + Avatar */}
         <div className="flex items-center gap-2">
-          {/* Mobile city selector */}
-          <div className="md:hidden">
-            <Select
-              value={selectedCity}
-              onValueChange={(val) => {
-                const city = CITIES.find((c) => c.slug === val)
-                if (city) setCity(city.slug, city.name)
-              }}
-            >
-              <SelectTrigger className="w-auto bg-transparent border-0 h-8 px-1 text-xs">
-                <MapPin className="size-3.5 text-[#D4AF37]" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CITIES.map((city) => (
-                  <SelectItem key={city.slug} value={city.slug}>
-                    {city.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Mobile search button */}
-          <motion.div whileTap={{ scale: 0.9 }} className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSearchOpen(true)}
-              className="relative"
-            >
-              <Search className="size-5 text-gray-600" />
-            </Button>
-          </motion.div>
-
-          {/* Notification Bell */}
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchOpen(true)} className="p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <Mic className="size-4 text-gray-500" />
+          </motion.button>
           <NotificationPanel />
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigateTo('dashboard')} className="ml-1 w-8 h-8 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+            {currentUser?.fullName?.charAt(0) || 'G'}
+          </motion.button>
+        </div>
+      </div>
 
-          {/* Mobile Menu (unused - for future) */}
-          <motion.div whileTap={{ scale: 0.9 }} className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="size-5 text-gray-600" />
-            </Button>
-          </motion.div>
+      {/* Mobile Header */}
+      <div className="flex md:hidden items-center justify-between h-12 px-3">
+        <div className="flex items-center gap-2">
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigateTo('home')} className="flex items-center gap-1.5">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-xs leading-none">C</span>
+            </div>
+            <span className="text-base font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent">
+              Choutuppal
+            </span>
+          </motion.button>
+
+          <Select value={selectedCity} onValueChange={(val) => {
+            const city = CITIES.find((c) => c.slug === val)
+            if (city) setCity(city.slug, city.name)
+          }}>
+            <SelectTrigger className="w-auto bg-transparent border-0 h-7 px-1 text-xs">
+              <MapPin className="size-3 text-[#D4AF37] mr-0.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CITIES.map((city) => (
+                <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchOpen(true)} className="p-2 rounded-lg">
+            <Search className="size-5 text-gray-600" />
+          </motion.button>
+          <NotificationPanel />
         </div>
       </div>
     </motion.header>

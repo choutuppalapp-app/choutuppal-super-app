@@ -17,11 +17,13 @@ const NAV_ITEMS: Array<{
 ]
 
 export function BottomNav() {
-  const { currentView, navigateTo } = useAppStore()
+  const { currentView, navigateTo, showBottomNav } = useAppStore()
+
+  if (!showBottomNav) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/40 backdrop-blur-2xl border-t border-white/30 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center justify-around px-2 py-1 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-100">
+      <div className="flex items-center justify-around h-14">
         {NAV_ITEMS.map((item) => {
           const isActive = currentView === item.view
           const Icon = item.icon
@@ -31,19 +33,20 @@ export function BottomNav() {
               key={item.view}
               whileTap={{ scale: 0.9 }}
               onClick={() => navigateTo(item.view)}
-              className="flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-colors relative min-w-[64px]"
+              className="flex flex-col items-center justify-center py-1 px-4 min-h-[44px] min-w-[56px] relative"
             >
               {isActive && (
                 <motion.div
-                  layoutId="bottomNavIndicator"
-                  className="absolute -top-1 w-8 h-1 rounded-full bg-[#D4AF37]"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  layoutId="mobileNavDot"
+                  className="absolute top-0.5 w-1 h-1 rounded-full bg-[#D4AF37]"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}
               <Icon
-                className={`size-5 transition-colors ${
+                className={`size-[22px] transition-colors ${
                   isActive ? 'text-[#D4AF37]' : 'text-gray-400'
                 }`}
+                strokeWidth={isActive ? 2.5 : 1.8}
               />
               <span
                 className={`text-[10px] mt-0.5 font-medium transition-colors ${
@@ -56,8 +59,8 @@ export function BottomNav() {
           )
         })}
       </div>
-      {/* Safe area padding for iOS */}
-      <div className="h-[env(safe-area-inset-bottom,0px)]" />
+      {/* iOS safe area */}
+      <div className="h-[env(safe-area-inset-bottom,0px)] bg-white" />
     </nav>
   )
 }

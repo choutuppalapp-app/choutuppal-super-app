@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft, MapPin, Clock, Star, Share2, QrCode,
   BadgeCheck, Phone, Eye, MessageSquare, ChevronLeft,
-  ChevronRight, Grid3X3, Image as ImageIcon,
+  ChevronRight, Grid3X3, Image as ImageIcon, MessageCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -237,7 +237,7 @@ export function ListingView() {
   }
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8">
+    <div className="min-h-screen pb-20 md:pb-8">
       {/* Hero Image Slider */}
       <div className="relative">
         <Carousel
@@ -253,7 +253,7 @@ export function ListingView() {
           <CarouselContent>
             {displayImages.map((img: string, idx: number) => (
               <CarouselItem key={idx}>
-                <div className="relative aspect-[16/9] sm:aspect-[2/1] w-full overflow-hidden">
+                <div className="relative aspect-video w-full overflow-hidden">
                   <img
                     src={img}
                     alt={`${listing.name} - Photo ${idx + 1}`}
@@ -433,7 +433,7 @@ export function ListingView() {
                   <img
                     src={img}
                     alt={`${listing.name} gallery ${idx + 1}`}
-                    className="w-full h-auto object-cover"
+                    className="w-full aspect-square sm:aspect-auto object-cover"
                     onError={(e) => {
                       ;(e.target as HTMLImageElement).src = PLACEHOLDER_IMAGES[idx % 3]
                     }}
@@ -620,39 +620,41 @@ export function ListingView() {
           </form>
         </GlassCard>
 
-        {/* Action Buttons */}
-        <GlassCard>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
-              <Button
-                onClick={handleGetQuote}
-                className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white font-semibold py-3 shadow-md"
-              >
-                <Phone className="size-4 mr-2" />
-                Get Quote
-              </Button>
-            </motion.div>
-            {(listing.whatsappNumber || listing.user.whatsappNumber) && (
-              <div className="flex-1">
-                <WhatsAppButton
-                  whatsappNumber={listing.whatsappNumber || listing.user.whatsappNumber || ''}
-                  businessName={listing.name}
-                  className="w-full py-3"
-                />
-              </div>
-            )}
-            <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
-              <Button
-                variant="outline"
-                onClick={handleShare}
-                className="w-full border-[#4169E1]/30 text-[#4169E1] hover:bg-[#4169E1]/5 py-3"
-              >
-                <Share2 className="size-4 mr-2" />
-                Share
-              </Button>
-            </motion.div>
-          </div>
-        </GlassCard>
+        {/* Action Buttons - Hidden on mobile, replaced by sticky CTA */}
+        <div className="hidden md:block">
+          <GlassCard>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
+                <Button
+                  onClick={handleGetQuote}
+                  className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white font-semibold py-3 shadow-md"
+                >
+                  <Phone className="size-4 mr-2" />
+                  Get Quote
+                </Button>
+              </motion.div>
+              {(listing.whatsappNumber || listing.user.whatsappNumber) && (
+                <div className="flex-1">
+                  <WhatsAppButton
+                    whatsappNumber={listing.whatsappNumber || listing.user.whatsappNumber || ''}
+                    businessName={listing.name}
+                    className="w-full py-3"
+                  />
+                </div>
+              )}
+              <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
+                <Button
+                  variant="outline"
+                  onClick={handleShare}
+                  className="w-full border-[#4169E1]/30 text-[#4169E1] hover:bg-[#4169E1]/5 py-3"
+                >
+                  <Share2 className="size-4 mr-2" />
+                  Share
+                </Button>
+              </motion.div>
+            </div>
+          </GlassCard>
+        </div>
 
         {/* QR Code Section */}
         <GlassCard variant="gold" className="text-center">
@@ -682,6 +684,33 @@ export function ListingView() {
             </Button>
           </motion.div>
         </div>
+      </div>
+
+      {/* Mobile Sticky CTA Footer */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <div className="flex gap-2 p-3">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleGetQuote}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white font-semibold text-sm shadow-md min-h-[48px]"
+          >
+            <Phone className="size-4" />
+            Connect via App
+          </motion.button>
+          {(listing.whatsappNumber || listing.user.whatsappNumber) && (
+            <motion.a
+              whileTap={{ scale: 0.97 }}
+              href={`https://wa.me/${(listing.whatsappNumber || listing.user.whatsappNumber || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I found your business on Choutuppal Super App. I want to know about ${listing.name}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#25D366] text-white font-semibold text-sm shadow-md min-h-[48px]"
+            >
+              <MessageCircle className="size-4" />
+              WhatsApp Chat
+            </motion.a>
+          )}
+        </div>
+        <div className="h-[env(safe-area-inset-bottom,0px)] bg-white" />
       </div>
     </div>
   )

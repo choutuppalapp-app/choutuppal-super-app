@@ -15,9 +15,10 @@ export function GlassCard({ children, variant = 'default', className, onClick }:
     <div
       onClick={onClick}
       className={cn(
-        'bg-white/40 backdrop-blur-2xl shadow-2xl rounded-2xl p-6 transition-all',
-        variant === 'default' && 'border border-white/30',
-        variant === 'gold' && 'border border-[#D4AF37]/40 shadow-[0_0_20px_rgba(212,175,55,0.1)]',
+        'bg-white/40 backdrop-blur-2xl rounded-2xl md:rounded-2xl p-4 md:p-6 transition-all',
+        'shadow-sm md:shadow-2xl',
+        variant === 'default' && 'border border-white/30 md:border-white/30',
+        variant === 'gold' && 'border border-[#D4AF37]/30 md:border-[#D4AF37]/40 shadow-[0_0_12px_rgba(212,175,55,0.06)] md:shadow-[0_0_20px_rgba(212,175,55,0.1)]',
         variant === 'premium' && 'border-2 border-transparent bg-clip-padding bg-white/40',
         onClick && 'cursor-pointer hover:bg-white/50 active:scale-[0.98] transition-transform',
         className

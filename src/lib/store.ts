@@ -33,6 +33,8 @@ interface AppState {
   setCurrentUser: (user: CurrentUser | null) => void
 
   // UI State
+  showBottomNav: boolean
+  setShowBottomNav: (show: boolean) => void
   isSearchOpen: boolean
   setSearchOpen: (open: boolean) => void
   searchQuery: string
@@ -62,8 +64,8 @@ export const useAppStore = create<AppState>((set) => ({
   // Navigation
   currentView: 'home',
   selectedListingSlug: null,
-  setSelectedListing: (slug) => set({ selectedListingSlug: slug }),
-  navigateTo: (view) => set({ currentView: view }),
+  setSelectedListing: (slug) => set({ selectedListingSlug: slug, showBottomNav: !slug }),
+  navigateTo: (view) => set({ currentView: view, showBottomNav: view !== 'listing' }),
 
   // City
   selectedCity: 'choutuppal',
@@ -81,6 +83,8 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentUser: (user) => set({ currentUser: user }),
 
   // UI State
+  showBottomNav: true,
+  setShowBottomNav: (show) => set({ showBottomNav: show }),
   isSearchOpen: false,
   setSearchOpen: (open) => set({ isSearchOpen: open }),
   searchQuery: '',

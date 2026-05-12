@@ -26,7 +26,7 @@ interface RealEstateListing {
 }
 
 export function RealEstateSection() {
-  const { selectedCity } = useAppStore()
+  const { selectedCity, addNotification } = useAppStore()
   const [listings, setListings] = useState<RealEstateListing[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)
@@ -126,6 +126,7 @@ export function RealEstateSection() {
                   <GlassCard
                     variant={listing.isFeatured ? 'gold' : 'default'}
                     className="!p-0 overflow-hidden cursor-pointer group"
+                    onClick={() => addNotification('Real estate detail view coming soon!')}
                   >
                     {/* Image */}
                     <div className="relative h-36 sm:h-40 bg-gray-100 overflow-hidden">

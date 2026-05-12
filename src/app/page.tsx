@@ -7,7 +7,6 @@ import { useAppStore } from '@/lib/store'
 // Layout
 import { Header } from '@/components/header'
 import { BottomNav } from '@/components/bottom-nav'
-import { DesktopSidebar } from '@/components/desktop-sidebar'
 import { SosButton } from '@/components/sos-button'
 import { Footer } from '@/components/footer'
 import { SpinWheel } from '@/components/spin-wheel'
@@ -42,7 +41,7 @@ function HomeView() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6 pb-6"
+      className="space-y-4 md:space-y-6"
     >
       <HeroSection />
       <StoriesSection />
@@ -62,9 +61,7 @@ function HomeView() {
 export default function Home() {
   const { currentView, currentUser, setCurrentUser } = useAppStore()
 
-  // Fetch current user data on mount
   useEffect(() => {
-    // Set a demo user for the app to work
     if (!currentUser) {
       setCurrentUser({
         id: 'demo-user-1',
@@ -98,23 +95,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <Header />
       
-      <div className="flex flex-1">
-        {/* Desktop Sidebar */}
-        <DesktopSidebar />
-        
-        {/* Main Content */}
-        <main className="flex-1 lg:ml-[72px] xl:ml-[240px] min-h-0">
-          <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
-            <AnimatePresence mode="wait">
-              {renderView()}
-            </AnimatePresence>
-          </div>
-          <Footer />
-        </main>
-      </div>
+      {/* Main scrollable content */}
+      <main className="flex-1 overflow-y-auto overscroll-none">
+        <div className="max-w-6xl mx-auto px-3 md:px-6 py-3 md:py-4 pb-20 md:pb-6">
+          <AnimatePresence mode="wait">
+            {renderView()}
+          </AnimatePresence>
+        </div>
+        <Footer />
+      </main>
       
       {/* Mobile Bottom Nav */}
       <BottomNav />
@@ -124,9 +116,6 @@ export default function Home() {
       <SpinWheel />
       <LeadCaptureForm />
       <VoiceSearchModal />
-      
-      {/* Bottom padding for mobile nav */}
-      <div className="h-16 md:hidden" />
     </div>
   )
 }
