@@ -6,6 +6,7 @@ import { Star, MapPin, ArrowRight } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
 import { WhatsAppButton } from '@/components/whatsapp-button'
+import { OptimizedImage } from '@/components/optimized-image'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -146,13 +147,11 @@ export function FeaturedListings() {
                 >
                   {/* Image */}
                   <div className="relative h-28 sm:h-32 bg-gray-100 overflow-hidden">
-                    <img
+                    <OptimizedImage
                       src={img || placeholderImg}
                       alt={listing.name}
+                      fill
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        ;(e.target as HTMLImageElement).src = placeholderImg
-                      }}
                     />
                     {/* Category badge */}
                     <div className="absolute top-2 left-2">

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { Skeleton } from '@/components/ui/skeleton'
+import { OptimizedImage } from '@/components/optimized-image'
 
 interface Story {
   id: string
@@ -106,14 +107,13 @@ export function StoriesSection() {
               }`}
             >
               <div className="w-full h-full rounded-full border-2 border-white overflow-hidden">
-                <img
-                  src={story.imageUrl || PLACEHOLDER_AVATAR}
-                  alt={story.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    ;(e.target as HTMLImageElement).src = PLACEHOLDER_AVATAR
-                  }}
-                />
+                <OptimizedImage
+                src={story.imageUrl || PLACEHOLDER_AVATAR}
+                alt={story.title}
+                fill
+                className="w-full h-full object-cover"
+                fallbackType="avatar"
+              />
               </div>
             </div>
             {/* Name Text */}

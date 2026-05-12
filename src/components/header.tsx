@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import {
   MapPin, Search, Mic, Home, Compass, Newspaper,
-  LayoutDashboard, Shield,
+  LayoutDashboard, Shield, LogOut, User,
 } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -11,6 +11,7 @@ import {
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
+import { useAuth } from '@/lib/auth-context'
 
 const CITIES = [
   { slug: 'choutuppal', name: 'Choutuppal' },
@@ -18,12 +19,12 @@ const CITIES = [
   { slug: 'warangal', name: 'Warangal' },
 ]
 
-const NAV_LINKS: Array<{ view: ViewType; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean }> = [
+const NAV_LINKS: Array<{ view: ViewType; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean; requiresAuth?: boolean }> = [
   { view: 'home', label: 'Home', icon: Home },
   { view: 'explore', label: 'Explore', icon: Compass },
   { view: 'news', label: 'News', icon: Newspaper },
-  { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
+  { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
+  { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true, requiresAuth: true },
 ]
 
 interface HeaderProps {
@@ -34,8 +35,17 @@ export function Header({ className }: HeaderProps) {
   const {
     selectedCity, setCity, setSearchOpen, currentView, navigateTo, currentUser,
   } = useAppStore()
+  const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
 
-  const isAdmin = currentUser?.role === 'admin'
+  const isAdmin = user?.role === 'admin'
+
+  const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
+    if (requiresAuth && !isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    navigateTo(view)
+  }
 
   return (
     <header
@@ -80,7 +90,7 @@ export function Header({ className }: HeaderProps) {
             return (
               <button
                 key={item.view}
-                onClick={() => navigateTo(item.view)}
+                onClick={() => handleNavClick(item.view, item.requiresAuth)}
                 className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
                     ? 'text-[#D4AF37]'
@@ -100,15 +110,39 @@ export function Header({ className }: HeaderProps) {
           })}
         </nav>
 
-        {/* Right: Search + Notifications + Avatar */}
+        {/* Right: Search + Notifications + Auth */}
         <div className="flex items-center gap-2">
           <button onClick={() => setSearchOpen(true)} className="p-2 rounded-lg hover:bg-gray-50 transition-colors">
             <Mic className="size-4 text-gray-500" />
           </button>
           <NotificationPanel />
-          <button onClick={() => navigateTo('dashboard')} className="ml-1 w-8 h-8 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity">
-            {currentUser?.fullName?.charAt(0) || 'G'}
-          </button>
+
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleNavClick('dashboard', true)}
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+                title={user?.fullName || 'Dashboard'}
+              >
+                {user?.fullName?.charAt(0) || 'U'}
+              </button>
+              <button
+                onClick={logout}
+                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="size-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity"
+            >
+              <User className="size-3.5" />
+              Sign In
+            </button>
+          )}
         </div>
       </div>
 
@@ -147,6 +181,21 @@ export function Header({ className }: HeaderProps) {
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center">
             <NotificationPanel />
           </div>
+          {isAuthenticated ? (
+            <button
+              onClick={() => handleNavClick('dashboard', true)}
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white text-xs font-bold shadow-sm"
+            >
+              {user?.fullName?.charAt(0) || 'U'}
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="ml-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs font-semibold shadow-sm"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </div>
     </header>

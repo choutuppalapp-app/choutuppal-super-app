@@ -49,6 +49,8 @@ import {
 } from '@/components/ui/dialog'
 import { GlassCard } from '@/components/glass-card'
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
+import Image from 'next/image'
 import {
   BarChart,
   Bar,
@@ -176,7 +178,7 @@ interface NewsArticle {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function AdminView() {
-  const { adminTab, setAdminTab, addNotification } = useAppStore()
+  const { adminTab, setAdminTab } = useAppStore()
 
   // ─── Shared State ──────────────────────────────────────────────────────────
   const [stats, setStats] = useState<Stats | null>(null)
@@ -393,14 +395,14 @@ export function AdminView() {
         body: JSON.stringify({ listingId, action }),
       })
       if (res.ok) {
-        addNotification(`Listing ${action} successful`)
+        toast.success(`Listing ${action} successful`)
         if (isRealestate) fetchReListings()
         else fetchAdminListings()
       } else {
-        addNotification('Action failed')
+        toast.error('Action failed')
       }
     } catch {
-      addNotification('Action failed')
+      toast.error('Action failed')
     }
   }
 
@@ -419,17 +421,17 @@ export function AdminView() {
         }),
       })
       if (res.ok) {
-        addNotification(`City "${newCityName}" added!`)
+        toast.success(`City "${newCityName}" added!`)
         setNewCityName('')
         setNewCitySlug('')
         setNewCityState('Telangana')
         setNewCityHero('')
         fetchCities()
       } else {
-        addNotification('Failed to add city')
+        toast.error('Failed to add city')
       }
     } catch {
-      addNotification('Failed to add city')
+      toast.error('Failed to add city')
     } finally {
       setAddingCity(false)
     }
@@ -439,13 +441,13 @@ export function AdminView() {
     try {
       const res = await fetch(`/api/cities?id=${cityId}`, { method: 'DELETE' })
       if (res.ok) {
-        addNotification('City deleted')
+        toast.success('City deleted')
         fetchCities()
       } else {
-        addNotification('Failed to delete city')
+        toast.error('Failed to delete city')
       }
     } catch {
-      addNotification('Failed to delete city')
+      toast.error('Failed to delete city')
     }
     setDeleteCityDialog(null)
   }
@@ -463,9 +465,9 @@ export function AdminView() {
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-      addNotification('Leads exported successfully')
+      toast.success('Leads exported successfully')
     } catch {
-      addNotification('Failed to export leads')
+      toast.error('Failed to export leads')
     } finally {
       setExportingLeads(false)
     }
@@ -473,7 +475,7 @@ export function AdminView() {
 
   const handleSaveNews = async () => {
     if (!newsForm.title || !newsForm.cityId) {
-      addNotification('Title and City are required')
+      toast.error('Title and City are required')
       return
     }
     setSavingNews(true)
@@ -493,16 +495,16 @@ export function AdminView() {
         body: JSON.stringify(payload),
       })
       if (res.ok) {
-        addNotification(editingNews ? 'News updated!' : 'News created!')
+        toast.success(editingNews ? 'News updated!' : 'News created!')
         setEditingNews(null)
         if (editor) editor.commands.setContent('')
         setNewsForm({ title: '', cityId: '', content: '', imageUrl: '', source: '', isPublished: true })
         fetchNews()
       } else {
-        addNotification('Failed to save news')
+        toast.error('Failed to save news')
       }
     } catch {
-      addNotification('Failed to save news')
+      toast.error('Failed to save news')
     } finally {
       setSavingNews(false)
     }
@@ -512,20 +514,20 @@ export function AdminView() {
     try {
       const res = await fetch(`/api/admin/news?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
-        addNotification('News deleted')
+        toast.success('News deleted')
         fetchNews()
       } else {
-        addNotification('Failed to delete news')
+        toast.error('Failed to delete news')
       }
     } catch {
-      addNotification('Failed to delete news')
+      toast.error('Failed to delete news')
     }
     setDeleteNewsDialog(null)
   }
 
   const handleSavePrize = async () => {
     if (!prizeForm.label || !prizeForm.prizeType) {
-      addNotification('Label and Prize Type are required')
+      toast.error('Label and Prize Type are required')
       return
     }
     setSavingPrize(true)
@@ -539,16 +541,16 @@ export function AdminView() {
         body: JSON.stringify(payload),
       })
       if (res.ok) {
-        addNotification(editingPrize ? 'Prize updated!' : 'Prize created!')
+        toast.success(editingPrize ? 'Prize updated!' : 'Prize created!')
         setShowPrizeForm(false)
         setEditingPrize(null)
         setPrizeForm({ label: '', prizeType: 'coins', prizeValue: 0, probability: 0.1, color: '#D4AF37' })
         fetchSpinPrizes()
       } else {
-        addNotification('Failed to save prize')
+        toast.error('Failed to save prize')
       }
     } catch {
-      addNotification('Failed to save prize')
+      toast.error('Failed to save prize')
     } finally {
       setSavingPrize(false)
     }
@@ -558,13 +560,13 @@ export function AdminView() {
     try {
       const res = await fetch(`/api/admin/spin-prizes?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
-        addNotification('Prize deleted')
+        toast.success('Prize deleted')
         fetchSpinPrizes()
       } else {
-        addNotification('Failed to delete prize')
+        toast.error('Failed to delete prize')
       }
     } catch {
-      addNotification('Failed to delete prize')
+      toast.error('Failed to delete prize')
     }
     setDeletePrizeDialog(null)
   }
@@ -578,7 +580,7 @@ export function AdminView() {
       })
       fetchSpinPrizes()
     } catch {
-      addNotification('Failed to toggle prize')
+      toast.error('Failed to toggle prize')
     }
   }
 
@@ -595,12 +597,12 @@ export function AdminView() {
         }),
       })
       if (res.ok) {
-        addNotification('Settings saved!')
+        toast.success('Settings saved!')
       } else {
-        addNotification('Failed to save settings')
+        toast.error('Failed to save settings')
       }
     } catch {
-      addNotification('Failed to save settings')
+      toast.error('Failed to save settings')
     } finally {
       setSavingSettings(false)
     }
@@ -619,7 +621,7 @@ export function AdminView() {
       const data = await res.json()
       if (res.ok) {
         setBroadcastResult(`Sent to ${data.sent} subscribers`)
-        addNotification('Broadcast sent!')
+        toast.success('Broadcast sent!')
         setBroadcastMsg('')
       } else {
         setBroadcastResult('Failed to send broadcast')
@@ -1092,7 +1094,7 @@ export function AdminView() {
                             <TableRow key={listing.id}>
                               <TableCell>
                                 {img ? (
-                                  <img src={img} alt={listing.name} className="w-10 h-10 rounded-lg object-cover" />
+                                  <Image src={img} alt={listing.name} width={40} height={40} className="w-10 h-10 rounded-lg object-cover" />
                                 ) : (
                                   <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                     <Store className="size-4 text-gray-400" />
@@ -1212,7 +1214,7 @@ export function AdminView() {
                             <TableRow key={listing.id}>
                               <TableCell>
                                 {img ? (
-                                  <img src={img} alt={listing.title} className="w-10 h-10 rounded-lg object-cover" />
+                                  <Image src={img} alt={listing.title} width={40} height={40} className="w-10 h-10 rounded-lg object-cover" />
                                 ) : (
                                   <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                     <Building2 className="size-4 text-gray-400" />
@@ -1551,7 +1553,7 @@ export function AdminView() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {article.imageUrl && (
-                              <img src={article.imageUrl} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                              <Image src={article.imageUrl} alt="" width={32} height={32} className="w-8 h-8 rounded object-cover shrink-0" />
                             )}
                             <p className="font-medium text-sm max-w-[200px] truncate">{article.title}</p>
                           </div>
@@ -1654,7 +1656,7 @@ export function AdminView() {
                 onClick={() => {
                   setSavingCoinValues(true)
                   setTimeout(() => {
-                    addNotification('Coin values saved!')
+                    toast.success('Coin values saved!')
                     setSavingCoinValues(false)
                   }, 500)
                 }}
@@ -1872,7 +1874,7 @@ export function AdminView() {
                 />
                 {settings?.logoUrl && (
                   <div className="mt-2">
-                    <img src={settings.logoUrl} alt="Logo preview" className="h-12 object-contain rounded" />
+                    <Image src={settings.logoUrl} alt="Logo preview" width={48} height={48} className="h-12 object-contain rounded" />
                   </div>
                 )}
               </div>
@@ -1886,7 +1888,7 @@ export function AdminView() {
                 />
                 {heroImageUrl && (
                   <div className="mt-2">
-                    <img src={heroImageUrl} alt="Hero preview" className="h-16 w-full object-cover rounded-lg" />
+                    <Image src={heroImageUrl} alt="Hero preview" width={600} height={64} className="h-16 w-full object-cover rounded-lg" />
                   </div>
                 )}
               </div>

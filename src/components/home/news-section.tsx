@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Clock, ArrowRight, Newspaper } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
+import { OptimizedImage } from '@/components/optimized-image'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface NewsItem {
@@ -125,13 +126,11 @@ export function NewsSection() {
                 {/* Image */}
                 {item.imageUrl && (
                   <div className="h-32 bg-gray-100 overflow-hidden">
-                    <img
+                    <OptimizedImage
                       src={item.imageUrl}
                       alt={item.title}
+                      fill
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        ;(e.target as HTMLImageElement).src = placeholderImg
-                      }}
                     />
                   </div>
                 )}

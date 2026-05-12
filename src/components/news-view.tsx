@@ -6,6 +6,7 @@ import { Newspaper, Calendar, MapPin, ExternalLink, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { GlassCard } from '@/components/glass-card'
+import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 
 interface NewsArticle {
@@ -162,13 +163,11 @@ export function NewsView() {
             >
               <GlassCard variant="gold" className="!p-0 overflow-hidden">
                 <div className="relative h-48 sm:h-64 overflow-hidden">
-                  <img
+                  <OptimizedImage
                     src={articles[0].imageUrl || PLACEHOLDER_IMG}
                     alt={articles[0].title}
+                    fill
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).src = PLACEHOLDER_IMG
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
@@ -216,13 +215,11 @@ export function NewsView() {
                   <div className="flex gap-4 p-4">
                     {/* Thumbnail */}
                     <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0">
-                      <img
+                      <OptimizedImage
                         src={article.imageUrl || PLACEHOLDER_IMG}
                         alt={article.title}
+                        fill
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          ;(e.target as HTMLImageElement).src = PLACEHOLDER_IMG
-                        }}
                       />
                     </div>
 

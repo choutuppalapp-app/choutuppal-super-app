@@ -40,7 +40,11 @@ import {
 } from '@/components/ui/dialog'
 import { GlassCard } from '@/components/glass-card'
 import { useAppStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 import { QRCodeSVG } from 'qrcode.react'
+import { toast } from 'sonner'
+import { EmptyListings, EmptyLeads, EmptyCoins, EmptySubscriptions } from '@/components/empty-states'
+import { ListingCardSkeleton, TableSkeleton, DashboardHeaderSkeleton, StatsCardSkeleton } from '@/components/skeleton-loaders'
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -125,13 +129,19 @@ const CATEGORIES = [
 // ─── Component ────────────────────────────────────────────────────
 export function DashboardView() {
   const {
-    currentUser,
     dashboardTab,
     setDashboardTab,
-    addNotification,
     setSelectedListing,
     navigateTo,
   } = useAppStore()
+  const { user } = useAuth()
+  const currentUser = user ? {
+    id: user.id,
+    fullName: user.fullName,
+    role: user.role,
+    coinsBalance: user.coinsBalance,
+    subscriptionTier: user.subscriptionTier,
+  } : null
 
   // ─── State ────────────────────────────────────────────────────
   // Listings
@@ -181,7 +191,9 @@ export function DashboardView() {
       .then((data) => {
         setListings(data.listings || [])
       })
-      .catch(() => {})
+      .catch(() => {
+        toast.error('Failed to load listings')
+      })
       .finally(() => setLoadingListings(false))
   }, [currentUser])
 
@@ -195,7 +207,9 @@ export function DashboardView() {
     fetch(`/api/leads?userId=${currentUser.id}`)
       .then((res) => res.json())
       .then((data) => setLeads(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .catch(() => {
+        toast.error('Failed to load leads')
+      })
   }, [currentUser])
 
   // Fetch coins
@@ -207,7 +221,9 @@ export function DashboardView() {
         setCoinBalance(data.balance ?? 0)
         setCoinTransactions(data.transactions ?? [])
       })
-      .catch(() => {})
+      .catch(() => {
+        toast.error('Failed to load coins')
+      })
   }, [currentUser])
 
   useEffect(() => {
@@ -223,7 +239,9 @@ export function DashboardView() {
         setSubscription(data.active || null)
         setSubscriptionHistory(data.subscriptions || [])
       })
-      .catch(() => {})
+      .catch(() => {
+        toast.error('Failed to load subscription')
+      })
   }, [currentUser])
 
   useEffect(() => {
@@ -252,14 +270,14 @@ export function DashboardView() {
       })
       if (res.ok) {
         const data = await res.json()
-        addNotification(`Claimed ${data.amount} coins! 🎉`)
+        toast.success(`Claimed ${data.amount} coins! 🎉`)
         fetchCoins()
       } else {
         const data = await res.json()
-        addNotification(data.error || 'Already claimed today')
+        toast.error(data.error || 'Already claimed today')
       }
     } catch {
-      addNotification('Failed to claim coins')
+      toast.error('Failed to claim coins')
     } finally {
       setClaimingDaily(false)
     }
@@ -280,7 +298,7 @@ export function DashboardView() {
         }),
       })
       if (res.ok) {
-        addNotification(`Upgraded to ${plan} plan! 🎉`)
+        toast.success(`Upgraded to ${plan} plan! 🎉`)
         fetchSubscription()
         // Update user store
         useAppStore.setState((state) => ({
@@ -289,10 +307,10 @@ export function DashboardView() {
             : null,
         }))
       } else {
-        addNotification('Upgrade failed. Try again.')
+        toast.error('Upgrade failed. Try again.')
       }
     } catch {
-      addNotification('Upgrade failed. Try again.')
+      toast.error('Upgrade failed. Try again.')
     } finally {
       setUpgradingPlan(null)
     }
@@ -350,10 +368,10 @@ export function DashboardView() {
           }),
         })
         if (res.ok) {
-          addNotification('Listing updated! ✅')
+          toast.success('Listing updated! ✅')
           fetchListings()
         } else {
-          addNotification('Failed to update listing')
+          toast.error('Failed to update listing')
         }
       } else {
         // Create new listing
@@ -372,15 +390,15 @@ export function DashboardView() {
           }),
         })
         if (res.ok) {
-          addNotification('Listing created! Pending approval. 🎉')
+          toast.success('Listing created! Pending approval. 🎉')
           fetchListings()
         } else {
-          addNotification('Failed to create listing')
+          toast.error('Failed to create listing')
         }
       }
       setShowListingDialog(false)
     } catch {
-      addNotification('Something went wrong')
+      toast.error('Something went wrong')
     } finally {
       setSubmittingListing(false)
     }
@@ -390,7 +408,7 @@ export function DashboardView() {
   const handleCopyLink = (slug: string) => {
     const url = `${window.location.origin}/listing/${slug}`
     navigator.clipboard.writeText(url)
-    addNotification('Link copied! 📋')
+    toast.success('Link copied! 📋')
   }
 
   // Download QR
@@ -417,7 +435,7 @@ export function DashboardView() {
       a.download = `${listingName}-qrcode.png`
       a.href = canvas.toDataURL('image/png')
       a.click()
-      addNotification('QR Code downloaded! 📥')
+      toast.success('QR Code downloaded! 📥')
     }
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
   }
@@ -772,7 +790,7 @@ export function DashboardView() {
                 Transaction History
               </h3>
               {coinTransactions.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">No transactions yet. Claim your daily coins!</p>
+                <EmptyCoins />
               ) : (
                 <div className="max-h-80 overflow-y-auto space-y-2">
                   {coinTransactions.map((tx) => (
@@ -837,24 +855,11 @@ export function DashboardView() {
             {loadingListings ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-40 rounded-xl bg-gray-100 animate-pulse" />
+                  <ListingCardSkeleton key={i} />
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <GlassCard className="text-center py-16">
-                <Store className="size-16 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-600 font-semibold text-lg">No listings yet</p>
-                <p className="text-sm text-gray-400 mt-1 mb-4">Create your first business listing</p>
-                <motion.div whileTap={{ scale: 0.95 }}>
-                  <Button
-                    onClick={openAddListing}
-                    className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white"
-                  >
-                    <Plus className="size-4 mr-1.5" />
-                    Add Your First Listing
-                  </Button>
-                </motion.div>
-              </GlassCard>
+              <EmptyListings onAddListing={openAddListing} />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <AnimatePresence mode="popLayout">
@@ -943,11 +948,7 @@ export function DashboardView() {
             </div>
 
             {leads.length === 0 ? (
-              <div className="text-center py-12">
-                <Inbox className="size-14 text-gray-200 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">No leads yet</p>
-                <p className="text-sm text-gray-400 mt-1">Leads will appear when customers enquire about your listings</p>
-              </div>
+              <EmptyLeads />
             ) : (
               <div className="max-h-[500px] overflow-y-auto -mx-4 px-4">
                 <Table>

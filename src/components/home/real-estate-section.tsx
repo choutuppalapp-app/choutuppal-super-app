@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Bed, Maximize, MapPin, ArrowRight, Building2 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
 import { GlassCard } from '@/components/glass-card'
+import { OptimizedImage } from '@/components/optimized-image'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -26,7 +28,7 @@ interface RealEstateListing {
 }
 
 export function RealEstateSection() {
-  const { selectedCity, addNotification } = useAppStore()
+  const { selectedCity } = useAppStore()
   const [listings, setListings] = useState<RealEstateListing[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)
@@ -126,17 +128,15 @@ export function RealEstateSection() {
                   <GlassCard
                     variant={listing.isFeatured ? 'gold' : 'default'}
                     className="!p-0 overflow-hidden cursor-pointer group"
-                    onClick={() => addNotification('Real estate detail view coming soon!')}
+                    onClick={() => toast.info('Real estate detail view coming soon!')}
                   >
                     {/* Image */}
                     <div className="relative h-36 sm:h-40 bg-gray-100 overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={img || placeholderImg}
                         alt={listing.title}
+                        fill
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          ;(e.target as HTMLImageElement).src = placeholderImg
-                        }}
                       />
                       {/* Price overlay */}
                       <div className="absolute bottom-2 left-2">

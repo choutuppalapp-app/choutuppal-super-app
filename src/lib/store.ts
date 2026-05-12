@@ -28,7 +28,7 @@ interface AppState {
   selectedCityName: string
   setCity: (slug: string, name: string) => void
 
-  // User (simplified - no auth)
+  // User (synced from auth context)
   currentUser: CurrentUser | null
   setCurrentUser: (user: CurrentUser | null) => void
 
@@ -72,14 +72,8 @@ export const useAppStore = create<AppState>((set) => ({
   selectedCityName: 'Choutuppal',
   setCity: (slug, name) => set({ selectedCity: slug, selectedCityName: name }),
 
-  // User
-  currentUser: {
-    id: 'demo-user-1',
-    fullName: 'Guest User',
-    role: 'user',
-    coinsBalance: 50,
-    subscriptionTier: 'free',
-  },
+  // User — will be set by AuthProvider
+  currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
 
   // UI State
@@ -105,18 +99,7 @@ export const useAppStore = create<AppState>((set) => ({
   setDashboardTab: (tab) => set({ dashboardTab: tab }),
 
   // Notification
-  notifications: [
-    {
-      id: '1',
-      message: 'Welcome to Choutuppal 2.0! Explore your city.',
-      time: 'Just now',
-    },
-    {
-      id: '2',
-      message: 'Spin the wheel to earn coins!',
-      time: '2 min ago',
-    },
-  ],
+  notifications: [],
   addNotification: (message) =>
     set((state) => ({
       notifications: [

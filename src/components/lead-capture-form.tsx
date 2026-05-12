@@ -15,9 +15,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
 
 export function LeadCaptureForm() {
-  const { showLeadForm, setShowLeadForm, leadFormListingId, addNotification } = useAppStore()
+  const { showLeadForm, setShowLeadForm, leadFormListingId } = useAppStore()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [requirement, setRequirement] = useState('')
@@ -43,7 +44,7 @@ export function LeadCaptureForm() {
 
       if (res.ok) {
         setIsSuccess(true)
-        addNotification('Your enquiry has been submitted successfully!')
+        toast.success('Your enquiry has been submitted successfully!')
         setTimeout(() => {
           setName('')
           setPhone('')
@@ -53,7 +54,7 @@ export function LeadCaptureForm() {
         }, 2000)
       }
     } catch {
-      addNotification('Failed to submit enquiry. Please try again.')
+      toast.error('Failed to submit enquiry. Please try again.')
     } finally {
       setIsSubmitting(false)
     }

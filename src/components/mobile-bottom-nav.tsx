@@ -4,28 +4,24 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Home, Compass, Newspaper, User, Phone, MessageCircle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 
 const NAV_ITEMS: Array<{
   view: ViewType
   label: string
   icon: React.ComponentType<{ className?: string }>
+  requiresAuth?: boolean
 }> = [
   { view: 'home', label: 'Home', icon: Home },
   { view: 'explore', label: 'Explore', icon: Compass },
   { view: 'news', label: 'News', icon: Newspaper },
-  { view: 'dashboard', label: 'You', icon: User },
+  { view: 'dashboard', label: 'You', icon: User, requiresAuth: true },
 ]
 
 /**
  * MobileBottomNav — Conditionally renders:
  *   - Normal 4-tab navigation on home/explore/news/dashboard views
  *   - Sticky CTA bar on listing detail view (WhatsApp/Instagram-style)
- *
- * This component is a flex-none child at the bottom of the AppShell.
- * It is NOT position:fixed — it's a natural flex child that stays at bottom.
- *
- * Active indicator: Small w-1.5 h-1.5 rounded-full bg-[#D4AF37] dot
- * exactly above the active icon.
  */
 export function MobileBottomNav() {
   const {
@@ -35,8 +31,17 @@ export function MobileBottomNav() {
     setShowLeadForm,
     setLeadFormListingId,
   } = useAppStore()
+  const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug
+
+  const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
+    if (requiresAuth && !isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    navigateTo(view)
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -68,7 +73,7 @@ export function MobileBottomNav() {
                 <motion.button
                   key={item.view}
                   whileTap={{ scale: 0.85 }}
-                  onClick={() => navigateTo(item.view)}
+                  onClick={() => handleNavClick(item.view, item.requiresAuth)}
                   className="flex flex-col items-center justify-center py-1 px-4 min-h-[44px] min-w-[56px] relative"
                 >
                   {/* Gold dot indicator — exactly above the active icon */}
@@ -106,11 +111,6 @@ export function MobileBottomNav() {
 
 /**
  * StickyCTA — Shown instead of BottomNav on listing detail pages.
- * Two prominent buttons: Connect via App + WhatsApp Chat.
- * Sits as a natural flex-none child at the bottom of AppShell.
- *
- * Uses env(safe-area-inset-bottom) for iPhone home bar clearance.
- * All buttons have min-h-[48px] for touch targets.
  */
 function StickyCTA() {
   const { selectedListingSlug, setShowLeadForm, setLeadFormListingId } = useAppStore()

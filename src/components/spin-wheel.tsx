@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
 
 const SEGMENTS = [
   { label: '5 Coins', value: 5, color: '#D4AF37' },
@@ -28,7 +29,7 @@ const SEGMENT_COUNT = SEGMENTS.length
 const SEGMENT_ANGLE = 360 / SEGMENT_COUNT
 
 export function SpinWheel() {
-  const { showSpinWheel, setShowSpinWheel, currentUser, setCurrentUser, addNotification } =
+  const { showSpinWheel, setShowSpinWheel, currentUser, setCurrentUser } =
     useAppStore()
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
@@ -128,9 +129,9 @@ export function SpinWheel() {
           ...currentUser,
           coinsBalance: currentUser.coinsBalance + winningSegment.value,
         })
-        addNotification(`You won ${winningSegment.value} coins!`)
+        toast.success(`You won ${winningSegment.value} coins!`)
       } else if (winningSegment.value === 0) {
-        addNotification('Better luck next time! Spin again tomorrow.')
+        toast.info('Better luck next time! Spin again tomorrow.')
       }
 
       // Try API call (non-blocking)

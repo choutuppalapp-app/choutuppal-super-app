@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { GlassCard } from '@/components/glass-card'
+import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 
 interface Listing {
@@ -287,13 +288,11 @@ export function ExploreView() {
                   >
                     {/* Image */}
                     <div className="relative h-40 sm:h-44 overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={coverImg}
                         alt={listing.name}
+                        fill
                         className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-                        onError={(e) => {
-                          ;(e.target as HTMLImageElement).src = PLACEHOLDER_IMG
-                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                       {listing.isPremium && (

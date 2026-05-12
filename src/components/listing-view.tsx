@@ -23,6 +23,9 @@ import {
 import { GlassCard } from '@/components/glass-card'
 import { WhatsAppButton } from '@/components/whatsapp-button'
 import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
+import { OptimizedImage } from '@/components/optimized-image'
+import { ListingDetailSkeleton } from '@/components/skeleton-loaders'
 
 interface ListingData {
   id: string
@@ -83,7 +86,7 @@ const PLACEHOLDER_IMAGES = [
 ]
 
 export function ListingView() {
-  const { selectedListingSlug, navigateTo, setShowLeadForm, setLeadFormListingId, addNotification } = useAppStore()
+  const { selectedListingSlug, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [reviewStats, setReviewStats] = useState<ReviewStats>({ total: 0, averageRating: 0 })
@@ -117,11 +120,11 @@ export function ListingView() {
         }).catch(() => {})
       }
     } catch {
-      addNotification('Failed to load listing')
+      toast.error('Failed to load listing')
     } finally {
       setLoading(false)
     }
-  }, [selectedListingSlug, addNotification])
+  }, [selectedListingSlug])
 
   useEffect(() => {
     fetchListing()
@@ -172,7 +175,7 @@ export function ListingView() {
       }
     } else {
       await navigator.clipboard.writeText(shareUrl)
-      addNotification('Link copied to clipboard!')
+      toast.success('Link copied to clipboard!')
     }
   }
 
@@ -194,29 +197,21 @@ export function ListingView() {
       })
 
       if (res.ok) {
-        addNotification('Review submitted successfully!')
+        toast.success('Review submitted successfully!')
         setReviewName('')
         setReviewComment('')
         setReviewRating(5)
         fetchListing()
       }
     } catch {
-      addNotification('Failed to submit review')
+      toast.error('Failed to submit review')
     } finally {
       setSubmittingReview(false)
     }
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="size-10 border-3 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full"
-        />
-      </div>
-    )
+    return <ListingDetailSkeleton />
   }
 
   if (!listing) {
@@ -254,13 +249,11 @@ export function ListingView() {
             {displayImages.map((img: string, idx: number) => (
               <CarouselItem key={idx}>
                 <div className="relative aspect-video w-full overflow-hidden">
-                  <img
+                  <OptimizedImage
                     src={img}
                     alt={`${listing.name} - Photo ${idx + 1}`}
+                    fill
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).src = PLACEHOLDER_IMAGES[idx % 3]
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </div>
@@ -430,13 +423,12 @@ export function ListingView() {
                   whileHover={{ scale: 1.02 }}
                   className="break-inside-avoid rounded-xl overflow-hidden shadow-md"
                 >
-                  <img
+                  <OptimizedImage
                     src={img}
                     alt={`${listing.name} gallery ${idx + 1}`}
+                    width={400}
+                    height={400}
                     className="w-full aspect-square sm:aspect-auto object-cover"
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).src = PLACEHOLDER_IMAGES[idx % 3]
-                    }}
                   />
                 </motion.div>
               ))}

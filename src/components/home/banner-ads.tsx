@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { OptimizedImage } from '@/components/optimized-image'
 
 interface BannerAd {
   id: string
@@ -109,9 +110,10 @@ export function BannerAds() {
           >
             {/* Image or gradient background */}
             {hasImage ? (
-              <img
+              <OptimizedImage
                 src={currentAd.imageUrl!}
                 alt="Promotion"
+                fill
                 className="w-full h-full object-cover"
               />
             ) : (
