@@ -237,7 +237,7 @@ export function ListingView() {
   }
 
   return (
-    <div className="min-h-screen pb-20 md:pb-8">
+    <div className="pb-24 md:pb-8">
       {/* Hero Image Slider */}
       <div className="relative">
         <Carousel
@@ -684,33 +684,6 @@ export function ListingView() {
             </Button>
           </motion.div>
         </div>
-      </div>
-
-      {/* Mobile Sticky CTA Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <div className="flex gap-2 p-3">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleGetQuote}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white font-semibold text-sm shadow-md min-h-[48px]"
-          >
-            <Phone className="size-4" />
-            Connect via App
-          </motion.button>
-          {(listing.whatsappNumber || listing.user.whatsappNumber) && (
-            <motion.a
-              whileTap={{ scale: 0.97 }}
-              href={`https://wa.me/${(listing.whatsappNumber || listing.user.whatsappNumber || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I found your business on Choutuppal Super App. I want to know about ${listing.name}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#25D366] text-white font-semibold text-sm shadow-md min-h-[48px]"
-            >
-              <MessageCircle className="size-4" />
-              WhatsApp Chat
-            </motion.a>
-          )}
-        </div>
-        <div className="h-[env(safe-area-inset-bottom,0px)] bg-white" />
       </div>
     </div>
   )

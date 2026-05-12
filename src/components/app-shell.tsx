@@ -14,7 +14,7 @@ import { VoiceSearchModal } from '@/components/voice-search-modal'
  *
  * Architecture:
  *   ┌──────────────────────────────┐
- *   │  Header (flex-none, sticky)  │  ← Always visible, never scrolls
+ *   │  Header (flex-none)          │  ← Always visible, never scrolls
  *   ├──────────────────────────────┤
  *   │                              │
  *   │  main (flex-1, overflow-y)   │  ← ONLY this area scrolls
@@ -24,6 +24,7 @@ import { VoiceSearchModal } from '@/components/voice-search-modal'
  *   └──────────────────────────────┘
  *
  * Uses h-[100dvh] for dynamic viewport height (handles mobile browser chrome).
+ * Body is locked: no scroll on html/body, only inside <main>.
  */
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -42,23 +43,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [currentUser, setCurrentUser])
 
   return (
-    <div className="h-[100dvh] w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50 overscroll-none">
-      {/* Header — flex-none, pinned to top */}
+    <div className="h-[100dvh] w-screen flex flex-col overflow-hidden overscroll-none bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* ── Header — flex-none, pinned to top ── */}
       <div className="flex-none">
         <Header />
       </div>
 
-      {/* Main scrollable area — flex-1, only region that scrolls */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+      {/* ── Main scrollable area — flex-1, only region that scrolls ── */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain -webkit-overflow-scrolling-touch">
         {children}
       </main>
 
-      {/* Mobile Bottom Nav OR Sticky CTA — flex-none, pinned to bottom */}
+      {/* ── Mobile Bottom Nav OR Sticky CTA — flex-none, pinned to bottom ── */}
       <div className="flex-none md:hidden">
         <MobileBottomNav />
       </div>
 
-      {/* Floating overlays (not part of flex layout) */}
+      {/* ── Floating overlays (position:fixed, not part of flex layout) ── */}
       <SosButton />
       <SpinWheel />
       <LeadCaptureForm />

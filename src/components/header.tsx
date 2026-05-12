@@ -39,7 +39,7 @@ export function Header() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60"
+      className="relative z-50 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60"
     >
       {/* Desktop Header */}
       <div className="hidden md:flex items-center justify-between h-14 px-6">

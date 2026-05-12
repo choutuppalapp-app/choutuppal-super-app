@@ -1,17 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
-
-// Layout
-import { Header } from '@/components/header'
-import { BottomNav } from '@/components/bottom-nav'
-import { SosButton } from '@/components/sos-button'
-import { Footer } from '@/components/footer'
-import { SpinWheel } from '@/components/spin-wheel'
-import { LeadCaptureForm } from '@/components/lead-capture-form'
-import { VoiceSearchModal } from '@/components/voice-search-modal'
 
 // Home sections
 import { HeroSection } from '@/components/home/hero-section'
@@ -33,6 +23,7 @@ import { NewsView } from '@/components/news-view'
 import { DashboardView } from '@/components/dashboard-view'
 import { AdminView } from '@/components/admin-view'
 import { SearchView } from '@/components/search-view'
+import { Footer } from '@/components/footer'
 
 function HomeView() {
   return (
@@ -59,19 +50,9 @@ function HomeView() {
 }
 
 export default function Home() {
-  const { currentView, currentUser, setCurrentUser } = useAppStore()
+  const { currentView } = useAppStore()
 
-  useEffect(() => {
-    if (!currentUser) {
-      setCurrentUser({
-        id: 'demo-user-1',
-        fullName: 'Guest User',
-        role: 'user',
-        coinsBalance: 50,
-        subscriptionTier: 'free',
-      })
-    }
-  }, [currentUser, setCurrentUser])
+  const isDetailPage = currentView === 'listing'
 
   const renderView = () => {
     switch (currentView) {
@@ -95,27 +76,13 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <Header />
-      
-      {/* Main scrollable content */}
-      <main className="flex-1 overflow-y-auto overscroll-none">
-        <div className="max-w-6xl mx-auto px-3 md:px-6 py-3 md:py-4 pb-20 md:pb-6">
-          <AnimatePresence mode="wait">
-            {renderView()}
-          </AnimatePresence>
-        </div>
-        <Footer />
-      </main>
-      
-      {/* Mobile Bottom Nav */}
-      <BottomNav />
-      
-      {/* Floating Components */}
-      <SosButton />
-      <SpinWheel />
-      <LeadCaptureForm />
-      <VoiceSearchModal />
+    <div className={`${isDetailPage ? 'pb-0' : 'pb-4'} md:pb-6`}>
+      <div className="max-w-6xl mx-auto px-3 md:px-6 py-3 md:py-4">
+        <AnimatePresence mode="wait">
+          {renderView()}
+        </AnimatePresence>
+      </div>
+      <Footer />
     </div>
   )
 }
