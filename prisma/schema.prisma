@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model City {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  state       String   @default("Telangana")
+  heroImageUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings          Listing[]
+  realEstateListings RealEstateListing[]
+  users             User[]
+  stories           Story[]
+  news              News[]
+}
+
+model User {
+  id               String   @id @default(cuid())
+  fullName         String
+  phone            String   @unique
+  email            String?
+  role             String   @default("user") // user, business, admin
+  cityId           String?
+  subscriptionTier String   @default("free") // free, pro, premium
+  coinsBalance     Int      @default(0)
+  whatsappNumber   String?
+  avatarUrl        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  city              City?    @relation(fields: [cityId], references: [id])
+  listings             Listing[]
+  realEstateListings   RealEstateListing[]
+  leads                Lead[]
+  reviews           Review[]
+  coinTransactions  CoinTransaction[]
+  subscriptions     Subscription[]
+  stories           Story[]
+}
+
+model Listing {
+  id            String   @id @default(cuid())
+  userId        String
+  cityId        String
+  slug          String   @unique
+  name          String
+  category      String
+  description   String?
+  services      String?  // JSON string of services
+  images        String?  // JSON string of image URLs
+  whatsappNumber String?
+  address       String?
+  latitude      Float?
+  longitude     Float?
+  isApproved    Boolean  @default(false)
+  isPremium     Boolean  @default(false)
+  isFeatured    Boolean  @default(false)
+  viewsCount    Int      @default(0)
+  operatingHours String?
+  qrCodeUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User    @relation(fields: [userId], references: [id])
+  city     City    @relation(fields: [cityId], references: [id])
+  leads    Lead[]
+  reviews  Review[]
+}
+
+model RealEstateListing {
+  id          String   @id @default(cuid())
+  userId      String
+  cityId      String
+  title       String
+  price       String
+  images      String?  // JSON string
+  ownerPhone  String
+  address     String?
+  bedroomCount Int?
+  area        String?
+  isApproved  Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  city City @relation(fields: [cityId], references: [id])
+}
+
+model Lead {
+  id             String   @id @default(cuid())
+  listingId      String
+  userId         String?
+  customerPhone  String
+  customerName   String?
+  requirementText String?
+  source         String   @default("form") // whatsapp, form, enquiry
+  status         String   @default("new") // new, contacted, converted, lost
+  createdAt      DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id])
+}
+
+model CoinTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  userId            String
+  razorpayPaymentId String?
+  plan              String   // free, pro, premium
+  status            String   @default("active") // active, expired, cancelled
+  startDate         DateTime @default(now())
+  endDate           DateTime?
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Story {
+  id          String   @id @default(cuid())
+  userId      String
+  cityId      String
+  title       String
+  imageUrl    String
+  isPremium   Boolean  @default(false)
+  viewsCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  city City @relation(fields: [cityId], references: [id])
+}
+
+model News {
+  id          String   @id @default(cuid())
+  cityId      String
+  title       String
+  content     String?
+  imageUrl    String?
+  source      String?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  city City @relation(fields: [cityId], references: [id])
+}
+
+model SiteSetting {
+  id              String   @id @default(cuid())
+  logoUrl         String?
+  affiliateBaseUrl String?
+  heroHeadline    String?
+  heroDescription String?
+  primaryColor    String   @default("#D4AF37")
+  accentColor     String   @default("#4169E1")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String?
+  endpoint  String
+  keys      String   // JSON string
+  createdAt DateTime @default(now())
+}
+
+model SpinPrize {
+  id          String   @id @default(cuid())
+  label       String
+  prizeType   String   // coins, discount, free_listing, none
+  prizeValue  Int      @default(0)
+  probability Float    @default(0.1)
+  color       String   @default("#D4AF37")
+  isActive    Boolean  @default(true)
+}
+
+model BannerAd {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String?
+  linkUrl   String?
+  cityId    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

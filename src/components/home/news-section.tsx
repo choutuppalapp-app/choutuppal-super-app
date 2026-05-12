@@ -1,0 +1,163 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Clock, ArrowRight, Newspaper } from 'lucide-react'
+import { useAppStore } from '@/lib/store'
+import { GlassCard } from '@/components/glass-card'
+import { Skeleton } from '@/components/ui/skeleton'
+
+interface NewsItem {
+  id: string
+  title: string
+  content: string | null
+  imageUrl: string | null
+  source: string | null
+  createdAt: string
+  city: {
+    id: string
+    name: string
+    slug: string
+  }
+}
+
+export function NewsSection() {
+  const { selectedCity } = useAppStore()
+  const [news, setNews] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [cityId, setCityId] = useState<string | null>(null)
+
+  // Fetch cityId from slug
+  useEffect(() => {
+    async function fetchCity() {
+      try {
+        const res = await fetch('/api/cities')
+        if (res.ok) {
+          const cities = await res.json()
+          const city = cities.find((c: { slug: string; id: string }) => c.slug === selectedCity)
+          if (city) setCityId(city.id)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchCity()
+  }, [selectedCity])
+
+  // Fetch news
+  useEffect(() => {
+    async function fetchNews() {
+      if (!cityId) return
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/news?cityId=${cityId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setNews(data)
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchNews()
+  }, [cityId])
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
+    if (diffHrs < 1) return 'Just now'
+    if (diffHrs < 24) return `${diffHrs}h ago`
+    const diffDays = Math.floor(diffHrs / 24)
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  }
+
+  const placeholderImg =
+    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNGM0Y0RjYiLz48dGV4dCB4PSIxMDAiIHk9IjY1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjRDRBRjM3IiBmb250LXNpemU9IjIwIj7wn5m2PC90ZXh0Pjwvc3ZnPg=='
+
+  return (
+    <section className="px-4 py-4">
+      <div className="flex items-center justify-between mb-3">
+        <motion.h2
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="text-lg font-bold text-gray-800"
+        >
+          📰 Local News
+        </motion.h2>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline"
+        >
+          View All <ArrowRight className="size-4" />
+        </motion.button>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-32 rounded-2xl" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : news.length === 0 ? (
+        <GlassCard className="!p-6 text-center">
+          <Newspaper className="size-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-gray-500 text-sm">No news yet for this area. Stay tuned!</p>
+        </GlassCard>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {news.slice(0, 6).map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.08, duration: 0.4 }}
+            >
+              <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
+                {/* Image */}
+                {item.imageUrl && (
+                  <div className="h-32 bg-gray-100 overflow-hidden">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        ;(e.target as HTMLImageElement).src = placeholderImg
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="p-3 space-y-2">
+                  <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">
+                    {item.title}
+                  </h3>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Clock className="size-3" />
+                      <span className="text-[11px]">{formatDate(item.createdAt)}</span>
+                    </div>
+                    {item.source && (
+                      <span className="text-[11px] text-[#4169E1] font-medium">
+                        {item.source}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
