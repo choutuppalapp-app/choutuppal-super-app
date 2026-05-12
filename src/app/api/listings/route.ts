@@ -9,12 +9,19 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')
     const isFeatured = searchParams.get('isFeatured')
     const isPremium = searchParams.get('isPremium')
+    const userId = searchParams.get('userId')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
 
-    const where: Record<string, unknown> = {
-      isApproved: true,
+    const where: Record<string, unknown> = {}
+
+    // If userId is provided, show ALL listings (including unapproved) for that user
+    // Otherwise, only show approved listings
+    if (userId) {
+      where.userId = userId
+    } else {
+      where.isApproved = true
     }
 
     if (cityId) {

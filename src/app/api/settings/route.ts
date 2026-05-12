@@ -49,6 +49,7 @@ export async function PUT(request: Request) {
       'affiliateBaseUrl',
       'heroHeadline',
       'heroDescription',
+      'heroImageUrl',
       'primaryColor',
       'accentColor',
     ]

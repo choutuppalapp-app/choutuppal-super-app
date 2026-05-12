@@ -1,58 +1,100 @@
 # Choutuppal 2.0 Worklog
 
 ---
-Task ID: mobile-layout-fix-v1
+Task ID: 1
 Agent: Main
-Task: Initial mobile layout fix attempt
+Task: Install required packages
 
 Work Log:
-- Restructured root layout.tsx with h-[100dvh] w-screen overflow-hidden overscroll-none on body
-- Moved AppShell into layout.tsx so it wraps all children (Header/main/MobileBottomNav)
-- Added CSS: html,body { height:100%; overflow:hidden; overscroll-behavior:none; -webkit-overflow-scrolling:touch; }
-- Rebuilt MobileBottomNav with AnimatePresence for smooth nav-to-CTA transitions
-- Added gold dot indicator above active nav icon
-- Rebuilt StickyCTA with env(safe-area-inset-bottom), min-h-[48px] buttons
-- Removed duplicate fixed CTA from ListingView
+- Installed qrcode.react@4.2.0 for QR code generation in User Panel
+- Installed @tiptap/react@3.23.1, @tiptap/starter-kit@3.23.1, @tiptap/extension-link@3.23.1, @tiptap/extension-placeholder@3.23.1, @tiptap/pm@3.23.1 for rich text editor in Content CMS
+- Installed web-push@3.6.7 for push notification broadcasting
 
 Stage Summary:
-- App shell architecture: Header(flex-none) -> main(flex-1) -> MobileBottomNav(flex-none)
-- Conditional bottom: listing detail pages show StickyCTA instead of nav tabs
-- Body scroll locked - only main scrolls
+- All packages installed successfully
+- Recharts already existed in project for admin charts
 
 ---
-Task ID: mobile-layout-fix-v2-exact
+Task ID: 2
 Agent: Main
-Task: Complete rewrite of root layout and mobile components using EXACT user-specified structure
+Task: Add missing API routes
 
 Work Log:
-- Rewrote layout.tsx: body itself is the flex container (h-[100dvh] w-screen overflow-hidden bg-gray-50 flex flex-col overscroll-none)
-- Removed AppShell wrapper div — body IS the flex container now
-- Header rendered directly as body child with className="flex-none z-50"
-- main rendered directly as body child with className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
-- Created MobileBottomWrapper component: renders BottomNav or StickyCTA based on Zustand state
-- BottomNav: exact WhatsApp style — h-16 bg-white border-t border-gray-200 flex justify-around items-center px-2
-- BottomNav touch targets: min-w-[48px] min-h-[48px] on each button
-- BottomNav active indicator: w-1.5 h-1.5 rounded-full bg-[#D4AF37] dot above active icon
-- StickyCTA: bg-white border-t border-gray-200 p-3 flex gap-3, pb-[max(0.75rem,env(safe-area-inset-bottom))]
-- StickyCTA buttons: min-h-[48px] bg-[#4169E1] + bg-[#25D366] rounded-xl font-bold text-sm
-- Created FloatingOverlays component for SOS, SpinWheel, LeadCaptureForm, VoiceSearchModal
-- Header updated: accepts className prop, mobile buttons have min-w-[44px] min-h-[44px]
-- globals.css exact mandates:
-  - -webkit-tap-highlight-color: transparent (removes blue flash on tap)
-  - -webkit-touch-callout: none (prevents callout menu on long press)
-  - overscroll-behavior: none (prevents pull-to-refresh and rubber-band)
-  - main { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-  - @media (max-width: 768px) { *:focus { outline: none; } }
-  - Mobile glass/glass-gold forced to solid white cards (no backdrop-filter, no blur)
-- GlassCard rewritten: mobile-first solid white (bg-white rounded-xl shadow-sm p-4 border border-gray-100), desktop gets glassmorphism
-- page.tsx content spacing: pb-20 for home (bottom nav), pb-24 for detail pages (taller CTA)
-- ListingView: pb-24 md:pb-8 for CTA clearance
+- Created /api/admin/news - Full CRUD with auto-affiliate link injection
+- Created /api/admin/spin-prizes - Full CRUD for spin wheel prizes
+- Created /api/admin/broadcast - Push notification broadcast endpoint
+- Created /api/admin/leads/export - CSV export for leads
+- Created /api/subscriptions - Subscription management (GET, POST)
+- Created /api/settings/sos - SOS contacts management
+- Created /api/admin/realestate - Real estate listing admin (GET, PATCH)
+- Updated /api/stats - Added totalActiveSubscriptions, totalRevenue, userGrowth, revenueGrowth, subscriptionsByPlan
+- Updated /api/cities - Added POST (create city) and DELETE (remove city)
+- Updated /api/settings - Added heroImageUrl to allowed fields
+- Updated /api/listings - Added userId filter to show all listings for a user
+- Updated /api/coins - Graceful handling of unknown users (returns balance 0)
+- Updated Prisma schema - Added heroImageUrl to SiteSetting model
 
 Stage Summary:
-- Body IS the flex column: no wrapper divs between body and Header/main/MobileBottomWrapper
-- Header: flex-none z-50 (never scrolls)
-- Main: flex-1 overflow-y-auto overflow-x-hidden scroll-smooth (ONLY section that scrolls)
-- MobileBottomWrapper: flex-none z-50 (never scrolls, shows nav or CTA)
-- No glassmorphism on mobile — solid white cards for performance
-- All touch targets min 44px/48px
-- All APIs returning 200, lint clean, compiled successfully
+- 7 new API route files created
+- 5 existing API routes updated with new functionality
+- Prisma schema updated with heroImageUrl field
+- All routes tested and returning 200 status codes
+
+---
+Task ID: 3
+Agent: Subagent (full-stack-developer)
+Task: Rebuild User Panel (dashboard-view.tsx)
+
+Work Log:
+- Completely rewrote dashboard-view.tsx with 5 full tabs
+- Tab 1: My Subscription - Plan cards, upgrade flow, subscription history
+- Tab 2: Choutuppal Coins - Balance display, daily claim, earn/spend categories, transaction history
+- Tab 3: My Listings - Grid cards, Add New Listing dialog form, Edit functionality, status badges
+- Tab 4: Lead Inbox - Table with expandable rows, status badges, New/Converted counts
+- Tab 5: My Mini-Website - QR codes via qrcode.react, copy link, download QR, share on WhatsApp
+- Added Dialog for add/edit listing with category dropdown, image URL, city selection
+- Added subscription upgrade flow with POST /api/subscriptions
+
+Stage Summary:
+- 1337 lines of fully functional dashboard code
+- All 5 tabs with real API integration
+- QR code generation and download working
+- Lint passes clean
+
+---
+Task ID: 4
+Agent: Subagent (full-stack-developer)
+Task: Rebuild Admin Panel (admin-view.tsx)
+
+Work Log:
+- Completely rewrote admin-view.tsx with 7 full tabs
+- Tab 1: Overview Dashboard - 4 stat cards, User Growth line chart, Revenue bar chart, leads by status bars, subscriptions by plan
+- Tab 2: Multi-City Manager - Add city form with hero image, cities table with delete confirmation
+- Tab 3: Listing Moderation - Business + Real Estate sub-tabs, filter dropdown, approve/reject/feature/premium actions, reject reason dialog
+- Tab 4: Lead CRM - Full leads table, status filter, Export CSV button with file download
+- Tab 5: Content CMS - TipTap rich text editor with toolbar (Bold, Italic, H2, Link, Lists), auto-affiliate notice, news articles list with edit/delete
+- Tab 6: Gamification Manager - Coin value editing, Spin wheel prizes CRUD with add/edit/delete, active/inactive toggle
+- Tab 7: Global Site Settings - Logo URL + preview, Hero image URL + preview, Broadcast notification, SOS contacts (Ambulance/Police/Fire/Women Helpline + custom contacts), general settings
+
+Stage Summary:
+- 2107 lines of fully functional admin panel code
+- All 7 tabs with real API integration
+- TipTap editor with full toolbar working
+- Auto-affiliate links injected server-side on news content
+- Lint passes clean
+
+---
+Task ID: 5
+Agent: Main
+Task: Desktop responsive layout fixes
+
+Work Log:
+- Verified layout.tsx already has responsive md: prefixes from previous fix
+- Footer component already hidden on mobile (hidden md:block)
+- Updated Prisma schema to add heroImageUrl field
+- Pushed schema changes and regenerated Prisma client
+- Updated settings API to include heroImageUrl
+
+Stage Summary:
+- Layout was already properly responsive from previous conversation
+- Schema and API updated to support new heroImageUrl field

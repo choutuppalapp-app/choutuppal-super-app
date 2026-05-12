@@ -179,6 +179,7 @@ model SiteSetting {
   affiliateBaseUrl String?
   heroHeadline    String?
   heroDescription String?
+  heroImageUrl    String?
   primaryColor    String   @default("#D4AF37")
   accentColor     String   @default("#4169E1")
   createdAt       DateTime @default(now())

@@ -18,11 +18,16 @@ export async function GET(request: Request) {
       select: { coinsBalance: true },
     })
 
+    // Return default response if user not found (e.g., demo users)
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
+      const transactions = await db.coinTransaction.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      })
+      return NextResponse.json({
+        balance: 0,
+        transactions,
+      })
     }
 
     const transactions = await db.coinTransaction.findMany({
