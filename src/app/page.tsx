@@ -207,7 +207,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`w-full max-w-7xl mx-auto ${isDetailPage ? 'pb-24 md:pb-8' : 'pb-20 md:pb-8'}`}>
+    <div className={`w-full max-w-7xl mx-auto pb-20 md:pb-6`}>
       <div className="px-3 md:px-6 py-3 md:py-6">
         <AnimatePresence mode="wait">
           {renderView()}

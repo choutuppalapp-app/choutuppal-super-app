@@ -1,11 +1,15 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, Compass, Newspaper, User, Phone, MessageCircle } from 'lucide-react'
+import { Home, Search, Newspaper, UserCircle, Phone, MessageCircle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 
+/**
+ * Bottom navigation items — using exactly the icons the user specified:
+ * Home, Search, Newspaper, UserCircle
+ */
 const NAV_ITEMS: Array<{
   view: ViewType
   label: string
@@ -13,24 +17,25 @@ const NAV_ITEMS: Array<{
   requiresAuth?: boolean
 }> = [
   { view: 'home', label: 'Home', icon: Home },
-  { view: 'explore', label: 'Explore', icon: Compass },
+  { view: 'explore', label: 'Search', icon: Search },
   { view: 'news', label: 'News', icon: Newspaper },
-  { view: 'dashboard', label: 'You', icon: User, requiresAuth: true },
+  { view: 'dashboard', label: 'You', icon: UserCircle, requiresAuth: true },
 ]
 
 /**
- * MobileBottomNav — Conditionally renders:
- *   - Normal 4-tab navigation on home/explore/news/dashboard views
- *   - Sticky CTA bar on listing detail view (WhatsApp/Instagram-style)
+ * MobileBottomNav — position:fixed bottom navigation bar.
+ *
+ * On normal views: Shows 4-tab bottom nav with gold dot indicator
+ * On listing detail view: Shows StickyCTA with Connect + WhatsApp buttons
+ *
+ * SPEC: fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t
+ *       flex justify-around items-center md:hidden
+ *       Icons: w-6 h-6, Active: gold dot above
+ *       Touch targets: min-h-[48px] min-w-[48px]
+ *       Safe area: pb-[env(safe-area-inset-bottom)]
  */
 export function MobileBottomNav() {
-  const {
-    currentView,
-    navigateTo,
-    selectedListingSlug,
-    setShowLeadForm,
-    setLeadFormListingId,
-  } = useAppStore()
+  const { currentView, navigateTo, selectedListingSlug, setShowLeadForm, setLeadFormListingId } = useAppStore()
   const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug
@@ -52,8 +57,13 @@ export function MobileBottomNav() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.2 }}
+          className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]"
         >
-          <StickyCTA />
+          <StickyCTA
+            selectedListingSlug={selectedListingSlug}
+            setShowLeadForm={setShowLeadForm}
+            setLeadFormListingId={setLeadFormListingId}
+          />
         </motion.div>
       ) : (
         <motion.div
@@ -61,48 +71,44 @@ export function MobileBottomNav() {
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 10, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="bg-white border-t border-gray-100"
+          transition={{ duration: 0.15 }}
+          className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t border-gray-200 flex justify-around items-center md:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
-          <div className="flex items-center justify-around h-14">
-            {NAV_ITEMS.map((item) => {
-              const isActive = currentView === item.view
-              const Icon = item.icon
+          {NAV_ITEMS.map((item) => {
+            const isActive = currentView === item.view
+            const Icon = item.icon
 
-              return (
-                <motion.button
-                  key={item.view}
-                  whileTap={{ scale: 0.85 }}
-                  onClick={() => handleNavClick(item.view, item.requiresAuth)}
-                  className="flex flex-col items-center justify-center py-1 px-4 min-h-[44px] min-w-[56px] relative"
-                >
-                  {/* Gold dot indicator — exactly above the active icon */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="mobileNavDot"
-                      className="absolute top-0.5 w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                  <Icon
-                    className={`size-[22px] transition-colors ${
-                      isActive ? 'text-[#D4AF37]' : 'text-gray-400'
-                    }`}
-                    strokeWidth={isActive ? 2.5 : 1.8}
+            return (
+              <button
+                key={item.view}
+                onClick={() => handleNavClick(item.view, item.requiresAuth)}
+                className="relative flex flex-col items-center justify-center min-h-[48px] min-w-[48px]"
+              >
+                {/* Gold dot indicator above active icon */}
+                {isActive && (
+                  <motion.div
+                    layoutId="mobileNavDot"
+                    className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
-                  <span
-                    className={`text-[10px] mt-0.5 font-medium transition-colors ${
-                      isActive ? 'text-[#D4AF37]' : 'text-gray-400'
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </motion.button>
-              )
-            })}
-          </div>
-          {/* iOS safe area padding */}
-          <div className="bg-white" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
+                )}
+                <Icon
+                  className={`w-6 h-6 transition-colors ${
+                    isActive ? 'text-[#D4AF37]' : 'text-gray-400'
+                  }`}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                />
+                <span
+                  className={`text-[10px] mt-0.5 font-medium transition-colors ${
+                    isActive ? 'text-[#D4AF37]' : 'text-gray-400'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </button>
+            )
+          })}
         </motion.div>
       )}
     </AnimatePresence>
@@ -111,10 +117,17 @@ export function MobileBottomNav() {
 
 /**
  * StickyCTA — Shown instead of BottomNav on listing detail pages.
+ * Two action buttons: "Connect via App" and "WhatsApp Chat"
  */
-function StickyCTA() {
-  const { selectedListingSlug, setShowLeadForm, setLeadFormListingId } = useAppStore()
-
+function StickyCTA({
+  selectedListingSlug,
+  setShowLeadForm,
+  setLeadFormListingId,
+}: {
+  selectedListingSlug: string | null
+  setShowLeadForm: (show: boolean) => void
+  setLeadFormListingId: (id: string) => void
+}) {
   const handleConnect = () => {
     if (selectedListingSlug) {
       setLeadFormListingId(selectedListingSlug)
@@ -127,29 +140,25 @@ function StickyCTA() {
   )}`
 
   return (
-    <div className="bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-      <div className="flex gap-3 p-3">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handleConnect}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white font-semibold text-sm min-h-[48px] active:opacity-90 shadow-sm"
-        >
-          <Phone className="size-4" />
-          Connect via App
-        </motion.button>
-        <motion.a
-          whileTap={{ scale: 0.97 }}
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#25D366] text-white font-semibold text-sm min-h-[48px] active:opacity-90 shadow-sm"
-        >
-          <MessageCircle className="size-4" />
-          WhatsApp Chat
-        </motion.a>
-      </div>
-      {/* iOS safe area padding with env() */}
-      <div className="bg-white" style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }} />
+    <div className="flex gap-3 p-3">
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={handleConnect}
+        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white font-semibold text-sm min-h-[48px] active:opacity-90 shadow-sm"
+      >
+        <Phone className="w-5 h-5" />
+        Connect via App
+      </motion.button>
+      <motion.a
+        whileTap={{ scale: 0.97 }}
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#25D366] text-white font-semibold text-sm min-h-[48px] active:opacity-90 shadow-sm"
+      >
+        <MessageCircle className="w-5 h-5" />
+        WhatsApp Chat
+      </motion.a>
     </div>
   )
 }

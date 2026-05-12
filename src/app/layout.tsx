@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header";
-import { MobileBottomWrapper } from "@/components/mobile-bottom-wrapper";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { FloatingOverlays } from "@/components/floating-overlays";
 import { AuthProvider } from "@/lib/auth-context";
 import { LoginModal } from "@/components/auth/login-modal";
@@ -55,19 +55,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       {/* Mobile: locked app height. Desktop: normal scrollable web page */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-[100dvh] md:h-auto md:min-h-screen w-screen md:w-full overflow-hidden md:overflow-auto bg-gray-50 flex md:flex flex-col overscroll-none md:overscroll-auto`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-[100dvh] md:h-auto md:min-h-screen w-screen md:w-full overflow-hidden md:overflow-auto bg-gray-50 flex flex-col overscroll-none md:overscroll-auto`}
       >
         <AuthProvider>
-          {/* Header: Flex-none on both, sticky on desktop */}
-          <Header className="flex-none md:flex-none z-50" />
+          {/* Header: Sticky on desktop, compact on mobile */}
+          <Header className="flex-none z-50" />
 
           {/* Main Content: Scroll container on mobile, normal block on desktop */}
           <main className="flex-1 md:flex-none overflow-y-auto md:overflow-y-auto overflow-x-hidden scroll-smooth">
             {children}
           </main>
 
-          {/* Bottom Wrapper: Only exists on mobile */}
-          <MobileBottomWrapper className="flex-none z-50 md:hidden" />
+          {/* Mobile Bottom Nav: position:fixed overlay, NOT a flex child */}
+          <MobileBottomNav />
 
           {/* Floating overlays (position:fixed, z-indexed) */}
           <FloatingOverlays />

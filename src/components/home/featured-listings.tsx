@@ -115,10 +115,10 @@ export function FeaturedListings() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-32 rounded-2xl" />
+              <Skeleton className="aspect-video rounded-t-xl" />
               <Skeleton className="h-4 w-3/4 rounded" />
               <Skeleton className="h-3 w-1/2 rounded" />
             </div>
@@ -129,7 +129,7 @@ export function FeaturedListings() {
           <p className="text-gray-500 text-sm">No featured listings yet. Be the first to list your business!</p>
         </GlassCard>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {listings.map((listing, index) => {
             const img = getFirstImage(listing.images)
             return (
@@ -145,13 +145,13 @@ export function FeaturedListings() {
                   variant={listing.isPremium ? 'gold' : 'default'}
                   className="!p-0 overflow-hidden cursor-pointer group"
                 >
-                  {/* Image */}
-                  <div className="relative h-28 sm:h-32 bg-gray-100 overflow-hidden">
+                  {/* Image — aspect-video w-full object-cover rounded-t-xl */}
+                  <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
                     <OptimizedImage
                       src={img || placeholderImg}
                       alt={listing.name}
                       fill
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
                     />
                     {/* Category badge */}
                     <div className="absolute top-2 left-2">
@@ -171,7 +171,7 @@ export function FeaturedListings() {
 
                   {/* Content */}
                   <div className="p-3 space-y-1.5">
-                    <h3 className="text-sm font-semibold text-gray-800 truncate">
+                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">
                       {listing.name}
                     </h3>
 

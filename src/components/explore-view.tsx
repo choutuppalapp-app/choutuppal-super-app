@@ -157,7 +157,7 @@ export function ExploreView() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="rounded-2xl overflow-hidden">
-          <Skeleton className="w-full h-40 rounded-t-2xl" />
+          <Skeleton className="w-full aspect-video rounded-t-xl" />
           <div className="p-4 space-y-2 bg-white/40 backdrop-blur-xl">
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
@@ -286,8 +286,8 @@ export function ExploreView() {
                     variant={listing.isPremium ? 'gold' : 'default'}
                     className="!p-0 overflow-hidden hover:shadow-xl transition-shadow"
                   >
-                    {/* Image */}
-                    <div className="relative h-40 sm:h-44 overflow-hidden">
+                    {/* Image — aspect-video w-full object-cover */}
+                    <div className="relative aspect-video w-full overflow-hidden">
                       <OptimizedImage
                         src={coverImg}
                         alt={listing.name}

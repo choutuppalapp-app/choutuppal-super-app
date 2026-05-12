@@ -102,7 +102,7 @@ export function NewsSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-32 rounded-2xl" />
+              <Skeleton className="aspect-video rounded-t-xl" />
               <Skeleton className="h-4 w-3/4 rounded" />
               <Skeleton className="h-3 w-1/2 rounded" />
             </div>
@@ -125,12 +125,12 @@ export function NewsSection() {
               <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
                 {/* Image */}
                 {item.imageUrl && (
-                  <div className="h-32 bg-gray-100 overflow-hidden">
+                  <div className="aspect-video w-full bg-gray-100 overflow-hidden">
                     <OptimizedImage
                       src={item.imageUrl}
                       alt={item.title}
                       fill
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                 )}

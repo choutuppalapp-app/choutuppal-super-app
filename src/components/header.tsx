@@ -1,9 +1,11 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  MapPin, Search, Mic, Home, Compass, Newspaper,
+  MapPin, Home, Compass, Newspaper,
   LayoutDashboard, Shield, LogOut, User,
+  Bell, Menu, X,
 } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -19,7 +21,13 @@ const CITIES = [
   { slug: 'warangal', name: 'Warangal' },
 ]
 
-const NAV_LINKS: Array<{ view: ViewType; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean; requiresAuth?: boolean }> = [
+const NAV_LINKS: Array<{
+  view: ViewType
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  adminOnly?: boolean
+  requiresAuth?: boolean
+}> = [
   { view: 'home', label: 'Home', icon: Home },
   { view: 'explore', label: 'Explore', icon: Compass },
   { view: 'news', label: 'News', icon: Newspaper },
@@ -32,8 +40,9 @@ interface HeaderProps {
 }
 
 export function Header({ className }: HeaderProps) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const {
-    selectedCity, setCity, setSearchOpen, currentView, navigateTo, currentUser,
+    selectedCity, setCity, currentView, navigateTo,
   } = useAppStore()
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
 
@@ -42,16 +51,20 @@ export function Header({ className }: HeaderProps) {
   const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
     if (requiresAuth && !isAuthenticated) {
       setShowLoginModal(true)
+      setIsDrawerOpen(false)
       return
     }
     navigateTo(view)
+    setIsDrawerOpen(false)
   }
 
   return (
     <header
       className={`w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60 md:sticky md:top-0 ${className || ''}`}
     >
-      {/* Desktop Header */}
+      {/* ═══════════════════════════════════════════
+          DESKTOP HEADER — hidden md:flex
+          ═══════════════════════════════════════════ */}
       <div className="hidden md:flex items-center justify-between h-14 px-6 max-w-7xl mx-auto">
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
@@ -112,9 +125,6 @@ export function Header({ className }: HeaderProps) {
 
         {/* Right: Search + Notifications + Auth */}
         <div className="flex items-center gap-2">
-          <button onClick={() => setSearchOpen(true)} className="p-2 rounded-lg hover:bg-gray-50 transition-colors">
-            <Mic className="size-4 text-gray-500" />
-          </button>
           <NotificationPanel />
 
           {isAuthenticated ? (
@@ -146,8 +156,12 @@ export function Header({ className }: HeaderProps) {
         </div>
       </div>
 
-      {/* Mobile Header */}
+      {/* ═══════════════════════════════════════════
+          MOBILE HEADER — flex md:hidden
+          Logo + City on LEFT | Bell + Hamburger on RIGHT
+          ═══════════════════════════════════════════ */}
       <div className="flex md:hidden items-center justify-between h-12 px-3">
+        {/* Left: Logo + City Selector */}
         <div className="flex items-center gap-2">
           <button onClick={() => navigateTo('home')} className="flex items-center gap-1.5">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
@@ -174,30 +188,136 @@ export function Header({ className }: HeaderProps) {
           </Select>
         </div>
 
-        <div className="flex items-center gap-1">
-          <button onClick={() => setSearchOpen(true)} className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center">
-            <Search className="size-5 text-gray-600" />
-          </button>
-          <div className="min-w-[44px] min-h-[44px] flex items-center justify-center">
+        {/* Right: Bell + Hamburger */}
+        <div className="flex items-center gap-0">
+          <button
+            className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center relative"
+          >
             <NotificationPanel />
-          </div>
-          {isAuthenticated ? (
-            <button
-              onClick={() => handleNavClick('dashboard', true)}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white text-xs font-bold shadow-sm"
-            >
-              {user?.fullName?.charAt(0) || 'U'}
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className="ml-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs font-semibold shadow-sm"
-            >
-              Sign In
-            </button>
-          )}
+          </button>
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6 text-gray-700" />
+          </button>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════
+          HAMBURGER DRAWER — Slide-in from RIGHT
+          Dark overlay + White panel with nav links
+          ═══════════════════════════════════════════ */}
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <>
+            {/* Dark overlay */}
+            <motion.div
+              key="drawer-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[60] bg-black/50 md:hidden"
+              onClick={() => setIsDrawerOpen(false)}
+            />
+
+            {/* Drawer panel */}
+            <motion.div
+              key="drawer-panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="fixed top-0 right-0 bottom-0 z-[70] w-72 bg-white shadow-2xl md:hidden flex flex-col"
+            >
+              {/* Drawer header */}
+              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
+                    <span className="text-white font-bold text-sm leading-none">C</span>
+                  </div>
+                  <span className="text-lg font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent">
+                    Choutuppal
+                  </span>
+                </div>
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* User section */}
+              <div className="px-4 py-3 border-b border-gray-100">
+                {isAuthenticated ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white font-bold shadow-sm">
+                      {user?.fullName?.charAt(0) || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{user?.fullName || 'User'}</p>
+                      <p className="text-xs text-gray-500">{user?.role === 'admin' ? 'Admin Account' : 'Member'}</p>
+                    </div>
+                    <button
+                      onClick={() => { logout(); setIsDrawerOpen(false) }}
+                      className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Sign out"
+                    >
+                      <LogOut className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setShowLoginModal(true); setIsDrawerOpen(false) }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold text-sm shadow-sm active:opacity-90"
+                  >
+                    <User className="size-4" />
+                    Sign In
+                  </button>
+                )}
+              </div>
+
+              {/* Navigation links */}
+              <nav className="flex-1 py-2 overflow-y-auto">
+                {NAV_LINKS.map((item) => {
+                  if (item.adminOnly && !isAdmin) return null
+                  const isActive = currentView === item.view
+                  const Icon = item.icon
+
+                  return (
+                    <button
+                      key={item.view}
+                      onClick={() => handleNavClick(item.view, item.requiresAuth)}
+                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors ${
+                        isActive
+                          ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-r-3 border-[#D4AF37]'
+                          : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-[#D4AF37]' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-medium ${isActive ? 'text-[#D4AF37]' : 'text-gray-700'}`}>
+                        {item.label}
+                      </span>
+                      {isActive && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                      )}
+                    </button>
+                  )
+                })}
+              </nav>
+
+              {/* Drawer footer */}
+              <div className="px-5 py-4 border-t border-gray-100">
+                <p className="text-[10px] text-gray-400 text-center">Choutuppal 2.0 • Made with ❤️ in Telangana</p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   )
 }

@@ -103,40 +103,40 @@ export function RealEstateSection() {
         </motion.button>
       </div>
 
-      <div
-        className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-64 snap-start">
-                <Skeleton className="h-40 rounded-2xl" />
-                <Skeleton className="h-4 w-3/4 mt-2 rounded" />
-                <Skeleton className="h-3 w-1/2 mt-1 rounded" />
-              </div>
-            ))
-          : listings.map((listing, index) => {
-              const img = getFirstImage(listing.images)
-              return (
-                <motion.div
-                  key={listing.id}
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.08, duration: 0.4 }}
-                  className="flex-shrink-0 w-60 sm:w-72 snap-start"
-                >
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="aspect-video rounded-t-xl" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {listings.map((listing, index) => {
+            const img = getFirstImage(listing.images)
+            return (
+              <motion.div
+                key={listing.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06, duration: 0.4 }}
+                className="w-full"
+              >
                   <GlassCard
                     variant={listing.isFeatured ? 'gold' : 'default'}
                     className="!p-0 overflow-hidden cursor-pointer group"
                     onClick={() => toast.info('Real estate detail view coming soon!')}
                   >
-                    {/* Image */}
-                    <div className="relative h-36 sm:h-40 bg-gray-100 overflow-hidden">
+                    {/* Image — aspect-video for proper scaling */}
+                    <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
                       <OptimizedImage
                         src={img || placeholderImg}
                         alt={listing.title}
                         fill
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
                       />
                       {/* Price overlay */}
                       <div className="absolute bottom-2 left-2">
@@ -185,7 +185,8 @@ export function RealEstateSection() {
                 </motion.div>
               )
             })}
-      </div>
+        </div>
+      )}
     </section>
   )
 }
