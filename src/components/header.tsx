@@ -2,13 +2,12 @@
 
 import { motion } from 'framer-motion'
 import {
-  MapPin, Search, Mic, Bell, Home, Compass, Newspaper,
+  MapPin, Search, Mic, Home, Compass, Newspaper,
   LayoutDashboard, Shield, User,
 } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
@@ -27,7 +26,11 @@ const NAV_LINKS: Array<{ view: ViewType; label: string; icon: React.ComponentTyp
   { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
 ]
 
-export function Header() {
+interface HeaderProps {
+  className?: string
+}
+
+export function Header({ className }: HeaderProps) {
   const {
     selectedCity, setCity, setSearchOpen, currentView, navigateTo, currentUser,
   } = useAppStore()
@@ -39,7 +42,7 @@ export function Header() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="relative z-50 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60"
+      className={`w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60 ${className || ''}`}
     >
       {/* Desktop Header */}
       <div className="hidden md:flex items-center justify-between h-14 px-6">
@@ -142,10 +145,12 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-1">
-          <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchOpen(true)} className="p-2 rounded-lg">
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchOpen(true)} className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center">
             <Search className="size-5 text-gray-600" />
           </motion.button>
-          <NotificationPanel />
+          <div className="min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <NotificationPanel />
+          </div>
         </div>
       </div>
     </motion.header>

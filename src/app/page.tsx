@@ -76,7 +76,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`${isDetailPage ? 'pb-0' : 'pb-4'} md:pb-6`}>
+    <div className={isDetailPage ? 'pb-24 md:pb-8' : 'pb-20 md:pb-8'}>
       <div className="max-w-6xl mx-auto px-3 md:px-6 py-3 md:py-4">
         <AnimatePresence mode="wait">
           {renderView()}

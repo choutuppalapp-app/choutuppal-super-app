@@ -10,17 +10,27 @@ interface GlassCardProps {
   onClick?: () => void
 }
 
+/**
+ * GlassCard — Desktop: Royal Glassmorphism, Mobile: Solid white cards.
+ *
+ * Mobile: bg-white rounded-xl shadow-sm p-4 border border-gray-100
+ * Desktop: bg-white/40 backdrop-blur-2xl border-white/30 shadow-2xl
+ *
+ * NO heavy glassmorphism on mobile — it makes things laggy and messy.
+ */
 export function GlassCard({ children, variant = 'default', className, onClick }: GlassCardProps) {
   return (
     <div
       onClick={onClick}
       className={cn(
-        'bg-white/40 backdrop-blur-2xl rounded-2xl md:rounded-2xl p-4 md:p-6 transition-all',
-        'shadow-sm md:shadow-2xl',
-        variant === 'default' && 'border border-white/30 md:border-white/30',
-        variant === 'gold' && 'border border-[#D4AF37]/30 md:border-[#D4AF37]/40 shadow-[0_0_12px_rgba(212,175,55,0.06)] md:shadow-[0_0_20px_rgba(212,175,55,0.1)]',
-        variant === 'premium' && 'border-2 border-transparent bg-clip-padding bg-white/40',
-        onClick && 'cursor-pointer hover:bg-white/50 active:scale-[0.98] transition-transform',
+        // Mobile-first: solid white cards
+        'bg-white rounded-xl p-4 border border-gray-100 shadow-sm',
+        // Desktop: upgrade to glassmorphism
+        'md:bg-white/40 md:backdrop-blur-2xl md:rounded-2xl md:p-6 md:shadow-2xl',
+        variant === 'default' && 'md:border-white/30',
+        variant === 'gold' && 'md:border-[#D4AF37]/40 md:shadow-[0_0_20px_rgba(212,175,55,0.1)] border-l-4 border-l-[#D4AF37]',
+        variant === 'premium' && 'md:border-2 md:border-transparent md:bg-clip-padding md:bg-white/40',
+        onClick && 'cursor-pointer hover:bg-gray-50 md:hover:bg-white/50 active:scale-[0.98] transition-transform',
         className
       )}
       style={
