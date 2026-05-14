@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Home, Compass, Newspaper, User } from 'lucide-react'
+import { Home, Compass, Newspaper, Users, User } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 
@@ -13,6 +13,7 @@ const NAV_ITEMS: Array<{
   { view: 'home', label: 'Home', icon: Home },
   { view: 'explore', label: 'Explore', icon: Compass },
   { view: 'news', label: 'News', icon: Newspaper },
+  { view: 'community', label: 'Community', icon: Users },
   { view: 'dashboard', label: 'You', icon: User },
 ]
 

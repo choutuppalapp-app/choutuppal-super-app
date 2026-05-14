@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Image, { type ImageProps } from 'next/image'
 
 // Base64 placeholder SVG for broken/missing images
@@ -14,11 +14,19 @@ interface OptimizedImageProps extends Omit<ImageProps, 'onError'> {
 }
 
 /**
+ * Checks if a URL is a data: URL (which Next.js Image doesn't support well)
+ */
+function isDataUrl(src: string): boolean {
+  return src.startsWith('data:')
+}
+
+/**
  * OptimizedImage — Next.js Image wrapper with:
  * - Automatic WebP conversion via Next.js
  * - Lazy loading by default
  * - Graceful fallback for broken images
  * - Solid background placeholder to prevent layout shift
+ * - Handles data: URLs by falling back to <img> tag
  */
 export function OptimizedImage({
   src,
@@ -27,31 +35,56 @@ export function OptimizedImage({
   className = '',
   ...props
 }: OptimizedImageProps) {
-  const [imgSrc, setImgSrc] = useState<string>(
-    typeof src === 'string' && src ? src : (fallbackType === 'avatar' ? AVATAR_SVG : FALLBACK_SVG)
-  )
   const [hasError, setHasError] = useState(false)
 
-  if (hasError || !src || (typeof src === 'string' && !src.trim())) {
+  const fallbackSrc = fallbackType === 'avatar' ? AVATAR_SVG : FALLBACK_SVG
+
+  // Handle empty/missing src
+  if (!src || (typeof src === 'string' && !src.trim())) {
+    // Use plain <img> for data: URL fallbacks
     return (
-      <Image
-        src={fallbackType === 'avatar' ? AVATAR_SVG : FALLBACK_SVG}
+      <img
+        src={fallbackSrc}
         alt={alt}
         className={className}
-        {...props}
+        style={props.fill ? { position: 'absolute', inset: 0 } : undefined}
       />
     )
   }
 
+  // Handle data: URLs — Next.js Image doesn't support these
+  if (typeof src === 'string' && isDataUrl(src)) {
+    return (
+      <img
+        src={hasError ? fallbackSrc : src}
+        alt={alt}
+        className={className}
+        onError={() => setHasError(true)}
+        style={props.fill ? { position: 'absolute', inset: 0, objectFit: props.style?.objectFit || 'cover' } : undefined}
+        loading="lazy"
+      />
+    )
+  }
+
+  // Handle error state — use plain <img> for fallback data: URLs
+  if (hasError) {
+    return (
+      <img
+        src={fallbackSrc}
+        alt={alt}
+        className={className}
+        style={props.fill ? { position: 'absolute', inset: 0 } : undefined}
+      />
+    )
+  }
+
+  // Normal Next.js Image for valid HTTP(S) URLs
   return (
     <Image
-      src={imgSrc}
+      src={src}
       alt={alt}
       className={className}
-      onError={() => {
-        setImgSrc(fallbackType === 'avatar' ? AVATAR_SVG : FALLBACK_SVG)
-        setHasError(true)
-      }}
+      onError={() => setHasError(true)}
       {...props}
     />
   )

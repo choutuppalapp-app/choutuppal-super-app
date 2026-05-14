@@ -8,10 +8,16 @@ interface AuthUser {
   fullName: string
   email?: string | null
   phone?: string | null
-  role: 'user' | 'admin'
+  role: 'user' | 'business' | 'admin' | 'super_admin' | 'city_admin' | 'agent'
   coinsBalance: number
   subscriptionTier: string
   avatarUrl?: string | null
+  managedCityId?: string | null
+  agentCityId?: string | null
+  isAgentApproved?: boolean
+  totalEarnings?: number
+  pendingPayout?: number
+  upiId?: string | null
 }
 
 interface AuthContextType {
@@ -36,12 +42,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const DEMO_ACCOUNTS: Record<string, AuthUser> = {
   '9999999999': {
     id: 'admin-user-1',
-    fullName: 'Admin User',
+    fullName: 'Mosin Md',
     phone: '9999999999',
     email: 'admin@choutuppal.com',
-    role: 'admin',
-    coinsBalance: 500,
+    role: 'super_admin',
+    coinsBalance: 5000,
     subscriptionTier: 'premium',
+    managedCityId: null,
   },
   '8888888888': {
     id: 'demo-user-1',
@@ -51,6 +58,33 @@ const DEMO_ACCOUNTS: Record<string, AuthUser> = {
     role: 'user',
     coinsBalance: 50,
     subscriptionTier: 'free',
+  },
+  '5555555551': {
+    id: 'city-admin-1',
+    fullName: 'Venkat Rao',
+    phone: '5555555551',
+    email: 'venkat@choutuppal.com',
+    role: 'city_admin',
+    coinsBalance: 0,
+    subscriptionTier: 'premium',
+    managedCityId: 'choutuppal',
+    totalEarnings: 8500,
+    pendingPayout: 3200,
+    upiId: 'venkatrao@upi',
+  },
+  '6666666661': {
+    id: 'agent-user-1',
+    fullName: 'Rajesh Agent',
+    phone: '6666666661',
+    email: 'rajesh@choutuppal.com',
+    role: 'agent',
+    coinsBalance: 200,
+    subscriptionTier: 'free',
+    agentCityId: 'choutuppal',
+    isAgentApproved: true,
+    totalEarnings: 4500,
+    pendingPayout: 1800,
+    upiId: 'rajesh@paytm',
   },
 }
 
@@ -75,6 +109,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: parsed.role,
           coinsBalance: parsed.coinsBalance,
           subscriptionTier: parsed.subscriptionTier,
+          managedCityId: parsed.managedCityId || null,
+          agentCityId: parsed.agentCityId || null,
+          isAgentApproved: parsed.isAgentApproved,
+          totalEarnings: parsed.totalEarnings,
+          pendingPayout: parsed.pendingPayout,
+          upiId: parsed.upiId || null,
         })
       }
     } catch {
@@ -93,6 +133,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: authUser.role,
       coinsBalance: authUser.coinsBalance,
       subscriptionTier: authUser.subscriptionTier,
+      managedCityId: authUser.managedCityId || null,
+      agentCityId: authUser.agentCityId || null,
+      isAgentApproved: authUser.isAgentApproved,
+      totalEarnings: authUser.totalEarnings,
+      pendingPayout: authUser.pendingPayout,
+      upiId: authUser.upiId || null,
     })
   }, [setCurrentUser])
 

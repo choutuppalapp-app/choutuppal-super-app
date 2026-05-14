@@ -3,43 +3,46 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { OptimizedImage } from '@/components/optimized-image'
+import { useAppStore } from '@/lib/store'
 
 interface BannerAd {
   id: string
   title: string
   imageUrl: string | null
+  shopName: string
+  offerText: string | null
   linkUrl: string | null
   isActive: boolean
 }
 
-// Fallback ads with realistic shop data
+// Fallback ads with gradient backgrounds (no weird stock photos)
 const FALLBACK_ADS = [
   {
     id: 'fallback-1',
     title: '🎯 List Your Business — Just ₹99/Day!',
     imageUrl: null,
+    shopName: 'Choutuppal Super App',
+    offerText: 'ఉచితంగా లిస్ట్ చేయండి!',
     linkUrl: null,
     isActive: true,
-    shopName: 'Choutuppal Super App',
-    offerText: 'Reach 10,000+ locals daily — Advertise now!',
   },
   {
     id: 'fallback-2',
     title: '🏠 Premium Real Estate Listings',
     imageUrl: null,
+    shopName: 'Choutuppal Premium',
+    offerText: '3x ఎక్కువ ఎంక్వైరీలు!',
     linkUrl: null,
     isActive: true,
-    shopName: 'Royal Properties',
-    offerText: '3BHK flats from ₹45L — Limited units!',
   },
   {
     id: 'fallback-3',
     title: '📱 Get Your Business Online',
     imageUrl: null,
+    shopName: 'Daily Spin Wheel',
+    offerText: 'రోజూ కాయిన్స్ గెలుచ్చి!',
     linkUrl: null,
     isActive: true,
-    shopName: 'Digital Choutuppal',
-    offerText: 'Free listing for first 100 businesses!',
   },
 ]
 
@@ -51,17 +54,22 @@ const AD_GRADIENTS = [
 ]
 
 export function BannerAds() {
+  const { selectedCity } = useAppStore()
   const [ads, setAds] = useState(FALLBACK_ADS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  // Fetch ads
+  // Fetch real ads from API
   useEffect(() => {
     async function fetchAds() {
       try {
-        const res = await fetch('/api/settings')
+        const res = await fetch(`/api/banners?cityId=${selectedCity === 'choutuppal' ? '' : ''}`)
         if (res.ok) {
-          // No dedicated ads API yet — use fallback
+          const data = await res.json()
+          if (Array.isArray(data) && data.length > 0) {
+            setAds(data)
+          }
+          // If no ads returned, keep FALLBACK_ADS
         }
       } catch {
         // Use fallback
@@ -70,7 +78,7 @@ export function BannerAds() {
       }
     }
     fetchAds()
-  }, [])
+  }, [selectedCity])
 
   // Auto-scroll logic (3 seconds interval)
   const adsCount = ads.length
@@ -87,7 +95,7 @@ export function BannerAds() {
     return (
       <div className="w-full bg-white py-3">
         <div className="px-4">
-          <div className="w-full aspect-[2/1] rounded-2xl bg-gray-100 animate-pulse" />
+          <div className="w-full aspect-[2/1] md:aspect-[3/1] rounded-xl bg-gray-100 animate-pulse" />
         </div>
       </div>
     )
@@ -106,15 +114,15 @@ export function BannerAds() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="w-full aspect-[2/1] rounded-2xl overflow-hidden relative shadow-sm cursor-pointer"
+            className="w-full aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer"
           >
             {/* Image or gradient background */}
             {hasImage ? (
               <OptimizedImage
                 src={currentAd.imageUrl!}
-                alt="Promotion"
+                alt={currentAd.title || 'Promotion'}
                 fill
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>
@@ -123,6 +131,11 @@ export function BannerAds() {
                   backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.3) 10px, rgba(212,175,55,0.3) 11px)',
                 }} />
                 <div className="relative z-10 text-center px-6">
+                  {currentAd?.offerText && (
+                    <p className="text-xs sm:text-sm font-bold text-[#D4AF37] mb-1">
+                      {currentAd.offerText}
+                    </p>
+                  )}
                   <p className="text-sm sm:text-base font-bold text-gray-800 leading-tight">
                     {currentAd?.title}
                   </p>
@@ -130,18 +143,20 @@ export function BannerAds() {
               </div>
             )}
 
-            {/* ₹99/Day Badge */}
-            <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
-              ₹99/Day
-            </div>
+            {/* Offer badge */}
+            {currentAd?.offerText && (
+              <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+                {currentAd.offerText}
+              </div>
+            )}
 
             {/* Glassmorphism Bottom Bar for Shop Name */}
             <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md p-2">
               <p className="text-xs font-bold text-gray-900 truncate">
-                {currentAd?.shopName || currentAd?.title}
+                {currentAd?.shopName || currentAd?.title || 'Choutuppal Super App'}
               </p>
               <p className="text-[10px] text-gray-700 truncate">
-                {currentAd?.offerText || 'Promoted listing on Choutuppal'}
+                {currentAd?.shopName ? currentAd.title : 'Promoted listing on Choutuppal'}
               </p>
             </div>
           </motion.div>

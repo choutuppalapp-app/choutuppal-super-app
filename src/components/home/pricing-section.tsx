@@ -5,6 +5,9 @@ import { Check, X, Crown, Zap, Star, Megaphone } from 'lucide-react'
 import { GlassCard } from '@/components/glass-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/lib/auth-context'
+import { toast } from 'sonner'
+import { useAppStore } from '@/lib/store'
 
 interface PricingPlan {
   id: string
@@ -96,6 +99,23 @@ const PLANS: PricingPlan[] = [
 ]
 
 export function PricingSection() {
+  const { isAuthenticated, setShowLoginModal } = useAuth()
+  const { navigateTo } = useAppStore()
+
+  const handleSubscribe = (planId: string) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    // In production, this would open Razorpay checkout
+    // For demo, show a toast and navigate to dashboard
+    toast.success('Payment gateway opening...', {
+      description: 'Razorpay integration requires real API keys. Redirecting to dashboard.',
+      duration: 4000,
+    })
+    setTimeout(() => navigateTo('dashboard'), 1500)
+  }
+
   return (
     <section className="px-4 py-4">
       <motion.div
@@ -167,6 +187,7 @@ export function PricingSection() {
               {/* CTA */}
               <motion.div whileTap={{ scale: 0.95 }}>
                 <Button
+                  onClick={() => handleSubscribe(plan.id)}
                   className={`w-full text-sm font-semibold ${
                     plan.popular
                       ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white shadow-md'

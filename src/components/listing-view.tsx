@@ -23,6 +23,8 @@ import {
 import { GlassCard } from '@/components/glass-card'
 import { WhatsAppButton } from '@/components/whatsapp-button'
 import { useAppStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
+import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 import { OptimizedImage } from '@/components/optimized-image'
 import { ListingDetailSkeleton } from '@/components/skeleton-loaders'
@@ -87,6 +89,7 @@ const PLACEHOLDER_IMAGES = [
 
 export function ListingView() {
   const { selectedListingSlug, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()
+  const { user } = useAuth()
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [reviewStats, setReviewStats] = useState<ReviewStats>({ total: 0, averageRating: 0 })
@@ -109,7 +112,7 @@ export function ListingView() {
         const reviewRes = await fetch(`/api/reviews?listingId=${data.id}`)
         if (reviewRes.ok) {
           const reviewData = await reviewRes.json()
-          setReviewStats(reviewData.stats)
+          setReviewStats(reviewData.stats || { total: 0, averageRating: 0 })
         }
 
         // Increment views
@@ -189,7 +192,7 @@ export function ListingView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 'demo-user-1',
+          userId: user?.id || `guest-${Date.now()}`,
           listingId: listing.id,
           rating: reviewRating,
           comment: reviewComment,
@@ -508,8 +511,8 @@ export function ListingView() {
 
           {/* Review list */}
           <div className="space-y-3 max-h-64 overflow-y-auto pr-1 mb-4">
-            {listing.reviews.length > 0 ? (
-              listing.reviews.map((review) => (
+            {(listing.reviews || []).length > 0 ? (
+              (listing.reviews || []).map((review) => (
                 <div
                   key={review.id}
                   className="p-3 rounded-xl bg-white/50 border border-white/30"
@@ -655,9 +658,13 @@ export function ListingView() {
             Quick Access
           </h2>
           <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-3">
-            <QRCodeDisplay
+            <QRCodeSVG
               value={`${typeof window !== 'undefined' ? window.location.origin : ''}/listing/${listing.slug}`}
               size={160}
+              bgColor="#ffffff"
+              fgColor="#1a1a1a"
+              level="M"
+              includeMargin={false}
             />
           </div>
           <p className="text-sm text-gray-500">Scan to visit this page</p>
@@ -681,61 +688,3 @@ export function ListingView() {
   )
 }
 
-// Simple QR Code display component using canvas
-function QRCodeDisplay({ value, size = 160 }: { value: string; size?: number }) {
-  const canvasRef = useState<HTMLCanvasElement | null>(null)
-  const ref = useCallback(
-    (node: HTMLCanvasElement | null) => {
-      if (!node) return
-      const ctx = node.getContext('2d')
-      if (!ctx) return
-
-      // Generate a simple visual QR-like pattern from the value string
-      const moduleCount = 21
-      const cellSize = size / moduleCount
-
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, size, size)
-
-      // Create deterministic pattern from string
-      let hash = 0
-      for (let i = 0; i < value.length; i++) {
-        hash = (hash * 31 + value.charCodeAt(i)) & 0xffffffff
-      }
-
-      ctx.fillStyle = '#1a1a1a'
-
-      // Finder patterns (3 corners)
-      const drawFinderPattern = (x: number, y: number) => {
-        // Outer border
-        for (let r = 0; r < 7; r++) {
-          for (let c = 0; c < 7; c++) {
-            if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
-              ctx.fillRect((x + c) * cellSize, (y + r) * cellSize, cellSize, cellSize)
-            }
-          }
-        }
-      }
-
-      drawFinderPattern(0, 0)
-      drawFinderPattern(moduleCount - 7, 0)
-      drawFinderPattern(0, moduleCount - 7)
-
-      // Data modules with pseudo-random pattern
-      for (let r = 0; r < moduleCount; r++) {
-        for (let c = 0; c < moduleCount; c++) {
-          // Skip finder pattern areas
-          if ((r < 8 && c < 8) || (r < 8 && c > moduleCount - 9) || (r > moduleCount - 9 && c < 8)) continue
-
-          hash = (hash * 1103515245 + 12345) & 0x7fffffff
-          if (hash % 3 !== 0) {
-            ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize)
-          }
-        }
-      }
-    },
-    [value, size]
-  )
-
-  return <canvas ref={ref} width={size} height={size} className="rounded-lg" />
-}

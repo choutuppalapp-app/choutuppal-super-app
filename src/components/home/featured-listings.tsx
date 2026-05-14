@@ -46,7 +46,8 @@ export function FeaturedListings() {
         const res = await fetch('/api/cities')
         if (res.ok) {
           const cities = await res.json()
-          const city = cities.find((c: { slug: string; id: string }) => c.slug === selectedCity)
+          const cityArr = Array.isArray(cities) ? cities : (cities?.data || [])
+          const city = cityArr.find((c: { slug: string; id: string }) => c.slug === selectedCity)
           if (city) setCityId(city.id)
         }
       } catch {
@@ -186,7 +187,7 @@ export function FeaturedListings() {
                       <div className="flex items-center gap-1">
                         <Star className="size-3.5 text-[#D4AF37] fill-[#D4AF37]" />
                         <span className="text-xs text-gray-600">
-                          {listing._count.reviews > 0 ? `${listing._count.reviews} reviews` : 'New'}
+                          {(listing._count?.reviews || 0) > 0 ? `${listing._count?.reviews} reviews` : 'New'}
                         </span>
                       </div>
                     </div>

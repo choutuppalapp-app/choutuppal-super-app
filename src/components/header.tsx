@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  MapPin, Home, Compass, Newspaper,
+  MapPin, Home, Compass, Newspaper, Users,
   LayoutDashboard, Shield, LogOut, User,
-  Bell, Menu, X,
+  Bell, Menu, X, FileText, Loader2,
 } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -14,12 +14,6 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
 import { useAuth } from '@/lib/auth-context'
-
-const CITIES = [
-  { slug: 'choutuppal', name: 'Choutuppal' },
-  { slug: 'hyderabad', name: 'Hyderabad' },
-  { slug: 'warangal', name: 'Warangal' },
-]
 
 const NAV_LINKS: Array<{
   view: ViewType
@@ -31,6 +25,8 @@ const NAV_LINKS: Array<{
   { view: 'home', label: 'Home', icon: Home },
   { view: 'explore', label: 'Explore', icon: Compass },
   { view: 'news', label: 'News', icon: Newspaper },
+  { view: 'community', label: 'Community', icon: Users },
+  { view: 'blog', label: 'Blog', icon: FileText },
   { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
   { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true, requiresAuth: true },
 ]
@@ -43,10 +39,17 @@ export function Header({ className }: HeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const {
     selectedCity, setCity, currentView, navigateTo,
+    availableCities, currentCity, locationLoading,
+    themePrimary, themeSecondary,
   } = useAppStore()
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
 
-  const isAdmin = user?.role === 'admin'
+  const brandName = currentCity.brandName || 'Choutuppal'
+  const logoUrl = currentCity.logoUrl || null
+  const primary = themePrimary || '#D4AF37'
+  const secondary = themeSecondary || '#4169E1'
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin'
 
   const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
     if (requiresAuth && !isAuthenticated) {
@@ -58,9 +61,45 @@ export function Header({ className }: HeaderProps) {
     setIsDrawerOpen(false)
   }
 
+  const renderLogo = (size: 'sm' | 'md' = 'md') => {
+    const dim = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8'
+    const textSize = size === 'sm' ? 'text-xs' : 'text-sm'
+
+    if (logoUrl) {
+      return (
+        <div className={`${dim} rounded-full overflow-hidden shadow-sm flex-shrink-0`}>
+          <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className={`${dim} rounded-full flex items-center justify-center shadow-sm flex-shrink-0`}
+        style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
+      >
+        <span className="text-white font-bold leading-none" style={{ fontSize: size === 'sm' ? '12px' : '14px' }}>
+          {brandName.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    )
+  }
+
+  const renderBrandText = (size: 'sm' | 'md' = 'md') => {
+    const textClass = size === 'sm' ? 'text-base' : 'text-lg'
+    return (
+      <span
+        className={`${textClass} font-bold bg-clip-text text-transparent`}
+        style={{ backgroundImage: `linear-gradient(to right, ${secondary}, ${primary})` }}
+      >
+        {brandName}
+      </span>
+    )
+  }
+
   return (
     <header
-      className={`w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/60 md:sticky md:top-0 ${className || ''}`}
+      className={`sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm ${className || ''}`}
     >
       {/* ═══════════════════════════════════════════
           DESKTOP HEADER — hidden md:flex
@@ -69,30 +108,34 @@ export function Header({ className }: HeaderProps) {
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
           <button onClick={() => navigateTo('home')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-sm leading-none">C</span>
-            </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent">
-              Choutuppal
-            </span>
+            {renderLogo('md')}
+            {renderBrandText('md')}
           </button>
 
           <div className="h-6 w-px bg-gray-200" />
 
-          <Select value={selectedCity} onValueChange={(val) => {
-            const city = CITIES.find((c) => c.slug === val)
-            if (city) setCity(city.slug, city.name)
-          }}>
-            <SelectTrigger className="w-[140px] h-8 text-xs bg-transparent border-gray-200 hover:border-[#D4AF37]/40 transition-colors">
-              <MapPin className="size-3.5 text-[#D4AF37] mr-1" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CITIES.map((city) => (
-                <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-1">
+            <Select value={selectedCity} onValueChange={(val) => {
+              const city = availableCities.find((c) => c.slug === val)
+              if (city) setCity(city.slug, city.name)
+            }}>
+              <SelectTrigger
+                className="w-[140px] h-8 text-xs bg-transparent border-gray-200 transition-colors"
+                style={{ borderColor: `${primary}40` }}
+              >
+                <MapPin className="size-3.5 mr-1" style={{ color: primary }} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCities.map((city) => (
+                  <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {locationLoading && (
+              <Loader2 className="size-3.5 animate-spin" style={{ color: primary }} />
+            )}
+          </div>
         </div>
 
         {/* Center: Nav Links */}
@@ -106,15 +149,17 @@ export function Header({ className }: HeaderProps) {
                 onClick={() => handleNavClick(item.view, item.requiresAuth)}
                 className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
-                    ? 'text-[#D4AF37]'
+                    ? ''
                     : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                 }`}
+                style={isActive ? { color: primary } : undefined}
               >
                 {item.label}
                 {isActive && (
                   <motion.div
                     layoutId="desktopNavIndicator"
-                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#D4AF37] rounded-full"
+                    className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
+                    style={{ backgroundColor: primary }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -131,7 +176,8 @@ export function Header({ className }: HeaderProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleNavClick('dashboard', true)}
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+                style={{ background: `linear-gradient(135deg, ${secondary}, ${primary})` }}
                 title={user?.fullName || 'Dashboard'}
               >
                 {user?.fullName?.charAt(0) || 'U'}
@@ -147,7 +193,8 @@ export function Header({ className }: HeaderProps) {
           ) : (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity"
+              style={{ background: `linear-gradient(to right, ${primary}, ${secondary})` }}
             >
               <User className="size-3.5" />
               Sign In
@@ -164,37 +211,36 @@ export function Header({ className }: HeaderProps) {
         {/* Left: Logo + City Selector */}
         <div className="flex items-center gap-2">
           <button onClick={() => navigateTo('home')} className="flex items-center gap-1.5">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-xs leading-none">C</span>
-            </div>
-            <span className="text-base font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent">
-              Choutuppal
-            </span>
+            {renderLogo('sm')}
+            {renderBrandText('sm')}
           </button>
 
-          <Select value={selectedCity} onValueChange={(val) => {
-            const city = CITIES.find((c) => c.slug === val)
-            if (city) setCity(city.slug, city.name)
-          }}>
-            <SelectTrigger className="w-auto bg-transparent border-0 h-7 px-1 text-xs">
-              <MapPin className="size-3 text-[#D4AF37] mr-0.5" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CITIES.map((city) => (
-                <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-1">
+            <Select value={selectedCity} onValueChange={(val) => {
+              const city = availableCities.find((c) => c.slug === val)
+              if (city) setCity(city.slug, city.name)
+            }}>
+              <SelectTrigger className="w-auto bg-transparent border-0 h-7 px-1 text-xs">
+                <MapPin className="size-3 mr-0.5" style={{ color: primary }} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCities.map((city) => (
+                  <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {locationLoading && (
+              <Loader2 className="size-3 animate-spin" style={{ color: primary }} />
+            )}
+          </div>
         </div>
 
         {/* Right: Bell + Hamburger */}
         <div className="flex items-center gap-0">
-          <button
-            className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center relative"
-          >
+          <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
             <NotificationPanel />
-          </button>
+          </div>
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -235,12 +281,8 @@ export function Header({ className }: HeaderProps) {
               {/* Drawer header */}
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-sm">
-                    <span className="text-white font-bold text-sm leading-none">C</span>
-                  </div>
-                  <span className="text-lg font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] bg-clip-text text-transparent">
-                    Choutuppal
-                  </span>
+                  {renderLogo('md')}
+                  {renderBrandText('md')}
                 </div>
                 <button
                   onClick={() => setIsDrawerOpen(false)}
@@ -255,12 +297,15 @@ export function Header({ className }: HeaderProps) {
               <div className="px-4 py-3 border-b border-gray-100">
                 {isAuthenticated ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4169E1] to-[#3155C1] flex items-center justify-center text-white font-bold shadow-sm">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-sm"
+                      style={{ background: `linear-gradient(135deg, ${secondary}, ${primary})` }}
+                    >
                       {user?.fullName?.charAt(0) || 'U'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{user?.fullName || 'User'}</p>
-                      <p className="text-xs text-gray-500">{user?.role === 'admin' ? 'Admin Account' : 'Member'}</p>
+                      <p className="text-xs text-gray-500">{user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin' ? 'Admin Account' : 'Member'}</p>
                     </div>
                     <button
                       onClick={() => { logout(); setIsDrawerOpen(false) }}
@@ -273,7 +318,8 @@ export function Header({ className }: HeaderProps) {
                 ) : (
                   <button
                     onClick={() => { setShowLoginModal(true); setIsDrawerOpen(false) }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold text-sm shadow-sm active:opacity-90"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm shadow-sm active:opacity-90"
+                    style={{ background: `linear-gradient(to right, ${primary}, ${secondary})` }}
                   >
                     <User className="size-4" />
                     Sign In
@@ -294,16 +340,21 @@ export function Header({ className }: HeaderProps) {
                       onClick={() => handleNavClick(item.view, item.requiresAuth)}
                       className={`w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors ${
                         isActive
-                          ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-r-3 border-[#D4AF37]'
+                          ? ''
                           : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                       }`}
+                      style={isActive ? {
+                        backgroundColor: `${primary}10`,
+                        color: primary,
+                        borderRight: `3px solid ${primary}`,
+                      } : undefined}
                     >
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-[#D4AF37]' : 'text-gray-400'}`} />
-                      <span className={`text-sm font-medium ${isActive ? 'text-[#D4AF37]' : 'text-gray-700'}`}>
+                      <Icon className={`w-5 h-5`} style={isActive ? { color: primary } : undefined} />
+                      <span className="text-sm font-medium" style={isActive ? { color: primary } : undefined}>
                         {item.label}
                       </span>
                       {isActive && (
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: primary }} />
                       )}
                     </button>
                   )
@@ -312,7 +363,7 @@ export function Header({ className }: HeaderProps) {
 
               {/* Drawer footer */}
               <div className="px-5 py-4 border-t border-gray-100">
-                <p className="text-[10px] text-gray-400 text-center">Choutuppal 2.0 • Made with ❤️ in Telangana</p>
+                <p className="text-[10px] text-gray-400 text-center">{brandName} 2.0 • Made with ❤️ in Telangana</p>
               </div>
             </motion.div>
           </>

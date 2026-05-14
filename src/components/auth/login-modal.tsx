@@ -174,7 +174,7 @@ export function LoginModal() {
                         />
                       </div>
                       <p className="text-xs text-gray-400">
-                        Demo: 9999999999 (Admin) or 8888888888 (User)
+                        Demo: 9999999999 (Super Admin) · 5555555551 (City Admin) · 6666666661 (Agent) · 8888888888 (User)
                       </p>
                     </div>
                     <Button

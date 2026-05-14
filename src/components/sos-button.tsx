@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Phone, AlertTriangle, X } from 'lucide-react'
+import { Phone, AlertTriangle, X, MessageCircle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useAppStore } from '@/lib/store'
 
 const EMERGENCY_CONTACTS = [
   {
@@ -45,9 +46,37 @@ const EMERGENCY_CONTACTS = [
 
 export function SosButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const { siteSettings } = useAppStore()
+
+  const whatsappNumber = siteSettings.whatsappSupportNumber || '919912353705'
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi%20Choutuppal%20Team`
 
   return (
     <>
+      {/* Floating WhatsApp Button - Mobile */}
+      <motion.a
+        whileTap={{ scale: 0.9 }}
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-[128px] right-4 z-40 md:hidden w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg flex items-center justify-center hover:shadow-xl transition-all"
+        aria-label="Chat on WhatsApp"
+      >
+        <MessageCircle className="size-6" />
+      </motion.a>
+
+      {/* Floating WhatsApp Button - Desktop */}
+      <motion.a
+        whileTap={{ scale: 0.9 }}
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hidden md:flex fixed bottom-6 right-24 z-40 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg items-center justify-center hover:shadow-xl transition-all"
+        aria-label="Chat on WhatsApp"
+      >
+        <MessageCircle className="size-6" />
+      </motion.a>
+
       {/* Floating SOS Button - Mobile */}
       <motion.button
         whileTap={{ scale: 0.9 }}

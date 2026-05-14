@@ -117,8 +117,10 @@ export function ExploreView() {
         const res = await fetch(`/api/listings?${params}`)
         if (res.ok) {
           const data = await res.json()
-          setListings((prev) => (reset ? data.listings : [...prev, ...data.listings]))
-          setTotalPages(data.pagination.totalPages)
+          const listingsData = Array.isArray(data?.listings) ? data.listings : []
+          const totalPagesNum = data?.pagination?.totalPages || 1
+          setListings((prev) => (reset ? listingsData : [...prev, ...listingsData]))
+          setTotalPages(totalPagesNum)
         }
       } catch {
         // silently handle
@@ -320,10 +322,10 @@ export function ExploreView() {
                         >
                           {listing.category}
                         </Badge>
-                        {listing._count.reviews > 0 && (
+                        {listing._count?.reviews > 0 && (
                           <div className="flex items-center gap-1 text-xs text-gray-500">
                             <Star className="size-3 text-[#D4AF37] fill-[#D4AF37]" />
-                            {listing._count.reviews}
+                            {listing._count?.reviews}
                           </div>
                         )}
                       </div>

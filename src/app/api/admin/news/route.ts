@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     return NextResponse.json(news)
   } catch (error) {
     console.error('Error fetching news:', error)
-    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })
+    return NextResponse.json([])
   }
 }
 

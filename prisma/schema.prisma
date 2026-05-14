@@ -7,37 +7,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model City {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  state       String   @default("Telangana")
-  heroImageUrl String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ─── Geographic Hierarchy ───────────────────────────────────
+model Location {
+  id        String   @id @default(cuid())
+  state     String
+  district  String
+  city      String
+  mandal    String?
+  pincode   String?
+  latitude  Float    @default(0)
+  longitude Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  users       User[]  // Users linked to this location
+  cities      City[]  @relation("CityLocation")
+}
+
+// ─── City (Multi-Tenancy) ───────────────────────────────────
+model City {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  state         String   @default("Telangana")
+  brandName     String   @default("Choutuppal App")
+  logoUrl       String?
+  heroImageUrl  String?
+  primaryColor  String   @default("#4169E1")
+  secondaryColor String  @default("#D4AF37")
+  latitude      Float    @default(17.2985)
+  longitude     Float    @default(78.9256)
+  locationId    String?  // Links to Location for precise targeting
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  location          Location?  @relation("CityLocation", fields: [locationId], references: [id])
   listings          Listing[]
   realEstateListings RealEstateListing[]
   users             User[]
+  cityAdmins        User[]   @relation("CityAdmin")
+  agents            User[]   @relation("AgentCity")
   stories           Story[]
   news              News[]
+  blogs             Blog[]
+  bannerAds         BannerAd[]
+  transactions      Transaction[]
 }
 
+// ─── User (4 Roles: SUPER_ADMIN, CITY_ADMIN, AGENT, USER) ──
 model User {
   id               String   @id @default(cuid())
   fullName         String
   phone            String   @unique
   email            String?
-  role             String   @default("user") // user, business, admin
+  role             String   @default("user") // super_admin, city_admin, agent, user
   cityId           String?
+  managedCityId    String?  // Links a CITY_ADMIN to their specific city
+  locationId       String?  // Links to Location for agents/city_admins
   subscriptionTier String   @default("free") // free, pro, premium
   coinsBalance     Int      @default(0)
   whatsappNumber   String?
   avatarUrl        String?
+  // Agent-specific fields
+  agentCityId      String?  // City the agent operates in
+  isAgentApproved  Boolean  @default(false) // Super Admin or City Admin must approve
+  upiId            String?  // For payout requests
+  bankDetails      String?  // JSON string for bank account details
+  // Earnings tracking
+  totalEarnings    Float    @default(0) // Running total of earned commission
+  pendingPayout    Float    @default(0) // Amount available for payout
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   city              City?    @relation(fields: [cityId], references: [id])
+  managedCity       City?    @relation("CityAdmin", fields: [managedCityId], references: [id])
+  location          Location? @relation(fields: [locationId], references: [id])
+  agentCity         City?     @relation("AgentCity", fields: [agentCityId], references: [id])
   listings             Listing[]
   realEstateListings   RealEstateListing[]
   leads                Lead[]
@@ -45,8 +90,73 @@ model User {
   coinTransactions  CoinTransaction[]
   subscriptions     Subscription[]
   stories           Story[]
+  blogs             Blog[]
+  adminRequests     AdminRequest[]
+  // Financial relations
+  buyerTransactions    Transaction[]  @relation("TransactionBuyer")
+  agentTransactions   Transaction[]  @relation("TransactionAgent")
+  cityAdminTransactions Transaction[] @relation("TransactionCityAdmin")
+  payoutRequests     PayoutRequest[]
+
+  // Social Network relations
+  profile             Profile?
+  posts               Post[]
+  comments            Comment[]
+  likes               Like[]
+  following           Follow[]         @relation("UserFollowing")
+  followers           Follow[]         @relation("UserFollowers")
+  verificationRequest VerificationRequest?
 }
 
+// ─── Platform Settings (Commission Engine) ──────────────────
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  label     String?  // Human-readable label for UI
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Transaction (Financial Tracking) ───────────────────────
+model Transaction {
+  id             String   @id @default(cuid())
+  userId         String   // Buyer (the business owner who pays)
+  agentId        String?  // Agent who referred the sale (nullable = direct purchase)
+  cityAdminId    String   // City Admin who owns the city
+  cityId         String
+  type           String   // LISTING, BANNER, NEWS_POST, SUBSCRIPTION, FRANCHISEE_FEE
+  amount         Float    // Total amount paid
+  agentCommission Float   @default(0) // Commission earned by agent
+  cityAdminShare Float   @default(0) // Revenue share for city admin
+  superAdminShare Float  @default(0) // Revenue share for super admin (platform)
+  status         String   @default("completed") // completed, pending, failed, refunded
+  description    String?  // Human-readable description
+  razorpayPaymentId String? // Razorpay payment reference
+  createdAt      DateTime @default(now())
+
+  user        User  @relation("TransactionBuyer", fields: [userId], references: [id])
+  agent       User? @relation("TransactionAgent", fields: [agentId], references: [id])
+  cityAdmin   User  @relation("TransactionCityAdmin", fields: [cityAdminId], references: [id])
+  city        City  @relation(fields: [cityId], references: [id])
+}
+
+// ─── Payout Request ─────────────────────────────────────────
+model PayoutRequest {
+  id          String   @id @default(cuid())
+  userId      String   // Agent or City Admin requesting payout
+  amount      Float    // Amount requested
+  status      String   @default("pending") // pending, approved, rejected, paid
+  upiId       String?  // UPI ID for transfer
+  bankDetails String?  // JSON string for bank details
+  note        String?  // Admin note on approval/rejection
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ─── Business Listing ───────────────────────────────────────
 model Listing {
   id            String   @id @default(cuid())
   userId        String
@@ -67,6 +177,8 @@ model Listing {
   viewsCount    Int      @default(0)
   operatingHours String?
   qrCodeUrl     String?
+  // Agent referral tracking
+  referredByAgentId String? // If an agent referred this listing
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -76,6 +188,7 @@ model Listing {
   reviews  Review[]
 }
 
+// ─── Real Estate Listing ─────────────────────────────────────
 model RealEstateListing {
   id          String   @id @default(cuid())
   userId      String
@@ -96,6 +209,7 @@ model RealEstateListing {
   city City @relation(fields: [cityId], references: [id])
 }
 
+// ─── Lead ────────────────────────────────────────────────────
 model Lead {
   id             String   @id @default(cuid())
   listingId      String
@@ -111,6 +225,7 @@ model Lead {
   user    User?   @relation(fields: [userId], references: [id])
 }
 
+// ─── Review ──────────────────────────────────────────────────
 model Review {
   id        String   @id @default(cuid())
   userId    String
@@ -123,6 +238,7 @@ model Review {
   listing Listing @relation(fields: [listingId], references: [id])
 }
 
+// ─── Coin Transaction ────────────────────────────────────────
 model CoinTransaction {
   id        String   @id @default(cuid())
   userId    String
@@ -133,6 +249,7 @@ model CoinTransaction {
   user User @relation(fields: [userId], references: [id])
 }
 
+// ─── Subscription ────────────────────────────────────────────
 model Subscription {
   id                String   @id @default(cuid())
   userId            String
@@ -146,20 +263,43 @@ model Subscription {
   user User @relation(fields: [userId], references: [id])
 }
 
+// ─── Story (Instagram/WhatsApp Clone) ────────────────────────
 model Story {
   id          String   @id @default(cuid())
   userId      String
   cityId      String
   title       String
-  imageUrl    String
+  mediaType   String   @default("IMAGE") // IMAGE, VIDEO
+  mediaUrl    String   // URL to image or video (Cloudinary)
+  musicId     String?  // Optional: linked MusicLibrary track
+  musicName   String?  // Denormalized for quick display
   isPremium   Boolean  @default(false)
   viewsCount  Int      @default(0)
+  expiresAt   DateTime // Auto-delete after 24hrs (filtered in API)
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
   city City @relation(fields: [cityId], references: [id])
+  music MusicLibrary? @relation(fields: [musicId], references: [id])
+
+  @@index([expiresAt])
 }
 
+// ─── Music Library (Royalty-Free Only) ──────────────────────
+model MusicLibrary {
+  id        String   @id @default(cuid())
+  name      String   // e.g. "Telugu Folk Beat", "Celebration Lo-Fi"
+  artist    String   @default("Royalty Free")
+  audioUrl  String   // MP3 URL from Cloudinary
+  genre     String   @default("Telugu") // e.g. "Telugu", "Traditional"
+  duration  Int      @default(30) // seconds
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  stories Story[]
+}
+
+// ─── News ────────────────────────────────────────────────────
 model News {
   id          String   @id @default(cuid())
   cityId      String
@@ -173,6 +313,7 @@ model News {
   city City @relation(fields: [cityId], references: [id])
 }
 
+// ─── Site Setting (Global) ──────────────────────────────────
 model SiteSetting {
   id              String   @id @default(cuid())
   logoUrl         String?
@@ -182,10 +323,22 @@ model SiteSetting {
   heroImageUrl    String?
   primaryColor    String   @default("#D4AF37")
   accentColor     String   @default("#4169E1")
+  // SEO & Meta fields
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+  // Contact & WhatsApp Integration
+  whatsappSupportNumber  String   @default("919912353705")
+  whatsappCommunityLink  String   @default("")
+  whatsappChannelLink    String   @default("")
+  contactName            String   @default("Mosin Md")
+  contactAddress         String   @default("Choutuppal, Yadadri, Telangana-508252")
+  contactPhone           String   @default("9912353705")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
+// ─── Push Subscription ───────────────────────────────────────
 model PushSubscription {
   id        String   @id @default(cuid())
   userId    String?
@@ -194,6 +347,7 @@ model PushSubscription {
   createdAt DateTime @default(now())
 }
 
+// ─── Spin Prize ──────────────────────────────────────────────
 model SpinPrize {
   id          String   @id @default(cuid())
   label       String
@@ -204,12 +358,149 @@ model SpinPrize {
   isActive    Boolean  @default(true)
 }
 
+// ─── Banner Ad ───────────────────────────────────────────────
 model BannerAd {
   id        String   @id @default(cuid())
   title     String
   imageUrl  String?
+  shopName  String   @default("")
+  offerText String?
   linkUrl   String?
   cityId    String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+
+  city City? @relation(fields: [cityId], references: [id])
+}
+
+// ─── Announcement ────────────────────────────────────────────
+model Announcement {
+  id        String   @id @default(cuid())
+  text      String   // The Telugu announcement text
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ─── Blog ────────────────────────────────────────────────────
+model Blog {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  coverImageUrl String?
+  content       String?  // Rich text HTML content
+  authorId      String
+  cityId        String?  // Optional: null = global blog
+  isPublished   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  author User  @relation(fields: [authorId], references: [id])
+  city   City? @relation(fields: [cityId], references: [id])
+}
+
+// ─── Admin Request (Franchisee / Agent Applications) ────────
+model AdminRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  cityName        String
+  reason          String?  // Why they want to manage it
+  type            String   @default("city_admin") // city_admin (franchisee), agent
+  status          String   @default("pending") // pending, approved, rejected
+  // Franchisee-specific
+  franchiseeFeePaid Boolean @default(false)
+  razorpayPaymentId String?
+  // Agent-specific
+  agentCityId     String?  // City the agent wants to operate in
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ─── Profile (Social Network) ─────────────────────────────────
+model Profile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  bio                 String   @default("")
+  avatarUrl           String?
+  coverImageUrl       String?
+  isPublicFigure      Boolean  @default(false)
+  publicFigureCategory String? // POLITICIAN, INFLUENCER, CELEBRITY, GOVT_OFFICIAL
+  isVerified          Boolean  @default(false)
+  followersCount      Int      @default(0)
+  followingCount      Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ─── Post (Social Network) ────────────────────────────────────
+model Post {
+  id            String   @id @default(cuid())
+  authorId      String
+  content       String
+  mediaUrls     String?  // JSON array of image/video URLs
+  likesCount    Int      @default(0)
+  commentsCount Int      @default(0)
+  isPinned      Boolean  @default(false)
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id])
+  comments Comment[]
+  likes    Like[]
+}
+
+// ─── Comment (Social Network) ─────────────────────────────────
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  post Post  @relation(fields: [postId], references: [id])
+  user User  @relation(fields: [userId], references: [id])
+}
+
+// ─── Like (Social Network) ────────────────────────────────────
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+// ─── Follow (Social Network) ──────────────────────────────────
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String   // User who follows
+  followingId String   // User being followed
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id])
+  following User @relation("UserFollowers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+// ─── Verification Request (Public Figure) ─────────────────────
+model VerificationRequest {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  category    String   // POLITICIAN, INFLUENCER, CELEBRITY, GOVT_OFFICIAL
+  idProofUrl  String?  // URL to uploaded ID proof
+  reason      String
+  status      String   @default("pending") // pending, approved, rejected
+  adminNote   String?  // Note from admin on approval/rejection
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }

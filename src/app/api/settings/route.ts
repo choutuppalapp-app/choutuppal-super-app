@@ -16,6 +16,12 @@ export async function GET() {
             'Find the best local businesses, services, real estate, news, and more — all in one super app built for Choutuppal.',
           primaryColor: '#D4AF37',
           accentColor: '#4169E1',
+          whatsappSupportNumber: '919912353705',
+          whatsappCommunityLink: '',
+          whatsappChannelLink: '',
+          contactName: 'Mosin Md',
+          contactAddress: 'Choutuppal, Yadadri, Telangana-508252',
+          contactPhone: '9912353705',
         },
       })
       return NextResponse.json(defaultSettings)
@@ -52,6 +58,16 @@ export async function PUT(request: Request) {
       'heroImageUrl',
       'primaryColor',
       'accentColor',
+      'metaTitle',
+      'metaDescription',
+      'ogImageUrl',
+      // Contact & WhatsApp Integration
+      'whatsappSupportNumber',
+      'whatsappCommunityLink',
+      'whatsappChannelLink',
+      'contactName',
+      'contactAddress',
+      'contactPhone',
     ]
 
     const updateData: Record<string, unknown> = {}

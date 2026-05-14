@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { AlertTriangle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
+import { ErrorBoundary } from '@/components/error-boundary'
 
-// Home sections
+// Home sections — all wrapped in ErrorBoundary for crash isolation
 import { HeroSection } from '@/components/home/hero-section'
 import { StoriesSection } from '@/components/home/stories-section'
 import { SosBanner } from '@/components/home/sos-banner'
@@ -17,14 +19,25 @@ import { TestimonialsSection } from '@/components/home/testimonials-section'
 import { PricingSection } from '@/components/home/pricing-section'
 import { NewsSection } from '@/components/home/news-section'
 import { DailySpinSection } from '@/components/home/daily-spin-section'
+import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
+import { AnnouncementTicker } from '@/components/home/announcement-ticker'
+import { BecomeAdminCta } from '@/components/home/become-admin-cta'
+// NUCLEAR OPTION: LocalLeadersSection commented out until confirmed safe
+// import { LocalLeadersSection } from '@/components/home/local-leaders-section'
 
 // Views
 import { ListingView } from '@/components/listing-view'
 import { ExploreView } from '@/components/explore-view'
 import { NewsView } from '@/components/news-view'
 import { DashboardView } from '@/components/dashboard-view'
-import { AdminView } from '@/components/admin-view'
+import { AgentDashboard } from '@/components/agent-dashboard'
+import dynamic from 'next/dynamic'
+const AdminView = dynamic(() => import('@/components/admin-view').then((mod) => ({ default: mod.AdminView })), { ssr: false })
 import { SearchView } from '@/components/search-view'
+import { BlogView } from '@/components/blog-view'
+import { BlogDetailView } from '@/components/blog-detail-view'
+const CommunityFeed = dynamic(() => import('@/components/community-feed').then((mod) => ({ default: mod.CommunityFeed })), { ssr: false })
+const ProfileView = dynamic(() => import('@/components/profile-view').then((mod) => ({ default: mod.ProfileView })), { ssr: false })
 import { Footer } from '@/components/footer'
 
 // Auth & Polish
@@ -40,30 +53,72 @@ function HomeView() {
       transition={{ duration: 0.3 }}
       className="space-y-4 md:space-y-8"
     >
-      <StoriesSection />
-      <BannerAds />
-      <HeroSection />
-      <SosBanner />
-      <DailySpinSection />
-      <CategoriesSection />
-      <FeaturedListings />
-      <RealEstateSection />
-      <NewsSection />
-      <TestimonialsSection />
-      <PricingSection />
+      <ErrorBoundary name="AnnouncementTicker">
+        <AnnouncementTicker />
+      </ErrorBoundary>
+      <ErrorBoundary name="StoriesSection">
+        <StoriesSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="BannerAds">
+        <BannerAds />
+      </ErrorBoundary>
+      <ErrorBoundary name="WhatsAppCommunitySection">
+        <WhatsAppCommunitySection />
+      </ErrorBoundary>
+      <ErrorBoundary name="HeroSection">
+        <HeroSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="SosBanner">
+        <SosBanner />
+      </ErrorBoundary>
+      <ErrorBoundary name="DailySpinSection">
+        <DailySpinSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="CategoriesSection">
+        <CategoriesSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="FeaturedListings">
+        <FeaturedListings />
+      </ErrorBoundary>
+      <ErrorBoundary name="RealEstateSection">
+        <RealEstateSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="NewsSection">
+        <NewsSection />
+      </ErrorBoundary>
+      {/* NUCLEAR OPTION: LocalLeadersSection commented out
+      <ErrorBoundary name="LocalLeadersSection">
+        <LocalLeadersSection />
+      </ErrorBoundary>
+      */}
+      <ErrorBoundary name="TestimonialsSection">
+        <TestimonialsSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="PricingSection">
+        <PricingSection />
+      </ErrorBoundary>
+      <ErrorBoundary name="BecomeAdminCta">
+        <BecomeAdminCta />
+      </ErrorBoundary>
     </motion.div>
   )
 }
 
 // Protected Dashboard wrapper
 function ProtectedDashboard() {
-  const { isAuthenticated, setShowLoginModal, isLoading } = useAuth()
+  const { isAuthenticated, user, setShowLoginModal, isLoading, login } = useAuth()
+  const autoLoginAttempted = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setShowLoginModal(true)
+    if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
+      autoLoginAttempted.current = true
+      if (process.env.NODE_ENV === 'development') {
+        login('8888888888', '1234')
+      } else {
+        setShowLoginModal(true)
+      }
     }
-  }, [isAuthenticated, isLoading, setShowLoginModal])
+  }, [isAuthenticated, isLoading, setShowLoginModal, login])
 
   if (isLoading) {
     return (
@@ -98,18 +153,28 @@ function ProtectedDashboard() {
     )
   }
 
+  if (user?.role === 'agent') {
+    return <AgentDashboard />
+  }
+
   return <DashboardView />
 }
 
 // Protected Admin wrapper
 function ProtectedAdmin() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
+  const { isAuthenticated, user, setShowLoginModal, isLoading, login } = useAuth()
+  const autoLoginAttempted = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setShowLoginModal(true)
+    if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
+      autoLoginAttempted.current = true
+      if (process.env.NODE_ENV === 'development') {
+        login('9999999999', '1234')
+      } else {
+        setShowLoginModal(true)
+      }
     }
-  }, [isAuthenticated, isLoading, setShowLoginModal])
+  }, [isAuthenticated, isLoading, setShowLoginModal, login])
 
   if (isLoading) {
     return (
@@ -144,8 +209,19 @@ function ProtectedAdmin() {
     )
   }
 
-  // Role check: Only admin can access
-  if (user?.role !== 'admin') {
+  const isAdminRole = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin'
+  if (!isAdminRole) {
+    if (process.env.NODE_ENV === 'development') {
+      return (
+        <div className="max-w-7xl mx-auto">
+          <div className="mx-4 mt-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
+            <AlertTriangle className="size-4 shrink-0" />
+            Dev Mode: Viewing admin panel as non-admin user. In production, this would be restricted.
+          </div>
+          <AdminView />
+        </div>
+      )
+    }
     return <ForbiddenPage />
   }
 
@@ -157,63 +233,84 @@ export default function Home() {
 
   // Update document title based on current view (SEO)
   useEffect(() => {
-    const titles: Record<string, string> = {
-      home: 'Choutuppal 2.0 - Your Hyper-Local Super App',
-      explore: 'Explore Businesses - Choutuppal 2.0',
-      news: 'Local News - Choutuppal 2.0',
-      listing: 'Business Listing - Choutuppal 2.0',
-      dashboard: 'My Dashboard - Choutuppal 2.0',
-      admin: 'Admin Panel - Choutuppal 2.0',
-      search: 'Search - Choutuppal 2.0',
-    }
-    document.title = titles[currentView] || titles.home
-
-    // Update meta description
-    const metaDesc = document.querySelector('meta[name="description"]')
-    if (metaDesc) {
-      const descriptions: Record<string, string> = {
-        home: 'Discover businesses, services, real estate, and local news in Choutuppal.',
-        explore: 'Browse all businesses and services in Choutuppal.',
-        news: 'Latest local news and updates from Choutuppal.',
-        dashboard: 'Manage your listings, coins, and subscriptions.',
-        admin: 'Admin dashboard for managing Choutuppal 2.0.',
-        search: 'Search for businesses and services in Choutuppal.',
+    try {
+      const titles: Record<string, string> = {
+        home: 'Choutuppal 2.0 - Your Hyper-Local Super App',
+        explore: 'Explore Businesses - Choutuppal 2.0',
+        news: 'Local News - Choutuppal 2.0',
+        listing: 'Business Listing - Choutuppal 2.0',
+        dashboard: 'My Dashboard - Choutuppal 2.0',
+        admin: 'Admin Panel - Choutuppal 2.0',
+        search: 'Search - Choutuppal 2.0',
+        blog: 'Blog - Choutuppal 2.0',
+        'blog-detail': 'Blog Article - Choutuppal 2.0',
+        community: 'Community - Choutuppal 2.0',
+        profile: 'Profile - Choutuppal 2.0',
       }
-      metaDesc.setAttribute('content', descriptions[currentView] || descriptions.home)
+      document.title = titles[currentView] || titles.home
+
+      const metaDesc = document.querySelector('meta[name="description"]')
+      if (metaDesc) {
+        const descriptions: Record<string, string> = {
+          home: 'Discover businesses, services, real estate, and local news in Choutuppal.',
+          explore: 'Browse all businesses and services in Choutuppal.',
+          news: 'Latest local news and updates from Choutuppal.',
+          dashboard: 'Manage your listings, coins, and subscriptions.',
+          admin: 'Admin dashboard for managing Choutuppal 2.0.',
+          search: 'Search for businesses and services in Choutuppal.',
+          blog: 'Read articles, stories, and updates from Choutuppal.',
+          'blog-detail': 'Read this blog article on Choutuppal 2.0.',
+          community: 'Connect with people and leaders in Choutuppal.',
+          profile: 'View and manage your social profile.',
+        }
+        metaDesc.setAttribute('content', descriptions[currentView] || descriptions.home)
+      }
+    } catch {
+      // Non-critical — ignore
     }
   }, [currentView])
-
-  const isDetailPage = currentView === 'listing'
 
   const renderView = () => {
     switch (currentView) {
       case 'home':
         return <HomeView />
       case 'explore':
-        return <ExploreView />
+        return <ErrorBoundary name="ExploreView"><ExploreView /></ErrorBoundary>
       case 'news':
-        return <NewsView />
+        return <ErrorBoundary name="NewsView"><NewsView /></ErrorBoundary>
       case 'listing':
-        return <ListingView />
+        return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
       case 'dashboard':
-        return <ProtectedDashboard />
+        return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
       case 'admin':
-        return <ProtectedAdmin />
+        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
       case 'search':
-        return <SearchView />
+        return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
+      case 'blog':
+        return <ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary>
+      case 'blog-detail':
+        return <ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary>
+      case 'community':
+        return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
+      case 'profile':
+        return <ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary>
       default:
         return <HomeView />
     }
   }
 
   return (
-    <div className={`w-full max-w-7xl mx-auto pb-20 md:pb-6`}>
-      <div className="px-3 md:px-6 py-3 md:py-6">
-        <AnimatePresence mode="wait">
-          {renderView()}
-        </AnimatePresence>
+    <div className="w-full min-h-full flex flex-col">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-3 md:py-6 pb-20 md:pb-6">
+        <ErrorBoundary name="MainContent">
+          <AnimatePresence mode="wait">
+            {renderView()}
+          </AnimatePresence>
+        </ErrorBoundary>
       </div>
-      <Footer />
+      <ErrorBoundary name="Footer">
+        <Footer />
+      </ErrorBoundary>
     </div>
   )
 }

@@ -35,7 +35,8 @@ export function NewsSection() {
         const res = await fetch('/api/cities')
         if (res.ok) {
           const cities = await res.json()
-          const city = cities.find((c: { slug: string; id: string }) => c.slug === selectedCity)
+          const cityArr = Array.isArray(cities) ? cities : (cities?.data || [])
+          const city = cityArr.find((c: { slug: string; id: string }) => c.slug === selectedCity)
           if (city) setCityId(city.id)
         }
       } catch {
@@ -54,7 +55,7 @@ export function NewsSection() {
         const res = await fetch(`/api/news?cityId=${cityId}`)
         if (res.ok) {
           const data = await res.json()
-          setNews(data)
+          setNews(Array.isArray(data) ? data : (data?.news || []))
         }
       } catch {
         // ignore

@@ -137,7 +137,6 @@
 /* Prevent rubber-band / bounce scrolling and pull-to-refresh — MOBILE ONLY */
 html {
   -webkit-tap-highlight-color: transparent;   /* Removes blue flash on tap */
-  -webkit-touch-callout: none;                /* Prevents callout menu on long press */
 }
 
 /* Mobile: lock viewport, Desktop: normal scrollable page */
@@ -166,13 +165,6 @@ main {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   overscroll-behavior-y: contain;
-}
-
-/* Remove all default focus rings on mobile for cleaner look */
-@media (max-width: 768px) {
-  *:focus {
-    outline: none;
-  }
 }
 
 /* ─── Custom Scrollbar ─── */
@@ -280,42 +272,20 @@ main {
 }
 
 /* ═══════════════════════════════════════════════
-   STRICT MOBILE UI RULES
+   MOBILE TOUCH TARGETS — Only for nav/action buttons
+   NOT applied globally to avoid breaking compact UI
    ═══════════════════════════════════════════════ */
-
-/* Mobile touch target minimum */
 @media (max-width: 767px) {
-  button, a, [role="button"] {
+  /* Only apply 44px touch targets to explicit interactive areas */
+  .touch-target {
     min-height: 44px;
+    min-width: 44px;
   }
 
-  /* Mobile cards: bg-white rounded-xl shadow-sm p-4 border border-gray-100 */
-  /* NO heavy glassmorphism on mobile — it makes things laggy and messy */
-  .glass,
-  .glass-gold,
-  [class*="bg-white/"][class*="backdrop-blur"] {
-    background: white !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border: 1px solid #f3f4f6 !important;
-    border-radius: 12px !important;
-    padding: 16px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  }
-
-  /* No horizontal scroll — prevent any overflow */
-  * {
-    max-width: 100vw;
-  }
-
+  /* Prevent horizontal overflow on mobile */
   img {
     max-width: 100%;
     height: auto;
-  }
-
-  /* Typography: text-sm for descriptions on mobile */
-  .text-base, .text-lg {
-    /* Keep headings, only override body/description text */
   }
 }
 
@@ -328,4 +298,23 @@ main {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+/* ─── Announcement Ticker Marquee Animation ─── */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Pause marquee on hover */
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

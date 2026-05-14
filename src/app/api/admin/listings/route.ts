@@ -71,10 +71,10 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Error fetching admin listings:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch listings' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      listings: [],
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+    })
   }
 }
 

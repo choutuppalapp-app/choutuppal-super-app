@@ -55,11 +55,26 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
+    if (!body.listingId || !body.customerPhone) {
+      return NextResponse.json(
+        { error: 'Missing required fields: listingId, customerPhone' },
+        { status: 400 }
+      )
+    }
+    // Validate phone format (Indian mobile)
+    const phone = String(body.customerPhone).trim()
+    if (!/^[6-9]\d{9}$/.test(phone.replace(/^\+91/, ''))) {
+      return NextResponse.json(
+        { error: 'Invalid phone number format' },
+        { status: 400 }
+      )
+    }
+
     const lead = await db.lead.create({
       data: {
         listingId: body.listingId,
         userId: body.userId || null,
-        customerPhone: body.customerPhone,
+        customerPhone: phone,
         customerName: body.customerName || null,
         requirementText: body.requirementText || null,
         source: body.source || 'form',
@@ -77,6 +92,61 @@ export async function POST(request: Request) {
     console.error('Error creating lead:', error)
     return NextResponse.json(
       { error: 'Failed to create lead' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json()
+
+    if (!body.leadId) {
+      return NextResponse.json(
+        { error: 'Missing required field: leadId' },
+        { status: 400 }
+      )
+    }
+
+    const existingLead = await db.lead.findUnique({
+      where: { id: body.leadId },
+    })
+
+    if (!existingLead) {
+      return NextResponse.json(
+        { error: 'Lead not found' },
+        { status: 404 }
+      )
+    }
+
+    const updatedLead = await db.lead.update({
+      where: { id: body.leadId },
+      data: {
+        status: body.status || 'contacted',
+      },
+      include: {
+        listing: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            phone: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(updatedLead)
+  } catch (error) {
+    console.error('Error updating lead:', error)
+    return NextResponse.json(
+      { error: 'Failed to update lead' },
       { status: 500 }
     )
   }

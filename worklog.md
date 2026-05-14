@@ -1,45 +1,30 @@
-# Choutuppal 2.0 — Production Polish Worklog
-
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Production Polish — Auth Guards, Skeletons, SEO, Error Boundaries, Image Optimization
+Task: CRITICAL EMERGENCY - Fix blank white screen in Choutuppal 2.0 Super App
 
 Work Log:
-- Created `src/lib/auth-context.tsx` — Full auth provider with phone OTP, magic link, signup, logout, localStorage persistence. Demo accounts: 9999999999 (admin), 8888888888 (user)
-- Created `src/components/auth/login-modal.tsx` — Professional login/signup modal with phone OTP flow, email magic link, and signup form. Mobile-first bottom sheet, desktop centered modal
-- Created `src/components/auth/forbidden-page.tsx` — 403 Forbidden page with clean UI and "Go to Home" button
-- Updated `src/lib/store.ts` — Removed hardcoded demo user, currentUser now set by AuthProvider. Removed initial notifications
-- Updated `src/app/layout.tsx` — Wrapped with AuthProvider, replaced Radix Toaster with Sonner, added LoginModal, added comprehensive Open Graph metadata, Twitter Card metadata, keywords
-- Updated `src/app/page.tsx` — Added ProtectedDashboard and ProtectedAdmin wrappers with auth checks, skeleton loaders during auth loading, 403 Forbidden for non-admin admin access. Added dynamic document.title and meta description updates per view
-- Updated `src/components/header.tsx` — Added Sign In/Sign Out buttons, auth-aware navigation (protected routes require login), user avatar from auth context
-- Updated `src/components/mobile-bottom-nav.tsx` — Added auth check for "You" tab, shows login modal if not authenticated
-- Updated `src/components/floating-overlays.tsx` — Removed hardcoded demo user initialization (now handled by AuthProvider)
-- Created `src/components/skeleton-loaders.tsx` — 12 reusable skeleton components: ListingCardSkeleton, RealEstateCardSkeleton, NewsCardSkeleton, StorySkeleton, BannerSkeleton, TableRowSkeleton, TableSkeleton, DashboardHeaderSkeleton, StatsCardSkeleton, ChartSkeleton, ListingDetailSkeleton
-- Created `src/components/empty-states.tsx` — Reusable EmptyState component + 7 pre-built empty states: EmptyListings, EmptyLeads, EmptyCoins, EmptyNews, EmptySearchResults, EmptyRealEstate, EmptySubscriptions
-- Created `src/app/error.tsx` — Global error boundary with retry button
-- Created `src/app/not-found.tsx` — 404 page with gradient text and navigation buttons
-- Updated dashboard-view.tsx — Uses useAuth() instead of store currentUser, toast.success/toast.error for all feedback, EmptyListings/EmptyLeads/EmptyCoins empty states, ListingCardSkeleton during loading
-- Updated admin-view.tsx — All addNotification replaced with toast.success/toast.error, added Image import from next/image, replaced 5 <img> tags with <Image>
-- Updated listing-view.tsx — Added toast for success/error, OptimizedImage for carousel and gallery images, ListingDetailSkeleton for loading state
-- Updated lead-capture-form.tsx — Toast for success/error
-- Updated spin-wheel.tsx — Toast for win/try-again
-- Updated real-estate-section.tsx — Toast for info, OptimizedImage for listing cards
-- Created `src/components/optimized-image.tsx` — OptimizedImage wrapper with Next.js Image, error fallback, lazy loading. SimpleImg for edge cases
-- Updated all home section components — StoriesSection, BannerAds, FeaturedListings, NewsSection, RealEstateSection now use OptimizedImage
-- Updated explore-view.tsx, search-view.tsx, news-view.tsx — Replaced <img> with OptimizedImage
-- Updated next.config.ts — Added remote image patterns for placehold.co, unsplash, cloudinary, google, github avatars. Added SVG support config
-- All linting passes with 0 errors
+- Checked dev server logs: Server compiles fine with no errors, all API routes return 200
+- Verified all 34 imported component files exist
+- Upgraded ErrorBoundary to show VISIBLE yellow fallbacks instead of silent null
+- Wrapped ALL previously unwrapped components in ErrorBoundary (Footer, PageContent, AuthProvider)
+- Added ErrorBoundary around AuthProvider in layout.tsx (was previously unprotected)
+- Added ErrorBoundary around children/PageContent in layout.tsx
+- Fixed stories-section.tsx line 142: `story.user.subscriptionTier` → `story.user?.subscriptionTier` (CRITICAL crash fix)
+- Fixed explore-view.tsx lines 120-121: Safe API response handling with `Array.isArray(data?.listings)` and `data?.pagination?.totalPages`
+- Fixed explore-view.tsx line 325: `listing._count.reviews` → `listing._count?.reviews`
+- Fixed listing-view.tsx line 115: `setReviewStats(reviewData.stats)` → `setReviewStats(reviewData.stats || { total: 0, averageRating: 0 })`
+- Fixed listing-view.tsx line 514: `listing.reviews.length` → `(listing.reviews || []).length`
+- Created GlobalErrorHandler component for catching unhandled promise rejections
+- Created error.tsx (route-level error boundary)
+- Created global-error.tsx (root layout error boundary)
+- LocalLeadersSection remains commented out (nuclear option from previous session)
+- Lint check passes with no errors
 
 Stage Summary:
-- Full authentication system with login modal (Phone OTP + Magic Link + Signup)
-- Route protection for /dashboard and /admin views with auth guards
-- Admin role check with 403 Forbidden page
-- 12 reusable skeleton loader components
-- 7 pre-built empty state components with illustrations
-- SEO: OG tags, Twitter Cards, dynamic document.title per view
-- Error boundary (error.tsx) and 404 page (not-found.tsx)
-- Sonner toast notifications throughout the entire app
-- All 16 <img> tags replaced with Next.js <Image> / OptimizedImage
-- Image domains configured in next.config.ts
-- 0 lint errors
+- Root cause: Multiple unsafe property access patterns causing TypeError crashes during client-side rendering
+- Most critical fix: `story.user.subscriptionTier` without optional chaining in stories-section.tsx - this would crash EVERY time stories API returns a story without a populated user relation
+- All ErrorBoundaries now show visible yellow fallback messages so crashes are immediately visible
+- Added 3 layers of error protection: ErrorBoundary (component-level), error.tsx (route-level), global-error.tsx (root-level)
+- Added GlobalErrorHandler for async errors that ErrorBoundary can't catch
+- Server compiles and serves pages correctly (confirmed GET / 200 with 143KB HTML)

@@ -6,49 +6,59 @@ export function useVoiceSearch() {
   const [transcript, setTranscript] = useState('')
 
   const startListening = useCallback(() => {
+    if (typeof window === 'undefined') return
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert('Voice search is not supported in this browser')
       return
     }
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'te-IN' // Telugu
-    recognition.continuous = false
-    recognition.interimResults = false
+    try {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'te-IN' // Telugu
+      recognition.continuous = false
+      recognition.interimResults = false
 
-    recognition.onstart = () => setIsListening(true)
-    recognition.onresult = (event: any) => {
-      const result = event.results[0][0].transcript
-      setTranscript(result)
-      setIsListening(false)
+      recognition.onstart = () => setIsListening(true)
+      recognition.onresult = (event: any) => {
+        const result = event.results[0][0].transcript
+        setTranscript(result)
+        setIsListening(false)
+      }
+      recognition.onerror = () => setIsListening(false)
+      recognition.onend = () => setIsListening(false)
+      recognition.start()
+    } catch {
+      // Speech recognition not available
     }
-    recognition.onerror = () => setIsListening(false)
-    recognition.onend = () => setIsListening(false)
-    recognition.start()
   }, [])
 
   const startListeningEnglish = useCallback(() => {
+    if (typeof window === 'undefined') return
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert('Voice search is not supported in this browser')
       return
     }
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'en-IN' // English (India)
-    recognition.continuous = false
-    recognition.interimResults = false
+    try {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'en-IN' // English (India)
+      recognition.continuous = false
+      recognition.interimResults = false
 
-    recognition.onstart = () => setIsListening(true)
-    recognition.onresult = (event: any) => {
-      const result = event.results[0][0].transcript
-      setTranscript(result)
-      setIsListening(false)
+      recognition.onstart = () => setIsListening(true)
+      recognition.onresult = (event: any) => {
+        const result = event.results[0][0].transcript
+        setTranscript(result)
+        setIsListening(false)
+      }
+      recognition.onerror = () => setIsListening(false)
+      recognition.onend = () => setIsListening(false)
+      recognition.start()
+    } catch {
+      // Speech recognition not available
     }
-    recognition.onerror = () => setIsListening(false)
-    recognition.onend = () => setIsListening(false)
-    recognition.start()
   }, [])
 
   return { isListening, transcript, startListening, startListeningEnglish, setTranscript }
