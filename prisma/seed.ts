@@ -817,7 +817,7 @@ async function main() {
       title: 'Choutuppal Municipality Approves New Road Widening Project',
       content:
         'The Choutuppal Municipality has approved a ₹15 crore road widening project for the Main Road stretch from Bus Stand to Highway Junction. The project is expected to be completed within 18 months and will ease traffic congestion in the town center. Local businesses have welcomed the move while requesting minimal disruption during construction.',
-      imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800',
+      imageUrl: null,
       source: 'Telangana Today',
       isPublished: true,
     },
@@ -1701,7 +1701,7 @@ async function main() {
       cityId: choutuppal.id,
       title: 'చౌటుప్పల్ అభివృద్ధి - కొత్త రోడ్లు 🛣️',
       youtubeVideoId: 'dQw4w9WgXcQ',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=400',
+      thumbnailUrl: null,
       viewsCount: 9800,
       likesCount: 450,
       commentsCount: 56,

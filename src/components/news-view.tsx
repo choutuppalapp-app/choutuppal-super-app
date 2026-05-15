@@ -24,7 +24,7 @@ interface NewsArticle {
   }
 }
 
-const PLACEHOLDER_IMG = 'https://placehold.co/600x300/4169E1/ffffff?text=News'
+const PLACEHOLDER_IMG = null // Use Royal Glassmorphism gradient fallback instead of external image
 
 export function NewsView() {
   const { selectedCity } = useAppStore()
@@ -163,12 +163,18 @@ export function NewsView() {
             >
               <GlassCard variant="gold" className="!p-0 overflow-hidden">
                 <div className="relative h-48 sm:h-64 overflow-hidden">
-                  <OptimizedImage
-                    src={articles[0].imageUrl || PLACEHOLDER_IMG}
-                    alt={articles[0].title}
-                    fill
-                    className="w-full h-full object-cover"
-                  />
+                  {articles[0].imageUrl ? (
+                    <OptimizedImage
+                      src={articles[0].imageUrl}
+                      alt={articles[0].title}
+                      fill
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
+                      <Newspaper className="w-12 h-12 text-white/40" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
                     <Badge className="bg-[#D4AF37] text-white border-none mb-2 text-xs">
@@ -215,12 +221,18 @@ export function NewsView() {
                   <div className="flex gap-4 p-4">
                     {/* Thumbnail */}
                     <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0">
-                      <OptimizedImage
-                        src={article.imageUrl || PLACEHOLDER_IMG}
-                        alt={article.title}
-                        fill
-                        className="w-full h-full object-cover"
-                      />
+                      {article.imageUrl ? (
+                        <OptimizedImage
+                          src={article.imageUrl}
+                          alt={article.title}
+                          fill
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
+                          <Newspaper className="w-5 h-5 text-white/50" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Content */}

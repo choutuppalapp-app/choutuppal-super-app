@@ -124,17 +124,21 @@ export function NewsSection() {
               transition={{ delay: index * 0.08, duration: 0.4 }}
             >
               <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
-                {/* Image */}
-                {item.imageUrl && (
-                  <div className="aspect-video w-full bg-gray-100 overflow-hidden">
+                {/* Image or Royal Glassmorphism gradient fallback */}
+                <div className="aspect-video w-full overflow-hidden">
+                  {item.imageUrl ? (
                     <OptimizedImage
                       src={item.imageUrl}
                       alt={item.title}
                       fill
                       className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-t-xl flex items-center justify-center">
+                      <Newspaper className="w-8 h-8 text-white/60" />
+                    </div>
+                  )}
+                </div>
 
                 <div className="p-3 space-y-2">
                   <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">
