@@ -41,6 +41,7 @@ async function main() {
     data: {
       name: 'Choutuppal',
       slug: 'choutuppal',
+      subdomain: 'choutuppal',
       state: 'Telangana',
       brandName: 'Choutuppal App',
       primaryColor: '#4169E1',
@@ -55,6 +56,7 @@ async function main() {
     data: {
       name: 'Hyderabad',
       slug: 'hyderabad',
+      subdomain: 'hyderabad',
       state: 'Telangana',
       brandName: 'Hyderabad App',
       primaryColor: '#E91E63',
@@ -69,6 +71,7 @@ async function main() {
     data: {
       name: 'Warangal',
       slug: 'warangal',
+      subdomain: 'warangal',
       state: 'Telangana',
       brandName: 'Warangal App',
       primaryColor: '#4CAF50',

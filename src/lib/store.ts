@@ -46,6 +46,7 @@ export interface CityData {
   id: string
   name: string
   slug: string
+  subdomain: string
   state: string
   brandName: string
   logoUrl: string | null
@@ -81,6 +82,7 @@ const DEFAULT_CITY: CityData = {
   id: '',
   name: 'Choutuppal',
   slug: 'choutuppal',
+  subdomain: 'choutuppal',
   state: 'Telangana',
   brandName: 'Choutuppal App',
   logoUrl: null,
@@ -108,6 +110,7 @@ interface AppState {
   locationDetected: boolean
   locationLoading: boolean
   setCity: (slug: string, name: string) => void
+  switchCityBySubdomain: (subdomain: string) => void
   setCityData: (city: CityData) => void
   setAvailableCities: (cities: CityData[]) => void
   detectLocation: () => void
@@ -208,6 +211,30 @@ export const useAppStore = create<AppState>((set, get) => ({
       get().applyCityTheme(city)
     } else {
       set({ selectedCity: slug, selectedCityName: name })
+    }
+  },
+  /**
+   * Switch to a different city by subdomain.
+   * In production, this navigates to the new subdomain URL.
+   * On localhost, this updates the query parameter.
+   */
+  switchCityBySubdomain: (subdomain: string) => {
+    const cities = get().availableCities
+    const city = cities.find(c => c.subdomain === subdomain)
+    if (!city) return
+
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // Dev: use query parameter
+        const url = new URL(window.location.href)
+        url.searchParams.set('city', subdomain)
+        window.location.href = url.toString()
+      } else {
+        // Production: navigate to subdomain
+        const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'mana.in'
+        window.location.href = `https://${subdomain}.${rootDomain}`
+      }
     }
   },
   setCityData: (city) => set({ currentCity: city }),

@@ -38,7 +38,7 @@ interface HeaderProps {
 export function Header({ className }: HeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const {
-    selectedCity, setCity, currentView, navigateTo,
+    selectedCity, setCity, switchCityBySubdomain, currentView, navigateTo,
     availableCities, currentCity, locationLoading,
     themePrimary, themeSecondary,
   } = useAppStore()
@@ -117,7 +117,12 @@ export function Header({ className }: HeaderProps) {
           <div className="flex items-center gap-1">
             <Select value={selectedCity} onValueChange={(val) => {
               const city = availableCities.find((c) => c.slug === val)
-              if (city) setCity(city.slug, city.name)
+              if (city) {
+                // Update local state immediately for responsive UI
+                setCity(city.slug, city.name)
+                // Then navigate to the correct subdomain
+                switchCityBySubdomain(city.subdomain)
+              }
             }}>
               <SelectTrigger
                 className="w-[140px] h-8 text-xs bg-transparent border-gray-200 transition-colors"
@@ -218,7 +223,10 @@ export function Header({ className }: HeaderProps) {
           <div className="flex items-center gap-1">
             <Select value={selectedCity} onValueChange={(val) => {
               const city = availableCities.find((c) => c.slug === val)
-              if (city) setCity(city.slug, city.name)
+              if (city) {
+                setCity(city.slug, city.name)
+                switchCityBySubdomain(city.subdomain)
+              }
             }}>
               <SelectTrigger className="w-auto bg-transparent border-0 h-7 px-1 text-xs">
                 <MapPin className="size-3 mr-0.5" style={{ color: primary }} />

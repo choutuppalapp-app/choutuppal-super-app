@@ -27,9 +27,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    if (!body.name || !body.slug) {
+    if (!body.name || !body.slug || !body.subdomain) {
       return NextResponse.json(
-        { error: 'name and slug are required' },
+        { error: 'name, slug, and subdomain are required' },
         { status: 400 }
       )
     }
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       data: {
         name: body.name,
         slug: body.slug,
+        subdomain: body.subdomain,
         state: body.state || 'Telangana',
         brandName: body.brandName || 'Choutuppal App',
         logoUrl: body.logoUrl || null,
@@ -87,6 +88,7 @@ export async function PUT(request: NextRequest) {
     const data: Record<string, unknown> = {}
     if (body.name !== undefined) data.name = body.name
     if (body.slug !== undefined) data.slug = body.slug
+    if (body.subdomain !== undefined) data.subdomain = body.subdomain
     if (body.state !== undefined) data.state = body.state
     if (body.brandName !== undefined) data.brandName = body.brandName
     if (body.logoUrl !== undefined) data.logoUrl = body.logoUrl

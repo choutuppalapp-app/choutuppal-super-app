@@ -29,6 +29,7 @@ model City {
   id            String   @id @default(cuid())
   name          String
   slug          String   @unique
+  subdomain     String   @unique  // e.g. "choutuppal", "warangal" → choutuppal.mana.in
   state         String   @default("Telangana")
   brandName     String   @default("Choutuppal App")
   logoUrl       String?

@@ -1,14 +1,16 @@
 'use client'
 
-import { MapPin, Phone, Mail, Heart, Globe } from 'lucide-react'
+import { MapPin, Phone, Mail, Heart, Globe, ExternalLink } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import { getCityUrl } from '@/lib/subdomain'
 
 export function Footer() {
-  const { selectedCityName, currentCity, themePrimary, themeSecondary, navigateTo } = useAppStore()
+  const { selectedCityName, currentCity, availableCities, themePrimary, themeSecondary, navigateTo } = useAppStore()
 
-  const brandName = currentCity.brandName || 'Choutuppal App'
+  const brandName = currentCity?.brandName || 'Choutuppal App'
   const primary = themePrimary || '#4169E1'
   const secondary = themeSecondary || '#D4AF37'
+  const currentSubdomain = currentCity?.subdomain || 'choutuppal'
 
   return (
     <footer className="hidden md:block border-t border-gray-100 bg-white mt-auto shrink-0">
@@ -17,7 +19,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              {currentCity.logoUrl ? (
+              {currentCity?.logoUrl ? (
                 <img src={currentCity.logoUrl} alt={brandName} className="w-8 h-8 rounded-full object-cover" />
               ) : (
                 <div
@@ -39,7 +41,7 @@ export function Footer() {
               everything local — all in one place.
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              A scalable multi-city platform — white-label ready for 100+ cities.
+              Powered by mana.in — Scalable multi-city platform, white-label ready.
             </p>
           </div>
 
@@ -49,7 +51,6 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-500">
               <li
                 className="hover:text-gray-800 transition-colors cursor-pointer"
-                style={{ '--hover-color': secondary } as React.CSSProperties}
                 onClick={() => navigateTo('explore')}
               >
                 Explore Businesses
@@ -75,25 +76,41 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Cities */}
+          {/* Cities — Dynamic, subdomain-aware */}
           <div>
             <h3 className="font-semibold text-sm text-gray-800 mb-3">Available Cities</h3>
             <p className="text-sm text-gray-500 mb-2">
               We&apos;re expanding! Currently available in:
             </p>
             <ul className="space-y-1.5 text-sm text-gray-500">
-              <li className="flex items-center gap-1.5">
-                <Globe className="size-3" style={{ color: primary }} />
-                <span className="font-medium" style={{ color: primary }}>Choutuppal</span>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Globe className="size-3 text-gray-300" />
-                Hyderabad
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Globe className="size-3 text-gray-300" />
-                Warangal
-              </li>
+              {availableCities.map((city) => (
+                <li key={city.id} className="flex items-center gap-1.5">
+                  <Globe
+                    className="size-3"
+                    style={{ color: city.subdomain === currentSubdomain ? primary : '#d1d5db' }}
+                  />
+                  {city.subdomain === currentSubdomain ? (
+                    <span className="font-medium" style={{ color: primary }}>{city.name}</span>
+                  ) : (
+                    <a
+                      href={getCityUrl(city.subdomain)}
+                      className="hover:text-gray-800 transition-colors flex items-center gap-0.5"
+                      title={`Visit ${city.name}`}
+                    >
+                      {city.name}
+                      <ExternalLink className="size-2.5 opacity-40" />
+                    </a>
+                  )}
+                </li>
+              ))}
+              {availableCities.length === 0 && (
+                <>
+                  <li className="flex items-center gap-1.5">
+                    <Globe className="size-3" style={{ color: primary }} />
+                    <span className="font-medium" style={{ color: primary }}>Choutuppal</span>
+                  </li>
+                </>
+              )}
               <li className="text-xs text-gray-400 mt-2 italic">
                 + More cities coming soon...
               </li>
@@ -106,7 +123,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-500">
               <li className="flex items-start gap-2">
                 <MapPin className="size-3.5 mt-0.5 shrink-0" style={{ color: secondary }} />
-                <span>Choutuppal, Yadadri, Telangana-508252</span>
+                <span>{currentCity?.name || 'Choutuppal'}, {currentCity?.state || 'Telangana'}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="size-3.5 shrink-0" style={{ color: secondary }} />
