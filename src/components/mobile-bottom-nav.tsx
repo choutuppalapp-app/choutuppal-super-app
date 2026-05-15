@@ -1,32 +1,35 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, Search, Newspaper, UserCircle, Phone, MessageCircle } from 'lucide-react'
+import { Home, Search, UserCircle, Phone, MessageCircle, Zap, GraduationCap } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 
 /**
- * Bottom navigation items — using exactly the icons the user specified:
- * Home, Search, Newspaper, UserCircle
+ * Bottom navigation items — 5 tabs:
+ * Home, Shorts, Learn, Search, You
  */
 const NAV_ITEMS: Array<{
   view: ViewType
   label: string
   icon: React.ComponentType<{ className?: string }>
   requiresAuth?: boolean
+  isSpecial?: boolean // For the Shorts center button
 }> = [
   { view: 'home', label: 'Home', icon: Home },
+  { view: 'shorts', label: 'Shorts', icon: Zap, isSpecial: true },
+  { view: 'learn', label: 'Learn', icon: GraduationCap },
   { view: 'explore', label: 'Search', icon: Search },
-  { view: 'news', label: 'News', icon: Newspaper },
   { view: 'dashboard', label: 'You', icon: UserCircle, requiresAuth: true },
 ]
 
 /**
  * MobileBottomNav — position:fixed bottom navigation bar.
  *
- * On normal views: Shows 4-tab bottom nav with gold dot indicator
+ * On normal views: Shows 5-tab bottom nav with gold dot indicator
  * On listing detail view: Shows StickyCTA with Connect + WhatsApp buttons
+ * On shorts view: Hidden (full-screen)
  *
  * SPEC: fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t
  *       flex justify-around items-center md:hidden
@@ -35,10 +38,13 @@ const NAV_ITEMS: Array<{
  *       Safe area: pb-[env(safe-area-inset-bottom)]
  */
 export function MobileBottomNav() {
-  const { currentView, navigateTo, selectedListingSlug, setShowLeadForm, setLeadFormListingId } = useAppStore()
+  const { currentView, navigateTo, selectedListingSlug, setShowLeadForm, setLeadFormListingId, showBottomNav } = useAppStore()
   const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug
+
+  // Don't show bottom nav on shorts or when explicitly hidden
+  if (!showBottomNav && !isDetailPage) return null
 
   const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
     if (requiresAuth && !isAuthenticated) {
@@ -93,12 +99,28 @@ export function MobileBottomNav() {
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
-                <Icon
-                  className={`w-6 h-6 transition-colors ${
-                    isActive ? 'text-[#D4AF37]' : 'text-gray-400'
-                  }`}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                />
+                {item.isSpecial ? (
+                  // Special styling for Shorts button
+                  <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
+                    isActive 
+                      ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8962E]' 
+                      : 'bg-gray-100'
+                  }`}>
+                    <Icon
+                      className={`w-4.5 h-4.5 transition-colors ${
+                        isActive ? 'text-white' : 'text-gray-500'
+                      }`}
+                      strokeWidth={isActive ? 2.5 : 2}
+                    />
+                  </div>
+                ) : (
+                  <Icon
+                    className={`w-6 h-6 transition-colors ${
+                      isActive ? 'text-[#D4AF37]' : 'text-gray-400'
+                    }`}
+                    strokeWidth={isActive ? 2.5 : 1.8}
+                  />
+                )}
                 <span
                   className={`text-[10px] mt-0.5 font-medium transition-colors ${
                     isActive ? 'text-[#D4AF37]' : 'text-gray-400'

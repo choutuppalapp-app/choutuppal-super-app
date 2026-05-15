@@ -38,6 +38,9 @@ import { BlogView } from '@/components/blog-view'
 import { BlogDetailView } from '@/components/blog-detail-view'
 const CommunityFeed = dynamic(() => import('@/components/community-feed').then((mod) => ({ default: mod.CommunityFeed })), { ssr: false })
 const ProfileView = dynamic(() => import('@/components/profile-view').then((mod) => ({ default: mod.ProfileView })), { ssr: false })
+import { LearnView } from '@/components/learn-view'
+import { VideoPlayerView } from '@/components/video-player-view'
+const ManaShortsFeed = dynamic(() => import('@/components/shorts-feed').then((mod) => ({ default: mod.ManaShortsFeed })), { ssr: false })
 import { Footer } from '@/components/footer'
 
 // Auth & Polish
@@ -246,6 +249,9 @@ export default function Home() {
         'blog-detail': 'Blog Article - Choutuppal 2.0',
         community: 'Community - Choutuppal 2.0',
         profile: 'Profile - Choutuppal 2.0',
+        shorts: 'Mana Shorts - Choutuppal 2.0',
+        learn: 'Mana Learn - Choutuppal 2.0',
+        'video-player': 'Watch Video - Choutuppal 2.0',
       }
       document.title = titles[currentView] || titles.home
 
@@ -262,6 +268,9 @@ export default function Home() {
           'blog-detail': 'Read this blog article on Choutuppal 2.0.',
           community: 'Connect with people and leaders in Choutuppal.',
           profile: 'View and manage your social profile.',
+          shorts: 'Watch short videos from your city on Mana Shorts.',
+          learn: 'Learn skills and watch educational videos on Mana Learn.',
+          'video-player': 'Watch educational videos on Mana Learn.',
         }
         metaDesc.setAttribute('content', descriptions[currentView] || descriptions.home)
       }
@@ -294,9 +303,30 @@ export default function Home() {
         return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
       case 'profile':
         return <ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary>
+      case 'shorts':
+        return <ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary>
+      case 'learn':
+        return <ErrorBoundary name="LearnView"><LearnView /></ErrorBoundary>
+      case 'video-player':
+        return <ErrorBoundary name="VideoPlayerView"><VideoPlayerView /></ErrorBoundary>
       default:
         return <HomeView />
     }
+  }
+
+  // Shorts view needs full-screen layout without max-width/padding/footer
+  const isFullScreenView = currentView === 'shorts'
+
+  if (isFullScreenView) {
+    return (
+      <div className="w-full h-[calc(100dvh-3.5rem)] md:h-screen">
+        <ErrorBoundary name="ShortsFullView">
+          <AnimatePresence mode="wait">
+            {renderView()}
+          </AnimatePresence>
+        </ErrorBoundary>
+      </div>
+    )
   }
 
   return (

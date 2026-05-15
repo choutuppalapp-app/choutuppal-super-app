@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile'
+export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile' | 'shorts' | 'learn' | 'video-player'
 
 interface Notification {
   id: string
@@ -98,8 +98,10 @@ interface AppState {
   currentView: ViewType
   selectedListingSlug: string | null
   selectedBlogSlug: string | null
+  selectedVideoId: string | null
   setSelectedListing: (slug: string | null) => void
   setSelectedBlogSlug: (slug: string | null) => void
+  setSelectedVideoId: (id: string | null) => void
   navigateTo: (view: ViewType) => void
 
   // City (Multi-Tenancy)
@@ -188,9 +190,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentView: 'home',
   selectedListingSlug: null,
   selectedBlogSlug: null,
+  selectedVideoId: null,
   setSelectedListing: (slug) => set({ selectedListingSlug: slug, showBottomNav: !slug }),
   setSelectedBlogSlug: (slug) => set({ selectedBlogSlug: slug }),
-  navigateTo: (view) => set({ currentView: view, showBottomNav: view !== 'listing' }),
+  setSelectedVideoId: (id) => set({ selectedVideoId: id }),
+  navigateTo: (view) => set({ currentView: view, showBottomNav: view !== 'listing' && view !== 'video-player' && view !== 'shorts' }),
 
   // City (Multi-Tenancy)
   selectedCity: 'choutuppal',

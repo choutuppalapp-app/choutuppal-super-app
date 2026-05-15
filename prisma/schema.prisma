@@ -53,6 +53,7 @@ model City {
   blogs             Blog[]
   bannerAds         BannerAd[]
   transactions      Transaction[]
+  shorts            Short[]
 }
 
 // ─── User (4 Roles: SUPER_ADMIN, CITY_ADMIN, AGENT, USER) ──
@@ -107,6 +108,13 @@ model User {
   following           Follow[]         @relation("UserFollowing")
   followers           Follow[]         @relation("UserFollowers")
   verificationRequest VerificationRequest?
+
+  // Shorts & Learn relations
+  shorts              Short[]
+  shortLikes          ShortLike[]
+  shortComments       ShortComment[]
+  videoPlaylists      VideoPlaylist[]
+  videoProgress       VideoProgress[]
 }
 
 // ─── Platform Settings (Commission Engine) ──────────────────
@@ -187,6 +195,7 @@ model Listing {
   city     City    @relation(fields: [cityId], references: [id])
   leads    Lead[]
   reviews  Review[]
+  shorts   Short[]
 }
 
 // ─── Real Estate Listing ─────────────────────────────────────
@@ -504,4 +513,132 @@ model VerificationRequest {
   updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// ─── Short (TikTok/Reels Style Vertical Video) ──────────────
+model Short {
+  id              String   @id @default(cuid())
+  userId          String
+  cityId          String
+  title           String
+  youtubeVideoId  String   // YouTube video ID for hosting
+  thumbnailUrl    String?
+  viewsCount      Int      @default(0)
+  likesCount      Int      @default(0)
+  commentsCount   Int      @default(0)
+  category        String   @default("GENERAL") // GENERAL, PROMOTION, NEWS
+  linkedListingId String?  // Optional: link to a business listing
+  isPinned        Boolean  @default(false)    // City Admin can pin
+  isPromoted      Boolean  @default(false)    // Sponsored short
+  isApproved      Boolean  @default(true)     // Moderation flag
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  city     City     @relation(fields: [cityId], references: [id])
+  listing  Listing? @relation(fields: [linkedListingId], references: [id])
+  likes    ShortLike[]
+  comments ShortComment[]
+
+  @@index([cityId, createdAt])
+  @@index([isPinned, isPromoted])
+}
+
+// ─── Short Like ──────────────────────────────────────────────
+model ShortLike {
+  id        String   @id @default(cuid())
+  shortId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  short Short @relation(fields: [shortId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([shortId, userId])
+}
+
+// ─── Short Comment ───────────────────────────────────────────
+model ShortComment {
+  id        String   @id @default(cuid())
+  shortId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  short Short @relation(fields: [shortId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([shortId, createdAt])
+}
+
+// ─── Video Category (For Learn Platform) ─────────────────────
+model VideoCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique  // e.g. "Education", "Skill Development"
+  slug      String   @unique
+  iconUrl   String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  playlists VideoPlaylist[]
+}
+
+// ─── Video Playlist (Course/Collection) ──────────────────────
+model VideoPlaylist {
+  id          String   @id @default(cuid())
+  categoryId  String
+  title       String
+  description String?
+  thumbnailUrl String?
+  creatorId   String
+  isPremium   Boolean  @default(false)  // Behind paywall
+  isFeatured  Boolean  @default(false)  // Featured by admin
+  isApproved  Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category VideoCategory @relation(fields: [categoryId], references: [id])
+  creator  User          @relation(fields: [creatorId], references: [id])
+  videos   LongVideo[]
+
+  @@index([categoryId, sortOrder])
+}
+
+// ─── Long Video (Educational/Long-form Content) ──────────────
+model LongVideo {
+  id              String   @id @default(cuid())
+  playlistId      String
+  title           String
+  description     String?
+  youtubeVideoId  String   // YouTube video ID
+  thumbnailUrl    String?
+  duration        String?  // e.g. "12:34"
+  viewsCount      Int      @default(0)
+  likesCount      Int      @default(0)
+  isPublished     Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  playlist    VideoPlaylist   @relation(fields: [playlistId], references: [id])
+  progress    VideoProgress[]
+
+  @@index([playlistId, sortOrder])
+}
+
+// ─── Video Progress (Watch History) ──────────────────────────
+model VideoProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  videoId   String
+  timestamp Float    @default(0)  // Seconds watched
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id])
+  video LongVideo  @relation(fields: [videoId], references: [id])
+
+  @@unique([userId, videoId])
 }

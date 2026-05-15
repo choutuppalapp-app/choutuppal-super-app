@@ -6,6 +6,13 @@ async function main() {
   console.log('🌱 Seeding database...')
 
   // Clean up existing data
+  await prisma.videoProgress.deleteMany()
+  await prisma.longVideo.deleteMany()
+  await prisma.videoPlaylist.deleteMany()
+  await prisma.videoCategory.deleteMany()
+  await prisma.shortLike.deleteMany()
+  await prisma.shortComment.deleteMany()
+  await prisma.short.deleteMany()
   await prisma.verificationRequest.deleteMany()
   await prisma.like.deleteMany()
   await prisma.comment.deleteMany()
@@ -1629,6 +1636,211 @@ async function main() {
   ]
   for (const data of additionalBlogsData) {
     await prisma.blog.create({ data })
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // SHORTS & LEARN SEED DATA
+  // ═══════════════════════════════════════════════════════════
+
+  // ─── Shorts (Vertical Video Feed) ──────────────────
+  console.log('Creating shorts...')
+  const shortsData = [
+    {
+      userId: localInfluencer.id,
+      cityId: choutuppal.id,
+      title: 'చౌటుప్పల్ జాతర వైభవం! 🎊',
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?w=400',
+      viewsCount: 15200,
+      likesCount: 1200,
+      commentsCount: 89,
+      category: 'NEWS',
+      isPinned: true,
+      isApproved: true,
+    },
+    {
+      userId: ramesh.id,
+      cityId: choutuppal.id,
+      title: 'Sri Venkateswara Tiffin - Best Dosa in Town! 🍽️',
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=400',
+      viewsCount: 8500,
+      likesCount: 670,
+      commentsCount: 45,
+      category: 'PROMOTION',
+      linkedListingId: createdListings[0].id,
+      isApproved: true,
+    },
+    {
+      userId: lakshmi.id,
+      cityId: choutuppal.id,
+      title: 'Bridal Makeup Tutorial - Lakshmi Salon 💄',
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400',
+      viewsCount: 12300,
+      likesCount: 980,
+      commentsCount: 67,
+      category: 'PROMOTION',
+      linkedListingId: createdListings[2].id,
+      isApproved: true,
+    },
+    {
+      userId: priya.id,
+      cityId: choutuppal.id,
+      title: 'Choutuppal Market Walkthrough 🛍️',
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
+      viewsCount: 4200,
+      likesCount: 340,
+      commentsCount: 28,
+      category: 'GENERAL',
+      isApproved: true,
+    },
+    {
+      userId: politicianRamesh.id,
+      cityId: choutuppal.id,
+      title: 'చౌటుప్పల్ అభివృద్ధి - కొత్త రోడ్లు 🛣️',
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=400',
+      viewsCount: 9800,
+      likesCount: 450,
+      commentsCount: 56,
+      category: 'NEWS',
+      isPromoted: true,
+      isApproved: true,
+    },
+    {
+      userId: suresh.id,
+      cityId: choutuppal.id,
+      title: 'New Plot Near Highway - Starting ₹10L! 🏠',
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400',
+      viewsCount: 6700,
+      likesCount: 230,
+      commentsCount: 34,
+      category: 'PROMOTION',
+      linkedListingId: createdListings[4].id,
+      isApproved: true,
+    },
+  ]
+
+  for (const data of shortsData) {
+    await prisma.short.create({ data })
+  }
+
+  // ─── Video Categories (Learn Platform) ─────────────
+  console.log('Creating video categories...')
+  const eduCategory = await prisma.videoCategory.create({
+    data: { name: 'Education', slug: 'education', sortOrder: 1, isActive: true },
+  })
+  const skillCategory = await prisma.videoCategory.create({
+    data: { name: 'Skill Development', slug: 'skill-development', sortOrder: 2, isActive: true },
+  })
+  const jobsCategory = await prisma.videoCategory.create({
+    data: { name: 'Government Jobs', slug: 'government-jobs', sortOrder: 3, isActive: true },
+  })
+  const eventsCategory = await prisma.videoCategory.create({
+    data: { name: 'Local Events', slug: 'local-events', sortOrder: 4, isActive: true },
+  })
+  const healthCategory = await prisma.videoCategory.create({
+    data: { name: 'Health Tips', slug: 'health-tips', sortOrder: 5, isActive: true },
+  })
+
+  // ─── Video Playlists (Courses) ─────────────────────
+  console.log('Creating video playlists...')
+  const sscPlaylist = await prisma.videoPlaylist.create({
+    data: {
+      categoryId: eduCategory.id,
+      title: '10th Class Maths - Complete Course',
+      description: 'పదవ తరగతి గణితం - పూర్తి కోర్సు. అన్ని అధ్యాయాలు వివరణాత్మకంగా.',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
+      creatorId: admin.id,
+      isPremium: false,
+      isFeatured: true,
+      isApproved: true,
+      sortOrder: 1,
+    },
+  })
+
+  const bankExamsPlaylist = await prisma.videoPlaylist.create({
+    data: {
+      categoryId: jobsCategory.id,
+      title: 'Bank Exams Preparation - IBPS & SBI',
+      description: 'బ్యాంక్ పరీక్షల కోసం సమగ్ర తయారీ. Reasoning, Aptitude, English, GK.',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800',
+      creatorId: admin.id,
+      isPremium: true,
+      isFeatured: true,
+      isApproved: true,
+      sortOrder: 1,
+    },
+  })
+
+  const carpentryPlaylist = await prisma.videoPlaylist.create({
+    data: {
+      categoryId: skillCategory.id,
+      title: 'Carpentry Skills - Learn Woodworking',
+      description: 'వడ్రంగి నైపుణ్యాలు - కలప పని నేర్చుకోండి. Step by step tutorials.',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=800',
+      creatorId: choutuppalAdmin.id,
+      isPremium: false,
+      isFeatured: false,
+      isApproved: true,
+      sortOrder: 1,
+    },
+  })
+
+  const healthTipsPlaylist = await prisma.videoPlaylist.create({
+    data: {
+      categoryId: healthCategory.id,
+      title: 'Health & Wellness Tips - Telugu',
+      description: 'ఆరోగ్య చిట్కాలు - తెలుగులో. Daily health tips for a better life.',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800',
+      creatorId: admin.id,
+      isPremium: false,
+      isFeatured: true,
+      isApproved: true,
+      sortOrder: 1,
+    },
+  })
+
+  const jataraPlaylist = await prisma.videoPlaylist.create({
+    data: {
+      categoryId: eventsCategory.id,
+      title: 'Choutuppal Jatara 2025 - Full Coverage',
+      description: 'చౌటుప్పల్ జాతర 2025 - పూర్తి కవరేజ్. Cultural programs and highlights.',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?w=800',
+      creatorId: localInfluencer.id,
+      isPremium: false,
+      isFeatured: true,
+      isApproved: true,
+      sortOrder: 1,
+    },
+  })
+
+  // ─── Long Videos (Educational Content) ─────────────
+  console.log('Creating long videos...')
+  const longVideosData = [
+    // SSC Maths
+    { playlistId: sscPlaylist.id, title: 'Chapter 1 - Real Numbers | వాస్తవ సంఖ్యలు', description: 'Introduction to Real Numbers - Euclid\'s Division Lemma, Fundamental Theorem of Arithmetic', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400', duration: '45:20', viewsCount: 12500, likesCount: 890, isPublished: true, sortOrder: 1 },
+    { playlistId: sscPlaylist.id, title: 'Chapter 2 - Polynomials | బహుపదులు', description: 'Polynomials - Zeros, relationship between zeros and coefficients', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1596495577886-d920f1fb7238?w=400', duration: '38:15', viewsCount: 9800, likesCount: 670, isPublished: true, sortOrder: 2 },
+    { playlistId: sscPlaylist.id, title: 'Chapter 3 - Pair of Linear Equations | రేఖీయ సమీకరణాల జత', description: 'Pair of Linear Equations in Two Variables - Graphical and Algebraic methods', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400', duration: '52:30', viewsCount: 8700, likesCount: 560, isPublished: true, sortOrder: 3 },
+    // Bank Exams
+    { playlistId: bankExamsPlaylist.id, title: 'Reasoning - Syllogism Tricks | తార్కిక నిర్ధారణ', description: 'Master syllogism with easy tricks and shortcuts for bank exams', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400', duration: '1:05:00', viewsCount: 25000, likesCount: 2100, isPublished: true, sortOrder: 1 },
+    { playlistId: bankExamsPlaylist.id, title: 'Aptitude - Speed, Time & Distance | వేగం, సమయం & దూరం', description: 'Complete coverage of Speed, Time & Distance problems with shortcuts', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1596495578054-02a5e4f58e2f?w=400', duration: '58:45', viewsCount: 18300, likesCount: 1560, isPublished: true, sortOrder: 2 },
+    // Carpentry
+    { playlistId: carpentryPlaylist.id, title: 'Introduction to Carpentry Tools | వడ్రంగి పనిముట్లు', description: 'Learn about essential carpentry tools and their uses', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=400', duration: '25:10', viewsCount: 5600, likesCount: 340, isPublished: true, sortOrder: 1 },
+    { playlistId: carpentryPlaylist.id, title: 'Making a Wooden Chair - Step by Step', description: 'Complete tutorial on making a wooden chair from scratch', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400', duration: '42:30', viewsCount: 4100, likesCount: 280, isPublished: true, sortOrder: 2 },
+    // Health Tips
+    { playlistId: healthTipsPlaylist.id, title: 'ఉదయం నడక ప్రయోజనాలు | Benefits of Morning Walk', description: 'రోజు ఉదయం నడక వల్ల కలిగే 10 ప్రయోజనాలు', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400', duration: '12:45', viewsCount: 32000, likesCount: 4500, isPublished: true, sortOrder: 1 },
+    { playlistId: healthTipsPlaylist.id, title: 'మధుమేహం నియంత్రణ - ఆహార చిట్కాలు | Diabetes Diet Tips', description: 'మధుమేహ నియంత్రణకు ఆహార సలహాలు మరియు చిట్కాలు', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400', duration: '18:20', viewsCount: 28500, likesCount: 3800, isPublished: true, sortOrder: 2 },
+    // Jatara
+    { playlistId: jataraPlaylist.id, title: 'Choutuppal Jatara 2025 - Day 1 Highlights', description: 'చౌటుప్పల్ జాతర 2025 - మొదటి రోజు ముఖ్యాంశాలు', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?w=400', duration: '15:30', viewsCount: 45000, likesCount: 6700, isPublished: true, sortOrder: 1 },
+    { playlistId: jataraPlaylist.id, title: 'Jatara Cultural Programs - Traditional Dance', description: 'జాతర సాంస్కృతిక కార్యక్రమాలు - సంప్రదాయ నృత్యం', youtubeVideoId: 'dQw4w9WgXcQ', thumbnailUrl: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?w=400', duration: '22:15', viewsCount: 38000, likesCount: 5400, isPublished: true, sortOrder: 2 },
+  ]
+
+  for (const data of longVideosData) {
+    await prisma.longVideo.create({ data })
   }
 
   console.log('\n✅ Seeding complete!')
