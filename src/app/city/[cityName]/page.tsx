@@ -53,13 +53,20 @@ function HomeView() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-4 md:space-y-8"
+      className="space-y-0 md:space-y-0"
     >
-      <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
+      {/* ─── STRICT LAYOUT ORDER ───
+          1. Stories Row (z-20, always visible)
+          2. Banner Ads (z-10, max 250px)
+          3. Announcement Ticker
+          4. Hero Section
+          5. Rest of content
+      */}
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
       <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
-      <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
+      <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><HeroSection /></ErrorBoundary>
+      <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
       <ErrorBoundary name="SosBanner"><SosBanner /></ErrorBoundary>
       <ErrorBoundary name="DailySpinSection"><DailySpinSection /></ErrorBoundary>
       <ErrorBoundary name="CategoriesSection"><CategoriesSection /></ErrorBoundary>

@@ -69,7 +69,6 @@ export function BannerAds() {
           if (Array.isArray(data) && data.length > 0) {
             setAds(data)
           }
-          // If no ads returned, keep FALLBACK_ADS
         }
       } catch {
         // Use fallback
@@ -95,7 +94,7 @@ export function BannerAds() {
     return (
       <div className="w-full bg-white py-3">
         <div className="px-4">
-          <div className="w-full aspect-[2/1] md:aspect-[3/1] rounded-xl bg-gray-100 animate-pulse" />
+          <div className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl bg-gray-100 animate-pulse" />
         </div>
       </div>
     )
@@ -105,7 +104,8 @@ export function BannerAds() {
   const hasImage = currentAd?.imageUrl
 
   return (
-    <div className="w-full bg-white py-3">
+    /* Banner container: z-10 (lower than Stories z-20) */
+    <div className="w-full bg-white py-3 relative z-10">
       <div className="relative w-full overflow-hidden px-4">
         <AnimatePresence mode="wait">
           <motion.div
@@ -114,7 +114,7 @@ export function BannerAds() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="w-full aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer"
+            className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer"
           >
             {/* Image or gradient background */}
             {hasImage ? (
@@ -145,13 +145,13 @@ export function BannerAds() {
 
             {/* Offer badge */}
             {currentAd?.offerText && (
-              <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+              <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md z-10">
                 {currentAd.offerText}
               </div>
             )}
 
             {/* Glassmorphism Bottom Bar for Shop Name */}
-            <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md p-2">
+            <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md p-2 z-10">
               <p className="text-xs font-bold text-gray-900 truncate">
                 {currentAd?.shopName || currentAd?.title || 'Choutuppal Super App'}
               </p>

@@ -36,3 +36,23 @@ Stage Summary:
   1. PERMANENT IMAGE FIX: All <Image fill> components follow strict pattern — parent div with position:relative + defined size, Image with fill + style={{ objectFit:'cover' }}, NO height on Image
   2. SMART CITY ROUTING: Single navigateToCity() utility in city-routing.ts, used by store.switchCity() and header, reads config from localStorage, path-based default with subdomain mode toggle
   3. PWA INSTALL: manifest.json, sw.js, icons, PWAInstallProvider, PWAInstallPopup (mobile), PWAIOSBanner (iOS fallback), Install App menu item in hamburger drawer
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix Stories section disappearing on city pages - restore layout order and visibility
+
+Work Log:
+- Identified root cause: StoriesSection returned `null` when no stories existed (line 110: `if (!loading && stories.length === 0) return null`), making the entire section including "Add Your Story" button vanish
+- REWROTE `src/components/home/stories-section.tsx` — removed null return, always renders Stories row with "Add Your Story" button + empty state placeholders ("Coming Soon", "Music") when no stories, added `z-20` for stacking above banners
+- REWROTE `src/components/home/banner-ads.tsx` — enforced `max-h-[250px]` on banner container, added `z-10` (lower than Stories z-20), added z-10 to offer badge and glassmorphism bottom bar
+- FIXED layout order in `src/app/city/[cityName]/page.tsx` HomeView — reordered to: StoriesSection → BannerAds → AnnouncementTicker → HeroSection → rest of content; changed space-y-4 to space-y-0 for tighter layout
+- REWROTE `src/components/home/hero-section.tsx` — added `mt-4` margin to separate from banner section
+- Verified layout.tsx has no overflow:hidden on page wrapper (only on body for mobile scroll containment, with main using overflow-y-auto for scrolling)
+- All lint passes, dev server running clean
+
+Stage Summary:
+- Stories section is now ALWAYS visible regardless of data, with "Add Your Story" button + placeholder circles
+- Strict layout order: Header → Stories (z-20) → Banner Ads (z-10, max 250px) → Announcement Ticker → Hero → Content
+- Banner images capped at 250px height with proper overflow:hidden only on individual banner containers
+- Stories z-index (20) is higher than Banner z-index (10), preventing overlap

@@ -107,15 +107,17 @@ export function StoriesSection() {
     setCreatorOpen(true)
   }
 
-  if (!loading && stories.length === 0) return null
-
+  // ─── ALWAYS render the Stories row — never return null ───
+  // This ensures the Stories section is always visible below the Header,
+  // even when there are no stories in the database yet.
   return (
     <>
-      <div className="w-full bg-white border-b border-gray-100 py-3">
+      {/* z-20 ensures Stories stays above Banner/Hero content */}
+      <div className="w-full bg-white border-b border-gray-100 py-3 relative z-20">
         {/* Horizontal Scroll Container */}
         <div className="flex overflow-x-auto gap-4 px-4 scrollbar-hide">
 
-          {/* 1. "Add Your Story" Button */}
+          {/* 1. "Add Your Story" Button — always visible */}
           <div className="flex flex-col items-center gap-1 flex-shrink-0">
             <button
               onClick={handleYourStoryClick}
@@ -134,7 +136,25 @@ export function StoriesSection() {
             </div>
           ))}
 
-          {/* 3. Map through stories */}
+          {/* 3. Empty state placeholder when no stories and not loading */}
+          {!loading && stories.length === 0 && (
+            <div className="flex items-center gap-3 px-2">
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <div className="w-[68px] h-[68px] rounded-full bg-gradient-to-br from-[#4169E1]/10 to-[#D4AF37]/10 flex items-center justify-center border border-gray-200">
+                  <Play className="w-5 h-5 text-[#4169E1]/40" />
+                </div>
+                <span className="text-[10px] text-gray-400 w-16 text-center truncate font-medium">Coming Soon</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <div className="w-[68px] h-[68px] rounded-full bg-gradient-to-br from-[#D4AF37]/10 to-[#4169E1]/10 flex items-center justify-center border border-gray-200">
+                  <Music className="w-5 h-5 text-[#D4AF37]/40" />
+                </div>
+                <span className="text-[10px] text-gray-400 w-16 text-center truncate font-medium">Music</span>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Map through actual stories */}
           {!loading && stories.map((story, index) => {
             const isViewed = viewedStories.has(story.id)
             const hasVideo = story.mediaType === 'VIDEO'

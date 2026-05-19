@@ -40,7 +40,7 @@ export function HeroSection() {
     : `Discover the best local shops, premium real estate deals, and the latest city news — all in one app, right at your fingertips!`
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden mt-4">
       {/* Background: City hero image OR beautiful gradient fallback */}
       {heroImageUrl ? (
         <div className="absolute inset-0">
