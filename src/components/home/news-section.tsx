@@ -125,13 +125,13 @@ export function NewsSection() {
             >
               <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
                 {/* Image or Royal Glassmorphism gradient fallback */}
-                <div className="aspect-video w-full overflow-hidden">
+                <div className="relative aspect-video w-full overflow-hidden">
                   {item.imageUrl ? (
                     <OptimizedImage
                       src={item.imageUrl}
                       alt={item.title}
                       fill
-                      className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
+                      style={{ objectFit: 'cover' }}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-t-xl flex items-center justify-center">

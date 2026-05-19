@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import Image, { type ImageProps } from 'next/image'
 
 // Base64 placeholder SVG for broken/missing images
@@ -16,23 +16,39 @@ interface OptimizedImageProps extends Omit<ImageProps, 'onError'> {
 /**
  * Checks if a URL is a data: URL (which Next.js Image doesn't support well)
  */
-function isDataUrl(src: string): boolean {
-  return src.startsWith('data:')
+function isDataUrl(src: unknown): boolean {
+  return typeof src === 'string' && src.startsWith('data:')
 }
 
 /**
- * OptimizedImage — Next.js Image wrapper with:
- * - Automatic WebP conversion via Next.js
- * - Lazy loading by default
+ * ─── OptimizedImage ───────────────────────────────────────────
+ *
+ * Next.js Image wrapper with:
  * - Graceful fallback for broken images
- * - Solid background placeholder to prevent layout shift
  * - Handles data: URLs by falling back to <img> tag
+ *
+ * ⚠️  CRITICAL RULE: When `fill` prop is used, this component
+ *     NEVER sets height on the <Image>. The parent <div> MUST have:
+ *       - position: relative
+ *       - A defined size (width, height, or aspect-ratio)
+ *       - overflow: hidden (optional, for clipping)
+ *
+ *     Correct usage:
+ *       <div className="relative aspect-video w-full overflow-hidden">
+ *         <OptimizedImage fill style={{ objectFit: 'cover' }} src="..." alt="..." />
+ *       </div>
+ *
+ *     WRONG (will cause console errors + broken layout):
+ *       <OptimizedImage fill height={200} src="..." alt="..." />
+ *       <OptimizedImage fill style={{ height: '200px' }} src="..." alt="..." />
  */
 export function OptimizedImage({
   src,
   alt,
   fallbackType = 'default',
   className = '',
+  fill,
+  style,
   ...props
 }: OptimizedImageProps) {
   const [hasError, setHasError] = useState(false)
@@ -41,26 +57,25 @@ export function OptimizedImage({
 
   // Handle empty/missing src
   if (!src || (typeof src === 'string' && !src.trim())) {
-    // Use plain <img> for data: URL fallbacks
     return (
       <img
         src={fallbackSrc}
         alt={alt}
         className={className}
-        style={props.fill ? { position: 'absolute', inset: 0 } : undefined}
+        style={fill ? { position: 'absolute', inset: 0, objectFit: 'cover' } : undefined}
       />
     )
   }
 
   // Handle data: URLs — Next.js Image doesn't support these
-  if (typeof src === 'string' && isDataUrl(src)) {
+  if (isDataUrl(src)) {
     return (
       <img
         src={hasError ? fallbackSrc : src}
         alt={alt}
         className={className}
         onError={() => setHasError(true)}
-        style={props.fill ? { position: 'absolute', inset: 0, objectFit: props.style?.objectFit || 'cover' } : undefined}
+        style={fill ? { position: 'absolute', inset: 0, objectFit: 'cover' } : undefined}
         loading="lazy"
       />
     )
@@ -73,17 +88,42 @@ export function OptimizedImage({
         src={fallbackSrc}
         alt={alt}
         className={className}
-        style={props.fill ? { position: 'absolute', inset: 0 } : undefined}
+        style={fill ? { position: 'absolute', inset: 0, objectFit: 'cover' } : undefined}
       />
     )
   }
 
   // Normal Next.js Image for valid HTTP(S) URLs
+  // CRITICAL: When fill=true, we strip any height from style to prevent
+  // the "Image with fill always uses height 100%" console error.
+  const safeStyle = fill
+    ? { ...style, objectFit: style?.objectFit || 'cover' }
+    : style
+
+  // Remove height property from style when fill is used
+  if (fill && safeStyle && 'height' in safeStyle) {
+    const { height, ...rest } = safeStyle as React.CSSProperties & { height?: unknown }
+    void height // suppress unused warning
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        className={className}
+        fill={fill}
+        style={rest as React.CSSProperties}
+        onError={() => setHasError(true)}
+        {...props}
+      />
+    )
+  }
+
   return (
     <Image
       src={src}
       alt={alt}
       className={className}
+      fill={fill}
+      style={safeStyle}
       onError={() => setHasError(true)}
       {...props}
     />
@@ -91,9 +131,7 @@ export function OptimizedImage({
 }
 
 /**
- * SimpleImg — For images that need to use <img> (e.g., in contexts where
- * Next.js Image doesn't work like cross-origin or data: URLs).
- * This component is used as a bridge during migration.
+ * SimpleImg — For images that need to use <img> (e.g., cross-origin or data: URLs).
  */
 export function SimpleImg({
   src,

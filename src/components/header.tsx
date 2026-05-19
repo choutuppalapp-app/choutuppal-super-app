@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   MapPin, Home, Compass, Newspaper, Users,
   LayoutDashboard, Shield, LogOut, User,
-  Bell, Menu, X, FileText, Loader2,
+  Bell, Menu, X, FileText, Loader2, Download,
 } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -14,6 +14,7 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
 import { useAuth } from '@/lib/auth-context'
+import { usePWAInstall } from './pwa-install-provider'
 
 const NAV_LINKS: Array<{
   view: ViewType
@@ -38,11 +39,13 @@ interface HeaderProps {
 export function Header({ className }: HeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const {
-    selectedCity, setCity, switchCityBySubdomain, currentView, navigateTo,
+    selectedCity, setCity, switchCity, currentView, navigateTo,
     availableCities, currentCity, locationLoading,
     themePrimary, themeSecondary,
   } = useAppStore()
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
+  const { isInstallable, isInstalled, isIOS, triggerInstall } = usePWAInstall()
+  const showInstallMenuItem = (isInstallable || isIOS) && !isInstalled
 
   const brandName = currentCity.brandName || 'Choutuppal'
   const logoUrl = currentCity.logoUrl || null
@@ -101,9 +104,7 @@ export function Header({ className }: HeaderProps) {
     <header
       className={`sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm ${className || ''}`}
     >
-      {/* ═══════════════════════════════════════════
-          DESKTOP HEADER — hidden md:flex
-          ═══════════════════════════════════════════ */}
+      {/* ═══ DESKTOP HEADER ═══ */}
       <div className="hidden md:flex items-center justify-between h-14 px-6 max-w-7xl mx-auto">
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
@@ -117,12 +118,7 @@ export function Header({ className }: HeaderProps) {
           <div className="flex items-center gap-1">
             <Select value={selectedCity} onValueChange={(val) => {
               const city = availableCities.find((c) => c.slug === val)
-              if (city) {
-                // Update local state immediately for responsive UI
-                setCity(city.slug, city.name)
-                // Then navigate to the correct subdomain
-                switchCityBySubdomain(city.subdomain)
-              }
+              if (city) switchCity(city.slug)
             }}>
               <SelectTrigger
                 className="w-[140px] h-8 text-xs bg-transparent border-gray-200 transition-colors"
@@ -153,9 +149,7 @@ export function Header({ className }: HeaderProps) {
                 key={item.view}
                 onClick={() => handleNavClick(item.view, item.requiresAuth)}
                 className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  isActive
-                    ? ''
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                  isActive ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                 }`}
                 style={isActive ? { color: primary } : undefined}
               >
@@ -173,10 +167,9 @@ export function Header({ className }: HeaderProps) {
           })}
         </nav>
 
-        {/* Right: Search + Notifications + Auth */}
+        {/* Right: Notifications + Auth */}
         <div className="flex items-center gap-2">
           <NotificationPanel />
-
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <button
@@ -187,11 +180,7 @@ export function Header({ className }: HeaderProps) {
               >
                 {user?.fullName?.charAt(0) || 'U'}
               </button>
-              <button
-                onClick={logout}
-                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                title="Sign out"
-              >
+              <button onClick={logout} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Sign out">
                 <LogOut className="size-3.5" />
               </button>
             </div>
@@ -208,25 +197,17 @@ export function Header({ className }: HeaderProps) {
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════
-          MOBILE HEADER — flex md:hidden
-          Logo + City on LEFT | Bell + Hamburger on RIGHT
-          ═══════════════════════════════════════════ */}
+      {/* ═══ MOBILE HEADER ═══ */}
       <div className="flex md:hidden items-center justify-between h-12 px-3">
-        {/* Left: Logo + City Selector */}
         <div className="flex items-center gap-2">
           <button onClick={() => navigateTo('home')} className="flex items-center gap-1.5">
             {renderLogo('sm')}
             {renderBrandText('sm')}
           </button>
-
           <div className="flex items-center gap-1">
             <Select value={selectedCity} onValueChange={(val) => {
               const city = availableCities.find((c) => c.slug === val)
-              if (city) {
-                setCity(city.slug, city.name)
-                switchCityBySubdomain(city.subdomain)
-              }
+              if (city) switchCity(city.slug)
             }}>
               <SelectTrigger className="w-auto bg-transparent border-0 h-7 px-1 text-xs">
                 <MapPin className="size-3 mr-0.5" style={{ color: primary }} />
@@ -238,13 +219,10 @@ export function Header({ className }: HeaderProps) {
                 ))}
               </SelectContent>
             </Select>
-            {locationLoading && (
-              <Loader2 className="size-3 animate-spin" style={{ color: primary }} />
-            )}
+            {locationLoading && <Loader2 className="size-3 animate-spin" style={{ color: primary }} />}
           </div>
         </div>
 
-        {/* Right: Bell + Hamburger */}
         <div className="flex items-center gap-0">
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
             <NotificationPanel />
@@ -259,14 +237,10 @@ export function Header({ className }: HeaderProps) {
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════
-          HAMBURGER DRAWER — Slide-in from RIGHT
-          Dark overlay + White panel with nav links
-          ═══════════════════════════════════════════ */}
+      {/* ═══ HAMBURGER DRAWER ═══ */}
       <AnimatePresence>
         {isDrawerOpen && (
           <>
-            {/* Dark overlay */}
             <motion.div
               key="drawer-overlay"
               initial={{ opacity: 0 }}
@@ -276,8 +250,6 @@ export function Header({ className }: HeaderProps) {
               className="fixed inset-0 z-[60] bg-black/50 md:hidden"
               onClick={() => setIsDrawerOpen(false)}
             />
-
-            {/* Drawer panel */}
             <motion.div
               key="drawer-panel"
               initial={{ x: '100%' }}
@@ -313,7 +285,7 @@ export function Header({ className }: HeaderProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{user?.fullName || 'User'}</p>
-                      <p className="text-xs text-gray-500">{user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin' ? 'Admin Account' : 'Member'}</p>
+                      <p className="text-xs text-gray-500">{isAdmin ? 'Admin Account' : 'Member'}</p>
                     </div>
                     <button
                       onClick={() => { logout(); setIsDrawerOpen(false) }}
@@ -347,9 +319,7 @@ export function Header({ className }: HeaderProps) {
                       key={item.view}
                       onClick={() => handleNavClick(item.view, item.requiresAuth)}
                       className={`w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors ${
-                        isActive
-                          ? ''
-                          : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                        isActive ? '' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                       }`}
                       style={isActive ? {
                         backgroundColor: `${primary}10`,
@@ -357,7 +327,7 @@ export function Header({ className }: HeaderProps) {
                         borderRight: `3px solid ${primary}`,
                       } : undefined}
                     >
-                      <Icon className={`w-5 h-5`} style={isActive ? { color: primary } : undefined} />
+                      <Icon className="w-5 h-5" style={isActive ? { color: primary } : undefined} />
                       <span className="text-sm font-medium" style={isActive ? { color: primary } : undefined}>
                         {item.label}
                       </span>
@@ -367,6 +337,43 @@ export function Header({ className }: HeaderProps) {
                     </button>
                   )
                 })}
+
+                {/* ─── Install App menu item ─── */}
+                {showInstallMenuItem && (
+                  <>
+                    <div className="mx-5 my-2 border-t border-gray-100" />
+                    <button
+                      onClick={async () => {
+                        if (isIOS) {
+                          // On iOS, the iOS banner handles instructions — just close drawer
+                          setIsDrawerOpen(false)
+                        } else {
+                          await triggerInstall()
+                          setIsDrawerOpen(false)
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-5 py-3.5 text-left text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      <div
+                        className="w-5 h-5 rounded flex items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, ${secondary}, ${primary})` }}
+                      >
+                        <Download className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        {isIOS ? 'Add to Home Screen' : 'Install App'}
+                      </span>
+                      {!isIOS && (
+                        <span
+                          className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+                          style={{ background: `linear-gradient(to right, ${primary}, ${secondary})` }}
+                        >
+                          NEW
+                        </span>
+                      )}
+                    </button>
+                  </>
+                )}
               </nav>
 
               {/* Drawer footer */}

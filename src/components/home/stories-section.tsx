@@ -166,7 +166,7 @@ export function StoriesSection() {
                         src={story.mediaUrl || PLACEHOLDER_AVATAR}
                         alt={story.title}
                         fill
-                        className="object-cover"
+                        style={{ objectFit: 'cover' }}
                         fallbackType="avatar"
                       />
                     </div>

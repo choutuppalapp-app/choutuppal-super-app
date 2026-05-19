@@ -137,7 +137,7 @@ export function RealEstateSection() {
                         src={img || placeholderImg}
                         alt={listing.title}
                         fill
-                        className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
+                        style={{ objectFit: 'cover' }}
                       />
                       {/* Price overlay */}
                       <div className="absolute bottom-2 left-2">

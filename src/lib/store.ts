@@ -1,4 +1,10 @@
 import { create } from 'zustand'
+import {
+  getRoutingConfig,
+  getCityUrl,
+  extractCityFromPath,
+  type RoutingConfig,
+} from '@/lib/city-routing'
 
 export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile' | 'shorts' | 'learn' | 'video-player'
 
@@ -57,7 +63,6 @@ export interface CityData {
   longitude: number
 }
 
-// Default settings used before API fetch completes
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   id: '',
   logoUrl: '/logo.png',
@@ -112,16 +117,21 @@ interface AppState {
   locationDetected: boolean
   locationLoading: boolean
   setCity: (slug: string, name: string) => void
-  switchCityBySubdomain: (subdomain: string) => void
+  /** Smart city switch — uses navigateToCity() which respects routing config */
+  switchCity: (slug: string) => void
   setCityData: (city: CityData) => void
   setAvailableCities: (cities: CityData[]) => void
   detectLocation: () => void
+
+  // Routing Configuration (domain-aware)
+  routingConfig: RoutingConfig
+  setRoutingConfig: (config: Partial<RoutingConfig>) => void
 
   // User (synced from auth context)
   currentUser: CurrentUser | null
   setCurrentUser: (user: CurrentUser | null) => void
 
-  // Site Settings (fetched once from API)
+  // Site Settings
   siteSettings: SiteSettings
   setSiteSettings: (settings: SiteSettings) => void
   fetchSiteSettings: () => Promise<void>
@@ -133,7 +143,7 @@ interface AppState {
   platformSettings: Record<string, string>
   fetchPlatformSettings: () => Promise<void>
 
-  // Dynamic Theme Colors (from current city)
+  // Dynamic Theme Colors
   themePrimary: string
   themeSecondary: string
   applyCityTheme: (city: CityData) => void
@@ -207,39 +217,42 @@ export const useAppStore = create<AppState>((set, get) => ({
     const cities = get().availableCities
     const city = cities.find(c => c.slug === slug)
     if (city) {
-      set({
-        selectedCity: slug,
-        selectedCityName: name,
-        currentCity: city,
-      })
+      set({ selectedCity: slug, selectedCityName: name, currentCity: city })
       get().applyCityTheme(city)
     } else {
       set({ selectedCity: slug, selectedCityName: name })
     }
   },
   /**
-   * Switch to a different city by subdomain.
-   * In production, this navigates to the new subdomain URL.
-   * On localhost, this updates the query parameter.
+   * Smart city switch — uses navigateToCity() from city-routing.ts
+   * - Path mode (default): navigates to /city/[slug]
+   * - Subdomain mode (when enabled): navigates to [slug].[baseDomain]
    */
-  switchCityBySubdomain: (subdomain: string) => {
-    const cities = get().availableCities
-    const city = cities.find(c => c.subdomain === subdomain)
-    if (!city) return
+  switchCity: (slug: string) => {
+    if (typeof window === 'undefined') return
 
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        // Dev: use query parameter
-        const url = new URL(window.location.href)
-        url.searchParams.set('city', subdomain)
-        window.location.href = url.toString()
-      } else {
-        // Production: navigate to subdomain
-        const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'mana.in'
-        window.location.href = `https://${subdomain}.${rootDomain}`
+    const config = get().routingConfig
+    const targetUrl = getCityUrl(slug, config)
+
+    // For path-based routing, check if we're already on this city
+    if (config.routingMode === 'path' || !config.isCustomDomainActive) {
+      const currentPath = window.location.pathname
+      const targetPath = `/city/${slug}`
+
+      if (currentPath === targetPath || currentPath.startsWith(targetPath + '/')) {
+        // Already on this city — just update local state
+        const cities = get().availableCities
+        const city = cities.find(c => c.slug === slug || c.subdomain === slug)
+        if (city) {
+          set({ selectedCity: city.slug, selectedCityName: city.name, currentCity: city })
+          get().applyCityTheme(city)
+        }
+        return
       }
     }
+
+    // Navigate to the new city URL
+    window.location.href = targetUrl
   },
   setCityData: (city) => set({ currentCity: city }),
   setAvailableCities: (cities) => set({ availableCities: cities }),
@@ -250,30 +263,33 @@ export const useAppStore = create<AppState>((set, get) => ({
       (position) => {
         const { latitude, longitude } = position.coords
         const cities = get().availableCities
-        // Find closest city within 100km
         let closestCity: CityData | null = null
         let minDist = Infinity
         for (const city of cities) {
           const dist = getDistanceKm(latitude, longitude, city.latitude, city.longitude)
-          if (dist < minDist) {
-            minDist = dist
-            closestCity = city
-          }
+          if (dist < minDist) { minDist = dist; closestCity = city }
         }
         if (closestCity && minDist <= 100) {
           get().setCity(closestCity.slug, closestCity.name)
         }
         set({ locationDetected: true, locationLoading: false })
       },
-      () => {
-        // Location denied — default to Choutuppal
-        set({ locationDetected: true, locationLoading: false })
-      },
+      () => { set({ locationDetected: true, locationLoading: false }) },
       { timeout: 10000, enableHighAccuracy: false }
     )
   },
 
-  // User — will be set by AuthProvider
+  // Routing Configuration
+  routingConfig: getRoutingConfig(),
+  setRoutingConfig: (config) => {
+    // Dynamic import to avoid circular dependency at module level
+    import('@/lib/city-routing').then(({ saveRoutingConfig }) => {
+      const updated = saveRoutingConfig(config)
+      set({ routingConfig: updated })
+    })
+  },
+
+  // User
   currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
 
@@ -281,19 +297,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   siteSettings: DEFAULT_SITE_SETTINGS,
   setSiteSettings: (settings) => set({ siteSettings: settings }),
   fetchSiteSettings: async () => {
-    // Don't re-fetch if we already have settings with an ID
     if (get().siteSettings.id) return
     try {
       const res = await fetch('/api/settings')
-      if (res.ok) {
-        const data = await res.json()
-        if (!data.error) {
-          set({ siteSettings: data })
-        }
-      }
-    } catch {
-      // Use defaults — non-critical
-    }
+      if (res.ok) { const data = await res.json(); if (!data.error) set({ siteSettings: data }) }
+    } catch { /* use defaults */ }
   },
 
   // Agent Role
@@ -306,24 +314,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       const res = await fetch('/api/platform-settings')
       if (res.ok) {
         const data = await res.json()
-        if (data && typeof data === 'object' && !data.error) {
-          set({ platformSettings: data })
-        }
+        if (data && typeof data === 'object' && !data.error) set({ platformSettings: data })
       }
-    } catch {
-      // Non-critical
-    }
+    } catch { /* non-critical */ }
   },
 
   // Dynamic Theme Colors
   themePrimary: '#4169E1',
   themeSecondary: '#D4AF37',
   applyCityTheme: (city) => {
-    set({
-      themePrimary: city.primaryColor,
-      themeSecondary: city.secondaryColor,
-    })
-    // Apply CSS custom properties for dynamic theming
+    set({ themePrimary: city.primaryColor, themeSecondary: city.secondaryColor })
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty('--theme-primary', city.primaryColor)
       document.documentElement.style.setProperty('--theme-secondary', city.secondaryColor)
@@ -352,24 +352,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   dashboardTab: 'overview',
   setDashboardTab: (tab) => set({ dashboardTab: tab }),
 
-  // Social Network state
+  // Social
   selectedProfileUserId: null,
   setSelectedProfileUserId: (userId) => set({ selectedProfileUserId: userId }),
   communityTab: 'feed',
   setCommunityTab: (tab) => set({ communityTab: tab }),
 
-  // Notification
+  // Notifications
   notifications: [],
   addNotification: (message) =>
     set((state) => ({
-      notifications: [
-        {
-          id: Date.now().toString(),
-          message,
-          time: 'Just now',
-        },
-        ...state.notifications,
-      ].slice(0, 20),
+      notifications: [{ id: Date.now().toString(), message, time: 'Just now' }, ...state.notifications].slice(0, 20),
     })),
   clearNotifications: () => set({ notifications: [] }),
 }))

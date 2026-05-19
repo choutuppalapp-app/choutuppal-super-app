@@ -122,7 +122,7 @@ export function BannerAds() {
                 src={currentAd.imageUrl!}
                 alt={currentAd.title || 'Promotion'}
                 fill
-                className="w-full h-full object-cover object-center"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>

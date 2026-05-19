@@ -152,7 +152,7 @@ export function FeaturedListings() {
                       src={img || placeholderImg}
                       alt={listing.name}
                       fill
-                      className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
+                      style={{ objectFit: 'cover' }}
                     />
                     {/* Category badge */}
                     <div className="absolute top-2 left-2">

@@ -2,111 +2,135 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * ─── Subdomain-Based Multi-Tenancy Middleware ──────────────────
+ * ─── Smart City Routing Middleware ─────────────────────────
  *
- * This middleware handles:
- * 1. Subdomain routing: choutuppal.mana.in → loads that city's data
- * 2. Localhost dev support: ?city=choutuppal query parameter
- * 3. Root domain (mana.in) → serves default/landing page
- * 4. Invalid subdomain → redirects to root domain
+ * Supports TWO routing modes:
  *
- * Architecture:
- * - The middleware sets custom headers (x-city-subdomain, x-city-id)
- *   that downstream API routes and server components can read.
- * - It does NOT do DB lookups (middleware should be fast).
- * - DB lookup happens in getCityFromHostname() helper on the server side.
+ * 1. Path-based (DEFAULT): /city/choutuppal
+ *    - Works everywhere (localhost, Vercel preview, sandbox)
+ *    - No custom domain needed
  *
- * DEPLOYMENT (Vercel):
- * - Add wildcard domain: *.mana.in
- * - DNS: CNAME * → cname.vercel-dns.com
+ * 2. Subdomain-based (when activated): choutuppal.mana.in
+ *    - Requires wildcard DNS (*.mana.in → Vercel)
+ *    - Toggled from Admin Panel via routing config cookie
+ *
+ * The middleware reads routing config from a cookie to decide
+ * which mode to use. Falls back to path-based if no config.
  */
 
-// Reserved subdomains that are NOT city subdomains
 const RESERVED_SUBDOMAINS = new Set([
   'www', 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap',
   'blog', 'docs', 'app', 'staging', 'dev', 'test', 'cdn',
   'assets', 'static', 'media', 'uploads', 'demo',
 ])
 
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'mana.in'
+const DEFAULT_CITY_SLUG = 'choutuppal'
 
-function extractSubdomain(hostname: string): string | null {
+function extractSubdomain(hostname: string, baseDomain: string): string | null {
   if (!hostname) return null
-
   const host = hostname.split(':')[0].toLowerCase()
-
-  // Localhost: no subdomain support (use query param)
-  if (host === 'localhost' || host === '127.0.0.1') {
-    return null
-  }
-
-  // *.localhost pattern for local subdomain testing
+  if (host === 'localhost' || host === '127.0.0.1') return null
   if (host.endsWith('.localhost')) {
     const sub = host.replace('.localhost', '')
-    if (sub && !RESERVED_SUBDOMAINS.has(sub)) {
-      return sub
-    }
+    if (sub && !RESERVED_SUBDOMAINS.has(sub)) return sub
     return null
   }
-
-  // Production: *.mana.in pattern
-  if (host.endsWith(`.${ROOT_DOMAIN}`)) {
-    const sub = host.replace(`.${ROOT_DOMAIN}`, '')
-    if (!sub || RESERVED_SUBDOMAINS.has(sub)) {
-      return null
-    }
+  if (host.endsWith(`.${baseDomain}`)) {
+    const sub = host.replace(`.${baseDomain}`, '')
+    if (!sub || RESERVED_SUBDOMAINS.has(sub)) return null
     return sub
   }
-
   return null
 }
 
-export function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || ''
-  const url = request.nextUrl
-
-  // ─── Step 1: Extract subdomain from hostname ─────────────
-  const subdomain = extractSubdomain(hostname)
-
-  // ─── Step 2: Localhost dev support — ?city= query param ──
-  if (!subdomain && (hostname.startsWith('localhost') || hostname.startsWith('127.0.0.1'))) {
-    const cityParam = url.searchParams.get('city')
-    if (cityParam) {
-      // Set headers so downstream can read the city
-      const response = NextResponse.next()
-      response.headers.set('x-city-subdomain', cityParam)
-      return response
+function getRoutingConfigFromCookie(request: NextRequest): {
+  baseDomain: string
+  subdomainRoutingEnabled: boolean
+} {
+  try {
+    const cookie = request.cookies.get('mana_routing_config')
+    if (cookie) {
+      const parsed = JSON.parse(cookie.value)
+      return {
+        baseDomain: parsed.baseDomain || 'mana.in',
+        subdomainRoutingEnabled: parsed.routingMode === 'subdomain' && parsed.isCustomDomainActive === true,
+      }
     }
-    // Default on localhost: set choutuppal as default city
+  } catch { /* corrupted cookie */ }
+  return { baseDomain: 'mana.in', subdomainRoutingEnabled: false }
+}
+
+export function middleware(request: NextRequest) {
+  const url = request.nextUrl
+  const pathname = url.pathname
+  const hostname = request.headers.get('host') || ''
+
+  // ─── Skip API routes, static files, PWA assets ─────────
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/icons/') ||
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
+    pathname === '/robots.txt' ||
+    pathname.includes('.') // static file extensions
+  ) {
+    return NextResponse.next()
+  }
+
+  // ─── Read routing config ──────────────────────────────
+  const config = getRoutingConfigFromCookie(request)
+
+  // ─── Subdomain routing mode ───────────────────────────
+  const subdomain = extractSubdomain(hostname, config.baseDomain)
+
+  if (subdomain && config.subdomainRoutingEnabled) {
+    // Set header so the app knows which city to show
     const response = NextResponse.next()
-    response.headers.set('x-city-subdomain', 'choutuppal')
+    response.headers.set('x-city-slug', subdomain)
+    response.headers.set('x-routing-mode', 'subdomain')
     return response
   }
 
-  // ─── Step 3: Root domain (mana.in or www.mana.in) ───────
-  if (!subdomain) {
-    // Root domain → serve the app with default city
+  // ─── Root domain with subdomain routing → redirect to default city subdomain
+  if (
+    config.subdomainRoutingEnabled &&
+    !subdomain &&
+    !hostname.startsWith('localhost') &&
+    !hostname.startsWith('127.0.0.1') &&
+    hostname.includes(config.baseDomain)
+  ) {
+    const redirectUrl = new URL(request.url)
+    redirectUrl.hostname = `${DEFAULT_CITY_SLUG}.${config.baseDomain}`
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // ─── Path-based routing mode (DEFAULT) ─────────────────
+
+  // Root "/" → Redirect to default city
+  if (pathname === '/' || pathname === '') {
+    const redirectUrl = new URL(`/city/${DEFAULT_CITY_SLUG}`, request.url)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // City route "/city/[slug]" → Set header and pass through
+  const cityMatch = pathname.match(/^\/city\/([^/]+)/)
+  if (cityMatch) {
+    const citySlug = cityMatch[1]
     const response = NextResponse.next()
-    response.headers.set('x-city-subdomain', 'choutuppal')
+    response.headers.set('x-city-slug', citySlug)
+    response.headers.set('x-routing-mode', 'path')
     return response
   }
 
-  // ─── Step 4: Valid city subdomain ────────────────────────
-  // Set the subdomain header so API routes can use it
-  const response = NextResponse.next()
-  response.headers.set('x-city-subdomain', subdomain)
-  return response
-
-  // NOTE: We do NOT redirect invalid subdomains here because
-  // we don't have DB access in middleware. Invalid subdomains
-  // will be handled by the getCityFromHostname() helper in
-  // the API routes and page components, which can redirect
-  // to the root domain if the subdomain doesn't exist in the DB.
+  // ─── All other routes → pass through ──────────────────
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    // Match all paths except static files and Next.js internals
-    '/((?!_next/static|_next/image|favicon\\.ico|og-image\\.png|logo\\.png|robots\\.txt|sitemap\\.xml|sw\\.js|workbox-.*\\.js).*)',
+    // Match all paths except static files, Next.js internals, and PWA assets
+    '/((?!_next/static|_next/image|favicon\\.ico|og-image\\.png|logo\\.png|robots\\.txt|sitemap\\.xml|sw\\.js|workbox-.*\\.js|manifest\\.json|icons/).*)',
   ],
 }

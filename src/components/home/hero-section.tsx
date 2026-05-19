@@ -48,8 +48,7 @@ export function HeroSection() {
             src={heroImageUrl}
             alt={`${cityName} Hero`}
             fill
-            className="object-cover object-center"
-            style={{ position: 'absolute', inset: 0 }}
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
           />
           {/* Dark overlay on top of image for text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />

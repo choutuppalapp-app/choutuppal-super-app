@@ -281,12 +281,6 @@ main {
     min-height: 44px;
     min-width: 44px;
   }
-
-  /* Prevent horizontal overflow on mobile */
-  img {
-    max-width: 100%;
-    height: auto;
-  }
 }
 
 /* ─── Smooth page transitions ─── */
