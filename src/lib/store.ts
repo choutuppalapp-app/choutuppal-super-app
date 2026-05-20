@@ -6,7 +6,7 @@ import {
   type RoutingConfig,
 } from '@/lib/city-routing'
 
-export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile' | 'shorts' | 'learn' | 'video-player'
+export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'super-admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile' | 'shorts' | 'learn' | 'video-player'
 
 interface Notification {
   id: string

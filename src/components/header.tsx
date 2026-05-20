@@ -6,6 +6,7 @@ import {
   MapPin, Home, Compass, Newspaper, Users,
   LayoutDashboard, Shield, LogOut, User,
   Bell, Menu, X, FileText, Loader2, Download,
+  Crown,
 } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,6 +22,7 @@ const NAV_LINKS: Array<{
   label: string
   icon: React.ComponentType<{ className?: string }>
   adminOnly?: boolean
+  superAdminOnly?: boolean
   requiresAuth?: boolean
 }> = [
   { view: 'home', label: 'Home', icon: Home },
@@ -30,6 +32,7 @@ const NAV_LINKS: Array<{
   { view: 'blog', label: 'Blog', icon: FileText },
   { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
   { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true, requiresAuth: true },
+  { view: 'super-admin', label: 'Super Admin', icon: Crown, superAdminOnly: true, requiresAuth: true },
 ]
 
 interface HeaderProps {
@@ -53,6 +56,7 @@ export function Header({ className }: HeaderProps) {
   const secondary = themeSecondary || '#4169E1'
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin'
+  const isSuperAdmin = user?.role === 'super_admin'
 
   const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
     if (requiresAuth && !isAuthenticated) {
@@ -143,6 +147,7 @@ export function Header({ className }: HeaderProps) {
         <nav className="flex items-center gap-1">
           {NAV_LINKS.map((item) => {
             if (item.adminOnly && !isAdmin) return null
+            if (item.superAdminOnly && !isSuperAdmin) return null
             const isActive = currentView === item.view
             return (
               <button
@@ -311,6 +316,7 @@ export function Header({ className }: HeaderProps) {
               <nav className="flex-1 py-2 overflow-y-auto">
                 {NAV_LINKS.map((item) => {
                   if (item.adminOnly && !isAdmin) return null
+                  if (item.superAdminOnly && !isSuperAdmin) return null
                   const isActive = currentView === item.view
                   const Icon = item.icon
 

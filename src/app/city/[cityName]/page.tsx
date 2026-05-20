@@ -32,6 +32,17 @@ import { DashboardView } from '@/components/dashboard-view'
 import { AgentDashboard } from '@/components/agent-dashboard'
 import dynamic from 'next/dynamic'
 const AdminView = dynamic(() => import('@/components/admin-view').then((mod) => ({ default: mod.AdminView })), { ssr: false })
+const SuperAdminSettings = dynamic(() => import('@/components/super-admin-settings').then((mod) => ({ default: mod.SuperAdminSettings })), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" />
+      <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />
+      <div className="h-80 w-full rounded-xl bg-gray-100 animate-pulse" />
+      <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
+    </div>
+  ),
+})
 import { SearchView } from '@/components/search-view'
 import { BlogView } from '@/components/blog-view'
 import { BlogDetailView } from '@/components/blog-detail-view'
@@ -39,7 +50,10 @@ const CommunityFeed = dynamic(() => import('@/components/community-feed').then((
 const ProfileView = dynamic(() => import('@/components/profile-view').then((mod) => ({ default: mod.ProfileView })), { ssr: false })
 import { LearnView } from '@/components/learn-view'
 import { VideoPlayerView } from '@/components/video-player-view'
-const ManaShortsFeed = dynamic(() => import('@/components/shorts-feed').then((mod) => ({ default: mod.ManaShortsFeed })), { ssr: false })
+const ManaShortsFeed = dynamic(() => import('@/components/shorts-feed').then((mod) => ({ default: mod.ManaShortsFeed })), {
+  ssr: false,
+  loading: () => <div className="w-full h-[500px] bg-gray-50 animate-pulse rounded-xl" />,
+})
 import { Footer } from '@/components/footer'
 
 // Auth & Polish
@@ -53,7 +67,7 @@ function HomeView() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-0 md:space-y-0"
+      className="space-y-4 md:space-y-8"
     >
       {/* ─── STRICT LAYOUT ORDER ───
           1. Stories Row (z-20, always visible)
@@ -171,6 +185,58 @@ function ProtectedAdmin() {
   return <AdminView />
 }
 
+function ProtectedSuperAdmin() {
+  const { isAuthenticated, user, setShowLoginModal, isLoading, login } = useAuth()
+  const autoLoginAttempted = useRef(false)
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
+      autoLoginAttempted.current = true
+      if (process.env.NODE_ENV === 'development') { login('9999999999', '1234') }
+      else { setShowLoginModal(true) }
+    }
+  }, [isAuthenticated, isLoading, setShowLoginModal, login])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
+        <div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" />
+        <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />
+        <div className="h-80 w-full rounded-xl bg-gray-100 animate-pulse" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center px-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+          <p className="text-gray-500 mb-3">Please sign in as Super Admin to access this page</p>
+          <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In as Super Admin</button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  const isSuperAdmin = user?.role === 'super_admin'
+  if (!isSuperAdmin) {
+    if (process.env.NODE_ENV === 'development') {
+      return (
+        <div className="max-w-4xl mx-auto">
+          <div className="mx-4 mt-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
+            <AlertTriangle className="size-4 shrink-0" />
+            Dev Mode: Viewing Super Admin settings as non-super-admin user.
+          </div>
+          <SuperAdminSettings />
+        </div>
+      )
+    }
+    return <ForbiddenPage />
+  }
+
+  return <SuperAdminSettings />
+}
+
 export default function CityPage() {
   const params = useParams()
   const cityName = params.cityName as string
@@ -218,6 +284,7 @@ export default function CityPage() {
         listing: 'Business Listing',
         dashboard: 'My Dashboard',
         admin: 'Admin Panel',
+        'super-admin': 'Super Admin Settings',
         search: 'Search',
         blog: 'Blog',
         'blog-detail': 'Blog Article',
@@ -239,6 +306,7 @@ export default function CityPage() {
       case 'listing': return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
       case 'dashboard': return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
       case 'admin': return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
+      case 'super-admin': return <ErrorBoundary name="ProtectedSuperAdmin"><ProtectedSuperAdmin /></ErrorBoundary>
       case 'search': return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog': return <ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary>
       case 'blog-detail': return <ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary>

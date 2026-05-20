@@ -1,58 +1,22 @@
-# Worklog
-
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Complete rewrite of Image sizing, City Routing, and PWA installation
+Task: Create Super Admin Settings Page with domain/subdomain management
 
 Work Log:
-- Audited all <Image fill> usage across 20+ components
-- Found 3 bugs: news-section.tsx missing `relative`, banner-ads/featured-listings/real-estate had `w-full h-full` className on fill images, hero-section had redundant style
-- REWROTE `/src/lib/city-routing.ts` — new file with navigateToCity(), getCityUrl(), RoutingConfig, path vs subdomain logic
-- REWROTE `/src/lib/store.ts` — added switchCity() using navigateToCity(), routingConfig state, setRoutingConfig()
-- REWROTE `/src/middleware.ts` — path-based routing (/city/[slug]) as default, subdomain routing when enabled, PWA asset exclusions
-- CREATED `/src/app/city/[cityName]/page.tsx` — dynamic city route, syncs URL slug with Zustand, all views
-- REWROTE `/src/components/optimized-image.tsx` — strips height from style when fill=true, uses objectFit:'cover' for fallback imgs
-- REWROTE `/src/components/home/hero-section.tsx` — removed redundant style={{ position:'absolute', inset:0 }}, uses style={{ objectFit:'cover' }}
-- FIXED `/src/components/home/news-section.tsx` — added `relative` to parent div, removed className from fill Image
-- FIXED `/src/components/home/banner-ads.tsx` — removed w-full h-full className, uses style={{ objectFit:'cover' }}
-- FIXED `/src/components/home/featured-listings.tsx` — removed className, uses style={{ objectFit:'cover' }}
-- FIXED `/src/components/home/real-estate-section.tsx` — removed className, uses style={{ objectFit:'cover' }}
-- FIXED `/src/components/home/stories-section.tsx` — moved object-cover from className to style
-- CREATED `/public/manifest.json` — PWA manifest with standalone display, Royal Blue theme, 8 icon sizes
-- CREATED `/public/sw.js` — service worker with network-first API, cache-first static, offline fallback
-- CREATED `/src/components/pwa-install-provider.tsx` — React Context capturing beforeinstallprompt, iOS detection, service worker registration
-- CREATED `/src/components/pwa-install-popup.tsx` — bottom popup with Install/Not Now buttons, Royal Blue→Gold theme
-- CREATED `/src/components/pwa-ios-banner.tsx` — iOS Safari step-by-step instructions with Share icon guidance
-- REWROTE `/src/app/layout.tsx` — added Viewport export, manifest link, apple-touch-icon, PWA components, PWAInstallProvider
-- REWROTE `/src/components/header.tsx` — uses switchCity() from store (via navigateToCity), Install App menu item with Download icon
-- REWROTE `/src/app/page.tsx` — redirects / to /city/choutuppal
-- Generated PWA icons via z-ai image generation (letter C in gold on royal blue), resized to all 8 sizes
-- Cleaned globals.css — removed problematic global `img { max-width:100%; height:auto }` rule on mobile
-- All lint passes, all routes return 200, PWA meta tags confirmed in HTML
+- Read existing project structure: page.tsx, store.ts, city-routing.ts, subdomain.ts, header.tsx, glass-card.tsx, admin-view.tsx, UI components
+- Created `src/hooks/use-domain-routing.ts` — Custom hook using useSyncExternalStore for hydration-safe localStorage reads. Provides baseDomain, isCustomDomainActive, subdomainMappings CRUD, getCityUrl routing helper
+- Created `src/components/super-admin-settings.tsx` — Complete SuperAdminSettings component with DNS Setup Guide, Base Domain Configuration (input + toggle + save), Subdomain Management (CRUD with auto-generate prefix), Routing Status Banner, Edit Dialog, Delete Confirmation Dialog
+- Updated `src/lib/store.ts` — Added 'super-admin' to ViewType union
+- Updated `src/app/city/[cityName]/page.tsx` — Added SuperAdminSettings dynamic import with loading placeholder, ProtectedSuperAdmin component (requires super_admin role), 'super-admin' case in renderView, 'super-admin' document title. Also fixed HomeView hydration error: changed `space-y-0 md:space-y-0` to static `space-y-4 md:space-y-8`. Added loading placeholder for ManaShortsFeed dynamic import.
+- Updated `src/components/header.tsx` — Added Crown icon import, superAdminOnly property to NAV_LINKS type, 'super-admin' nav link entry, superAdminOnly filter in both desktop and mobile nav sections, isSuperAdmin derived variable
+- Ran ESLint — no errors
+- Verified dev server compiles cleanly
 
 Stage Summary:
-- 3 core features completely rewritten from scratch:
-  1. PERMANENT IMAGE FIX: All <Image fill> components follow strict pattern — parent div with position:relative + defined size, Image with fill + style={{ objectFit:'cover' }}, NO height on Image
-  2. SMART CITY ROUTING: Single navigateToCity() utility in city-routing.ts, used by store.switchCity() and header, reads config from localStorage, path-based default with subdomain mode toggle
-  3. PWA INSTALL: manifest.json, sw.js, icons, PWAInstallProvider, PWAInstallPopup (mobile), PWAIOSBanner (iOS fallback), Install App menu item in hamburger drawer
-
----
-Task ID: 2
-Agent: Main Agent
-Task: Fix Stories section disappearing on city pages - restore layout order and visibility
-
-Work Log:
-- Identified root cause: StoriesSection returned `null` when no stories existed (line 110: `if (!loading && stories.length === 0) return null`), making the entire section including "Add Your Story" button vanish
-- REWROTE `src/components/home/stories-section.tsx` — removed null return, always renders Stories row with "Add Your Story" button + empty state placeholders ("Coming Soon", "Music") when no stories, added `z-20` for stacking above banners
-- REWROTE `src/components/home/banner-ads.tsx` — enforced `max-h-[250px]` on banner container, added `z-10` (lower than Stories z-20), added z-10 to offer badge and glassmorphism bottom bar
-- FIXED layout order in `src/app/city/[cityName]/page.tsx` HomeView — reordered to: StoriesSection → BannerAds → AnnouncementTicker → HeroSection → rest of content; changed space-y-4 to space-y-0 for tighter layout
-- REWROTE `src/components/home/hero-section.tsx` — added `mt-4` margin to separate from banner section
-- Verified layout.tsx has no overflow:hidden on page wrapper (only on body for mobile scroll containment, with main using overflow-y-auto for scrolling)
-- All lint passes, dev server running clean
-
-Stage Summary:
-- Stories section is now ALWAYS visible regardless of data, with "Add Your Story" button + placeholder circles
-- Strict layout order: Header → Stories (z-20) → Banner Ads (z-10, max 250px) → Announcement Ticker → Hero → Content
-- Banner images capped at 250px height with proper overflow:hidden only on individual banner containers
-- Stories z-index (20) is higher than Banner z-index (10), preventing overlap
+- Super Admin Settings Page fully implemented with all 4 requested features
+- HomeView hydration error fixed (static spacing classes)
+- ManaShortsFeed loading placeholder added
+- Navigation accessible to super_admin role only
+- All data persisted in LocalStorage
+- Lint passes cleanly
