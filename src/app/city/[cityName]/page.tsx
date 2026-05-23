@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -61,8 +60,9 @@ import { ForbiddenPage } from '@/components/auth/forbidden-page'
 import { ListingDetailSkeleton, DashboardHeaderSkeleton } from '@/components/skeleton-loaders'
 
 /**
- * HomeView — ONLY rendered when currentView === 'home'
- * Completely separate from any other view.
+ * HomeView — ONLY rendered when currentView === 'home'.
+ * When currentView !== 'home', this component DOES NOT EXIST in the DOM.
+ * The hero image inside this component CANNOT bleed into other views.
  */
 function HomeView() {
   return (
@@ -229,16 +229,24 @@ function ProtectedSuperAdmin() {
 }
 
 /**
- * CityPage — COMPLETE REWRITE of view routing
+ * CityPage — BULLETPROOF View Routing
  *
- * RULES ENFORCED:
- * 1. Use `currentView` from Zustand store as the SOLE source of truth
- * 2. Each view is rendered with a UNIQUE KEY based on currentView
- *    so React completely unmounts the old view and mounts the new one
- * 3. AnimatePresence mode="wait" ensures exit before enter
- * 4. If currentView === 'home', ONLY <HomeView /> is in the DOM
- * 5. If currentView === 'news', ONLY <NewsView /> is in the DOM
- * 6. HomeView is NEVER rendered alongside any other view
+ * ═══════════════════════════════════════════════════════════════
+ * CRITICAL RULES ENFORCED:
+ *
+ * 1. NO AnimatePresence on the main content area.
+ *    AnimatePresence keeps old views in the DOM during exit animation,
+ *    which causes the HomeView hero image to bleed into other views.
+ *    REMOVED ENTIRELY.
+ *
+ * 2. STRICT conditional rendering via switch statement.
+ *    Only ONE view component exists in the DOM at any time.
+ *    When currentView === 'news', HomeView returns null and
+ *    its hero image is COMPLETELY REMOVED from the DOM.
+ *
+ * 3. Zero exit animations. The previous view is destroyed instantly.
+ *    No fade-out, no slide-out, no delay. Instant swap.
+ * ═══════════════════════════════════════════════════════════════
  */
 export default function CityPage() {
   const params = useParams()
@@ -301,54 +309,59 @@ export default function CityPage() {
   }, [currentView, currentCity.brandName])
 
   /**
-   * renderView — STRICT one-to-one mapping.
-   * Each case returns EXACTLY ONE component with a unique key.
-   * The HomeView is ONLY rendered when currentView === 'home'.
-   * The previous view is COMPLETELY removed from the DOM.
+   * renderView — STRICT ONE-TO-ONE MAPPING.
+   *
+   * This is a plain switch statement. NO AnimatePresence.
+   * NO exit animations. NO transition delays.
+   *
+   * When currentView === 'home' → ONLY <HomeView /> in DOM
+   * When currentView === 'news' → ONLY <NewsView /> in DOM
+   *   → HomeView is COMPLETELY DESTROYED (not hidden, not faded, DESTROYED)
+   *   → Hero image does NOT exist in the DOM
    */
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><HomeView /></motion.div>
+        return <HomeView />
       case 'explore':
-        return <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ExploreView"><ExploreView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ExploreView"><ExploreView /></ErrorBoundary>
       case 'news':
-        return <motion.div key="news" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="NewsView"><NewsView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="NewsView"><NewsView /></ErrorBoundary>
       case 'listing':
-        return <motion.div key="listing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
       case 'dashboard':
-        return <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
       case 'admin':
-        return <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
       case 'super-admin':
-        return <motion.div key="super-admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProtectedSuperAdmin"><ProtectedSuperAdmin /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ProtectedSuperAdmin"><ProtectedSuperAdmin /></ErrorBoundary>
       case 'search':
-        return <motion.div key="search" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog':
-        return <motion.div key="blog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary>
       case 'blog-detail':
-        return <motion.div key="blog-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary>
       case 'community':
-        return <motion.div key="community" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
       case 'profile':
-        return <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary>
       case 'shorts':
-        return <motion.div key="shorts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary>
       case 'learn':
-        return <motion.div key="learn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="LearnView"><LearnView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="LearnView"><LearnView /></ErrorBoundary>
       case 'video-player':
-        return <motion.div key="video-player" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="VideoPlayerView"><VideoPlayerView /></ErrorBoundary></motion.div>
+        return <ErrorBoundary name="VideoPlayerView"><VideoPlayerView /></ErrorBoundary>
       default:
-        return <motion.div key="home-default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><HomeView /></motion.div>
+        return <HomeView />
     }
   }
 
-  // Shorts view: full-screen layout
+  // Shorts view: full-screen layout (also NO AnimatePresence)
   if (currentView === 'shorts') {
     return (
       <div className="w-full h-[calc(100dvh-3.5rem)] md:h-screen">
         <ErrorBoundary name="ShortsFullView">
-          <AnimatePresence mode="wait">{renderView()}</AnimatePresence>
+          {renderView()}
         </ErrorBoundary>
       </div>
     )
@@ -358,9 +371,7 @@ export default function CityPage() {
     <div className="w-full min-h-full flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-3 md:py-6 pb-20 md:pb-6">
         <ErrorBoundary name="MainContent">
-          <AnimatePresence mode="wait">
-            {renderView()}
-          </AnimatePresence>
+          {renderView()}
         </ErrorBoundary>
       </div>
       <ErrorBoundary name="Footer"><Footer /></ErrorBoundary>

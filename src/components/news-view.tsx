@@ -85,7 +85,7 @@ export function NewsView() {
   const SkeletonList = () => (
     <div className="space-y-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/40 backdrop-blur-xl">
+        <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white border border-gray-100">
           <Skeleton className="w-28 h-28 rounded-xl shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-5 w-3/4" />
@@ -162,7 +162,7 @@ export function NewsView() {
               transition={{ duration: 0.4 }}
             >
               <GlassCard variant="gold" className="!p-0 overflow-hidden">
-                <div className="relative h-48 sm:h-64 overflow-hidden">
+                <div className="relative max-h-[250px] h-48 sm:h-[250px] overflow-hidden">
                   {articles[0].imageUrl ? (
                     <OptimizedImage
                       src={articles[0].imageUrl}

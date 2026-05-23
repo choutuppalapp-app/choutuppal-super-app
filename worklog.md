@@ -43,3 +43,25 @@ Stage Summary:
 - BUG 3 FIXED: Hero section capped at max-h-[300px] with overflow-hidden
 - Header is now fully opaque (bg-white)
 - All 3 rewrites are complete rewrites, not patches
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Permanently fix News/Blog hero image bleed — remove AnimatePresence, strict conditional rendering
+
+Work Log:
+- Diagnosed root cause: AnimatePresence mode="wait" with exit={{ opacity: 0 }} keeps HomeView (and its hero image) in the DOM during the fade-out transition, causing the hero image to remain visible when switching to News view
+- COMPLETELY REMOVED AnimatePresence from page.tsx — no more transition animations on the main content area
+- COMPLETELY REMOVED all motion.div wrappers from renderView() — views are now rendered as plain React components
+- Implemented STRICT conditional rendering: a plain switch statement where only ONE view component exists in the DOM at any time
+- When currentView === 'news', HomeView is COMPLETELY DESTROYED (not hidden, not faded) — its hero image CANNOT exist in the DOM
+- Constrained NewsView featured article image from h-48 sm:h-64 to max-h-[250px] h-48 sm:h-[250px] — never exceeds 250px
+- Fixed NewsView skeleton loader from transparent bg-white/40 backdrop-blur-xl to solid bg-white border border-gray-100
+- Verified lint passes and dev server compiles cleanly
+
+Stage Summary:
+- BUG FIXED: HomeView hero image can NEVER bleed into News view because HomeView is completely destroyed on navigation
+- No AnimatePresence, no exit animations, no transition delays — instant view swap
+- NewsView featured image capped at max-h-[250px]
+- HeroSection still capped at max-h-[300px] as safety net
+- Login modal still has solid white card with dark overlay (from previous fix)
