@@ -87,3 +87,31 @@ Stage Summary:
 - Spin & Win integration auto-generates and copies coupon codes
 - All data persisted in LocalStorage (coupon list + applied coupon state)
 - Case-insensitive coupon input, expiry/usage limit validation
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix infinite loop in use-coupon-store.ts and pricing-section.tsx
+
+Work Log:
+- Read use-coupon-store.ts and identified root cause: useSyncExternalStore's getSnapshot functions (readCouponsFromStorage, readAppliedCouponFromStorage) called JSON.parse on every invocation, returning new object/array references each time. React requires getSnapshot to return referentially stable values when data hasn't changed.
+- Read pricing-section.tsx and all other consumers (apply-coupon.tsx, coupon-management.tsx, spin-wheel.tsx)
+- Rewrote use-coupon-store.ts with:
+  - Module-level snapshot caches (_couponsRawString/_couponsParsed, _appliedRawString/_appliedParsed) that compare the raw localStorage string and only re-parse when it changes
+  - Stable module-level subscribe functions (subscribeCoupons, subscribeAppliedCoupon) using custom events (choutuppal:coupons-changed, choutuppal:applied-coupon-changed) for same-tab notifications + 'storage' event for cross-tab
+  - Stable server snapshots using a module-level _EMPTY_COUPONS constant
+  - Cache invalidation in writeCouponsToStorage/writeAppliedCouponToStorage (sets _rawString to undefined before dispatching events)
+  - Actions (addCoupon, updateCoupon, deleteCoupon, toggleCouponStatus, applyCoupon) read directly from localStorage instead of the cache to always get latest data
+- Rewrote pricing-section.tsx with:
+  - Replaced getDiscountedTotal callback from hook with useMemo-based discount calculations
+  - Added discountAmount and planDiscounts memoized computations
+  - Local getDiscountedPrice() function uses the memoized planDiscounts Map
+  - Checkout dialog uses pre-computed checkoutDiscountedPrice instead of calling getDiscountedTotal inline
+- Lint passes with no errors
+- Dev server compiles successfully with no errors
+
+Stage Summary:
+- Infinite loop root cause: useSyncExternalStore getSnapshot returning new references on every call via JSON.parse
+- Fix: Module-level caching that compares raw localStorage strings and returns cached parsed results when unchanged
+- All 5 consuming components verified compatible with the rewritten hook
+- Custom events replace synthetic StorageEvents for more reliable same-tab notifications

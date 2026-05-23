@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Check, X, Crown, Zap, Star, Megaphone, Ticket } from 'lucide-react'
 import { GlassCard } from '@/components/glass-card'
@@ -109,8 +109,34 @@ const PLANS: PricingPlan[] = [
 export function PricingSection() {
   const { isAuthenticated, setShowLoginModal } = useAuth()
   const { navigateTo } = useAppStore()
-  const { appliedCoupon, getDiscountedTotal } = useCouponStore()
+  const { appliedCoupon } = useCouponStore()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+
+  // ─── Memoized discount calculations ─────────────────────────────────────
+  // Compute discounted totals for each plan using useMemo so we don't
+  // recalculate on every render. The dependency is `appliedCoupon` which
+  // is now a stable reference from the fixed useCouponStore.
+
+  const discountAmount = useMemo(
+    () => appliedCoupon?.discountAmount ?? 0,
+    [appliedCoupon],
+  )
+
+  const planDiscounts = useMemo(() => {
+    if (!appliedCoupon || discountAmount === 0) return new Map<string, number>()
+    const map = new Map<string, number>()
+    for (const plan of PLANS) {
+      if (plan.priceValue > 0) {
+        map.set(plan.id, Math.max(0, plan.priceValue - discountAmount))
+      }
+    }
+    return map
+  }, [appliedCoupon, discountAmount])
+
+  const getDiscountedPrice = (plan: PricingPlan): number => {
+    if (plan.priceValue <= 0 || !appliedCoupon || discountAmount === 0) return plan.priceValue
+    return planDiscounts.get(plan.id) ?? plan.priceValue
+  }
 
   const handleSubscribe = (planId: string) => {
     if (!isAuthenticated) {
@@ -133,7 +159,7 @@ export function PricingSection() {
     const plan = PLANS.find((p) => p.id === selectedPlan)
     if (!plan) return
 
-    const discountedPrice = getDiscountedTotal(plan.priceValue)
+    const discountedPrice = getDiscountedPrice(plan)
     const saved = plan.priceValue - discountedPrice
 
     toast.success('Payment gateway opening...', {
@@ -148,6 +174,7 @@ export function PricingSection() {
 
   // Checkout modal for selected plan
   const checkoutPlan = PLANS.find((p) => p.id === selectedPlan)
+  const checkoutDiscountedPrice = checkoutPlan ? getDiscountedPrice(checkoutPlan) : 0
 
   return (
     <section className="px-4 py-4">
@@ -172,9 +199,7 @@ export function PricingSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLANS.map((plan, index) => {
-          const discountedPrice = appliedCoupon && plan.priceValue > 0
-            ? getDiscountedTotal(plan.priceValue)
-            : plan.priceValue
+          const discountedPrice = getDiscountedPrice(plan)
           const hasDiscount = appliedCoupon && plan.priceValue > 0 && discountedPrice < plan.priceValue
 
           return (
@@ -298,7 +323,7 @@ export function PricingSection() {
                 onClick={handleCheckout}
                 className="w-full bg-gradient-to-r from-[#D4AF37] to-[#4169E1] text-white font-bold h-12 text-base shadow-lg hover:opacity-90 transition-opacity"
               >
-                Pay ₹{getDiscountedTotal(checkoutPlan.priceValue)} Now
+                Pay ₹{checkoutDiscountedPrice} Now
               </Button>
 
               <button
