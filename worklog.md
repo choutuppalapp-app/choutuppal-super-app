@@ -141,3 +141,27 @@ Stage Summary:
 - Fix: Replaced with Zustand + persist middleware — state in JS memory, localStorage as write-through persistence
 - All 5 consumer components verified compatible (same destructuring API)
 - localStorage key changed from choutuppal_coupons/choutuppal_applied_coupon to choutuppal_coupon_store (persist middleware uses single key)
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Complete rewrite of 4 files to permanently fix infinite loop, hydration mismatch, and maximum update depth errors
+
+Work Log:
+- COMPLETELY REWROTE use-coupon-store.ts: Zustand + persist middleware (no useSyncExternalStore, no localStorage reads during render)
+- Added useShallow selector hooks: useCouponData(), useCouponActions(), useAppliedCoupon(), useCoupons()
+- All consumers MUST use selector hooks, never useCouponStore() directly
+- COMPLETELY REWROTE hero-section.tsx: Removed ALL Framer Motion, static divs on SSR, CSS animations on client, max-h-[300px] always enforced
+- COMPLETELY REWROTE spin-wheel.tsx: CSS rotation instead of Framer Motion, useCouponActions() selector, useMounted() guard
+- COMPLETELY REWROTE login-modal.tsx: Removed ALL Framer Motion, CSS transitions only, useMounted() guard, solid white bg
+- Created use-mounted.ts hook using useSyncExternalStore (ESLint-safe, no setState in useEffect)
+- Updated apply-coupon.tsx: uses useAppliedCoupon() and useCouponActions() selector hooks
+- Updated pricing-section.tsx: uses useAppliedCoupon() selector, no motion.div wrappers
+- Updated coupon-management.tsx: uses useCouponData() and useCouponActions() selector hooks
+- Lint passes clean, dev server compiles successfully
+
+Stage Summary:
+- Error 1 (Infinite Loop): Fixed by Zustand + persist middleware. State in JS memory, localStorage only for persistence. useShallow for all object/array selectors.
+- Error 2 (Maximum Update Depth): Fixed by removing Framer Motion from spin-wheel and login-modal (was cascading from store re-renders). CSS transitions replace motion animations.
+- Error 3 (Hydration Mismatch): Fixed by removing ALL Framer Motion from hero-section. Static HTML on SSR, CSS animations only on client via useMounted() guard. max-h-[300px] always present in className.
+- useMounted hook uses useSyncExternalStore pattern (server returns false, client returns true) — no setState in useEffect, ESLint-safe.

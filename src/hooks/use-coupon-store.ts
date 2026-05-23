@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,7 +12,7 @@ export interface Coupon {
   discountType: 'percentage' | 'flat'
   discountValue: number
   minimumPurchase: number
-  expiryDate: string // ISO date string
+  expiryDate: string
   maxUsage: number
   currentUsage: number
   isActive: boolean
@@ -23,11 +24,11 @@ export interface AppliedCoupon {
   code: string
   discountType: 'percentage' | 'flat'
   discountValue: number
-  discountAmount: number // actual saved amount
+  discountAmount: number
   minimumPurchase: number
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helper ───────────────────────────────────────────────────────────────────
 
 function generateCouponCode(length = 8): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -41,6 +42,7 @@ function generateCouponCode(length = 8): string {
 // ─── Store Interface ──────────────────────────────────────────────────────────
 
 interface CouponState {
+  // Data
   coupons: Coupon[]
   appliedCoupon: AppliedCoupon | null
 
@@ -51,30 +53,35 @@ interface CouponState {
   toggleCouponStatus: (id: string) => void
   applyCoupon: (code: string, cartTotal: number) => { success: boolean; error?: string; coupon?: AppliedCoupon }
   removeAppliedCoupon: () => void
-  calculateDiscount: (cartTotal: number) => number
   getDiscountedTotal: (cartTotal: number) => number
   generateCode: () => string
 }
 
-// ─── Zustand Store with persist middleware ────────────────────────────────────
+// ─── Zustand Store ────────────────────────────────────────────────────────────
 //
-// WHY THIS FIXES THE INFINITE LOOP:
+// ARCHITECTURE DECISION: WHY ZUSTAND + persist
 //
-// The previous implementation used useSyncExternalStore with localStorage.
-// useSyncExternalStore requires getSnapshot to return the SAME reference
-// when data hasn't changed. But JSON.parse(localStorage.getItem(...))
-// ALWAYS creates new objects, causing React to detect "changed state" and
-// re-render infinitely.
+// PREVIOUS BUGS (useSyncExternalStore + localStorage):
+//   useSyncExternalStore's getSnapshot MUST return the exact same JS object
+//   reference when data hasn't changed. JSON.parse(localStorage.getItem(...))
+//   ALWAYS creates new objects. This caused an infinite re-render loop.
 //
-// Zustand's persist middleware solves this because:
-// 1. React state lives in the Zustand store (JavaScript memory), NOT localStorage
-// 2. getSnapshot returns a reference to the store's internal state object
-// 3. That reference only changes when set() is called with new data
-// 4. localStorage is used as a PERSISTENCE layer only — never read during render
-// 5. Hydration from localStorage happens asynchronously after first render
-//    (no hydration mismatch, no synchronous setState in effect)
+//   Module-level caching (comparing raw strings) still failed in React 18
+//   concurrent mode and Strict Mode double-invocation.
 //
-// Result: Zero infinite loops. Stable references. SSR-safe.
+//   useState + useEffect + custom events still had edge cases with
+//   synchronous setState in effects and cross-tab sync.
+//
+// WHY ZUSTAND + persist FIXES THIS:
+//   1. State lives in JS memory (Zustand store). getSnapshot returns a
+//      reference to the SAME internal state object until set() is called.
+//   2. localStorage is ONLY a write-through persistence layer — never read
+//      during render.
+//   3. Hydration from localStorage happens asynchronously after first render,
+//      so server and client initial renders match (both empty).
+//   4. No useSyncExternalStore, no getSnapshot, no ref tricks needed.
+//   5. useShallow ensures selectors that return objects/arrays compare by
+//      value, not reference — no false-positive re-renders.
 
 export const useCouponStore = create<CouponState>()(
   persist(
@@ -82,7 +89,7 @@ export const useCouponStore = create<CouponState>()(
       coupons: [],
       appliedCoupon: null,
 
-      // ─── CRUD Actions ────────────────────────────────────────────────────
+      // ─── CRUD ───────────────────────────────────────────────────────────
 
       addCoupon: (data) => {
         const newCoupon: Coupon = {
@@ -122,30 +129,19 @@ export const useCouponStore = create<CouponState>()(
         }))
       },
 
-      // ─── Apply / Remove Coupon ──────────────────────────────────────────
+      // ─── Apply / Remove ─────────────────────────────────────────────────
 
       applyCoupon: (code, cartTotal) => {
         const upperCode = code.toUpperCase().trim()
         const allCoupons = get().coupons
         const coupon = allCoupons.find((c) => c.code === upperCode)
 
-        if (!coupon) {
-          return { success: false, error: 'Invalid coupon code' }
-        }
-        if (!coupon.isActive) {
-          return { success: false, error: 'This coupon is no longer active' }
-        }
-        if (new Date(coupon.expiryDate) < new Date()) {
-          return { success: false, error: 'This coupon has expired' }
-        }
-        if (coupon.currentUsage >= coupon.maxUsage) {
-          return { success: false, error: 'This coupon has reached its usage limit' }
-        }
-        if (coupon.minimumPurchase > 0 && cartTotal < coupon.minimumPurchase) {
-          return { success: false, error: `Minimum purchase of ₹${coupon.minimumPurchase} required` }
-        }
+        if (!coupon) return { success: false, error: 'Invalid coupon code' }
+        if (!coupon.isActive) return { success: false, error: 'This coupon is no longer active' }
+        if (new Date(coupon.expiryDate) < new Date()) return { success: false, error: 'This coupon has expired' }
+        if (coupon.currentUsage >= coupon.maxUsage) return { success: false, error: 'This coupon has reached its usage limit' }
+        if (coupon.minimumPurchase > 0 && cartTotal < coupon.minimumPurchase) return { success: false, error: `Minimum purchase of ₹${coupon.minimumPurchase} required` }
 
-        // Calculate discount
         let discountAmount: number
         if (coupon.discountType === 'percentage') {
           discountAmount = Math.round((cartTotal * coupon.discountValue) / 100)
@@ -163,7 +159,7 @@ export const useCouponStore = create<CouponState>()(
           minimumPurchase: coupon.minimumPurchase,
         }
 
-        // Increment usage count and update both coupons and appliedCoupon atomically
+        // Single atomic set — updates coupons AND appliedCoupon together
         set({
           coupons: allCoupons.map((c) =>
             c.code === upperCode ? { ...c, currentUsage: c.currentUsage + 1 } : c
@@ -178,22 +174,15 @@ export const useCouponStore = create<CouponState>()(
         set({ appliedCoupon: null })
       },
 
-      calculateDiscount: (_cartTotal: number) => {
-        return get().appliedCoupon?.discountAmount || 0
-      },
-
       getDiscountedTotal: (cartTotal: number) => {
         const discount = get().appliedCoupon?.discountAmount || 0
         return Math.max(0, cartTotal - discount)
       },
 
-      generateCode: () => {
-        return generateCouponCode()
-      },
+      generateCode: () => generateCouponCode(),
     }),
     {
-      name: 'choutuppal_coupon_store', // localStorage key
-      // Only persist these fields (not the action functions)
+      name: 'choutuppal_coupon_store',
       partialize: (state) => ({
         coupons: state.coupons,
         appliedCoupon: state.appliedCoupon,
@@ -201,3 +190,45 @@ export const useCouponStore = create<CouponState>()(
     }
   )
 )
+
+// ─── Selector Hooks ───────────────────────────────────────────────────────────
+//
+// ALL consumers MUST use these pre-built selector hooks instead of calling
+// useCouponStore() directly. This ensures useShallow is always used for
+// object/array selections, preventing infinite loops from new references.
+//
+// RULE: Never do   const { coupons, appliedCoupon } = useCouponStore()
+//        Always do  const { coupons, appliedCoupon } = useCouponData()
+
+export function useCouponData() {
+  return useCouponStore(
+    useShallow((state) => ({
+      coupons: state.coupons,
+      appliedCoupon: state.appliedCoupon,
+    }))
+  )
+}
+
+export function useCouponActions() {
+  return useCouponStore(
+    useShallow((state) => ({
+      addCoupon: state.addCoupon,
+      updateCoupon: state.updateCoupon,
+      deleteCoupon: state.deleteCoupon,
+      toggleCouponStatus: state.toggleCouponStatus,
+      applyCoupon: state.applyCoupon,
+      removeAppliedCoupon: state.removeAppliedCoupon,
+      getDiscountedTotal: state.getDiscountedTotal,
+      generateCode: state.generateCode,
+    }))
+  )
+}
+
+// Single-field selectors — these return primitives, so useShallow isn't needed
+export function useAppliedCoupon() {
+  return useCouponStore((state) => state.appliedCoupon)
+}
+
+export function useCoupons() {
+  return useCouponStore((state) => state.coupons)
+}

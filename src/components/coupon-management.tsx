@@ -27,7 +27,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { GlassCard } from '@/components/glass-card'
-import { useCouponStore, type Coupon } from '@/hooks/use-coupon-store'
+import { useCouponData, useCouponActions, type Coupon } from '@/hooks/use-coupon-store'
 import { toast } from 'sonner'
 
 // ─── Animation Variants ────────────────────────────────────────────────────────
@@ -72,9 +72,8 @@ const EMPTY_FORM: CouponFormData = {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function CouponManagement() {
-  const {
-    coupons, addCoupon, updateCoupon, deleteCoupon, toggleCouponStatus, generateCode,
-  } = useCouponStore()
+  const { coupons } = useCouponData()
+  const { addCoupon, updateCoupon, deleteCoupon, toggleCouponStatus, generateCode } = useCouponActions()
 
   // Form state
   const [showForm, setShowForm] = useState(false)

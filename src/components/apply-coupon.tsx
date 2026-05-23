@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Ticket, Check, X, Loader2, Tag, Sparkles } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useCouponStore } from '@/hooks/use-coupon-store'
+import { useAppliedCoupon, useCouponActions } from '@/hooks/use-coupon-store'
 import { toast } from 'sonner'
 
 interface ApplyCouponProps {
@@ -14,17 +14,9 @@ interface ApplyCouponProps {
   className?: string
 }
 
-/**
- * ApplyCoupon — User-facing coupon input component.
- *
- * - Text input + "Apply" button
- * - Case-insensitive (converts to uppercase)
- * - Shows success/error toasts
- * - Displays applied coupon with discount amount
- * - "Remove" button to clear applied coupon
- */
 export function ApplyCoupon({ cartTotal, onCouponApplied, onCouponRemoved, className }: ApplyCouponProps) {
-  const { applyCoupon, removeAppliedCoupon, appliedCoupon } = useCouponStore()
+  const appliedCoupon = useAppliedCoupon()
+  const { applyCoupon, removeAppliedCoupon } = useCouponActions()
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -35,7 +27,6 @@ export function ApplyCoupon({ cartTotal, onCouponApplied, onCouponRemoved, class
     }
 
     setLoading(true)
-    // Brief delay for UX
     await new Promise((r) => setTimeout(r, 400))
 
     const result = applyCoupon(code, cartTotal)
@@ -59,7 +50,6 @@ export function ApplyCoupon({ cartTotal, onCouponApplied, onCouponRemoved, class
     toast.info('Coupon removed')
   }
 
-  // Show applied coupon state
   if (appliedCoupon) {
     return (
       <div className={`rounded-xl border border-green-200 bg-green-50/60 p-4 ${className || ''}`}>
@@ -93,7 +83,6 @@ export function ApplyCoupon({ cartTotal, onCouponApplied, onCouponRemoved, class
     )
   }
 
-  // Show input form
   return (
     <div className={`rounded-xl border border-gray-200 bg-white p-4 ${className || ''}`}>
       <div className="flex items-center gap-2 mb-3">
@@ -127,10 +116,8 @@ export function ApplyCoupon({ cartTotal, onCouponApplied, onCouponRemoved, class
 
 /**
  * CouponDiscountSummary — Shows pricing breakdown with coupon discount.
- * Use this in checkout flows to display the discounted total.
- *
- * Uses appliedCoupon directly (no getDiscountedTotal) to avoid
- * any potential for unstable function references causing re-renders.
+ * Uses useAppliedCoupon() selector (returns a primitive-friendly value).
+ * Computes total directly instead of using getDiscountedTotal function.
  */
 export function CouponDiscountSummary({
   originalTotal,
@@ -139,7 +126,7 @@ export function CouponDiscountSummary({
   originalTotal: number
   className?: string
 }) {
-  const { appliedCoupon } = useCouponStore()
+  const appliedCoupon = useAppliedCoupon()
   const discount = appliedCoupon?.discountAmount ?? 0
   const finalTotal = Math.max(0, originalTotal - discount)
 
