@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { OptimizedImage } from '@/components/optimized-image'
 
+/**
+ * HeroSection — COMPLETE REWRITE
+ *
+ * RULES ENFORCED:
+ * 1. Hero container: relative overflow-hidden max-h-[300px] — NEVER exceeds 300px
+ * 2. <Image fill> inside it: style={{ objectFit: 'cover' }} — proper cropping
+ * 3. Content padding reduced to fit within 300px
+ * 4. No py-12/py-16/py-20 — constrained height
+ */
 export function HeroSection() {
   const { navigateTo, siteSettings, currentCity, themePrimary, themeSecondary } = useAppStore()
 
@@ -20,12 +29,12 @@ export function HeroSection() {
   // Hero image: prefer city-specific, then site settings, then null
   const heroImageUrl = currentCity.heroImageUrl || siteSettings.heroImageUrl || null
 
-  // Badge text: show brand-specific for non-Choutuppal, Telugu for Choutuppal
+  // Badge text
   const badgeText = currentCity.slug === 'choutuppal'
     ? 'మన ఊరి సూపర్ యాప్'
     : `${brandName} — Your City Super App`
 
-  // Headline: Telugu for Choutuppal, English for others
+  // Headline
   const isChoutuppal = currentCity.slug === 'choutuppal'
   const headlinePrimary = isChoutuppal
     ? 'చౌటుప్పల్ కి స్వాగతం!'
@@ -34,14 +43,14 @@ export function HeroSection() {
     ? 'ఇది మన ఊరి డిజిటల్ విప్లవం.'
     : 'Your city\'s digital revolution starts here.'
 
-  // Description: Telugu for Choutuppal, English for others
+  // Description
   const description = isChoutuppal
-    ? 'అత్యుత్తమ లోకల్ షాపులు, ప్రీమియం రియల్ ఎస్టేట్ డీల్స్, మరియు తాజా స్థానిక వార్తలు... అన్నీ ఇప్పుడు ఒకే యాప్‌లో, మీ అరచేతిలో!'
-    : `Discover the best local shops, premium real estate deals, and the latest city news — all in one app, right at your fingertips!`
+    ? 'అత్యుత్తమ లోకల్ షాపులు, ప్రీమియం రియల్ ఎస్టేట్ డీల్స్, మరియు తాజా స్థానిక వార్తలు... అన్నీ ఇప్పుడు ఒకే యాప్‌లో!'
+    : `Discover the best local shops, premium real estate deals, and the latest city news — all in one app!`
 
   return (
-    <section className="relative overflow-hidden mt-4">
-      {/* Background: City hero image OR beautiful gradient fallback */}
+    <section className="relative overflow-hidden max-h-[300px] mt-4">
+      {/* Background: City hero image OR gradient fallback */}
       {heroImageUrl ? (
         <div className="absolute inset-0">
           <OptimizedImage
@@ -64,91 +73,78 @@ export function HeroSection() {
             className="absolute inset-0"
             style={{ background: `radial-gradient(ellipse at top right, ${primary}40, transparent 60%)` }}
           />
-          <div
-            className="absolute inset-0"
-            style={{ background: `radial-gradient(ellipse at bottom left, ${secondary}33, transparent 60%)` }}
-          />
         </>
       )}
 
       {/* Decorative floating orbs */}
       <motion.div
-        className="absolute top-10 right-10 w-32 h-32 rounded-full bg-white/10 blur-3xl"
+        className="absolute top-4 right-8 w-20 h-20 rounded-full bg-white/10 blur-2xl"
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
-      <motion.div
-        className="absolute bottom-10 left-10 w-40 h-40 rounded-full bg-white/10 blur-3xl"
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.2, 0.4] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      />
 
-      {/* Content — text is always white/light for contrast on both image & gradient */}
-      <div className="relative px-4 py-12 sm:py-16 md:py-20 max-w-4xl mx-auto">
+      {/* Content — constrained to fit in max-h-[300px] */}
+      <div className="relative px-4 py-8 sm:py-10 max-w-4xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
           className="text-center"
         >
           {/* Sparkle badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-md mb-6"
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-md mb-3"
           >
-            <Sparkles className="size-4" style={{ color: primary }} />
-            <span className="text-sm font-medium text-white">
-              {badgeText}
-            </span>
+            <Sparkles className="size-3.5" style={{ color: primary }} />
+            <span className="text-xs font-medium text-white">{badgeText}</span>
           </motion.div>
 
-          {/* Headline */}
+          {/* Headline — smaller text to fit in 300px */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
-            className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4"
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="text-2xl sm:text-3xl font-bold leading-tight mb-2"
           >
-            <span className="text-white">
-              {headlinePrimary}
-            </span>
+            <span className="text-white">{headlinePrimary}</span>
             <br />
             <span className={heroImageUrl ? 'text-gray-200' : 'text-white/90'}>
               {headlineSecondary}
             </span>
           </motion.h1>
 
-          {/* Description */}
+          {/* Description — compact */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.7 }}
-            className="text-base sm:text-lg text-white/80 max-w-2xl mx-auto mb-8 leading-relaxed"
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-sm text-white/80 max-w-xl mx-auto mb-4 leading-relaxed line-clamp-2"
           >
             {description}
           </motion.p>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons — compact */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.7 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-2"
           >
             <motion.div whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={() => navigateTo('explore')}
-                size="lg"
-                className="text-white font-bold px-8 py-3 shadow-lg text-base min-h-[44px]"
+                size="sm"
+                className="text-white font-bold px-6 py-2 shadow-lg text-sm min-h-[40px]"
                 style={{
                   background: `linear-gradient(to right, ${primary}, ${secondary})`,
-                  boxShadow: `0 10px 15px -3px ${primary}30`,
+                  boxShadow: `0 6px 10px -3px ${primary}30`,
                 }}
               >
                 Explore Now
-                <ChevronRight className="size-5 ml-1" />
+                <ChevronRight className="size-4 ml-1" />
               </Button>
             </motion.div>
             <motion.div whileTap={{ scale: 0.95 }}>
@@ -156,9 +152,9 @@ export function HeroSection() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white/20 backdrop-blur text-white border border-white/40 font-bold px-8 py-3 rounded-xl shadow-md hover:bg-white/30 transition-colors text-base min-h-[44px]"
+                className="inline-flex items-center justify-center gap-2 bg-white/20 backdrop-blur text-white border border-white/40 font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-white/30 transition-colors text-sm min-h-[40px]"
               >
-                <MessageCircle className="size-5" />
+                <MessageCircle className="size-4" />
                 Chat on WhatsApp
               </a>
             </motion.div>

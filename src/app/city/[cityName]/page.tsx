@@ -60,22 +60,13 @@ import { Footer } from '@/components/footer'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
 import { ListingDetailSkeleton, DashboardHeaderSkeleton } from '@/components/skeleton-loaders'
 
+/**
+ * HomeView — ONLY rendered when currentView === 'home'
+ * Completely separate from any other view.
+ */
 function HomeView() {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4 md:space-y-8"
-    >
-      {/* ─── STRICT LAYOUT ORDER ───
-          1. Stories Row (z-20, always visible)
-          2. Banner Ads (z-10, max 250px)
-          3. Announcement Ticker
-          4. Hero Section
-          5. Rest of content
-      */}
+    <div className="space-y-4 md:space-y-8">
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
       <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
@@ -90,7 +81,7 @@ function HomeView() {
       <ErrorBoundary name="TestimonialsSection"><TestimonialsSection /></ErrorBoundary>
       <ErrorBoundary name="PricingSection"><PricingSection /></ErrorBoundary>
       <ErrorBoundary name="BecomeAdminCta"><BecomeAdminCta /></ErrorBoundary>
-    </motion.div>
+    </div>
   )
 }
 
@@ -120,10 +111,10 @@ function ProtectedDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+        <div className="text-center">
           <p className="text-gray-500 mb-3">Please sign in to access your dashboard</p>
           <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In</button>
-        </motion.div>
+        </div>
       </div>
     )
   }
@@ -158,10 +149,10 @@ function ProtectedAdmin() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+        <div className="text-center">
           <p className="text-gray-500 mb-3">Please sign in as admin to access this page</p>
           <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In as Admin</button>
-        </motion.div>
+        </div>
       </div>
     )
   }
@@ -210,10 +201,10 @@ function ProtectedSuperAdmin() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+        <div className="text-center">
           <p className="text-gray-500 mb-3">Please sign in as Super Admin to access this page</p>
           <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In as Super Admin</button>
-        </motion.div>
+        </div>
       </div>
     )
   }
@@ -237,6 +228,18 @@ function ProtectedSuperAdmin() {
   return <SuperAdminSettings />
 }
 
+/**
+ * CityPage — COMPLETE REWRITE of view routing
+ *
+ * RULES ENFORCED:
+ * 1. Use `currentView` from Zustand store as the SOLE source of truth
+ * 2. Each view is rendered with a UNIQUE KEY based on currentView
+ *    so React completely unmounts the old view and mounts the new one
+ * 3. AnimatePresence mode="wait" ensures exit before enter
+ * 4. If currentView === 'home', ONLY <HomeView /> is in the DOM
+ * 5. If currentView === 'news', ONLY <NewsView /> is in the DOM
+ * 6. HomeView is NEVER rendered alongside any other view
+ */
 export default function CityPage() {
   const params = useParams()
   const cityName = params.cityName as string
@@ -261,7 +264,6 @@ export default function CityPage() {
           const data = await res.json()
           const cities = Array.isArray(data) ? data : (data?.data || [])
           setAvailableCities(cities)
-          // If the URL city matches one in the DB, use its full data
           const match = cities.find((c: { slug: string }) => c.slug === cityName)
           if (match) {
             setCity(match.slug, match.name)
@@ -298,24 +300,46 @@ export default function CityPage() {
     } catch { /* non-critical */ }
   }, [currentView, currentCity.brandName])
 
+  /**
+   * renderView — STRICT one-to-one mapping.
+   * Each case returns EXACTLY ONE component with a unique key.
+   * The HomeView is ONLY rendered when currentView === 'home'.
+   * The previous view is COMPLETELY removed from the DOM.
+   */
   const renderView = () => {
     switch (currentView) {
-      case 'home': return <HomeView />
-      case 'explore': return <ErrorBoundary name="ExploreView"><ExploreView /></ErrorBoundary>
-      case 'news': return <ErrorBoundary name="NewsView"><NewsView /></ErrorBoundary>
-      case 'listing': return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
-      case 'dashboard': return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
-      case 'admin': return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
-      case 'super-admin': return <ErrorBoundary name="ProtectedSuperAdmin"><ProtectedSuperAdmin /></ErrorBoundary>
-      case 'search': return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
-      case 'blog': return <ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary>
-      case 'blog-detail': return <ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary>
-      case 'community': return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
-      case 'profile': return <ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary>
-      case 'shorts': return <ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary>
-      case 'learn': return <ErrorBoundary name="LearnView"><LearnView /></ErrorBoundary>
-      case 'video-player': return <ErrorBoundary name="VideoPlayerView"><VideoPlayerView /></ErrorBoundary>
-      default: return <HomeView />
+      case 'home':
+        return <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><HomeView /></motion.div>
+      case 'explore':
+        return <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ExploreView"><ExploreView /></ErrorBoundary></motion.div>
+      case 'news':
+        return <motion.div key="news" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="NewsView"><NewsView /></ErrorBoundary></motion.div>
+      case 'listing':
+        return <motion.div key="listing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary></motion.div>
+      case 'dashboard':
+        return <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary></motion.div>
+      case 'admin':
+        return <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary></motion.div>
+      case 'super-admin':
+        return <motion.div key="super-admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProtectedSuperAdmin"><ProtectedSuperAdmin /></ErrorBoundary></motion.div>
+      case 'search':
+        return <motion.div key="search" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary></motion.div>
+      case 'blog':
+        return <motion.div key="blog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary></motion.div>
+      case 'blog-detail':
+        return <motion.div key="blog-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary></motion.div>
+      case 'community':
+        return <motion.div key="community" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary></motion.div>
+      case 'profile':
+        return <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary></motion.div>
+      case 'shorts':
+        return <motion.div key="shorts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary></motion.div>
+      case 'learn':
+        return <motion.div key="learn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="LearnView"><LearnView /></ErrorBoundary></motion.div>
+      case 'video-player':
+        return <motion.div key="video-player" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ErrorBoundary name="VideoPlayerView"><VideoPlayerView /></ErrorBoundary></motion.div>
+      default:
+        return <motion.div key="home-default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><HomeView /></motion.div>
     }
   }
 
@@ -334,7 +358,9 @@ export default function CityPage() {
     <div className="w-full min-h-full flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-3 md:py-6 pb-20 md:pb-6">
         <ErrorBoundary name="MainContent">
-          <AnimatePresence mode="wait">{renderView()}</AnimatePresence>
+          <AnimatePresence mode="wait">
+            {renderView()}
+          </AnimatePresence>
         </ErrorBoundary>
       </div>
       <ErrorBoundary name="Footer"><Footer /></ErrorBoundary>

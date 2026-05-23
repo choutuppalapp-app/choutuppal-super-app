@@ -106,7 +106,7 @@ export function Header({ className }: HeaderProps) {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm ${className || ''}`}
+      className={`sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm ${className || ''}`}
     >
       {/* ═══ DESKTOP HEADER ═══ */}
       <div className="hidden md:flex items-center justify-between h-14 px-6 max-w-7xl mx-auto">
