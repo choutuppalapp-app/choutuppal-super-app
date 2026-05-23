@@ -115,3 +115,29 @@ Stage Summary:
 - Fix: Module-level caching that compares raw localStorage strings and returns cached parsed results when unchanged
 - All 5 consuming components verified compatible with the rewritten hook
 - Custom events replace synthetic StorageEvents for more reliable same-tab notifications
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix infinite loop in use-coupon-store.ts permanently (second attempt — complete architecture change)
+
+Work Log:
+- Previous fix (module-level caching with useSyncExternalStore) still caused infinite loop — the getSnapshot stability requirement is too strict for localStorage-based state
+- Completely abandoned useSyncExternalStore approach
+- Rewrote use-coupon-store.ts as a proper Zustand store with persist middleware
+  - State lives in JavaScript memory (Zustand store), NOT localStorage
+  - localStorage is ONLY a persistence layer (read on mount, write on mutation)
+  - Zustand returns stable references automatically — no getSnapshot issues
+  - persist middleware handles hydration from localStorage asynchronously after first render
+  - No hydration mismatch (first render uses empty state, matching server)
+  - No synchronous setState in useEffect (persist handles this internally)
+- Updated pricing-section.tsx: useMemo for discountAmount and getDiscountedPrice, removed getDiscountedTotal dependency
+- Updated CouponDiscountSummary in apply-coupon.tsx: removed getDiscountedTotal, computes finalTotal directly from appliedCoupon
+- Removed useRef hack for getDiscountedTotal (was causing lint error about ref updates during render)
+- Lint passes clean, dev server compiles without errors
+
+Stage Summary:
+- Root cause: useSyncExternalStore + localStorage is fundamentally incompatible because JSON.parse creates new object references on every call, and getSnapshot MUST return the same reference when data hasn't changed
+- Fix: Replaced with Zustand + persist middleware — state in JS memory, localStorage as write-through persistence
+- All 5 consumer components verified compatible (same destructuring API)
+- localStorage key changed from choutuppal_coupons/choutuppal_applied_coupon to choutuppal_coupon_store (persist middleware uses single key)

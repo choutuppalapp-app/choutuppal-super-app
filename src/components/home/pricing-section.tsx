@@ -113,43 +113,35 @@ export function PricingSection() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 
   // ─── Memoized discount calculations ─────────────────────────────────────
-  // Compute discounted totals for each plan using useMemo so we don't
-  // recalculate on every render. The dependency is `appliedCoupon` which
-  // is now a stable reference from the fixed useCouponStore.
+  // Derive all discount values from appliedCoupon using useMemo.
+  // appliedCoupon is a stable reference from useState (not useSyncExternalStore),
+  // so useMemo will only recompute when the coupon actually changes.
 
   const discountAmount = useMemo(
     () => appliedCoupon?.discountAmount ?? 0,
     [appliedCoupon],
   )
 
-  const planDiscounts = useMemo(() => {
-    if (!appliedCoupon || discountAmount === 0) return new Map<string, number>()
-    const map = new Map<string, number>()
-    for (const plan of PLANS) {
-      if (plan.priceValue > 0) {
-        map.set(plan.id, Math.max(0, plan.priceValue - discountAmount))
-      }
-    }
-    return map
-  }, [appliedCoupon, discountAmount])
+  const getDiscountedPrice = useMemo(
+    () => (plan: PricingPlan): number => {
+      if (plan.priceValue <= 0 || discountAmount === 0) return plan.priceValue
+      return Math.max(0, plan.priceValue - discountAmount)
+    },
+    [discountAmount],
+  )
 
-  const getDiscountedPrice = (plan: PricingPlan): number => {
-    if (plan.priceValue <= 0 || !appliedCoupon || discountAmount === 0) return plan.priceValue
-    return planDiscounts.get(plan.id) ?? plan.priceValue
-  }
+  const hasActiveDiscount = discountAmount > 0 && !!appliedCoupon
 
   const handleSubscribe = (planId: string) => {
     if (!isAuthenticated) {
       setShowLoginModal(true)
       return
     }
-    // If plan is paid, show checkout with coupon
     const plan = PLANS.find((p) => p.id === planId)
     if (plan && plan.priceValue > 0) {
       setSelectedPlan(planId)
       return
     }
-    // Free plan — no checkout needed
     toast.success('Welcome! Your free listing is ready.')
     setTimeout(() => navigateTo('dashboard'), 1500)
   }
@@ -200,7 +192,7 @@ export function PricingSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLANS.map((plan, index) => {
           const discountedPrice = getDiscountedPrice(plan)
-          const hasDiscount = appliedCoupon && plan.priceValue > 0 && discountedPrice < plan.priceValue
+          const planHasDiscount = hasActiveDiscount && plan.priceValue > 0 && discountedPrice < plan.priceValue
 
           return (
             <motion.div
@@ -230,7 +222,7 @@ export function PricingSection() {
 
                 {/* Price */}
                 <div className="mb-2">
-                  {hasDiscount ? (
+                  {planHasDiscount ? (
                     <div>
                       <span className="text-sm text-gray-400 line-through">{plan.price}</span>
                       <span className="text-2xl font-bold text-green-600 ml-1">₹{discountedPrice}</span>

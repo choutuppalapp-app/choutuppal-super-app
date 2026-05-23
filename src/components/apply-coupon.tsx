@@ -128,6 +128,9 @@ export function ApplyCoupon({ cartTotal, onCouponApplied, onCouponRemoved, class
 /**
  * CouponDiscountSummary — Shows pricing breakdown with coupon discount.
  * Use this in checkout flows to display the discounted total.
+ *
+ * Uses appliedCoupon directly (no getDiscountedTotal) to avoid
+ * any potential for unstable function references causing re-renders.
  */
 export function CouponDiscountSummary({
   originalTotal,
@@ -136,9 +139,9 @@ export function CouponDiscountSummary({
   originalTotal: number
   className?: string
 }) {
-  const { appliedCoupon, getDiscountedTotal } = useCouponStore()
-  const discount = appliedCoupon?.discountAmount || 0
-  const finalTotal = getDiscountedTotal(originalTotal)
+  const { appliedCoupon } = useCouponStore()
+  const discount = appliedCoupon?.discountAmount ?? 0
+  const finalTotal = Math.max(0, originalTotal - discount)
 
   return (
     <div className={`space-y-2 ${className || ''}`}>
