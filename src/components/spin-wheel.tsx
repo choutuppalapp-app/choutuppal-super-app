@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, X, Award } from 'lucide-react'
+import { Sparkles, Award, Ticket, Copy } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -12,17 +12,26 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
+import { useCouponStore } from '@/hooks/use-coupon-store'
 import { toast } from 'sonner'
 
-const SEGMENTS = [
-  { label: '5 Coins', value: 5, color: '#D4AF37' },
-  { label: '10 Coins', value: 10, color: '#4169E1' },
-  { label: '2 Coins', value: 2, color: '#E8B84B' },
-  { label: '50 Coins', value: 50, color: '#FF6B35' },
-  { label: '1 Coin', value: 1, color: '#7CB342' },
-  { label: '20 Coins', value: 20, color: '#8E24AA' },
-  { label: '3 Coins', value: 3, color: '#00897B' },
-  { label: 'Try Again', value: 0, color: '#9E9E9E' },
+interface SpinSegment {
+  label: string
+  value: number
+  color: string
+  type: 'coins' | 'coupon' | 'none'
+  couponDiscount?: number // percentage for coupon wins
+}
+
+const SEGMENTS: SpinSegment[] = [
+  { label: '5 Coins', value: 5, color: '#D4AF37', type: 'coins' },
+  { label: '10% Off', value: 0, color: '#E74C3C', type: 'coupon', couponDiscount: 10 },
+  { label: '2 Coins', value: 2, color: '#E8B84B', type: 'coins' },
+  { label: '50 Coins', value: 50, color: '#FF6B35', type: 'coins' },
+  { label: '25% Off', value: 0, color: '#9B59B6', type: 'coupon', couponDiscount: 25 },
+  { label: '20 Coins', value: 20, color: '#8E24AA', type: 'coins' },
+  { label: '3 Coins', value: 3, color: '#00897B', type: 'coins' },
+  { label: 'Try Again', value: 0, color: '#9E9E9E', type: 'none' },
 ]
 
 const SEGMENT_COUNT = SEGMENTS.length
@@ -31,9 +40,11 @@ const SEGMENT_ANGLE = 360 / SEGMENT_COUNT
 export function SpinWheel() {
   const { showSpinWheel, setShowSpinWheel, currentUser, setCurrentUser } =
     useAppStore()
+  const { addCoupon } = useCouponStore()
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
-  const [result, setResult] = useState<number | null>(null)
+  const [result, setResult] = useState<SpinSegment | null>(null)
+  const [wonCouponCode, setWonCouponCode] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const drawWheel = useCallback(
@@ -101,19 +112,27 @@ export function SpinWheel() {
     [drawWheel]
   )
 
+  const handleCopyCoupon = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      toast.success('Coupon code copied to clipboard!', { description: `Use ${code} at checkout` })
+    }).catch(() => {
+      toast.info(`Your coupon code: ${code}`)
+    })
+  }
+
   const handleSpin = async () => {
     if (isSpinning) return
     setIsSpinning(true)
     setResult(null)
+    setWonCouponCode(null)
 
     // Calculate random result
     const winningIndex = Math.floor(Math.random() * SEGMENT_COUNT)
     const winningSegment = SEGMENTS[winningIndex]
 
-    // Calculate rotation: multiple full spins + landing on winning segment
-    // The pointer is at the top (270 degrees or -90 degrees)
+    // Calculate rotation
     const targetAngle = 360 - winningIndex * SEGMENT_ANGLE - SEGMENT_ANGLE / 2
-    const fullSpins = 5 + Math.floor(Math.random() * 3) // 5-7 full spins
+    const fullSpins = 5 + Math.floor(Math.random() * 3)
     const totalRotation = fullSpins * 360 + targetAngle
 
     setRotation((prev) => prev + totalRotation)
@@ -121,16 +140,35 @@ export function SpinWheel() {
     // Wait for spin animation
     setTimeout(async () => {
       setIsSpinning(false)
-      setResult(winningSegment.value)
+      setResult(winningSegment)
 
-      // Update coins
-      if (winningSegment.value > 0 && currentUser) {
+      if (winningSegment.type === 'coins' && winningSegment.value > 0 && currentUser) {
         setCurrentUser({
           ...currentUser,
           coinsBalance: currentUser.coinsBalance + winningSegment.value,
         })
         toast.success(`You won ${winningSegment.value} coins!`)
-      } else if (winningSegment.value === 0) {
+      } else if (winningSegment.type === 'coupon' && winningSegment.couponDiscount) {
+        // Generate a unique coupon for this spin win
+        const newCoupon = addCoupon({
+          discountType: 'percentage',
+          discountValue: winningSegment.couponDiscount,
+          minimumPurchase: 0,
+          expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+          maxUsage: 1,
+          isActive: true,
+          description: `Spin & Win: ${winningSegment.couponDiscount}% off!`,
+        })
+        setWonCouponCode(newCoupon.code)
+        toast.success(`🎉 You won ${winningSegment.couponDiscount}% off coupon!`, {
+          description: `Code: ${newCoupon.code} — copied to clipboard!`,
+          duration: 5000,
+        })
+        // Auto-copy to clipboard
+        try {
+          await navigator.clipboard.writeText(newCoupon.code)
+        } catch { /* non-critical */ }
+      } else if (winningSegment.type === 'none') {
         toast.info('Better luck next time! Spin again tomorrow.')
       }
 
@@ -149,14 +187,14 @@ export function SpinWheel() {
 
   return (
     <Dialog open={showSpinWheel} onOpenChange={setShowSpinWheel}>
-      <DialogContent className="bg-white/80 backdrop-blur-2xl border border-white/40 shadow-2xl max-w-sm">
+      <DialogContent className="bg-white border border-gray-200 shadow-2xl max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-[#D4AF37]">
             <Sparkles className="size-5" />
             Spin & Win!
           </DialogTitle>
           <DialogDescription>
-            Spin the wheel to earn coins and rewards
+            Spin the wheel to earn coins and discount coupons
           </DialogDescription>
         </DialogHeader>
 
@@ -191,19 +229,55 @@ export function SpinWheel() {
 
           {/* Result */}
           <AnimatePresence>
-            {result !== null && !isSpinning && (
+            {result && !isSpinning && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="mt-4 text-center"
+                className="mt-4 text-center w-full"
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37]/10 to-[#4169E1]/10 border border-[#D4AF37]/20">
-                  <Award className="size-5 text-[#D4AF37]" />
-                  <span className="font-semibold text-gray-800">
-                    {result > 0 ? `You won ${result} coins!` : 'Better luck next time!'}
-                  </span>
-                </div>
+                {result.type === 'coins' && result.value > 0 ? (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37]/10 to-[#4169E1]/10 border border-[#D4AF37]/20">
+                    <Award className="size-5 text-[#D4AF37]" />
+                    <span className="font-semibold text-gray-800">You won {result.value} coins!</span>
+                  </div>
+                ) : result.type === 'coupon' && wonCouponCode ? (
+                  <div className="rounded-xl border border-[#E74C3C]/30 bg-gradient-to-r from-[#E74C3C]/5 to-[#9B59B6]/5 p-4">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Ticket className="size-5 text-[#E74C3C]" />
+                      <span className="font-bold text-gray-800">{result.couponDiscount}% OFF Coupon!</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <code className="px-3 py-1.5 rounded-lg bg-[#4169E1]/10 text-[#4169E1] font-mono font-bold text-sm tracking-widest">
+                        {wonCouponCode}
+                      </code>
+                      <button
+                        onClick={() => handleCopyCoupon(wonCouponCode)}
+                        className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                        title="Copy code"
+                      >
+                        <Copy className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">Valid for 7 days · Apply at checkout</p>
+                    <Button
+                      onClick={() => {
+                        setShowSpinWheel(false)
+                        // Navigate to pricing so they can use the coupon
+                        toast.info('Apply your coupon on the Pricing Plans section!', { duration: 4000 })
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 text-[#4169E1] border-[#4169E1]/30 hover:bg-[#4169E1]/5"
+                    >
+                      Apply on Checkout →
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 border border-gray-200">
+                    <span className="font-medium text-gray-500">Better luck next time!</span>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

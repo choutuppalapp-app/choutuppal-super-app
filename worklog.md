@@ -65,3 +65,25 @@ Stage Summary:
 - NewsView featured image capped at max-h-[250px]
 - HeroSection still capped at max-h-[300px] as safety net
 - Login modal still has solid white card with dark overlay (from previous fix)
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Implement complete Coupon Code System
+
+Work Log:
+- Created `src/hooks/use-coupon-store.ts` — Hydration-safe coupon store using useSyncExternalStore + LocalStorage. Manages Coupon CRUD, apply/remove coupon, discount calculation, auto-code generation. Persists coupons and applied coupon state in LocalStorage.
+- Created `src/components/coupon-management.tsx` — Full admin coupon management UI with: Create Coupon Form (auto-generate code, discount type dropdown %/₹, discount value, min purchase, expiry date picker, max usage limit, active/inactive toggle, description), Coupons List Table (code with copy button, discount, expiry, usage progress bar, status toggle, edit/delete actions), Search/filter, Edit Dialog, Delete Confirmation Dialog.
+- Created `src/components/apply-coupon.tsx` — User-facing ApplyCoupon component (text input + Apply button, case-insensitive, success/error toasts, applied coupon display with remove button) and CouponDiscountSummary component (pricing breakdown with coupon discount).
+- Integrated "Coupons" tab into Admin View (`src/components/admin-view.tsx`) — Added Ticket icon import, CouponManagement import, new TabsTrigger "Coupons" after "Games" tab, new TabsContent with CouponManagement component.
+- Integrated ApplyCoupon into PricingSection (`src/components/home/pricing-section.tsx`) — Added coupon input above plan cards, checkout modal with CouponDiscountSummary for selected plan, price display shows discounted price with green strikethrough when coupon is applied.
+- Updated SpinWheel (`src/components/spin-wheel.tsx`) — Added coupon segments ("10% Off", "25% Off"), when user wins a coupon it auto-generates a unique code via addCoupon(), auto-copies to clipboard, shows coupon code with copy button and "Apply on Checkout" CTA button, coupon valid for 7 days with 1 usage limit.
+- All lint checks pass, dev server compiles cleanly.
+
+Stage Summary:
+- Complete Coupon Code System implemented with 6 new/modified files
+- Admin can create, edit, delete, toggle coupon status from Admin Panel
+- Users can apply coupons at checkout with real-time discount calculation
+- Spin & Win integration auto-generates and copies coupon codes
+- All data persisted in LocalStorage (coupon list + applied coupon state)
+- Case-insensitive coupon input, expiry/usage limit validation

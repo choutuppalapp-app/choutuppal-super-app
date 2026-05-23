@@ -18,7 +18,7 @@ import {
   PieChart as PieChartIcon, Clock, Ban, ShieldCheck,
   Landmark, UserPlus, Percent, Wallet, MapPin, IndianRupee,
   CreditCard, ArrowRightLeft, FileCheck, Pencil,
-  Music, Disc3,
+  Music, Disc3, Ticket,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -56,6 +56,7 @@ import { GlassCard } from '@/components/glass-card'
 import { MediaUploader } from '@/components/media-uploader'
 import { useAppStore } from '@/lib/store'
 import { sanitizeHtml } from '@/lib/sanitize'
+import { CouponManagement } from '@/components/coupon-management'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import {
@@ -1945,6 +1946,9 @@ export function AdminView() {
             </TabsTrigger>
             <TabsTrigger value="gamification" className="text-xs sm:text-sm">
               <Gamepad2 className="size-3.5 mr-1" />Games
+            </TabsTrigger>
+            <TabsTrigger value="coupons" className="text-xs sm:text-sm">
+              <Ticket className="size-3.5 mr-1" />Coupons
             </TabsTrigger>
             <TabsTrigger value="banners" className="text-xs sm:text-sm">
               <Megaphone className="size-3.5 mr-1" />Banners
@@ -4522,6 +4526,10 @@ export function AdminView() {
         {/* ═══════════════════════════════════════════════════════════════════════
             TAB 6: GAMIFICATION MANAGER
         ═══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="coupons" className="mt-4 space-y-4">
+          <CouponManagement />
+        </TabsContent>
+
         <TabsContent value="gamification" className="mt-4 space-y-4">
           {/* Coin Values Section */}
           <GlassCard>
