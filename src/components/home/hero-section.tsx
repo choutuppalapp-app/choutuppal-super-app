@@ -1,66 +1,78 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Sparkles, ChevronRight, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
-import { OptimizedImage } from '@/components/optimized-image'
 
 /**
  * HeroSection — COMPLETE REWRITE
  *
- * HYDRATION ERROR — ROOT CAUSES & PERMANENT FIXES:
+ * 5 STRICT RULES ENFORCED:
  *
- * ROOT CAUSE 1: useMounted() used useSyncExternalStore which returns
- *   false on server but TRUE on client's first render. Conditional rendering
- *   (orb, keyframes) created hydration mismatches.
- *   FIX: Do NOT conditionally render any DOM elements. Always render the
- *   exact same structure on server and client. The decorative orb and its
- *   animation are always present — the animation simply won't run on the
- *   server (no browser to process it), which is harmless.
+ * RULE 1: Client-Only Rendering (THE ONLY PERMANENT FIX)
+ *   Because Framer Motion in sibling components and complex gradients
+ *   break SSR, DO NOT render the Hero on the server.
+ *   if (!mounted) return <skeleton placeholder>
+ *   The skeleton is a SINGLE <section> tag with bg-gray-100 animate-pulse.
+ *   Server and client first render produce the EXACT same element.
+ *   The full hero only renders AFTER hydration on the client.
  *
- * ROOT CAUSE 2: themePrimary/themeSecondary came from the Zustand store.
- *   These could differ between server (defaults) and client (hydrated),
- *   causing inline style mismatches.
- *   FIX: Hardcode gradient colors as string constants. NEVER derive them
- *   from window, localStorage, or changing state.
+ * RULE 2: NEVER change DOM structure conditionally
+ *   No blur circles that swap positions with content containers.
+ *   The mounted version has a FIXED DOM tree that never changes.
  *
- * ROOT CAUSE 3: Structural DOM changes between server and client.
- *   Server rendered some classes, client changed them based on state.
- *   FIX: The DOM nesting, className, and style are EXACTLY the same on
- *   server and client. No conditional classes. No conditional elements.
+ * RULE 3: ZERO INLINE STYLES
+ *   ALL backgrounds use Tailwind CSS classes ONLY:
+ *     bg-gradient-to-br from-[#4169E1] to-[#D4AF37]
+ *     bg-[radial-gradient(ellipse_at_top_right,#4169E140,transparent_60%)]
+ *     bg-[radial-gradient(ellipse_at_bottom_left,#D4AF3733,transparent_60%)]
+ *   ZERO style={{ background: "..." }}, ZERO style={{ color: "..." }}.
+ *   NO OptimizedImage (it injects style={{ objectFit: 'cover' }}).
  *
- * RULES ENFORCED:
- * 1. Hero container: className="relative overflow-hidden max-h-[300px] mt-4" — ALWAYS
- * 2. NO Framer Motion — zero motion.div elements, ever
- * 3. NO useMounted / no conditional rendering — same DOM on server and client
- * 4. Hardcoded gradient colors — NOT from store, window, or localStorage
- * 5. Identical className and style on server and client first render
- * 6. Decorative elements always present — animation runs naturally on client
+ * RULE 4: ENFORCE max-h-[300px]
+ *   className="relative overflow-hidden max-h-[300px] mt-4" — ALWAYS.
+ *   Present on BOTH the skeleton and the full hero. NEVER removed.
+ *
+ * RULE 5: No Framer Motion
+ *   Zero <motion.div>, zero framer-motion imports.
  */
-
-// ─── HARDCODED GRADIENT COLORS ─────────────────────────────────────────────
-// These are string constants. They MUST NOT come from the Zustand store,
-// window, localStorage, or any changing state. This guarantees server and
-// client always render the exact same inline styles on first paint.
-const HERO_PRIMARY = '#D4AF37'    // Gold
-const HERO_SECONDARY = '#4169E1'  // Royal Blue
 
 export function HeroSection() {
   const { navigateTo, siteSettings, currentCity } = useAppStore()
 
-  // ─── DERIVED VALUES ──────────────────────────────────────────────────────
-  // These come from the Zustand store's default values. Since the store
-  // doesn't use persist middleware, the defaults are the same on server
-  // and client's first render. They only change AFTER useEffect fires
-  // in parent components, which is after hydration completes.
+  /* ─── RULE 1: CLIENT-ONLY RENDERING ────────────────────────────────────────
+   * Server:        mounted = false → skeleton placeholder (single <section>)
+   * Client first:  mounted = false → SAME skeleton (NO hydration mismatch!)
+   * After hydrate: mounted = true  → full hero (legitimate re-render)
+   */
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
+
+  /* ─── RULE 1: SKELETON PLACEHOLDER ────────────────────────────────────────
+   * A single <section> tag. Server and client render EXACTLY the same thing.
+   * No gradients, no text, no images — just a pulsing gray box.
+   * This COMPLETELY eliminates any hydration mismatch risk.
+   */
+  if (!mounted) {
+    return (
+      /* RULE 4: max-h-[300px] permanently enforced */
+      <section className="relative overflow-hidden max-h-[300px] mt-4 bg-gray-100 animate-pulse rounded-xl" />
+    )
+  }
+
+  // ─── Derived values (only computed after mount, safe from hydration)
   const cityName = currentCity.name || 'Choutuppal'
   const brandName = currentCity.brandName || 'Choutuppal App'
   const heroImageUrl = currentCity.heroImageUrl || siteSettings.heroImageUrl || null
-
   const whatsappNumber = siteSettings.whatsappSupportNumber || '919912353705'
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(brandName)}%20Team`
-
   const isChoutuppal = currentCity.slug === 'choutuppal'
+
   const badgeText = isChoutuppal
     ? 'మన ఊరి సూపర్ యాప్'
     : `${brandName} — Your City Super App`
@@ -74,47 +86,50 @@ export function HeroSection() {
     ? 'అత్యుత్తమ లోకల్ షాపులు, ప్రీమియం రియల్ ఎస్టేట్ డీల్స్, మరియు తాజా స్థానిక వార్తలు... అన్నీ ఇప్పుడు ఒకే యాప్‌లో!'
     : 'Discover the best local shops, premium real estate deals, and the latest city news — all in one app!'
 
+  /* ─── FULL HERO — client only, after hydration ────────────────────────────
+   * RULE 2: Fixed DOM structure. Overlay containers are absolute inset-0.
+   *         Content container is relative with padding. Never changes.
+   * RULE 3: ZERO inline styles. All Tailwind classes.
+   * RULE 4: max-h-[300px] on the section.
+   * RULE 5: Zero Framer Motion.
+   */
   return (
+    /* RULE 4: max-h-[300px] permanently enforced */
     <section className="relative overflow-hidden max-h-[300px] mt-4">
-      {/* ═══ BACKGROUND — IDENTICAL on server and client ═══ */}
+
+      {/* ─── Background ─── RULE 2: absolute inset-0, always */}
       {heroImageUrl ? (
         <div className="absolute inset-0">
-          <OptimizedImage
+          {/* RULE 3: className="object-cover" — NOT style={{ objectFit: 'cover' }} */}
+          <Image
             src={heroImageUrl}
             alt={`${cityName} Hero`}
             fill
-            style={{ objectFit: 'cover', objectPosition: 'center' }}
+            className="object-cover"
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
         </div>
       ) : (
         <>
-          {/* Main gradient — uses HARDCODED colors, never from store/state */}
-          <div
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${HERO_SECONDARY}, ${HERO_PRIMARY})` }}
-          />
-          {/* Accent glow — uses HARDCODED colors */}
-          <div
-            className="absolute inset-0"
-            style={{ background: `radial-gradient(ellipse at top right, ${HERO_PRIMARY}40, transparent 60%)` }}
-          />
+          {/* RULE 3: bg-gradient-to-br — NOT style={{ background: "linear-gradient(...)" }} */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4169E1] to-[#D4AF37]" />
+          {/* RULE 3: bg-[radial-gradient(...)] — NOT style={{ background: "radial-gradient(...)" }} */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,#4169E140,transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,#D4AF3733,transparent_60%)]" />
         </>
       )}
 
-      {/* ═══ DECORATIVE ORB — ALWAYS rendered (same DOM on server & client) ═══ */}
-      {/* The animation won't run on the server (no browser), but the div is present. */}
-      {/* This prevents hydration mismatch from conditional rendering. */}
-      <div
-        className="absolute top-4 right-8 w-20 h-20 rounded-full bg-white/10 blur-2xl hero-orb-animate"
-      />
+      {/* Decorative orb — RULE 2: absolute, fixed position, always in same DOM location */}
+      <div className="absolute top-4 right-8 w-20 h-20 rounded-full bg-white/10 blur-2xl animate-pulse" />
 
-      {/* ═══ CONTENT — always visible, NO conditional classes or styles ═══ */}
+      {/* ─── Content ─── RULE 2: relative, fixed position, always in same DOM location */}
       <div className="relative px-4 py-8 sm:py-10 max-w-4xl mx-auto">
         <div className="text-center">
-          {/* Sparkle badge */}
+          {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-md mb-3">
-            <Sparkles className="size-3.5" style={{ color: HERO_PRIMARY }} />
+            {/* RULE 3: text-[#D4AF37] — NOT style={{ color: "#D4AF37" }} */}
+            <Sparkles className="size-3.5 text-[#D4AF37]" />
             <span className="text-xs font-medium text-white">{badgeText}</span>
           </div>
 
@@ -132,16 +147,13 @@ export function HeroSection() {
             {description}
           </p>
 
-          {/* CTA Buttons — uses HARDCODED colors for gradient */}
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            {/* RULE 3: bg-gradient-to-r — NOT style={{ background: "linear-gradient(...)" }} */}
             <Button
               onClick={() => navigateTo('explore')}
               size="sm"
-              className="text-white font-bold px-6 py-2 shadow-lg text-sm min-h-[40px]"
-              style={{
-                background: `linear-gradient(to right, ${HERO_PRIMARY}, ${HERO_SECONDARY})`,
-                boxShadow: `0 6px 10px -3px ${HERO_PRIMARY}30`,
-              }}
+              className="text-white font-bold px-6 py-2 shadow-lg text-sm min-h-[40px] bg-gradient-to-r from-[#D4AF37] to-[#4169E1] hover:from-[#C9A533] hover:to-[#3b5fd4]"
             >
               Explore Now
               <ChevronRight className="size-4 ml-1" />
@@ -158,17 +170,6 @@ export function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* ═══ CSS KEYFRAMES — always present (no conditional rendering) ═══ */}
-      <style jsx>{`
-        @keyframes heroOrb {
-          0%, 100% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.2); opacity: 0.5; }
-        }
-        .hero-orb-animate {
-          animation: heroOrb 6s ease-in-out infinite;
-        }
-      `}</style>
     </section>
   )
 }
