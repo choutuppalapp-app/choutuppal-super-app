@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { AlertTriangle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 // Home sections
-import { HeroSection } from '@/components/home/hero-section'
 import { StoriesSection } from '@/components/home/stories-section'
 import { SosBanner } from '@/components/home/sos-banner'
 import { BannerAds } from '@/components/home/banner-ads'
@@ -23,41 +23,74 @@ import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-s
 import { AnnouncementTicker } from '@/components/home/announcement-ticker'
 import { BecomeAdminCta } from '@/components/home/become-admin-cta'
 
-// Views
+// Views (static imports)
 import { ListingView } from '@/components/listing-view'
 import { ExploreView } from '@/components/explore-view'
 import { NewsView } from '@/components/news-view'
 import { DashboardView } from '@/components/dashboard-view'
 import { AgentDashboard } from '@/components/agent-dashboard'
-import dynamic from 'next/dynamic'
-const AdminView = dynamic(() => import('@/components/admin-view').then((mod) => ({ default: mod.AdminView })), { ssr: false })
-const SuperAdminSettings = dynamic(() => import('@/components/super-admin-settings').then((mod) => ({ default: mod.SuperAdminSettings })), {
-  ssr: false,
-  loading: () => (
-    <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
-      <div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" />
-      <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />
-      <div className="h-80 w-full rounded-xl bg-gray-100 animate-pulse" />
-      <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
-    </div>
-  ),
-})
 import { SearchView } from '@/components/search-view'
 import { BlogView } from '@/components/blog-view'
 import { BlogDetailView } from '@/components/blog-detail-view'
-const CommunityFeed = dynamic(() => import('@/components/community-feed').then((mod) => ({ default: mod.CommunityFeed })), { ssr: false })
-const ProfileView = dynamic(() => import('@/components/profile-view').then((mod) => ({ default: mod.ProfileView })), { ssr: false })
 import { LearnView } from '@/components/learn-view'
 import { VideoPlayerView } from '@/components/video-player-view'
-const ManaShortsFeed = dynamic(() => import('@/components/shorts-feed').then((mod) => ({ default: mod.ManaShortsFeed })), {
-  ssr: false,
-  loading: () => <div className="w-full h-[500px] bg-gray-50 animate-pulse rounded-xl" />,
-})
 import { Footer } from '@/components/footer'
 
 // Auth & Polish
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
 import { ListingDetailSkeleton, DashboardHeaderSkeleton } from '@/components/skeleton-loaders'
+
+// ─── Dynamic imports (ssr: false) ─────────────────────────────────
+// All dynamic imports grouped AFTER all static imports.
+// This prevents Turbopack HMR module graph errors.
+
+const DynamicHeroSection = dynamic(
+  () => import('@/components/home/hero-section').then((mod) => ({ default: mod.HeroSection })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="relative overflow-hidden max-h-[300px] mt-4 bg-gray-100 animate-pulse rounded-xl" />
+    ),
+  }
+)
+
+const AdminView = dynamic(
+  () => import('@/components/admin-view').then((mod) => ({ default: mod.AdminView })),
+  { ssr: false }
+)
+
+const SuperAdminSettings = dynamic(
+  () => import('@/components/super-admin-settings').then((mod) => ({ default: mod.SuperAdminSettings })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
+        <div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" />
+        <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />
+        <div className="h-80 w-full rounded-xl bg-gray-100 animate-pulse" />
+        <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
+      </div>
+    ),
+  }
+)
+
+const CommunityFeed = dynamic(
+  () => import('@/components/community-feed').then((mod) => ({ default: mod.CommunityFeed })),
+  { ssr: false }
+)
+
+const ProfileView = dynamic(
+  () => import('@/components/profile-view').then((mod) => ({ default: mod.ProfileView })),
+  { ssr: false }
+)
+
+const ManaShortsFeed = dynamic(
+  () => import('@/components/shorts-feed').then((mod) => ({ default: mod.ManaShortsFeed })),
+  {
+    ssr: false,
+    loading: () => <div className="w-full h-[500px] bg-gray-50 animate-pulse rounded-xl" />,
+  }
+)
 
 /**
  * HomeView — ONLY rendered when currentView === 'home'.
@@ -70,7 +103,7 @@ function HomeView() {
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
       <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
-      <ErrorBoundary name="HeroSection"><HeroSection /></ErrorBoundary>
+      <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
       <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
       <ErrorBoundary name="SosBanner"><SosBanner /></ErrorBoundary>
       <ErrorBoundary name="DailySpinSection"><DailySpinSection /></ErrorBoundary>

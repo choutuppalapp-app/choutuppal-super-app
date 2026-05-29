@@ -60,7 +60,7 @@ export function DailySpinSection() {
           {['5', '10', '2', '50', '1', '20'].map((coins, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0 }}
+              initial={false}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 + i * 0.08, duration: 0.3 }}
               className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#4169E1]/10 border border-[#D4AF37]/30 flex items-center justify-center"

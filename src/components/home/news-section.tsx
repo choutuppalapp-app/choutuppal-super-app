@@ -85,7 +85,7 @@ export function NewsSection() {
     <section className="px-4 py-4">
       <div className="flex items-center justify-between mb-3">
         <motion.h2
-          initial={{ opacity: 0, x: -20 }}
+          initial={false}
           animate={{ opacity: 1, x: 0 }}
           className="text-lg font-bold text-gray-800"
         >
@@ -119,7 +119,7 @@ export function NewsSection() {
           {news.slice(0, 6).map((item, index) => (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.08, duration: 0.4 }}
             >

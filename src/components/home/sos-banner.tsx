@@ -53,7 +53,7 @@ export function SosBanner() {
                 key={contact.number}
                 href={`tel:${contact.number}`}
                 whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, x: 20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl ${contact.color} ${contact.hoverColor} text-white text-xs font-semibold shadow-sm transition-colors`}

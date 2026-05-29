@@ -59,7 +59,7 @@ export function MobileBottomNav() {
       {isDetailPage ? (
         <motion.div
           key="sticky-cta"
-          initial={{ y: 20, opacity: 0 }}
+          initial={false}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.2 }}
@@ -74,7 +74,7 @@ export function MobileBottomNav() {
       ) : (
         <motion.div
           key="bottom-nav"
-          initial={{ y: 10, opacity: 0 }}
+          initial={false}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 10, opacity: 0 }}
           transition={{ duration: 0.15 }}

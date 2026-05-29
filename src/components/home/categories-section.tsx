@@ -44,7 +44,7 @@ export function CategoriesSection() {
   return (
     <section className="px-4 py-4">
       <motion.h2
-        initial={{ opacity: 0, x: -20 }}
+        initial={false}
         animate={{ opacity: 1, x: 0 }}
         className="text-lg font-bold text-gray-800 mb-3"
       >
@@ -55,7 +55,7 @@ export function CategoriesSection() {
         {CATEGORIES.map((category, index) => (
           <motion.div
             key={category.name}
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.4 }}
             whileTap={{ scale: 0.95 }}

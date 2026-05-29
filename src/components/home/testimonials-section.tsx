@@ -46,7 +46,7 @@ export function TestimonialsSection() {
   return (
     <section className="px-4 py-4">
       <motion.h2
-        initial={{ opacity: 0, x: -20 }}
+        initial={false}
         animate={{ opacity: 1, x: 0 }}
         className="text-lg font-bold text-gray-800 mb-3"
       >
@@ -60,7 +60,7 @@ export function TestimonialsSection() {
         {TESTIMONIALS.map((testimonial, index) => (
           <motion.div
             key={testimonial.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
             className="flex-shrink-0 w-64 sm:w-72 snap-start"

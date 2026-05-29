@@ -164,7 +164,7 @@ export function StoriesSection() {
             return (
               <motion.button
                 key={story.id}
-                initial={{ opacity: 0, scale: 0.85 }}
+                initial={false}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
                 onClick={() => handleStoryClick(index)}

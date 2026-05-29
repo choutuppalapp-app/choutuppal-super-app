@@ -111,7 +111,7 @@ export function BecomeAdminCta() {
       <section className="px-4 py-4 space-y-4">
         {/* Franchisee CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.6 }}
@@ -134,7 +134,7 @@ export function BecomeAdminCta() {
 
             <div className="relative z-10 text-center py-8 md:py-12 px-6 md:px-12">
               <motion.div
-                initial={{ scale: 0 }}
+                initial={false}
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
@@ -200,7 +200,7 @@ export function BecomeAdminCta() {
 
         {/* Agent CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.6, delay: 0.15 }}
@@ -219,7 +219,7 @@ export function BecomeAdminCta() {
 
             <div className="relative z-10 text-center py-8 md:py-10 px-6 md:px-12">
               <motion.div
-                initial={{ scale: 0 }}
+                initial={false}
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.3 }}
