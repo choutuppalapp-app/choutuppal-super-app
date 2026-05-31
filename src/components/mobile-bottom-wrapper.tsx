@@ -30,7 +30,9 @@ interface MobileBottomWrapperProps {
  * It is NOT position:fixed — it's a natural flex child pinned to bottom.
  */
 export function MobileBottomWrapper({ className }: MobileBottomWrapperProps) {
-  const { currentView, selectedListingSlug } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const currentView = useAppStore((s) => s.currentView)
+  const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
 
   // Check if we are on a detail page (Listing or Real Estate)
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug
@@ -46,7 +48,9 @@ export function MobileBottomWrapper({ className }: MobileBottomWrapperProps) {
 
 // --- Bottom Navigation (WhatsApp Style) ---
 function BottomNav() {
-  const { currentView, navigateTo } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const currentView = useAppStore((s) => s.currentView)
+  const navigateTo = useAppStore((s) => s.navigateTo)
 
   return (
     <motion.div
@@ -99,7 +103,10 @@ function BottomNav() {
 
 // --- Sticky CTA for Detail Pages ---
 function StickyCTA() {
-  const { selectedListingSlug, setShowLeadForm, setLeadFormListingId } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
+  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
+  const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
 
   const handleConnect = () => {
     if (selectedListingSlug) {

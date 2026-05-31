@@ -54,7 +54,8 @@ const AD_GRADIENTS = [
 ]
 
 export function BannerAds() {
-  const { selectedCity } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
   const [ads, setAds] = useState(FALLBACK_ADS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)

@@ -34,7 +34,10 @@ interface Listing {
 }
 
 export function FeaturedListings() {
-  const { selectedCity, setSelectedListing, navigateTo } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
+  const setSelectedListing = useAppStore((s) => s.setSelectedListing)
+  const navigateTo = useAppStore((s) => s.navigateTo)
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)

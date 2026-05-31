@@ -11,7 +11,8 @@ import { useAppStore } from '@/lib/store'
  * Links are dynamic from admin settings; buttons hidden if links are empty.
  */
 export function WhatsAppCommunitySection() {
-  const { siteSettings } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const siteSettings = useAppStore((s) => s.siteSettings)
 
   const communityLink = siteSettings.whatsappCommunityLink || ''
   const channelLink = siteSettings.whatsappChannelLink || ''

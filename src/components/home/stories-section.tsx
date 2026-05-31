@@ -42,7 +42,8 @@ const PLACEHOLDER_AVATAR =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIzMiIgZmlsbD0iI0YzRjRGNiIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0Q0QUYzNyIgZm9udC1zaXplPSIyMCI+8J+OpzwvdGV4dD48L3N2Zz4='
 
 export function StoriesSection() {
-  const { selectedCity } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
   const { user, isAuthenticated } = useAuth()
   const [stories, setStories] = useState<StoryItem[]>([])
   const [loading, setLoading] = useState(true)

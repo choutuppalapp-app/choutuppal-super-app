@@ -124,7 +124,8 @@ const TYPE_ICONS: Record<PropertyType, typeof Home> = {
 /* ------------------------------------------------------------------ */
 
 export function RealEstateView() {
-  const { selectedCityName } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCityName = useAppStore((s) => s.selectedCityName)
   const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const [search, setSearch] = useState('')

@@ -5,7 +5,9 @@ import { Coins } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
 export function CoinBadge() {
-  const { currentUser, setShowSpinWheel } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const currentUser = useAppStore((s) => s.currentUser)
+  const setShowSpinWheel = useAppStore((s) => s.setShowSpinWheel)
   const coins = currentUser?.coinsBalance ?? 0
 
   return (

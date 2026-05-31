@@ -28,7 +28,8 @@ interface RealEstateListing {
 }
 
 export function RealEstateSection() {
-  const { selectedCity } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
   const [listings, setListings] = useState<RealEstateListing[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)

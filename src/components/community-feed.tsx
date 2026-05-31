@@ -633,7 +633,11 @@ function LeaderCard({
 
 // ─── Main Community Feed ───────────────────────────────────────
 export function CommunityFeed() {
-  const { communityTab, setCommunityTab, navigateTo, setSelectedProfileUserId } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const communityTab = useAppStore((s) => s.communityTab)
+  const setCommunityTab = useAppStore((s) => s.setCommunityTab)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const setSelectedProfileUserId = useAppStore((s) => s.setSelectedProfileUserId)
   const { user, isAuthenticated } = useAuth()
 
   // Feed state

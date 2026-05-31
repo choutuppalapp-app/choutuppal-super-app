@@ -19,7 +19,10 @@ import { useAppStore } from '@/lib/store'
  */
 
 const HeroSection = () => {
-  const { navigateTo, siteSettings, currentCity } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const siteSettings = useAppStore((s) => s.siteSettings)
+  const currentCity = useAppStore((s) => s.currentCity)
 
   const cityName = currentCity.name || 'Choutuppal'
   const brandName = currentCity.brandName || 'Choutuppal App'

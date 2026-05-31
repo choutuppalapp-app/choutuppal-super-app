@@ -45,7 +45,12 @@ interface CitySubdomain {
 
 // ─── Main Component ──────────────────────────────────────────────
 export function RoutingSettingsTab() {
-  const { routingConfig, setRoutingConfig, availableCities, themePrimary, themeSecondary } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const routingConfig = useAppStore((s) => s.routingConfig)
+  const setRoutingConfig = useAppStore((s) => s.setRoutingConfig)
+  const availableCities = useAppStore((s) => s.availableCities)
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
   const primary = themePrimary || '#4169E1'
   const secondary = themeSecondary || '#D4AF37'
 

@@ -145,12 +145,11 @@ const TAB_ITEMS = [
 
 // ─── Component ────────────────────────────────────────────────────
 export function DashboardView() {
-  const {
-    dashboardTab,
-    setDashboardTab,
-    setSelectedListing,
-    navigateTo,
-  } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const dashboardTab = useAppStore((s) => s.dashboardTab)
+  const setDashboardTab = useAppStore((s) => s.setDashboardTab)
+  const setSelectedListing = useAppStore((s) => s.setSelectedListing)
+  const navigateTo = useAppStore((s) => s.navigateTo)
   const { user } = useAuth()
   const currentUser = user ? {
     id: user.id,

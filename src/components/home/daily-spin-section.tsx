@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 
 export function DailySpinSection() {
-  const { setShowSpinWheel, currentUser } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const setShowSpinWheel = useAppStore((s) => s.setShowSpinWheel)
+  const currentUser = useAppStore((s) => s.currentUser)
 
   return (
     <section className="px-4 py-4">

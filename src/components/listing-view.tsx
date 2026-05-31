@@ -88,7 +88,11 @@ const PLACEHOLDER_IMAGES = [
 ]
 
 export function ListingView() {
-  const { selectedListingSlug, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
+  const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
   const { user } = useAuth()
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)

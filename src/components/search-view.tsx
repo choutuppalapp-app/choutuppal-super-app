@@ -45,7 +45,14 @@ interface SearchResult {
 const PLACEHOLDER_IMG = 'https://placehold.co/400x250/4169E1/ffffff?text=Business'
 
 export function SearchView() {
-  const { searchQuery, setSearchQuery, selectedCity, setSelectedListing, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const searchQuery = useAppStore((s) => s.searchQuery)
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery)
+  const selectedCity = useAppStore((s) => s.selectedCity)
+  const setSelectedListing = useAppStore((s) => s.setSelectedListing)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
+  const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [localQuery, setLocalQuery] = useState(searchQuery)

@@ -41,11 +41,17 @@ interface HeaderProps {
 
 export function Header({ className }: HeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const {
-    selectedCity, setCity, switchCity, currentView, navigateTo,
-    availableCities, currentCity, locationLoading,
-    themePrimary, themeSecondary,
-  } = useAppStore()
+  // CRITICAL: Use individual selectors, NOT useAppStore() — prevents re-render
+  // on every unrelated store change (spin wheel, search, notifications, etc.)
+  const selectedCity = useAppStore((s) => s.selectedCity)
+  const switchCity = useAppStore((s) => s.switchCity)
+  const currentView = useAppStore((s) => s.currentView)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const availableCities = useAppStore((s) => s.availableCities)
+  const currentCity = useAppStore((s) => s.currentCity)
+  const locationLoading = useAppStore((s) => s.locationLoading)
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
   const { isInstallable, isInstalled, isIOS, triggerInstall } = usePWAInstall()
   const showInstallMenuItem = (isInstallable || isIOS) && !isInstalled

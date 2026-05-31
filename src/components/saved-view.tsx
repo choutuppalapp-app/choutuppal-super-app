@@ -82,7 +82,8 @@ const CATEGORY_COLORS: Record<SavedCategory, string> = {
 
 export function SavedView() {
   const { isAuthenticated, setShowLoginModal } = useAuth()
-  const { selectedCityName } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCityName = useAppStore((s) => s.selectedCityName)
 
   const [activeTab, setActiveTab] = useState<TabFilter>('All')
   const [savedItems, setSavedItems] = useState<SavedItem[]>(MOCK_SAVED)

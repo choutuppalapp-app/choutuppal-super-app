@@ -5,7 +5,13 @@ import { useAppStore } from '@/lib/store'
 import { getCityUrl } from '@/lib/subdomain'
 
 export function Footer() {
-  const { selectedCityName, currentCity, availableCities, themePrimary, themeSecondary, navigateTo } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCityName = useAppStore((s) => s.selectedCityName)
+  const currentCity = useAppStore((s) => s.currentCity)
+  const availableCities = useAppStore((s) => s.availableCities)
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
+  const navigateTo = useAppStore((s) => s.navigateTo)
 
   const brandName = currentCity?.brandName || 'Choutuppal App'
   const primary = themePrimary || '#4169E1'

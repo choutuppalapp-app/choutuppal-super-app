@@ -38,7 +38,13 @@ const NAV_ITEMS: Array<{
  *       Safe area: pb-[env(safe-area-inset-bottom)]
  */
 export function MobileBottomNav() {
-  const { currentView, navigateTo, selectedListingSlug, setShowLeadForm, setLeadFormListingId, showBottomNav } = useAppStore()
+  // CRITICAL: Use individual selectors, NOT useAppStore()
+  const currentView = useAppStore((s) => s.currentView)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
+  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
+  const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
+  const showBottomNav = useAppStore((s) => s.showBottomNav)
   const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug

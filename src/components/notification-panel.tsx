@@ -12,7 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAppStore } from '@/lib/store'
 
 export function NotificationPanel() {
-  const { notifications, clearNotifications } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const notifications = useAppStore((s) => s.notifications)
+  const clearNotifications = useAppStore((s) => s.clearNotifications)
   const count = notifications.length
 
   return (

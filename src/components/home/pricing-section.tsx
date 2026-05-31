@@ -70,7 +70,8 @@ const PLANS: PricingPlan[] = [
 
 export function PricingSection() {
   const { isAuthenticated, setShowLoginModal } = useAuth()
-  const { navigateTo } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const navigateTo = useAppStore((s) => s.navigateTo)
   const appliedCoupon = useAppliedCoupon()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 

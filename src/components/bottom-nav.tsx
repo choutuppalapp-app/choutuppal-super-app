@@ -18,7 +18,10 @@ const NAV_ITEMS: Array<{
 ]
 
 export function BottomNav() {
-  const { currentView, navigateTo, showBottomNav } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const currentView = useAppStore((s) => s.currentView)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const showBottomNav = useAppStore((s) => s.showBottomNav)
 
   if (!showBottomNav) return null
 

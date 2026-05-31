@@ -27,7 +27,10 @@ interface CityOption {
 }
 
 export function BecomeAdminCta() {
-  const { themePrimary, themeSecondary, platformSettings } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
+  const platformSettings = useAppStore((s) => s.platformSettings)
   const { isAuthenticated, user, setShowLoginModal } = useAuth()
   const [showModal, setShowModal] = useState(false)
   const [applicationType, setApplicationType] = useState<'city_admin' | 'agent'>('city_admin')

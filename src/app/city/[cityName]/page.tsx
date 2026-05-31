@@ -284,10 +284,15 @@ function ProtectedSuperAdmin() {
 export default function CityPage() {
   const params = useParams()
   const cityName = params.cityName as string
-  const {
-    currentView, selectedCity, setCity, setAvailableCities,
-    currentCity, fetchSiteSettings, fetchPlatformSettings,
-  } = useAppStore()
+  // CRITICAL: Use individual selectors, NOT useAppStore() — subscribing to the
+  // entire store re-renders on EVERY state change (even unrelated ones)
+  const currentView = useAppStore((s) => s.currentView)
+  const selectedCity = useAppStore((s) => s.selectedCity)
+  const setCity = useAppStore((s) => s.setCity)
+  const setAvailableCities = useAppStore((s) => s.setAvailableCities)
+  const currentCity = useAppStore((s) => s.currentCity)
+  const fetchSiteSettings = useAppStore((s) => s.fetchSiteSettings)
+  const fetchPlatformSettings = useAppStore((s) => s.fetchPlatformSettings)
 
   // Sync URL slug → store on mount and when URL changes
   useEffect(() => {

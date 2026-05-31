@@ -18,7 +18,10 @@ import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
 
 export function LeadCaptureForm() {
-  const { showLeadForm, setShowLeadForm, leadFormListingId } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const showLeadForm = useAppStore((s) => s.showLeadForm)
+  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
+  const leadFormListingId = useAppStore((s) => s.leadFormListingId)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [requirement, setRequirement] = useState('')

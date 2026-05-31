@@ -23,7 +23,8 @@ interface NewsItem {
 }
 
 export function NewsSection() {
-  const { selectedCity } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
   const [news, setNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)

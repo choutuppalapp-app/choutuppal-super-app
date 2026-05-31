@@ -8,7 +8,10 @@ import { useVoiceSearch } from '@/hooks/use-voice-search'
 import { Button } from '@/components/ui/button'
 
 export function VoiceSearchModal() {
-  const { isSearchOpen, setSearchOpen, setSearchQuery } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const isSearchOpen = useAppStore((s) => s.isSearchOpen)
+  const setSearchOpen = useAppStore((s) => s.setSearchOpen)
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const { isListening, transcript, startListening, startListeningEnglish, setTranscript } =
     useVoiceSearch()
   const [lang, setLang] = useState<'te' | 'en'>('te')

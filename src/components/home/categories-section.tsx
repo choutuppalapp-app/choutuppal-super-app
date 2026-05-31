@@ -34,7 +34,9 @@ const CATEGORIES = [
 ]
 
 export function CategoriesSection() {
-  const { setSearchQuery, navigateTo } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery)
+  const navigateTo = useAppStore((s) => s.navigateTo)
 
   const handleCategoryClick = (categoryName: string) => {
     setSearchQuery(categoryName)

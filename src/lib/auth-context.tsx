@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { useAppStore } from '@/lib/store'
 
 interface AuthUser {
@@ -94,7 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [loginStep, setLoginStep] = useState<'phone' | 'otp' | 'email'>('phone')
   const [pendingPhone, setPendingPhone] = useState('')
-  const { setCurrentUser } = useAppStore()
+  // CRITICAL: Use individual selector, NOT useAppStore() — subscribing to the
+  // entire store would re-render AuthProvider (and the ENTIRE app tree) on every
+  // state change, causing maximum update depth crashes.
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser)
 
   // Check for existing session on mount
   useEffect(() => {
@@ -217,7 +220,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(null)
   }, [setCurrentUser])
 
-  const value: AuthContextType = {
+  // Memoize context value to prevent re-rendering ALL consumers when
+  // AuthProvider re-renders for unrelated reasons (e.g., pendingPhone change)
+  const value: AuthContextType = useMemo(() => ({
     user,
     isLoading,
     isAuthenticated: !!user,
@@ -231,7 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoginStep,
     pendingPhone,
     setPendingPhone,
-  }
+  }), [user, isLoading, login, loginWithMagicLink, signup, logout, showLoginModal, loginStep, pendingPhone])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

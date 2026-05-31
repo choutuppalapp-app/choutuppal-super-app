@@ -28,7 +28,12 @@ interface BlogPost {
 const PLACEHOLDER_IMG = 'https://placehold.co/600x340/D4AF37/ffffff?text=Blog'
 
 export function BlogView() {
-  const { selectedCity, navigateTo, setSelectedBlogSlug, themePrimary, themeSecondary } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const setSelectedBlogSlug = useAppStore((s) => s.setSelectedBlogSlug)
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
   const [blogs, setBlogs] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')

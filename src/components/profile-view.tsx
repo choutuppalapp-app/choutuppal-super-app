@@ -85,7 +85,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // ─── Component ──────────────────────────────────────────────
 export function ProfileView() {
-  const { selectedProfileUserId, navigateTo, currentUser } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedProfileUserId = useAppStore((s) => s.selectedProfileUserId)
+  const navigateTo = useAppStore((s) => s.navigateTo)
+  const currentUser = useAppStore((s) => s.currentUser)
   const { isAuthenticated, user } = useAuth()
 
   const isOwnProfile = !selectedProfileUserId || (currentUser && selectedProfileUserId === currentUser.id)

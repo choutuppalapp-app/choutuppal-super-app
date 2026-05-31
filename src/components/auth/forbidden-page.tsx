@@ -7,7 +7,8 @@ import { GlassCard } from '@/components/glass-card'
 import { useAppStore } from '@/lib/store'
 
 export function ForbiddenPage() {
-  const { navigateTo } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const navigateTo = useAppStore((s) => s.navigateTo)
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">

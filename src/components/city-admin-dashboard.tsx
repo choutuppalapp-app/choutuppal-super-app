@@ -183,7 +183,9 @@ const TAB_ITEMS = [
 // ─── Component ────────────────────────────────────────────────────
 export function CityAdminDashboard() {
   const { user } = useAuth()
-  const { themePrimary, themeSecondary } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
   const managedCityId = user?.managedCityId
 
   // ─── Active tab ────────────────────────────────────────────────

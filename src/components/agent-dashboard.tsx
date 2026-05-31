@@ -132,7 +132,9 @@ const CHART_COLORS = ['#4169E1', '#D4AF37', '#E74C3C', '#2ECC71']
 // ─── Component ────────────────────────────────────────────────────
 export function AgentDashboard() {
   const { user } = useAuth()
-  const { themePrimary, themeSecondary } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const themePrimary = useAppStore((s) => s.themePrimary)
+  const themeSecondary = useAppStore((s) => s.themeSecondary)
 
   // ─── State ────────────────────────────────────────────────────
   const [agentTab, setAgentTab] = useState('earnings')

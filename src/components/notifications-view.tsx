@@ -142,7 +142,8 @@ const TYPE_ICON_BG: Record<NotificationType, string> = {
 /* ------------------------------------------------------------------ */
 
 export function NotificationsView() {
-  const { selectedCityName } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCityName = useAppStore((s) => s.selectedCityName)
   const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS)

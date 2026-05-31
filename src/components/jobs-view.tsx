@@ -143,7 +143,8 @@ const JOB_TYPE_COLORS: Record<JobType, string> = {
 /* ------------------------------------------------------------------ */
 
 export function JobsView() {
-  const { selectedCityName } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCityName = useAppStore((s) => s.selectedCityName)
   const { isAuthenticated, setShowLoginModal } = useAuth()
 
   const [search, setSearch] = useState('')

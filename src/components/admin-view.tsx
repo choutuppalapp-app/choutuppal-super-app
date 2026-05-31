@@ -349,7 +349,9 @@ interface MusicTrack {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function AdminView() {
-  const { adminTab, setAdminTab } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const adminTab = useAppStore((s) => s.adminTab)
+  const setAdminTab = useAppStore((s) => s.setAdminTab)
   const currentUser = useAppStore((s) => s.currentUser)
   const isSuperAdmin = currentUser?.role === 'super_admin'
   const isCityAdmin = currentUser?.role === 'city_admin'

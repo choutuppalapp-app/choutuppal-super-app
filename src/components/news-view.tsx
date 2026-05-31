@@ -27,7 +27,8 @@ interface NewsArticle {
 const PLACEHOLDER_IMG = null // Use Royal Glassmorphism gradient fallback instead of external image
 
 export function NewsView() {
-  const { selectedCity } = useAppStore()
+  // Use individual selectors to prevent re-rendering on unrelated store changes
+  const selectedCity = useAppStore((s) => s.selectedCity)
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [cities, setCities] = useState<Array<{ id: string; name: string; slug: string }>>([])
