@@ -12,7 +12,8 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function GET(request: NextRequest) {
   try {
-    const subdomain = request.headers.get('x-city-subdomain')
+    // Middleware sets x-city-slug (not x-city-subdomain)
+    const subdomain = request.headers.get('x-city-slug')
 
     if (!subdomain) {
       return NextResponse.json(

@@ -10,25 +10,18 @@ import { LeadCaptureForm } from '@/components/lead-capture-form'
 import { VoiceSearchModal } from '@/components/voice-search-modal'
 
 /**
- * AppShell — The root layout shell for the entire app.
+ * AppShell — DEPRECATED: This component is NOT used.
  *
- * Architecture:
- *   ┌──────────────────────────────┐
- *   │  Header (flex-none)          │  ← Always visible, never scrolls
- *   ├──────────────────────────────┤
- *   │                              │
- *   │  main (flex-1, overflow-y)   │  ← ONLY this area scrolls
- *   │                              │
- *   ├──────────────────────────────┤
- *   │  MobileBottomNav (flex-none) │  ← Nav OR Sticky CTA, never scrolls
- *   └──────────────────────────────┘
+ * The layout is now handled by src/app/layout.tsx which renders:
+ * - Header, MobileBottomNav, FloatingOverlays, LoginModal directly
  *
- * Uses h-[100dvh] for dynamic viewport height (handles mobile browser chrome).
- * Body is locked: no scroll on html/body, only inside <main>.
+ * This file is kept for reference only. DO NOT import this component.
+ * If you need to modify the app shell, edit src/app/layout.tsx instead.
  */
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { currentUser, setCurrentUser } = useAppStore()
+  const currentUser = useAppStore((s) => s.currentUser)
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser)
 
   useEffect(() => {
     if (!currentUser) {

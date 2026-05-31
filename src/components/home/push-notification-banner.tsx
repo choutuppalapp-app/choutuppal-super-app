@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Loader2, Check, BellOff } from 'lucide-react'
+import { Bell, X, Loader2 } from 'lucide-react'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { Button } from '@/components/ui/button'
+import { useMounted } from '@/hooks/use-mounted'
 
 /**
  * PushNotificationBanner — Subtle banner on home page prompting users to enable notifications
@@ -15,6 +16,10 @@ import { Button } from '@/components/ui/button'
  * - Permission hasn't been denied
  *
  * Dismissible — once dismissed, stays hidden for the session (stored in sessionStorage)
+ *
+ * HYDRATION SAFE: Uses useMounted() guard and initial={false} to prevent
+ * server/client DOM mismatch. sessionStorage check uses useState lazy
+ * initializer (not useEffect) to avoid cascading render lint warnings.
  */
 export function PushNotificationBanner() {
   const {
@@ -26,21 +31,27 @@ export function PushNotificationBanner() {
     error,
   } = usePushNotifications()
 
+  const mounted = useMounted()
   const [dismissed, setDismissed] = useState(false)
+
+  // Check sessionStorage via lazy initializer — runs once on mount.
+  // On the server, typeof window is undefined so this returns false.
+  // Hydration is safe because this component returns null until mounted.
+  const [sessionDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return sessionStorage.getItem('push-banner-dismissed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Don't render until client-side mount
+  if (!mounted) return null
 
   // Don't render if push is not supported, already subscribed, or denied
   if (!isSupported || isSubscribed || permissionStatus === 'denied') return null
-
-  // Check if user already dismissed this session
-  if (typeof window !== 'undefined') {
-    try {
-      if (sessionStorage.getItem('push-banner-dismissed') === 'true') return null
-    } catch {
-      // sessionStorage not available
-    }
-  }
-
-  if (dismissed) return null
+  if (sessionDismissed || dismissed) return null
 
   const handleDismiss = () => {
     setDismissed(true)
@@ -54,7 +65,7 @@ export function PushNotificationBanner() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, height: 0 }}
+        initial={false}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
         transition={{ duration: 0.3 }}
@@ -85,10 +96,7 @@ export function PushNotificationBanner() {
               }}
               disabled={isLoading}
               size="sm"
-              className="text-white text-xs font-semibold px-3 h-8 flex-shrink-0"
-              style={{
-                background: 'linear-gradient(to right, #4169E1, #D4AF37)',
-              }}
+              className="text-white text-xs font-semibold px-3 h-8 flex-shrink-0 bg-gradient-to-r from-[#4169E1] to-[#D4AF37] hover:opacity-90"
             >
               {isLoading ? (
                 <Loader2 className="size-3.5 animate-spin" />

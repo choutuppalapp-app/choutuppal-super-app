@@ -285,7 +285,7 @@ export function BecomeAdminCta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowModal(false)}
           >
             <motion.div
@@ -296,7 +296,7 @@ export function BecomeAdminCta() {
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-md"
             >
-              <GlassCard variant="premium" className="relative !p-6 md:!p-8">
+              <div className="relative bg-white rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">
                 <button
                   onClick={() => setShowModal(false)}
                   className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -409,7 +409,7 @@ export function BecomeAdminCta() {
                     </Button>
                   </motion.div>
                 </div>
-              </GlassCard>
+              </div>
             </motion.div>
           </motion.div>
         )}
