@@ -38,7 +38,10 @@ const SEGMENT_COUNT = SEGMENTS.length
 const SEGMENT_ANGLE = 360 / SEGMENT_COUNT
 
 export function SpinWheel() {
-  const { showSpinWheel, setShowSpinWheel, currentUser, setCurrentUser } = useAppStore()
+  const showSpinWheel = useAppStore((s) => s.showSpinWheel)
+  const setShowSpinWheel = useAppStore((s) => s.setShowSpinWheel)
+  const currentUser = useAppStore((s) => s.currentUser)
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser)
   const { addCoupon } = useCouponActions()
   const mounted = useMounted()
 

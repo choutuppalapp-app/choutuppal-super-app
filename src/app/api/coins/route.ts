@@ -135,31 +135,35 @@ export async function POST(request: Request) {
         )
       }
 
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { coinsBalance: true },
-      })
+      const result = await db.$transaction(async (tx) => {
+        const user = await tx.user.findUnique({ where: { id: userId } })
+        if (!user || user.coinsBalance < amount) throw new Error('Insufficient coins')
+        await tx.user.update({
+          where: { id: userId },
+          data: { coinsBalance: { decrement: amount } },
+        })
+        await tx.coinTransaction.create({
+          data: { userId, amount: -amount, reason },
+        })
+        return user
+      }).catch(() => null)
 
-      if (!user || user.coinsBalance < amount) {
+      if (!result) {
         return NextResponse.json(
           { error: 'Insufficient coin balance' },
           { status: 400 }
         )
       }
 
-      await db.coinTransaction.create({
-        data: { userId, amount: -amount, reason },
-      })
-
-      const updatedUser = await db.user.update({
+      const updatedUser = await db.user.findUnique({
         where: { id: userId },
-        data: { coinsBalance: { decrement: amount } },
+        select: { coinsBalance: true },
       })
 
       return NextResponse.json({
         message: 'Coins redeemed!',
         amount,
-        newBalance: updatedUser.coinsBalance,
+        newBalance: updatedUser?.coinsBalance ?? 0,
       })
     }
 

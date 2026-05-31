@@ -105,13 +105,13 @@ export function SearchView() {
     return () => clearTimeout(timer)
   }, [localQuery, performSearch])
 
-  // Trigger initial search if query exists
+  // Trigger initial search if query exists (or when searchQuery changes from external source)
   useEffect(() => {
     if (searchQuery) {
       setLocalQuery(searchQuery)
       performSearch(searchQuery)
     }
-  }, [])
+  }, [searchQuery])
 
   const handleCardClick = (slug: string) => {
     setSelectedListing(slug)

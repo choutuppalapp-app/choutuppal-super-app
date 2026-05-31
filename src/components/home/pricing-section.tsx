@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Check, X, Crown, Zap, Star, Megaphone, Ticket } from 'lucide-react'
 import { GlassCard } from '@/components/glass-card'
 import { Button } from '@/components/ui/button'
@@ -74,14 +74,20 @@ export function PricingSection() {
   const appliedCoupon = useAppliedCoupon()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 
-  const discountAmount = useMemo(() => appliedCoupon?.discountAmount ?? 0, [appliedCoupon])
-
+  // Calculate discount per-plan using the coupon's discountType/discountValue
+  // instead of the pre-computed flat discountAmount (which was computed for
+  // a single cart total and incorrectly applied to all differently-priced plans).
   const getDiscountedPrice = (plan: PricingPlan): number => {
-    if (plan.priceValue <= 0 || discountAmount === 0) return plan.priceValue
-    return Math.max(0, plan.priceValue - discountAmount)
+    if (plan.priceValue <= 0 || !appliedCoupon) return plan.priceValue
+    if (appliedCoupon.discountType === 'percentage') {
+      const pctDiscount = Math.round((plan.priceValue * appliedCoupon.discountValue) / 100)
+      return Math.max(0, plan.priceValue - pctDiscount)
+    }
+    // Flat discount
+    return Math.max(0, plan.priceValue - appliedCoupon.discountValue)
   }
 
-  const hasActiveDiscount = discountAmount > 0 && !!appliedCoupon
+  const hasActiveDiscount = !!appliedCoupon
 
   const handleSubscribe = (planId: string) => {
     if (!isAuthenticated) {
@@ -179,7 +185,7 @@ export function PricingSection() {
                       ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white shadow-md'
                       : plan.id === 'pro'
                       ? 'bg-[#4169E1] hover:bg-[#3457B5] text-white'
-                      : 'bg-white/60 hover:bg-white/80 text-gray-700 border border-gray-200'
+                      : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
                   }`}
                 >
                   {plan.price === 'Free' ? 'Get Started' : 'Subscribe'}

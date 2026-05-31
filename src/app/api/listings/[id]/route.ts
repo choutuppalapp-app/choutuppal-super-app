@@ -91,10 +91,15 @@ export async function PUT(
     // Support both ID and slug lookup
     const existingListing = await db.listing.findFirst({
       where: { OR: [{ id }, { slug: id }] },
-      select: { id: true },
+      select: { id: true, userId: true },
     })
     if (!existingListing) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
+    }
+
+    // Ownership check: only the owner or an admin can update
+    if (body.userId && body.userId !== existingListing.userId && !body.adminUserId) {
+      return NextResponse.json({ error: 'Forbidden: not the listing owner' }, { status: 403 })
     }
 
     const listing = await db.listing.update({

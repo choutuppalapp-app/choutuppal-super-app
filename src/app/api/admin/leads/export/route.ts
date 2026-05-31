@@ -12,17 +12,20 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
+    // Sanitize CSV cells to prevent CSV injection
+    const sanitize = (str: string) => str.replace(/^[=+@\-]/, ' $&')
+
     // Generate CSV
     const headers = ['Lead ID', 'Customer Name', 'Customer Phone', 'Requirement', 'Listing Name', 'Listing Category', 'Source', 'Status', 'Date']
     const rows = leads.map(lead => [
       lead.id,
-      lead.customerName || 'Anonymous',
-      lead.customerPhone,
-      (lead.requirementText || '-').replace(/,/g, ';'),
-      lead.listing.name,
-      lead.listing.category,
-      lead.source,
-      lead.status,
+      lead.customerName ? sanitize(lead.customerName) : 'Anonymous',
+      sanitize(lead.customerPhone),
+      sanitize((lead.requirementText || '-').replace(/,/g, ';')),
+      sanitize(lead.listing.name),
+      sanitize(lead.listing.category),
+      sanitize(lead.source),
+      sanitize(lead.status),
       new Date(lead.createdAt).toLocaleDateString('en-IN'),
     ])
 

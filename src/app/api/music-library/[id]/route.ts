@@ -7,9 +7,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params
     const body = await request.json()
 
+    const { title, artist, audioUrl, coverUrl, duration, isActive, category } = body
+    const allowedFields = { title, artist, audioUrl, coverUrl, duration, isActive, category }
+    const data = Object.fromEntries(Object.entries(allowedFields).filter(([_, v]) => v !== undefined))
+
     const track = await db.musicLibrary.update({
       where: { id },
-      data: body,
+      data,
     })
     return NextResponse.json(track)
   } catch (error) {
