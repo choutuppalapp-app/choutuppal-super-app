@@ -320,3 +320,27 @@ Stage Summary:
 - The HMR module factory error was caused by interleaving `import` statements with `const` declarations
 - Fix: All static imports first, then all dynamic import consts after
 - Page loads successfully, no errors
+
+---
+Task ID: 4
+Agent: main
+Task: Fix HMR module factory error by correcting export/import pattern for HeroSection
+
+Work Log:
+- Root cause: hero-section.tsx used a NAMED export (`export function HeroSection`) but page.tsx dynamic import tried to resolve it with `.then((mod) => ({ default: mod.HeroSection }))` — this pattern confused Turbopack's HMR module graph
+- Fix applied to hero-section.tsx:
+  - Changed from `export function HeroSection()` to `const HeroSection = () => { ... }` + `export default HeroSection`
+  - Removed named export entirely
+  - Only `export default HeroSection` at the bottom of the file
+- Fix applied to page.tsx:
+  - Changed from `.then((mod) => ({ default: mod.HeroSection }))` to `.then(mod => mod.default)`
+  - Simpler, more reliable pattern — resolves the default export directly
+- Verified no other file imports hero-section with named import
+- Cleared .next cache, restarted dev server
+- Page loads with 200 status, zero module factory errors, zero hydration errors
+- Lint passes clean
+
+Stage Summary:
+- The HMR module factory error was caused by export/import pattern mismatch
+- Using default export + `.then(mod => mod.default)` is the simplest and most reliable pattern for next/dynamic with ssr:false
+- All previous fixes still in place: initial={false} on all home sections, zero inline styles, max-h-[300px]

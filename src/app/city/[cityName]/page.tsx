@@ -45,7 +45,7 @@ import { ListingDetailSkeleton, DashboardHeaderSkeleton } from '@/components/ske
 // This prevents Turbopack HMR module graph errors.
 
 const DynamicHeroSection = dynamic(
-  () => import('@/components/home/hero-section').then((mod) => ({ default: mod.HeroSection })),
+  () => import('@/components/home/hero-section').then(mod => mod.default),
   {
     ssr: false,
     loading: () => (

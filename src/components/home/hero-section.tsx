@@ -6,50 +6,21 @@ import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 
 /**
- * HeroSection — COMPLETE REWRITE (next/dynamic ssr:false edition)
+ * HeroSection — loaded via next/dynamic with ssr: false in page.tsx
  *
- * ═══════════════════════════════════════════════════════════════
- * This component is loaded via next/dynamic with ssr: false
- * in page.tsx. That means:
- *   - The server NEVER renders this component.
- *   - The server only renders the <DynamicHeroSection /> loading
- *     placeholder (a simple gray div).
- *   - The client loads this component AFTER hydration.
- *   - ZERO hydration mismatch possible because server and client
- *     never try to render the same DOM for the hero.
+ * This component uses a DEFAULT EXPORT so that next/dynamic can
+ * resolve it with: .then(mod => mod.default)
  *
- * Because ssr:false handles the hydration problem externally,
- * there is NO NEED for a mounted state gate inside this component.
- * This component is ALWAYS client-only, always mounted.
- * ═══════════════════════════════════════════════════════════════
- *
- * RULES ENFORCED:
- *
- * RULE 1: NO mounted state gate. ssr:false handles hydration.
- *         No useState(false) + useEffect + if(!mounted) return skeleton.
- *         That pattern was the CAUSE of the hydration mismatch
- *         because it swaps DOM between server and client.
- *
- * RULE 2: ZERO inline styles. ALL visual styling via Tailwind.
- *         NO style={{ background: "linear-gradient(...)" }}
- *         NO style={{ background: "radial-gradient(...)" }}
- *         NO style={{ objectFit: "cover" }}
- *         USE: bg-gradient-to-br from-[#4169E1] to-[#D4AF37]
- *         USE: className="object-cover" on Image
- *         NO OptimizedImage (it injects style={{ objectFit: 'cover' }})
- *
- * RULE 3: ENFORCE max-h-[300px] on the root <section>.
- *         className="relative overflow-hidden max-h-[300px] mt-4"
- *         ALWAYS present. NEVER removed. NEVER conditionally changed.
- *
- * RULE 4: NO Framer Motion. Zero imports from framer-motion.
- *         Zero <motion.div>, zero AnimatePresence.
+ * RULES:
+ * 1. NO mounted state gate — ssr:false handles hydration
+ * 2. ZERO inline styles — all Tailwind classes only
+ * 3. max-h-[300px] permanently enforced on root <section>
+ * 4. NO Framer Motion
  */
 
-export function HeroSection() {
+const HeroSection = () => {
   const { navigateTo, siteSettings, currentCity } = useAppStore()
 
-  /* ─── Derived values ──────────────────────────────────────────── */
   const cityName = currentCity.name || 'Choutuppal'
   const brandName = currentCity.brandName || 'Choutuppal App'
   const heroImageUrl = currentCity.heroImageUrl || siteSettings.heroImageUrl || null
@@ -70,19 +41,12 @@ export function HeroSection() {
     ? 'అత్యుత్తమ లోకల్ షాపులు, ప్రీమియం రియల్ ఎస్టేట్ డీల్స్, మరియు తాజా స్థానిక వార్తలు... అన్నీ ఇప్పుడు ఒకే యాప్‌లో!'
     : 'Discover the best local shops, premium real estate deals, and the latest city news — all in one app!'
 
-  /* ─── RENDER ─────────────────────────────────────────────────────
-   * RULE 3: max-h-[300px] permanently enforced on root <section>.
-   * RULE 2: ZERO inline styles. All Tailwind.
-   * RULE 4: ZERO Framer Motion.
-   * RULE 1: NO mounted gate. ssr:false in page.tsx handles it.
-   */
   return (
     <section className="relative overflow-hidden max-h-[300px] mt-4 rounded-xl">
 
-      {/* ─── Background ─── */}
+      {/* Background */}
       {heroImageUrl ? (
         <div className="absolute inset-0">
-          {/* RULE 2: className="object-cover" — NOT style={{ objectFit: 'cover' }} */}
           <Image
             src={heroImageUrl}
             alt={`${cityName} Hero`}
@@ -94,9 +58,7 @@ export function HeroSection() {
         </div>
       ) : (
         <>
-          {/* RULE 2: bg-gradient-to-br — NOT style={{ background: "linear-gradient(...)" }} */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#4169E1] to-[#D4AF37]" />
-          {/* RULE 2: bg-[radial-gradient(...)] — NOT style={{ background: "radial-gradient(...)" }} */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,#4169E140,transparent_60%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,#D4AF3733,transparent_60%)]" />
         </>
@@ -105,12 +67,11 @@ export function HeroSection() {
       {/* Decorative orb */}
       <div className="absolute top-4 right-8 w-20 h-20 rounded-full bg-white/10 blur-2xl animate-pulse" />
 
-      {/* ─── Content ─── */}
+      {/* Content */}
       <div className="relative px-4 py-8 sm:py-10 max-w-4xl mx-auto">
         <div className="text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-md mb-3">
-            {/* RULE 2: text-[#D4AF37] — NOT style={{ color: "#D4AF37" }} */}
             <Sparkles className="size-3.5 text-[#D4AF37]" />
             <span className="text-xs font-medium text-white">{badgeText}</span>
           </div>
@@ -131,7 +92,6 @@ export function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            {/* RULE 2: bg-gradient-to-r — NOT style={{ background: "linear-gradient(...)" }} */}
             <Button
               onClick={() => navigateTo('explore')}
               size="sm"
@@ -155,3 +115,5 @@ export function HeroSection() {
     </section>
   )
 }
+
+export default HeroSection
