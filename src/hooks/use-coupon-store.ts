@@ -45,6 +45,7 @@ interface CouponState {
   // Data
   coupons: Coupon[]
   appliedCoupon: AppliedCoupon | null
+  _hasSeeded?: boolean
 
   // Actions
   addCoupon: (data: Omit<Coupon, 'id' | 'code' | 'currentUsage' | 'createdAt'> & { code?: string }) => Coupon

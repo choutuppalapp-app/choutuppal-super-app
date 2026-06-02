@@ -23,6 +23,8 @@ export interface RoutingConfig {
   baseDomain: string
   /** Whether custom domain is connected and active */
   isCustomDomainActive: boolean
+  /** Whether subdomain routing is enabled by admin (actual mode may differ based on environment) */
+  subdomainRoutingEnabled: boolean
 }
 
 const ROUTING_CONFIG_KEY = 'mana_routing_config'
@@ -31,6 +33,7 @@ const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
   routingMode: 'path',
   baseDomain: 'mana.in',
   isCustomDomainActive: false,
+  subdomainRoutingEnabled: false,
 }
 
 /** Read routing config from localStorage */
@@ -44,6 +47,7 @@ export function getRoutingConfig(): RoutingConfig {
         routingMode: parsed.routingMode || 'path',
         baseDomain: parsed.baseDomain || 'mana.in',
         isCustomDomainActive: parsed.isCustomDomainActive === true,
+        subdomainRoutingEnabled: parsed.subdomainRoutingEnabled === true,
       }
     }
   } catch {

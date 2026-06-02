@@ -93,6 +93,7 @@ export async function PATCH(
             data: {
               name: existingRequest.cityName,
               slug,
+              subdomain: slug,
             },
           })
         }

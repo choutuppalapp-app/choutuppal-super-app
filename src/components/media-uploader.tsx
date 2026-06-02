@@ -121,7 +121,7 @@ export function MediaUploader({
     }
   }, [handleUpload, multiple])
 
-  const acceptTypes = acceptVideo
+  const acceptTypes: Record<string, string[]> = acceptVideo
     ? { 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'], 'image/webp': ['.webp'], 'video/mp4': ['.mp4'], 'video/webm': ['.webm'] }
     : { 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'], 'image/webp': ['.webp'] }
 

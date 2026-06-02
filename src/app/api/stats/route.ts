@@ -152,7 +152,7 @@ export async function GET() {
 
     // ── Transaction revenue growth (last 6 months) ──────────────
     const now = new Date()
-    const transactionRevenueGrowth = []
+    const transactionRevenueGrowth: Array<{ month: string; revenue: number }> = []
     for (let i = 5; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1)
@@ -170,7 +170,7 @@ export async function GET() {
     }
 
     // ── User growth over time (last 6 months, existing) ─────────
-    const userGrowth = []
+    const userGrowth: Array<{ month: string; users: number }> = []
     for (let i = 5; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1)
@@ -186,7 +186,7 @@ export async function GET() {
     }
 
     // ── Revenue over time from subscriptions (existing) ─────────
-    const revenueGrowth = []
+    const revenueGrowth: Array<{ month: string; revenue: number }> = []
     for (let i = 5; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1)

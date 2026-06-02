@@ -426,7 +426,7 @@ export default function DashboardView() {
     const svgData = new XMLSerializer().serializeToString(svgEl)
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
-    const img = new Image()
+    const img = new window.Image()
     img.onload = () => {
       canvas.width = img.width * 2
       canvas.height = img.height * 2
@@ -1374,9 +1374,9 @@ export default function DashboardView() {
               <div>
                 <Label className="text-sm font-semibold mb-2 block">Business Images</Label>
                 <MultiMediaUploader
-                  images={formData.imageUrls}
+                  value={formData.imageUrls}
                   onChange={(urls) => setFormData({ ...formData, imageUrls: urls })}
-                  maxImages={5}
+                  maxFiles={5}
                 />
               </div>
 

@@ -21,7 +21,7 @@ import { useAppConfig } from '@/hooks/use-app-config'
 const NAV_LINKS: Array<{
   view: ViewType
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number; style?: React.CSSProperties }>
   adminOnly?: boolean
   superAdminOnly?: boolean
   requiresAuth?: boolean

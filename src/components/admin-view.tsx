@@ -4838,7 +4838,9 @@ export default function AdminView() {
                       className="flex-1"
                     />
                     <MediaUploader
-                      onUpload={(url: string) => setBannerForm((prev) => ({ ...prev, imageUrl: url }))}
+                      value={bannerForm.imageUrl}
+                      onChange={(url: string) => setBannerForm((prev) => ({ ...prev, imageUrl: url }))}
+                      guideline="banner"
                     />
                   </div>
                 </div>

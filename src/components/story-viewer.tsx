@@ -68,7 +68,7 @@ const DRAG_THRESHOLD_PX = 10 // px before we consider it a drag vs tap
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewerProps) {
+export default function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewerProps) {
   /* ---- derived state ---- */
   const userGroups = useMemo(() => groupByUser(stories), [stories])
   const userIds = useMemo(() => [...userGroups.keys()], [userGroups])

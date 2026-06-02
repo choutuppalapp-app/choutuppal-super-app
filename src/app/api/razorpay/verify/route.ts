@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const keySecret = process.env.RAZORPAY_KEY_SECRET
-
-    if (!keySecret) {
+    if (!process.env.RAZORPAY_KEY_SECRET) {
       return NextResponse.json(
-        { error: 'Razorpay credentials not configured' },
+        { error: 'Razorpay keys not configured' },
         { status: 500 }
       )
     }
+
+    const keySecret = process.env.RAZORPAY_KEY_SECRET!
 
     const body = await request.json()
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body

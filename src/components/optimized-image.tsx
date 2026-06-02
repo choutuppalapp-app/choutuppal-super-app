@@ -71,7 +71,7 @@ export function OptimizedImage({
   if (isDataUrl(src)) {
     return (
       <img
-        src={hasError ? fallbackSrc : src}
+        src={hasError ? fallbackSrc : String(src)}
         alt={alt}
         className={className}
         onError={() => setHasError(true)}

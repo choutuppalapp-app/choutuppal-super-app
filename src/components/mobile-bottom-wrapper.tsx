@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 const NAV_ITEMS: Array<{
   view: ViewType
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number; style?: React.CSSProperties }>
 }> = [
   { view: 'home', label: 'Home', icon: Home },
   { view: 'explore', label: 'Explore', icon: Compass },

@@ -14,13 +14,13 @@ import { OptimizedImage } from '@/components/optimized-image'
 // nested dynamic imports inside statically-imported components.
 import { lazy, Suspense } from 'react'
 
-const StoryViewer = lazy(() => import('@/components/story-viewer').then((mod) => ({ default: mod.StoryViewer })))
-const StoryCreator = lazy(() => import('@/components/story-creator').then((mod) => ({ default: mod.StoryCreator })))
+const StoryViewer = lazy(() => import('@/components/story-viewer'))
+const StoryCreator = lazy(() => import('@/components/story-creator'))
 
 interface StoryItem {
   id: string
   title: string
-  mediaType: string
+  mediaType: 'IMAGE' | 'VIDEO'
   mediaUrl: string
   musicId: string | null
   musicName: string | null

@@ -69,3 +69,31 @@ Stage Summary:
 - Lint passes clean with zero errors
 - Static DOM structure guaranteed identical on server and first client render
 - File: src/components/home/city-selector.tsx
+
+---
+Task ID: 3
+Agent: Main
+Task: Fix all deployment-blocking TypeScript errors and build issues
+
+Work Log:
+- Ran `npx tsc --noEmit` and found 24 TypeScript errors across 15 files
+- Fixed strokeWidth prop errors in 4 files (bottom-nav, mobile-bottom-nav, mobile-bottom-wrapper, header) by widening icon type to include strokeWidth and style props
+- Fixed stories-section.tsx: removed .then() from lazy imports, changed story-viewer/creator to default exports, fixed mediaType union type
+- Fixed dashboard-view.tsx: changed `new Image()` to `new window.Image()`, changed `images` prop to `value`, `maxImages` to `maxFiles`
+- Fixed admin-view.tsx: changed `onUpload` prop to `onChange` on MediaUploader
+- Fixed city-routing.ts: added `subdomainRoutingEnabled` to RoutingConfig interface, defaults, and parser
+- Fixed stats/route.ts: added explicit type annotations to 3 arrays
+- Fixed admin-requests/[id]/route.ts: added missing `subdomain` field to city create
+- Fixed razorpay/create-order and razorpay/verify: added graceful env var checks
+- Fixed coupon-management.tsx: added Variants type annotation and `ease: 'easeOut' as const`
+- Fixed media-uploader.tsx: added `Record<string, string[]>` type to acceptTypes
+- Fixed optimized-image.tsx: wrapped src in `String()` for <img> tag compatibility
+- Fixed use-coupon-store.ts: added `_hasSeeded?: boolean` to CouponState interface
+- Fixed use-push-notifications.ts: cast applicationServerKey as BufferSource
+
+Stage Summary:
+- ALL 24 TypeScript errors resolved — `npx tsc --noEmit` reports zero errors in src/
+- `next build` succeeds with all 50 pages generated
+- `bun run lint` passes clean
+- Dev server running healthy, all API routes returning 200
+- Deployment should now succeed

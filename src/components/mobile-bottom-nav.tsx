@@ -28,7 +28,7 @@ import { ListingActionBar } from '@/components/listing-action-bar'
 const NAV_ITEMS: Array<{
   view: ViewType
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number; style?: React.CSSProperties }>
   requiresAuth?: boolean
   searchQuery?: string
 }> = [
@@ -215,7 +215,7 @@ function NavItem({
   isActive,
   onClick,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number; style?: React.CSSProperties }>
   label: string
   isActive: boolean
   onClick: () => void

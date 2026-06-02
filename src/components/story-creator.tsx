@@ -57,7 +57,7 @@ function formatDuration(seconds: number): string {
 }
 
 // ─── Component ────────────────────────────────────────────────────
-export function StoryCreator({
+export default function StoryCreator({
   isOpen,
   onClose,
   cityId,
