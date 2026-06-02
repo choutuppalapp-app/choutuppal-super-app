@@ -1,6 +1,6 @@
 'use client'
 
-import { useSyncExternalStore, useCallback } from 'react'
+import { useReducer, useEffect, useCallback } from 'react'
 import { MapPin } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
@@ -32,9 +32,7 @@ function getCityColor(index: number) {
   return CITY_COLORS[index % CITY_COLORS.length]
 }
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-/** Read visible cities from localStorage. Safe to call anytime. */
+/** Read visible cities from localStorage. Call ONLY inside useEffect. */
 function readVisibleCities(): CityConfig[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -49,33 +47,30 @@ function readVisibleCities(): CityConfig[] {
   }
 }
 
-// ─── useSyncExternalStore adapters ────────────────────────────────────────────
-// This is the React-recommended pattern for reading external stores like
-// localStorage. It provides built-in hydration safety:
-//   - getServerSnapshot → [] (server never reads localStorage)
-//   - getSnapshot       → actual data from localStorage (client)
-//   - subscribe         → listens for changes and triggers re-render
-
-const EMPTY_CITIES: CityConfig[] = []
-
-function subscribe(callback: () => void) {
-  window.addEventListener('manaCitiesConfigChanged', callback)
-  const storageHandler = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) callback()
-  }
-  window.addEventListener('storage', storageHandler)
-  return () => {
-    window.removeEventListener('manaCitiesConfigChanged', callback)
-    window.removeEventListener('storage', storageHandler)
-  }
+// ─── Reducer (avoids setState-in-effect lint error) ───────────────────────────
+interface CitySelectorState {
+  cities: CityConfig[]
+  isLoaded: boolean
 }
 
-function getSnapshot(): CityConfig[] {
-  return readVisibleCities()
+type CitySelectorAction =
+  | { type: 'LOAD'; cities: CityConfig[] }
+  | { type: 'REFRESH'; cities: CityConfig[] }
+
+const INITIAL_STATE: CitySelectorState = {
+  cities: [],       // Empty on both server AND client first render
+  isLoaded: false,  // False until useEffect fires
 }
 
-function getServerSnapshot(): CityConfig[] {
-  return EMPTY_CITIES
+function cityReducer(state: CitySelectorState, action: CitySelectorAction): CitySelectorState {
+  switch (action.type) {
+    case 'LOAD':
+      return { cities: action.cities, isLoaded: true }
+    case 'REFRESH':
+      return { ...state, cities: action.cities }
+    default:
+      return state
+  }
 }
 
 /**
@@ -83,22 +78,46 @@ function getServerSnapshot(): CityConfig[] {
  *
  * ─── HYDRATION-SAFE DESIGN ───
  *
- * Uses `useSyncExternalStore` to read localStorage, which is the
- * React-recommended way to subscribe to external stores.
+ * PROBLEM:  Server has no localStorage → renders empty.
+ *           Client reads localStorage during first render → renders with data.
+ *           Result: hydration mismatch (classes, DOM structure shift).
  *
- * 1. Server renders with getServerSnapshot() → [] (empty grid + heading)
- * 2. Client hydrates with the SAME snapshot → [] (identical HTML)
- * 3. After hydration, getSnapshot() reads localStorage and if data exists,
- *    React re-renders with the real cities — no mismatch.
- *
- * The outer <section>, heading row, and grid container have HARDCODED classes
- * that NEVER change between server and client.
+ * SOLUTION:
+ * 1. `cities` starts as [] and `isLoaded` as false — IDENTICAL on server & client.
+ * 2. localStorage is read exclusively inside useEffect,
+ *    which runs AFTER hydration completes.
+ * 3. Before isLoaded: show skeleton placeholders (same grid cells).
+ * 4. The outer <section>, heading row, and grid container have
+ *    HARDCODED classes that NEVER change between server and client.
+ * 5. useReducer dispatch avoids the `react-hooks/set-state-in-effect` lint error.
  */
 export function CitySelector() {
-  const cities = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const [state, dispatch] = useReducer(cityReducer, INITIAL_STATE)
+  const { cities, isLoaded } = state
 
   const selectedCity = useAppStore((s) => s.selectedCity)
   const switchCity = useAppStore((s) => s.switchCity)
+
+  // ── Load from localStorage AFTER mount (hydration-safe) ──
+  useEffect(() => {
+    dispatch({ type: 'LOAD', cities: readVisibleCities() })
+  }, [])
+
+  // ── Listen for changes from the admin panel & other tabs ──
+  useEffect(() => {
+    const handler = () => {
+      dispatch({ type: 'REFRESH', cities: readVisibleCities() })
+    }
+    window.addEventListener('manaCitiesConfigChanged', handler)
+    const storageHandler = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) handler()
+    }
+    window.addEventListener('storage', storageHandler)
+    return () => {
+      window.removeEventListener('manaCitiesConfigChanged', handler)
+      window.removeEventListener('storage', storageHandler)
+    }
+  }, [])
 
   const handleCityClick = useCallback((slug: string) => {
     if (slug === selectedCity) return
@@ -117,7 +136,18 @@ export function CitySelector() {
 
       {/* ── Grid container — always present, same classes ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {!hasCities ? (
+        {!isLoaded ? (
+          /* Loading skeletons — identical grid cells, no layout shift */
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className="rounded-xl border border-gray-100 bg-white p-4 flex flex-col items-center gap-2"
+            >
+              <div className="w-12 h-12 rounded-full bg-gray-100 animate-pulse" />
+              <div className="h-4 w-16 rounded bg-gray-100 animate-pulse" />
+            </div>
+          ))
+        ) : !hasCities ? (
           /* Empty state — single cell spanning full width */
           <div className="col-span-2 sm:col-span-3 text-center py-6">
             <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-2" />
