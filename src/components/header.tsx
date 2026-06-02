@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   MapPin, Home, Compass, Newspaper, Users,
   LayoutDashboard, Shield, LogOut, User,
@@ -172,11 +171,9 @@ export function Header({ className }: HeaderProps) {
               >
                 {item.label}
                 {isActive && (
-                  <motion.div
-                    layoutId="desktopNavIndicator"
+                  <div
                     className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
                     style={{ backgroundColor: primary }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
               </button>
@@ -255,26 +252,15 @@ export function Header({ className }: HeaderProps) {
       </div>
 
       {/* ═══ HAMBURGER DRAWER ═══ */}
-      <AnimatePresence>
-        {isDrawerOpen && (
-          <>
-            <motion.div
-              key="drawer-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-black/50 md:hidden"
-              onClick={() => setIsDrawerOpen(false)}
-            />
-            <motion.div
-              key="drawer-panel"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed top-0 right-0 bottom-0 z-[70] w-72 bg-white shadow-2xl md:hidden flex flex-col"
-            >
+      {isDrawerOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-[60] bg-black/50 md:hidden transition-opacity duration-200"
+            onClick={() => setIsDrawerOpen(false)}
+          />
+          <div
+            className="fixed top-0 right-0 bottom-0 z-[70] w-72 bg-white shadow-2xl md:hidden flex flex-col"
+          >
               {/* Drawer header */}
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
@@ -402,10 +388,9 @@ export function Header({ className }: HeaderProps) {
               <div className="px-5 py-4 border-t border-gray-100">
                 <p className="text-[10px] text-gray-400 text-center">{brandName} 2.0 • Made with ❤️ in Telangana</p>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          </div>
+        </>
+      )}
     </header>
   )
 }

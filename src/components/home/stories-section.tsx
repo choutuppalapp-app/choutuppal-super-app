@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Play, Music } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -168,13 +167,10 @@ export function StoriesSection() {
             const isPremium = story.isPremium || story.user?.subscriptionTier === 'premium' || story.user?.subscriptionTier === 'pro'
 
             return (
-              <motion.button
+              <button
                 key={story.id}
-                initial={false}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
                 onClick={() => handleStoryClick(index)}
-                className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer group"
+                className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer group transition-all duration-200 active:scale-95"
               >
                 {/* Avatar Ring Logic */}
                 <div className="relative">
@@ -221,7 +217,7 @@ export function StoriesSection() {
                 }`}>
                   {story.user?.fullName || story.title}
                 </span>
-              </motion.button>
+              </button>
             )
           })}
         </div>

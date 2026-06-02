@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X, Loader2 } from 'lucide-react'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { Button } from '@/components/ui/button'
@@ -17,7 +16,7 @@ import { useMounted } from '@/hooks/use-mounted'
  *
  * Dismissible — once dismissed, stays hidden for the session (stored in sessionStorage)
  *
- * HYDRATION SAFE: Uses useMounted() guard and initial={false} to prevent
+ * HYDRATION SAFE: Uses useMounted() guard to prevent
  * server/client DOM mismatch. sessionStorage check uses useState lazy
  * initializer (not useEffect) to avoid cascading render lint warnings.
  */
@@ -63,14 +62,7 @@ export function PushNotificationBanner() {
   }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={false}
-        animate={{ opacity: 1, height: 'auto' }}
-        exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.3 }}
-        className="w-full"
-      >
+    <div className="w-full">
         <div className="mx-4 my-2 rounded-xl bg-gradient-to-r from-[#4169E1]/10 via-[#D4AF37]/5 to-[#4169E1]/10 border border-[#4169E1]/20 overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             {/* Icon */}
@@ -121,7 +113,6 @@ export function PushNotificationBanner() {
             </div>
           )}
         </div>
-      </motion.div>
-    </AnimatePresence>
+    </div>
   )
 }

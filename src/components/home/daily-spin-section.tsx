@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { Sparkles, RotateCw, Gift } from 'lucide-react'
 import { GlassCard } from '@/components/glass-card'
 import { Button } from '@/components/ui/button'
@@ -17,12 +16,9 @@ export function DailySpinSection() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-              >
+              <div className="animate-[spin_4s_linear_infinite]">
                 <Sparkles className="size-5 text-[#D4AF37]" />
-              </motion.div>
+              </div>
               <h3 className="text-lg font-bold bg-gradient-to-r from-[#D4AF37] to-[#B8962E] bg-clip-text text-transparent">
                 Spin & Win!
               </h3>
@@ -46,7 +42,7 @@ export function DailySpinSection() {
             </div>
           </div>
 
-          <motion.div whileTap={{ scale: 0.95 }}>
+          <div className="active:scale-95 transition-transform">
             <Button
               onClick={() => setShowSpinWheel(true)}
               className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white font-bold px-5 shadow-lg shadow-[#D4AF37]/20"
@@ -54,21 +50,18 @@ export function DailySpinSection() {
               <RotateCw className="size-4 mr-1.5" />
               SPIN
             </Button>
-          </motion.div>
+          </div>
         </div>
 
         {/* Decorative wheel preview */}
         <div className="mt-3 flex items-center gap-2">
           {['5', '10', '2', '50', '1', '20'].map((coins, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={false}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 + i * 0.08, duration: 0.3 }}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#4169E1]/10 border border-[#D4AF37]/30 flex items-center justify-center"
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#4169E1]/10 border border-[#D4AF37]/30 flex items-center justify-center transition-all duration-200"
             >
               <span className="text-[10px] font-bold text-[#D4AF37]">{coins}</span>
-            </motion.div>
+            </div>
           ))}
           <span className="text-[11px] text-gray-400 ml-1">+ more prizes!</span>
         </div>

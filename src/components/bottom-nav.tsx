@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { Home, Compass, Newspaper, Users, User } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
@@ -33,18 +32,13 @@ export function BottomNav() {
           const Icon = item.icon
 
           return (
-            <motion.button
+            <button
               key={item.view}
-              whileTap={{ scale: 0.9 }}
               onClick={() => navigateTo(item.view)}
-              className="flex flex-col items-center justify-center py-1 px-4 min-h-[44px] min-w-[56px] relative"
+              className="flex flex-col items-center justify-center py-1 px-4 min-h-[44px] min-w-[56px] relative active:scale-90 transition-transform"
             >
               {isActive && (
-                <motion.div
-                  layoutId="mobileNavDot"
-                  className="absolute top-0.5 w-1 h-1 rounded-full bg-[#D4AF37]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
+                <div className="absolute top-0.5 w-1 h-1 rounded-full bg-[#D4AF37] transition-all duration-200" />
               )}
               <Icon
                 className={`size-[22px] transition-colors ${
@@ -59,7 +53,7 @@ export function BottomNav() {
               >
                 {item.label}
               </span>
-            </motion.button>
+            </button>
           )
         })}
       </div>

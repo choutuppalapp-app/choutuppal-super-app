@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { MessageCircle, Bell } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
@@ -21,12 +20,7 @@ export function WhatsAppCommunitySection() {
   if (!communityLink && !channelLink) return null
 
   return (
-    <motion.section
-      initial={false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full px-4"
-    >
+    <section className="w-full px-4">
       <div className="w-full bg-gradient-to-r from-[#25D366]/10 to-white p-4 md:p-6 rounded-2xl border border-[#25D366]/30 shadow-sm">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-center md:text-left">
@@ -63,6 +57,6 @@ export function WhatsAppCommunitySection() {
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   )
 }

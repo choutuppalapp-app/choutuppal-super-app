@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 
@@ -108,14 +107,9 @@ export function BannerAds() {
     /* Banner container: z-10 (lower than Stories z-20) */
     <div className="w-full bg-white py-3 relative z-10">
       <div className="relative w-full overflow-hidden px-4">
-        <AnimatePresence mode="wait">
-          <motion.div
+          <div
             key={currentIndex}
-            initial={false}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer"
+            className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer transition-opacity duration-300"
           >
             {/* Image or gradient background */}
             {hasImage ? (
@@ -160,8 +154,7 @@ export function BannerAds() {
                 {currentAd?.shopName ? currentAd.title : 'Promoted listing on Choutuppal'}
               </p>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
       </div>
 
       {/* Subtle Dot Indicators */}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { Clock, ArrowRight, Newspaper } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
@@ -85,19 +84,16 @@ export function NewsSection() {
   return (
     <section className="px-4 py-4">
       <div className="flex items-center justify-between mb-3">
-        <motion.h2
-          initial={false}
-          animate={{ opacity: 1, x: 0 }}
+        <h2
           className="text-lg font-bold text-gray-800"
         >
           📰 Local News
-        </motion.h2>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline"
+        </h2>
+        <button
+          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline active:scale-95 transition-transform"
         >
           View All <ArrowRight className="size-4" />
-        </motion.button>
+        </button>
       </div>
 
       {loading ? (
@@ -118,12 +114,7 @@ export function NewsSection() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {news.slice(0, 6).map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08, duration: 0.4 }}
-            >
+            <div key={item.id}>
               <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
                 {/* Image or Royal Glassmorphism gradient fallback */}
                 <div className="relative aspect-video w-full overflow-hidden">
@@ -159,7 +150,7 @@ export function NewsSection() {
                   </div>
                 </div>
               </GlassCard>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

@@ -3,7 +3,6 @@
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { Home, Compass, Newspaper, User, Phone, MessageCircle } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 const NAV_ITEMS: Array<{
   view: ViewType
@@ -39,9 +38,7 @@ export function MobileBottomWrapper({ className }: MobileBottomWrapperProps) {
 
   return (
     <div className={`md:hidden ${className || ''}`}>
-      <AnimatePresence mode="wait">
-        {isDetailPage ? <StickyCTA key="cta" /> : <BottomNav key="nav" />}
-      </AnimatePresence>
+      {isDetailPage ? <StickyCTA key="cta" /> : <BottomNav key="nav" />}
     </div>
   )
 }
@@ -53,31 +50,20 @@ function BottomNav() {
   const navigateTo = useAppStore((s) => s.navigateTo)
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 10, opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="h-16 bg-white border-t border-gray-200 flex justify-around items-center px-2"
-    >
+    <div className="h-16 bg-white border-t border-gray-200 flex justify-around items-center px-2 transition-all duration-200">
       {NAV_ITEMS.map((item) => {
         const isActive = currentView === item.view
         const Icon = item.icon
 
         return (
-          <motion.button
+          <button
             key={item.view}
-            whileTap={{ scale: 0.85 }}
             onClick={() => navigateTo(item.view)}
-            className="relative flex flex-col items-center justify-center min-w-[48px] min-h-[48px]"
+            className="relative flex flex-col items-center justify-center min-w-[48px] min-h-[48px] active:scale-95 transition-transform"
           >
             {/* Active dot indicator — w-1.5 h-1.5 rounded-full bg-[#D4AF37] above icon */}
             {isActive && (
-              <motion.div
-                layoutId="mobileNavDot"
-                className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
+              <div className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#D4AF37] transition-all duration-200" />
             )}
             <Icon
               className={`size-[22px] transition-colors ${
@@ -92,12 +78,12 @@ function BottomNav() {
             >
               {item.label}
             </span>
-          </motion.button>
+          </button>
         )
       })}
       {/* iOS safe area */}
       <div className="absolute bottom-0 left-0 right-0 bg-white" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
-    </motion.div>
+    </div>
   )
 }
 
@@ -120,12 +106,8 @@ function StickyCTA() {
   )}`
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 20, opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="bg-white border-t border-gray-200 p-3 flex gap-3"
+    <div
+      className="bg-white border-t border-gray-200 p-3 flex gap-3 transition-all duration-200"
       style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       <button
@@ -144,6 +126,6 @@ function StickyCTA() {
         <MessageCircle className="size-4" />
         WhatsApp Chat
       </a>
-    </motion.div>
+    </div>
   )
 }

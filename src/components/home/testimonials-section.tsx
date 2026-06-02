@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { GlassCard } from '@/components/glass-card'
 import { Quote, Star } from 'lucide-react'
 
@@ -45,25 +44,20 @@ const TESTIMONIALS = [
 export function TestimonialsSection() {
   return (
     <section className="px-4 py-4">
-      <motion.h2
-        initial={false}
-        animate={{ opacity: 1, x: 0 }}
+      <h2
         className="text-lg font-bold text-gray-800 mb-3"
       >
         💬 What People Say
-      </motion.h2>
+      </h2>
 
       <div
         className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {TESTIMONIALS.map((testimonial, index) => (
-          <motion.div
+          <div
             key={testimonial.id}
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.5 }}
-            className="flex-shrink-0 w-64 sm:w-72 snap-start"
+            className="flex-shrink-0 w-64 sm:w-72 snap-start transition-all duration-300"
           >
             <GlassCard className="!p-4 h-full flex flex-col justify-between">
               {/* Quote icon */}
@@ -101,7 +95,7 @@ export function TestimonialsSection() {
                 </div>
               </div>
             </GlassCard>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>
