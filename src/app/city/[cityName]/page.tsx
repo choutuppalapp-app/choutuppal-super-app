@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { AlertTriangle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
+import { useAppConfig } from '@/hooks/use-app-config'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
@@ -162,12 +163,27 @@ const Footer = dynamic(
   { ssr: false, loading: () => <div className="h-20 bg-gray-50 animate-pulse" /> }
 )
 
+const MaintenancePage = dynamic(
+  () => import('@/components/maintenance-page'),
+  { ssr: false, loading: () => <div className="fixed inset-0 bg-gray-900 animate-pulse" /> }
+)
+
 /**
  * HomeView — ONLY rendered when currentView === 'home'.
  * When currentView !== 'home', this component DOES NOT EXIST in the DOM.
  * The hero image inside this component CANNOT bleed into other views.
+ *
+ * FEATURE TOGGLES: Each section is conditionally rendered based on useAppConfig().
+ * - enableListings → CategoriesSection, FeaturedListings
+ * - enableRealEstate → RealEstateSection
+ * - enableShorts → ManaShortsFeed (view-level, not here)
+ * - enableLeaderProfiles → FeaturedProfiles
+ * - enableSpinAndWin → DailySpinSection
+ * - enableBlog → NewsSection
  */
 function HomeView() {
+  const { config } = useAppConfig()
+
   return (
     <div className="space-y-4 md:space-y-8">
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
@@ -175,13 +191,25 @@ function HomeView() {
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
       <ErrorBoundary name="CitySelector"><CitySelector /></ErrorBoundary>
-      <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
+      {config.enableLeaderProfiles && (
+        <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
+      )}
       <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
-      <ErrorBoundary name="DailySpinSection"><DailySpinSection /></ErrorBoundary>
-      <ErrorBoundary name="CategoriesSection"><CategoriesSection /></ErrorBoundary>
-      <ErrorBoundary name="FeaturedListings"><FeaturedListings /></ErrorBoundary>
-      <ErrorBoundary name="RealEstateSection"><RealEstateSection /></ErrorBoundary>
-      <ErrorBoundary name="NewsSection"><NewsSection /></ErrorBoundary>
+      {config.enableSpinAndWin && (
+        <ErrorBoundary name="DailySpinSection"><DailySpinSection /></ErrorBoundary>
+      )}
+      {config.enableListings && (
+        <>
+          <ErrorBoundary name="CategoriesSection"><CategoriesSection /></ErrorBoundary>
+          <ErrorBoundary name="FeaturedListings"><FeaturedListings /></ErrorBoundary>
+        </>
+      )}
+      {config.enableRealEstate && (
+        <ErrorBoundary name="RealEstateSection"><RealEstateSection /></ErrorBoundary>
+      )}
+      {config.enableBlog && (
+        <ErrorBoundary name="NewsSection"><NewsSection /></ErrorBoundary>
+      )}
       <ErrorBoundary name="TestimonialsSection"><TestimonialsSection /></ErrorBoundary>
       <ErrorBoundary name="PricingSection"><PricingSection /></ErrorBoundary>
       <ErrorBoundary name="BecomeAdminCta"><BecomeAdminCta /></ErrorBoundary>
@@ -369,6 +397,10 @@ export default function CityPage() {
   const fetchSiteSettings = useAppStore((s) => s.fetchSiteSettings)
   const fetchPlatformSettings = useAppStore((s) => s.fetchPlatformSettings)
 
+  // Feature toggle config
+  const { config, isLoaded: configLoaded } = useAppConfig()
+  const { user } = useAuth()
+
   // Sync URL slug → store on mount and when URL changes
   useEffect(() => {
     if (cityName && cityName !== selectedCity) {
@@ -424,25 +456,31 @@ export default function CityPage() {
   }, [currentView, currentCity.brandName])
 
   /**
-   * renderView — STRICT ONE-TO-ONE MAPPING.
+   * renderView — STRICT ONE-TO-ONE MAPPING with FEATURE TOGGLES.
    *
    * This is a plain switch statement. NO AnimatePresence.
    * NO exit animations. NO transition delays.
    *
-   * When currentView === 'home' → ONLY <HomeView /> in DOM
-   * When currentView === 'news' → ONLY <NewsView /> in DOM
-   *   → HomeView is COMPLETELY DESTROYED (not hidden, not faded, DESTROYED)
-   *   → Hero image does NOT exist in the DOM
+   * Feature toggles are enforced here:
+   * - enableShorts === false → 'shorts' view redirects to HomeView
+   * - enableListings === false → 'explore' view redirects to HomeView
+   * - enableRealEstate === false → 'explore' with 'Real Estate' query → HomeView
+   * - enableBlog === false → 'blog'/'blog-detail'/'news' → HomeView
+   * - enableLeaderProfiles === false → 'leader-profile' → HomeView
    */
   const renderView = () => {
     switch (currentView) {
       case 'home':
         return <HomeView />
       case 'explore':
+        // If listings are disabled, don't show explore view
+        if (!config.enableListings && !config.enableRealEstate) return <HomeView />
         return <ErrorBoundary name="ExploreView"><ExploreView /></ErrorBoundary>
       case 'news':
+        if (!config.enableBlog) return <HomeView />
         return <ErrorBoundary name="NewsView"><NewsView /></ErrorBoundary>
       case 'listing':
+        if (!config.enableListings) return <HomeView />
         return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
       case 'dashboard':
         return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
@@ -453,8 +491,10 @@ export default function CityPage() {
       case 'search':
         return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog':
+        if (!config.enableBlog) return <HomeView />
         return <ErrorBoundary name="BlogView"><BlogView /></ErrorBoundary>
       case 'blog-detail':
+        if (!config.enableBlog) return <HomeView />
         return <ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary>
       case 'community':
         return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
@@ -463,8 +503,10 @@ export default function CityPage() {
       case 'individual-profile':
         return <ErrorBoundary name="IndividualProfilePage"><IndividualProfilePage /></ErrorBoundary>
       case 'leader-profile':
+        if (!config.enableLeaderProfiles) return <HomeView />
         return <ErrorBoundary name="LeaderProfilePage"><LeaderProfilePage /></ErrorBoundary>
       case 'shorts':
+        if (!config.enableShorts) return <HomeView />
         return <ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary>
       case 'learn':
         return <ErrorBoundary name="LearnView"><LearnView /></ErrorBoundary>
@@ -473,6 +515,24 @@ export default function CityPage() {
       default:
         return <HomeView />
     }
+  }
+
+  // ── Maintenance Mode: Show MaintenancePage to non-Super-Admin users ───
+  // Super Admins always bypass maintenance mode.
+  // Also bypass if we're on admin/super-admin views (so admin can still manage).
+  const isSuperAdmin = user?.role === 'super_admin'
+  const isAdminView = currentView === 'admin' || currentView === 'super-admin'
+  if (
+    configLoaded &&
+    config.maintenanceMode &&
+    !isSuperAdmin &&
+    !isAdminView
+  ) {
+    return (
+      <ErrorBoundary name="MaintenancePage">
+        <MaintenancePage />
+      </ErrorBoundary>
+    )
   }
 
   // Full-screen views (no container padding, no footer, no max-width)

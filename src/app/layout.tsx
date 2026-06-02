@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { FloatingOverlays } from "@/components/floating-overlays";
 import { AuthProvider } from "@/lib/auth-context";
+import { AppConfigProvider } from "@/hooks/use-app-config";
 import { LoginModal } from "@/components/auth/login-modal";
 import { SettingsInitializer } from "@/components/settings-initializer";
 import { Toaster } from "@/components/ui/sonner";
@@ -85,6 +86,7 @@ export default function RootLayout({
         <GlobalErrorHandler />
         <ErrorBoundary name="AuthProvider">
           <AuthProvider>
+            <AppConfigProvider>
             <PWAInstallProvider>
               <ErrorBoundary name="SettingsInitializer">
                 <SettingsInitializer />
@@ -131,6 +133,7 @@ export default function RootLayout({
                 />
               </ErrorBoundary>
             </PWAInstallProvider>
+            </AppConfigProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>

@@ -16,6 +16,7 @@ import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
 import { useAuth } from '@/lib/auth-context'
 import { usePWAInstall } from './pwa-install-provider'
+import { useAppConfig } from '@/hooks/use-app-config'
 
 const NAV_LINKS: Array<{
   view: ViewType
@@ -54,6 +55,7 @@ export function Header({ className }: HeaderProps) {
   const themeSecondary = useAppStore((s) => s.themeSecondary)
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
   const { isInstallable, isInstalled, isIOS, triggerInstall } = usePWAInstall()
+  const { config } = useAppConfig()
   const showInstallMenuItem = (isInstallable || isIOS) && !isInstalled
 
   const brandName = currentCity.brandName || 'Choutuppal'
@@ -154,6 +156,10 @@ export function Header({ className }: HeaderProps) {
           {NAV_LINKS.map((item) => {
             if (item.adminOnly && !isAdmin) return null
             if (item.superAdminOnly && !isSuperAdmin) return null
+            // Feature toggle filtering for desktop nav
+            if (item.view === 'blog' && !config.enableBlog) return null
+            if (item.view === 'news' && !config.enableBlog) return null
+            if (item.view === 'explore' && !config.enableListings && !config.enableRealEstate) return null
             const isActive = currentView === item.view
             return (
               <button
@@ -323,6 +329,10 @@ export function Header({ className }: HeaderProps) {
                 {NAV_LINKS.map((item) => {
                   if (item.adminOnly && !isAdmin) return null
                   if (item.superAdminOnly && !isSuperAdmin) return null
+                  // Feature toggle filtering for drawer nav
+                  if (item.view === 'blog' && !config.enableBlog) return null
+                  if (item.view === 'news' && !config.enableBlog) return null
+                  if (item.view === 'explore' && !config.enableListings && !config.enableRealEstate) return null
                   const isActive = currentView === item.view
                   const Icon = item.icon
 

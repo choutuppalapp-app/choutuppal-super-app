@@ -5,6 +5,7 @@ import { Home, LayoutList, PlusCircle, Building2, UserCircle, Store, Landmark } 
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
+import { useAppConfig } from '@/hooks/use-app-config'
 import {
   Sheet,
   SheetContent,
@@ -57,6 +58,7 @@ export function MobileBottomNav() {
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
   const showBottomNav = useAppStore((s) => s.showBottomNav)
   const { isAuthenticated, setShowLoginModal } = useAuth()
+  const { config } = useAppConfig()
 
   const [postSheetOpen, setPostSheetOpen] = useState(false)
 
@@ -107,7 +109,7 @@ export function MobileBottomNav() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="relative flex justify-around items-end h-16 px-2">
-          {/* Home tab */}
+          {/* Home tab — always visible */}
           <NavItem
             icon={Home}
             label="Home"
@@ -115,37 +117,43 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('home')}
           />
 
-          {/* Listings tab */}
-          <NavItem
-            icon={LayoutList}
-            label="Listings"
-            isActive={isListingsActive}
-            onClick={() => handleNavClick('explore', false, '')}
-          />
+          {/* Listings tab — hidden when enableListings is OFF */}
+          {config.enableListings && (
+            <NavItem
+              icon={LayoutList}
+              label="Listings"
+              isActive={isListingsActive}
+              onClick={() => handleNavClick('explore', false, '')}
+            />
+          )}
 
-          {/* Center FAB — '+' Button */}
-          <button
-            onClick={() => setPostSheetOpen(true)}
-            className="relative flex flex-col items-center -mt-7 group"
-            aria-label="Create new post"
-          >
-            <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-lg shadow-blue-500/30 active:scale-90 transition-transform duration-200">
-              <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-[10px] mt-1 font-medium text-gray-400 group-active:text-[#4169E1] transition-colors">
-              Post
-            </span>
-          </button>
+          {/* Center FAB — '+' Button — hidden when both listings and RE are off */}
+          {(config.enableListings || config.enableRealEstate) && (
+            <button
+              onClick={() => setPostSheetOpen(true)}
+              className="relative flex flex-col items-center -mt-7 group"
+              aria-label="Create new post"
+            >
+              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-lg shadow-blue-500/30 active:scale-90 transition-transform duration-200">
+                <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <span className="text-[10px] mt-1 font-medium text-gray-400 group-active:text-[#4169E1] transition-colors">
+                Post
+              </span>
+            </button>
+          )}
 
-          {/* Real Estate tab */}
-          <NavItem
-            icon={Building2}
-            label="Real Estate"
-            isActive={isRealEstateActive}
-            onClick={() => handleNavClick('explore', false, 'Real Estate')}
-          />
+          {/* Real Estate tab — hidden when enableRealEstate is OFF */}
+          {config.enableRealEstate && (
+            <NavItem
+              icon={Building2}
+              label="Real Estate"
+              isActive={isRealEstateActive}
+              onClick={() => handleNavClick('explore', false, 'Real Estate')}
+            />
+          )}
 
-          {/* Profile/You tab */}
+          {/* Profile/You tab — always visible */}
           <NavItem
             icon={UserCircle}
             label="You"
@@ -163,30 +171,34 @@ export function MobileBottomNav() {
             <SheetDescription>Choose a category to get started</SheetDescription>
           </SheetHeader>
           <div className="flex flex-col gap-3 p-4 pt-2 pb-8">
-            <button
-              onClick={() => handlePostAction('listing')}
-              className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
-            >
-              <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#4169E1] to-[#3155C1] shadow-sm">
-                <Store className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">Add Listing</p>
-                <p className="text-sm text-gray-500">List your business, shop, or service</p>
-              </div>
-            </button>
-            <button
-              onClick={() => handlePostAction('real-estate')}
-              className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
-            >
-              <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] shadow-sm">
-                <Landmark className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">Add Real Estate</p>
-                <p className="text-sm text-gray-500">Post a property for sale or rent</p>
-              </div>
-            </button>
+            {config.enableListings && (
+              <button
+                onClick={() => handlePostAction('listing')}
+                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
+              >
+                <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#4169E1] to-[#3155C1] shadow-sm">
+                  <Store className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900">Add Listing</p>
+                  <p className="text-sm text-gray-500">List your business, shop, or service</p>
+                </div>
+              </button>
+            )}
+            {config.enableRealEstate && (
+              <button
+                onClick={() => handlePostAction('real-estate')}
+                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
+              >
+                <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] shadow-sm">
+                  <Landmark className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900">Add Real Estate</p>
+                  <p className="text-sm text-gray-500">Post a property for sale or rent</p>
+                </div>
+              </button>
+            )}
           </div>
         </SheetContent>
       </Sheet>
