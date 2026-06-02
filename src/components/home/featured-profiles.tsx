@@ -6,6 +6,23 @@ import { useAppStore } from '@/lib/store'
 /**
  * FeaturedProfiles — Quick access to Individual & Leader profile pages.
  * Shown on the home page as a horizontal scrollable row of profile cards.
+ *
+ * ─── HYDRATION-SAFE DESIGN ───
+ *
+ * 1. The <section> and heading structure have HARDCODED classes that NEVER
+ *    change between server and client render.
+ * 2. No data is read from localStorage or async sources during render.
+ *    The profiles array is hardcoded (static dummy data).
+ * 3. No conditional DOM wrappers — the structure is strictly static:
+ *    <section className="px-4 py-4">
+ *      <div className="flex items-center justify-between mb-3">
+ *        <div className="flex items-center gap-2">
+ *          <icon> <heading>
+ *        </div>
+ *        <button>See All</button>
+ *      </div>
+ *      <scrollable list />
+ *    </section>
  */
 export function FeaturedProfiles() {
   const navigateTo = useAppStore((s) => s.navigateTo)
@@ -60,22 +77,18 @@ export function FeaturedProfiles() {
   ]
 
   const handleProfileClick = (profile: typeof profiles[number]) => {
-    setSelectedProfileUserId(null) // Use placeholder data
+    setSelectedProfileUserId(null)
     setProfileType(profile.type)
     navigateTo(profile.type === 'leader' ? 'leader-profile' : 'individual-profile')
   }
 
   return (
-    <section className="py-4">
+    <section className="px-4 py-4">
+      {/* ── Static heading — NEVER changes between server & client ── */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center shadow-sm">
-            <Crown className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-gray-900">Featured People</h2>
-            <p className="text-[10px] text-gray-400 -mt-0.5">Professionals & Leaders</p>
-          </div>
+          <Crown className="w-5 h-5 text-[#4169E1]" />
+          <h2 className="text-lg font-bold text-gray-800">Featured Profiles</h2>
         </div>
         <button
           onClick={() => navigateTo('community')}
@@ -86,6 +99,7 @@ export function FeaturedProfiles() {
         </button>
       </div>
 
+      {/* ── Scrollable profile cards ── */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {profiles.map((profile) => {
           const IconComponent = profile.icon

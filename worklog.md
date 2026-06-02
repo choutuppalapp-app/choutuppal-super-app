@@ -97,3 +97,27 @@ Stage Summary:
 - `bun run lint` passes clean
 - Dev server running healthy, all API routes returning 200
 - Deployment should now succeed
+
+---
+Task ID: 4
+Agent: Main
+Task: Fix Hydration Mismatch in FeaturedProfiles and verify SuperAdminSettings dynamic import
+
+Work Log:
+- Read FeaturedProfiles component — found <section className="py-4"> (missing px-4) with a complex heading using nested divs wrapping the icon
+- The server renders the section without px-4, but the client hydration could shift the structure since the heading used a nested <div> wrapper around the Crown icon
+- Rewrote featured-profiles.tsx with EXACT static structure per user spec:
+  - <section className="px-4 py-4"> — hardcoded, never changes
+  - <div className="flex items-center justify-between mb-3"> — static wrapper
+  - <div className="flex items-center gap-2"> — icon + heading group
+  - <Crown className="w-5 h-5 text-[#4169E1]" /> — icon directly, no wrapper div
+  - <h2 className="text-lg font-bold text-gray-800">Featured Profiles</h2>
+- No conditional DOM wrappers, no localStorage reads, no state-dependent class changes
+- Verified SuperAdminSettings: already has export default function SuperAdminSettings() on line 622
+- Verified dynamic import in page.tsx: already uses simple import() without .then()
+- Both lint and tsc --noEmit pass clean
+
+Stage Summary:
+- FeaturedProfiles hydration error fixed by enforcing static structure with px-4 py-4 and hardcoded classes
+- SuperAdminSettings was already correctly configured (default export + simple dynamic import)
+- File: src/components/home/featured-profiles.tsx
