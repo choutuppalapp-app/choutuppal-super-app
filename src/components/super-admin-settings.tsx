@@ -15,6 +15,10 @@ import {
   Loader2,
   ArrowRightLeft,
   Shield,
+  MapPin,
+  Settings,
+  CreditCard,
+  Ticket,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
@@ -52,6 +56,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { GlassCard } from '@/components/glass-card'
 import { useDomainRouting, type SubdomainMapping } from '@/hooks/use-domain-routing'
+import { CityVisibilityManager } from '@/components/admin/city-visibility-manager'
+import { usePaymentConfig } from '@/hooks/use-payment-config'
 import { toast } from 'sonner'
 
 // ─── Helper: generate subdomain prefix from city name ──────────────────────────
@@ -79,8 +85,287 @@ const rowVariants = {
   exit: { opacity: 0, x: 10, transition: { duration: 0.2 } },
 }
 
+// ─── Tab type ────────────────────────────────────────────────────────────────────
+type AdminTab = 'domain' | 'cities' | 'app-config'
+
+// ─── App Config Tab Component ────────────────────────────────────────────────
+
+function AppConfigTab({
+  paymentConfig,
+  paymentConfigLoaded,
+  isFreeLaunch,
+  togglePaymentGateway,
+  effectiveFreeMessage,
+  setFreeMessageDraft,
+  setFreeMessageDirty,
+  updateFreeListingMessage,
+}: {
+  paymentConfig: { paymentGatewayEnabled: boolean; freeListingMessage: string; freeLaunchCouponCode: string }
+  paymentConfigLoaded: boolean
+  isFreeLaunch: boolean
+  togglePaymentGateway: (enabled: boolean) => void
+  effectiveFreeMessage: string
+  setFreeMessageDraft: (v: string) => void
+  setFreeMessageDirty: (v: boolean) => void
+  updateFreeListingMessage: (msg: string) => void
+}) {
+  if (!paymentConfigLoaded) {
+    return (
+      <div className="space-y-4 p-6">
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </div>
+    )
+  }
+
+  const handleSaveMessage = () => {
+    updateFreeListingMessage(effectiveFreeMessage.trim())
+    setFreeMessageDirty(false)
+    toast.success('Free listing message saved!')
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* ── Payment Gateway Status Banner ── */}
+      <div
+        className={`rounded-xl p-4 flex items-center gap-3 transition-colors duration-300 border ${
+          isFreeLaunch
+            ? 'bg-green-50/80 border-green-200'
+            : 'bg-blue-50/80 border-blue-200'
+        }`}
+      >
+        <div
+          className={`flex items-center justify-center w-10 h-10 rounded-lg shrink-0 ${
+            isFreeLaunch ? 'bg-green-100' : 'bg-blue-100'
+          }`}
+        >
+          <CreditCard
+            className={`w-5 h-5 ${isFreeLaunch ? 'text-green-600' : 'text-blue-600'}`}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-sm font-semibold ${
+              isFreeLaunch ? 'text-green-800' : 'text-blue-800'
+            }`}
+          >
+            {isFreeLaunch ? '🚀 Free Launch Mode Active' : '💳 Payment Gateway Active'}
+          </p>
+          <p
+            className={`text-xs mt-0.5 ${
+              isFreeLaunch ? 'text-green-600' : 'text-blue-600'
+            }`}
+          >
+            {isFreeLaunch
+              ? 'All premium listings are FREE. No payment required from users.'
+              : 'Razorpay checkout is active. Users will be charged for premium listings.'}
+          </p>
+        </div>
+        <Badge
+          className={`shrink-0 ${
+            isFreeLaunch
+              ? 'bg-green-100 text-green-800 border-green-200'
+              : 'bg-blue-100 text-blue-800 border-blue-200'
+          }`}
+        >
+          {isFreeLaunch ? 'FREE' : 'PAID'}
+        </Badge>
+      </div>
+
+      {/* ── Payment Gateway Toggle Card ── */}
+      <GlassCard variant="default">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#4169E1]/10">
+              <CreditCard className="w-5 h-5 text-[#4169E1]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Payment Gateway</h2>
+              <p className="text-sm text-muted-foreground">Enable or disable Razorpay checkout</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-[#4169E1]" />
+                  Enable Payment Gateway
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  When OFF, all premium listings are free. When ON, Razorpay checkout is used.
+                </p>
+              </div>
+              <Switch
+                checked={paymentConfig.paymentGatewayEnabled}
+                onCheckedChange={(checked) => {
+                  togglePaymentGateway(checked)
+                  toast.success(checked ? 'Payment gateway enabled' : 'Free launch mode activated', {
+                    description: checked
+                      ? 'Users will be charged via Razorpay'
+                      : 'All premium listings are now FREE',
+                  })
+                }}
+                className="data-[state=checked]:bg-[#4169E1] data-[state=unchecked]:bg-gray-300"
+              />
+            </div>
+
+            {/* Status indicator */}
+            <div
+              className={`rounded-lg p-3 transition-colors duration-300 ${
+                isFreeLaunch
+                  ? 'bg-green-50 border border-green-100'
+                  : 'bg-blue-50 border border-blue-100'
+              }`}
+            >
+              <p
+                className={`text-sm ${
+                  isFreeLaunch ? 'text-green-700' : 'text-blue-700'
+                }`}
+              >
+                {isFreeLaunch ? (
+                  <>
+                    <strong>Current:</strong> Free Launch Mode — Users can post premium listings without
+                    payment. Coupon <code className="px-1.5 py-0.5 rounded bg-green-100 text-green-800 text-xs font-mono">{paymentConfig.freeLaunchCouponCode}</code> is auto-applied.
+                  </>
+                ) : (
+                  <>
+                    <strong>Current:</strong> Payment Mode — Razorpay checkout will open for paid plans.
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* ── Free Listing Message Card ── */}
+      <GlassCard variant="default">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#D4AF37]/10">
+              <Settings className="w-5 h-5 text-[#D4AF37]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Free Listing Message</h2>
+              <p className="text-sm text-muted-foreground">
+                Banner shown on pricing page when gateway is OFF
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label htmlFor="free-message" className="text-sm font-medium">
+              Banner Message
+            </Label>
+            <div className="flex gap-3">
+              <Input
+                id="free-message"
+                placeholder="🎉 Early Bird Offer: Post Premium Listings for FREE!"
+                value={effectiveFreeMessage}
+                onChange={(e) => {
+                  setFreeMessageDraft(e.target.value)
+                  setFreeMessageDirty(true)
+                }}
+                className="flex-1 h-10"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveMessage()
+                }}
+              />
+              <Button
+                onClick={handleSaveMessage}
+                disabled={!effectiveFreeMessage.trim()}
+                className="h-10 px-5 bg-gradient-to-r from-[#D4AF37] to-[#B8941F] hover:from-[#C9A533] hover:to-[#A88518] text-white font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                <Save className="w-4 h-4" />
+                <span className="ml-1.5 hidden sm:inline">Save</span>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This message appears as a promotional banner on the Pricing page
+            </p>
+          </div>
+
+          {/* Preview */}
+          {effectiveFreeMessage && (
+            <div className="rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4">
+              <p className="text-xs font-medium text-green-600 mb-1.5">Preview:</p>
+              <div className="rounded-lg bg-white border border-green-200 p-3 shadow-sm">
+                <p className="text-sm font-semibold text-green-800">{effectiveFreeMessage}</p>
+                <p className="text-xs text-green-600 mt-1">No Credit Card Required ✨</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </GlassCard>
+
+      {/* ── Launch Coupon Info Card ── */}
+      <GlassCard variant="default">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-500/10">
+              <Ticket className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Launch Coupon</h2>
+              <p className="text-sm text-muted-foreground">
+                Auto-applied 100% discount coupon during free launch
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="rounded-lg bg-purple-50 border border-purple-200 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-purple-700">Coupon Code:</span>
+              <code className="px-2.5 py-1 rounded-md bg-purple-100 text-purple-800 text-sm font-mono font-bold tracking-wider">
+                {paymentConfig.freeLaunchCouponCode}
+              </code>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-purple-700">Discount:</span>
+              <Badge className="bg-green-100 text-green-800 border-green-200">100% OFF</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-purple-700">Status:</span>
+              <Badge className={isFreeLaunch ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}>
+                {isFreeLaunch ? 'Auto-Applied' : 'Inactive (Gateway ON)'}
+              </Badge>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            When the Payment Gateway is OFF, this coupon is automatically applied on the checkout
+            page, making all paid plans free. Create this coupon in the Coupon Manager to activate.
+          </p>
+        </div>
+      </GlassCard>
+    </div>
+  )
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
-export function SuperAdminSettings() {
+export default function SuperAdminSettings() {
+  const [activeTab, setActiveTab] = useState<AdminTab>('domain')
+
+  // Payment config
+  const {
+    config: paymentConfig,
+    isLoaded: paymentConfigLoaded,
+    togglePaymentGateway,
+    updateFreeListingMessage,
+    isFreeLaunch,
+  } = usePaymentConfig()
+  const [freeMessageDraft, setFreeMessageDraft] = useState('')
+  const [freeMessageDirty, setFreeMessageDirty] = useState(false)
+
+  const effectiveFreeMessage = freeMessageDirty ? freeMessageDraft : paymentConfig.freeListingMessage
+
   const {
     baseDomain,
     isCustomDomainActive,
@@ -266,6 +551,59 @@ export function SuperAdminSettings() {
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* ─── Tab Navigation ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+        <button
+          onClick={() => setActiveTab('domain')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex-1 justify-center ${
+            activeTab === 'domain'
+              ? 'bg-white text-[#4169E1] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Globe className="w-4 h-4" />
+          Domain Settings
+        </button>
+        <button
+          onClick={() => setActiveTab('cities')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex-1 justify-center ${
+            activeTab === 'cities'
+              ? 'bg-white text-[#4169E1] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          Manage Cities
+        </button>
+        <button
+          onClick={() => setActiveTab('app-config')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex-1 justify-center ${
+            activeTab === 'app-config'
+              ? 'bg-white text-[#4169E1] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          App Config
+        </button>
+      </div>
+
+      {/* ─── Tab Content ─────────────────────────────────────────────────── */}
+      {activeTab === 'app-config' ? (
+        <AppConfigTab
+          paymentConfig={paymentConfig}
+          paymentConfigLoaded={paymentConfigLoaded}
+          isFreeLaunch={isFreeLaunch}
+          togglePaymentGateway={togglePaymentGateway}
+          effectiveFreeMessage={effectiveFreeMessage}
+          setFreeMessageDraft={setFreeMessageDraft}
+          setFreeMessageDirty={setFreeMessageDirty}
+          updateFreeListingMessage={updateFreeListingMessage}
+        />
+      ) : activeTab === 'cities' ? (
+        <CityVisibilityManager />
+      ) : (
+      <>
       {/* ─── Section 1: DNS Setup Guide Alert ─────────────────────────────── */}
       <motion.div
         custom={0}
@@ -652,6 +990,9 @@ export function SuperAdminSettings() {
           </Badge>
         </div>
       </motion.div>
+
+      </>
+      )}
 
       {/* ─── Edit Mapping Dialog ──────────────────────────────────────────── */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

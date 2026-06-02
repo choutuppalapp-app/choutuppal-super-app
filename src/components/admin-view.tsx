@@ -348,7 +348,7 @@ interface MusicTrack {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export function AdminView() {
+export default function AdminView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const adminTab = useAppStore((s) => s.adminTab)
   const setAdminTab = useAppStore((s) => s.setAdminTab)

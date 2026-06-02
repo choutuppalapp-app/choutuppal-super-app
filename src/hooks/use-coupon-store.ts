@@ -89,6 +89,9 @@ export const useCouponStore = create<CouponState>()(
       coupons: [],
       appliedCoupon: null,
 
+      // ─── Seed default launch coupon on first load ──────────────────────
+      _hasSeeded: false,
+
       // ─── CRUD ───────────────────────────────────────────────────────────
 
       addCoupon: (data) => {
@@ -186,7 +189,30 @@ export const useCouponStore = create<CouponState>()(
       partialize: (state) => ({
         coupons: state.coupons,
         appliedCoupon: state.appliedCoupon,
+        _hasSeeded: state._hasSeeded,
       }),
+      // After hydration, seed the LAUNCH100 coupon if not already present
+      onRehydrateStorage: () => (state) => {
+        if (state && !state._hasSeeded) {
+          const hasLaunch100 = state.coupons.some((c) => c.code === 'LAUNCH100')
+          if (!hasLaunch100) {
+            state.coupons.push({
+              id: 'coupon-launch100-seed',
+              code: 'LAUNCH100',
+              discountType: 'percentage',
+              discountValue: 100,
+              minimumPurchase: 0,
+              expiryDate: '2026-12-31',
+              maxUsage: 99999,
+              currentUsage: 0,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              description: 'Launch offer — 100% off all paid plans during free launch period',
+            })
+          }
+          state._hasSeeded = true
+        }
+      },
     }
   )
 )

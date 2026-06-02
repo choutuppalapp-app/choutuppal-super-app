@@ -7,10 +7,15 @@ import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OptimizedImage } from '@/components/optimized-image'
-import dynamic from 'next/dynamic'
 
-const StoryViewer = dynamic(() => import('@/components/story-viewer').then((mod) => ({ default: mod.StoryViewer })), { ssr: false })
-const StoryCreator = dynamic(() => import('@/components/story-creator').then((mod) => ({ default: mod.StoryCreator })), { ssr: false })
+// Lazy-load heavy modal components to reduce initial bundle size.
+// Using React.lazy + Suspense instead of next/dynamic to avoid
+// Turbopack HMR "module factory not available" errors caused by
+// nested dynamic imports inside statically-imported components.
+import { lazy, Suspense } from 'react'
+
+const StoryViewer = lazy(() => import('@/components/story-viewer').then((mod) => ({ default: mod.StoryViewer })))
+const StoryCreator = lazy(() => import('@/components/story-creator').then((mod) => ({ default: mod.StoryCreator })))
 
 interface StoryItem {
   id: string
@@ -224,25 +229,29 @@ export function StoriesSection() {
 
       {/* Story Viewer - handles its own AnimatePresence internally */}
       {viewerOpen && (
-        <StoryViewer
-          stories={stories}
-          initialStoryIndex={viewerStoryIndex}
-          onClose={() => setViewerOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <StoryViewer
+            stories={stories}
+            initialStoryIndex={viewerStoryIndex}
+            onClose={() => setViewerOpen(false)}
+          />
+        </Suspense>
       )}
 
       {/* Story Creator - handles its own AnimatePresence internally */}
       {creatorOpen && cityId && user && (
-        <StoryCreator
-          isOpen={creatorOpen}
-          onClose={() => setCreatorOpen(false)}
-          cityId={cityId}
-          userId={user.id}
-          onStoryCreated={() => {
-            setCreatorOpen(false)
-            fetchStories()
-          }}
-        />
+        <Suspense fallback={null}>
+          <StoryCreator
+            isOpen={creatorOpen}
+            onClose={() => setCreatorOpen(false)}
+            cityId={cityId}
+            userId={user.id}
+            onStoryCreated={() => {
+              setCreatorOpen(false)
+              fetchStories()
+            }}
+          />
+        </Suspense>
       )}
     </>
   )

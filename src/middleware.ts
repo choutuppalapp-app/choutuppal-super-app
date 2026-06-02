@@ -108,10 +108,9 @@ export function middleware(request: NextRequest) {
 
   // ─── Path-based routing mode (DEFAULT) ─────────────────
 
-  // Root "/" → Redirect to default city
+  // Root "/" → Let page.tsx handle it (leader profile page)
   if (pathname === '/' || pathname === '') {
-    const redirectUrl = new URL(`/city/${DEFAULT_CITY_SLUG}`, request.url)
-    return NextResponse.redirect(redirectUrl)
+    return NextResponse.next()
   }
 
   // City route "/city/[slug]" → Set header and pass through

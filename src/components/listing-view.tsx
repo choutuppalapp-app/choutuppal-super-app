@@ -87,7 +87,7 @@ const PLACEHOLDER_IMAGES = [
   'https://placehold.co/800x400/B8962E/ffffff?text=Business+Photo+3',
 ]
 
-export function ListingView() {
+export default function ListingView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
   const navigateTo = useAppStore((s) => s.navigateTo)

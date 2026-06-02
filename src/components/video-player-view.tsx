@@ -81,7 +81,7 @@ function getTimeAgo(dateStr: string): string {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function VideoPlayerView() {
+export default function VideoPlayerView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedVideoId = useAppStore((s) => s.selectedVideoId)
   const navigateTo = useAppStore((s) => s.navigateTo)

@@ -273,7 +273,7 @@ function PostCard({
   currentUserId: string | null
   onLike: (postId: string, currentlyLiked: boolean) => void
   onCommentClick: (postId: string) => void
-  onProfileClick: (userId: string) => void
+  onProfileClick: (userId: string, isLeader?: boolean) => void
   expandedComments: boolean
   commentsData: CommentData[]
   commentsLoading: boolean
@@ -342,11 +342,11 @@ function PostCard({
 
       {/* Author row */}
       <div className="p-4 flex items-center gap-3">
-        <UserAvatar author={post.author} onClick={() => onProfileClick(post.author.id)} />
+        <UserAvatar author={post.author} onClick={() => onProfileClick(post.author.id, post.author.profile?.publicFigureCategory === 'POLITICIAN' || post.author.profile?.publicFigureCategory === 'GOVT_OFFICIAL')} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
-              onClick={() => onProfileClick(post.author.id)}
+              onClick={() => onProfileClick(post.author.id, post.author.profile?.publicFigureCategory === 'POLITICIAN' || post.author.profile?.publicFigureCategory === 'GOVT_OFFICIAL')}
               className="text-sm font-semibold text-gray-900 hover:underline truncate"
             >
               {post.author.fullName}
@@ -442,11 +442,11 @@ function PostCard({
                   <div className="divide-y divide-white/10">
                     {commentsData.map((comment) => (
                       <div key={comment.id} className="px-4 py-3 flex gap-2.5">
-                        <UserAvatar author={comment.user} size="sm" onClick={() => onProfileClick(comment.user.id)} />
+                        <UserAvatar author={comment.user} size="sm" onClick={() => onProfileClick(comment.user.id, comment.user.profile?.publicFigureCategory === 'POLITICIAN' || comment.user.profile?.publicFigureCategory === 'GOVT_OFFICIAL')} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <button
-                              onClick={() => onProfileClick(comment.user.id)}
+                              onClick={() => onProfileClick(comment.user.id, comment.user.profile?.publicFigureCategory === 'POLITICIAN' || comment.user.profile?.publicFigureCategory === 'GOVT_OFFICIAL')}
                               className="text-xs font-semibold text-gray-900 hover:underline"
                             >
                               {comment.user.fullName}
@@ -508,7 +508,7 @@ function LeaderCard({
 }: {
   leader: LeaderProfile
   currentUserId: string | null
-  onProfileClick: (userId: string) => void
+  onProfileClick: (userId: string, isLeader?: boolean) => void
 }) {
   const [following, setFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
@@ -553,7 +553,7 @@ function LeaderCard({
       className="bg-white/40 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl p-4"
     >
       <div className="flex items-center gap-3">
-        <div className="relative" onClick={() => onProfileClick(leader.userId)}>
+        <div className="relative" onClick={() => onProfileClick(leader.userId, true)}>
           <div
             className="rounded-full overflow-hidden ring-2 ring-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.25)] cursor-pointer"
             style={{ width: 56, height: 56 }}
@@ -584,7 +584,7 @@ function LeaderCard({
 
         <div className="flex-1 min-w-0">
           <button
-            onClick={() => onProfileClick(leader.userId)}
+            onClick={() => onProfileClick(leader.userId, true)}
             className="text-sm font-semibold text-gray-900 hover:underline truncate block"
           >
             {leader.user.fullName}
@@ -632,12 +632,13 @@ function LeaderCard({
 }
 
 // ─── Main Community Feed ───────────────────────────────────────
-export function CommunityFeed() {
+export default function CommunityFeed() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const communityTab = useAppStore((s) => s.communityTab)
   const setCommunityTab = useAppStore((s) => s.setCommunityTab)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const setSelectedProfileUserId = useAppStore((s) => s.setSelectedProfileUserId)
+  const setProfileType = useAppStore((s) => s.setProfileType)
   const { user, isAuthenticated } = useAuth()
 
   // Feed state
@@ -848,9 +849,10 @@ export function CommunityFeed() {
   }
 
   // Profile navigation
-  const handleProfileClick = (userId: string) => {
+  const handleProfileClick = (userId: string, isLeader: boolean = false) => {
     setSelectedProfileUserId(userId)
-    navigateTo('profile')
+    setProfileType(isLeader ? 'leader' : 'individual')
+    navigateTo(isLeader ? 'leader-profile' : 'individual-profile')
   }
 
   // Load more posts
@@ -1203,5 +1205,3 @@ export function CommunityFeed() {
     </motion.div>
   )
 }
-
-export default CommunityFeed

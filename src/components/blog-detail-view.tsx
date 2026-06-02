@@ -27,7 +27,7 @@ interface BlogPost {
 
 const PLACEHOLDER_IMG = 'https://placehold.co/1200x675/D4AF37/ffffff?text=Blog+Article'
 
-export function BlogDetailView() {
+export default function BlogDetailView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedBlogSlug = useAppStore((s) => s.selectedBlogSlug)
   const navigateTo = useAppStore((s) => s.navigateTo)

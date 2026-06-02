@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  // Allow cross-origin requests from the preview panel
+  // Next.js uses wildcard domain matching via matchWildcardDomain()
+  // '*.space-z.ai' matches any subdomain of space-z.ai
+  allowedDevOrigins: [
+    '*.space-z.ai',
+    '*.z.ai',
+    'space-z.ai',
+    'z.ai',
+  ],
   images: {
     remotePatterns: [
       {

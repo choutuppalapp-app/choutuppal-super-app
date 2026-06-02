@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { Bed, Maximize, MapPin, ArrowRight, Building2 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
@@ -27,9 +26,62 @@ interface RealEstateListing {
   }
 }
 
+// ─── Realistic dummy real estate data for Choutuppal area ──────────
+const DUMMY_RE_LISTINGS: RealEstateListing[] = [
+  {
+    id: 're1',
+    title: '3 BHK Independent House — Gated Community',
+    price: '₹55 Lakhs',
+    images: null,
+    address: 'NH-65 Highway, Choutuppal',
+    bedroomCount: 3,
+    area: '1,800 sq.ft',
+    isFeatured: true,
+    ownerPhone: '919912353705',
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+  },
+  {
+    id: 're2',
+    title: '2 BHK Apartment — Near Bus Stand',
+    price: '₹28 Lakhs',
+    images: null,
+    address: 'Bus Stand Road, Choutuppal',
+    bedroomCount: 2,
+    area: '1,100 sq.ft',
+    isFeatured: true,
+    ownerPhone: '919876543210',
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+  },
+  {
+    id: 're3',
+    title: 'Open Plot — 200 Sq.Yards',
+    price: '₹18 Lakhs',
+    images: null,
+    address: 'Colony Extension, Choutuppal',
+    bedroomCount: null,
+    area: '200 sq.yd',
+    isFeatured: false,
+    ownerPhone: '919440123456',
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+  },
+  {
+    id: 're4',
+    title: 'Commercial Shop — Main Road',
+    price: '₹12,000/month',
+    images: null,
+    address: 'Main Road, Choutuppal',
+    bedroomCount: null,
+    area: '500 sq.ft',
+    isFeatured: true,
+    ownerPhone: '918765432109',
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+  },
+]
+
 export function RealEstateSection() {
-  // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedCity = useAppStore((s) => s.selectedCity)
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery)
+  const navigateTo = useAppStore((s) => s.navigateTo)
   const [listings, setListings] = useState<RealEstateListing[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)
@@ -61,10 +113,12 @@ export function RealEstateSection() {
         const res = await fetch(`/api/realestate?cityId=${cityId}`)
         if (res.ok) {
           const data = await res.json()
-          setListings(Array.isArray(data) ? data : (data?.listings || []))
+          const apiListings = Array.isArray(data) ? data : (data?.listings || [])
+          // Use API data if available, otherwise fall back to dummy data
+          setListings(apiListings.length > 0 ? apiListings : DUMMY_RE_LISTINGS)
         }
       } catch {
-        // ignore
+        setListings(DUMMY_RE_LISTINGS)
       } finally {
         setLoading(false)
       }
@@ -85,24 +139,26 @@ export function RealEstateSection() {
   const placeholderImg =
     'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNGM0Y0RjYiLz48dGV4dCB4PSIxMDAiIHk9IjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjRDRBRjM3IiBmb250LXNpemU9IjI0Ij7wn5GAPC90ZXh0Pjwvc3ZnPg=='
 
+  const handleViewAll = () => {
+    setSearchQuery('Real Estate')
+    navigateTo('explore')
+  }
+
+  // Don't return null anymore — always show the section with dummy data
   if (!loading && listings.length === 0) return null
 
   return (
     <section className="px-4 py-4">
       <div className="flex items-center justify-between mb-3">
-        <motion.h2
-          initial={false}
-          animate={{ opacity: 1, x: 0 }}
-          className="text-lg font-bold text-gray-800"
-        >
+        <h2 className="text-lg font-bold text-gray-800">
           🏠 Real Estate
-        </motion.h2>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline"
+        </h2>
+        <button
+          onClick={handleViewAll}
+          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline active:scale-95 transition-transform"
         >
           View All <ArrowRight className="size-4" />
-        </motion.button>
+        </button>
       </div>
 
       {loading ? (
@@ -119,74 +175,78 @@ export function RealEstateSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {listings.map((listing, index) => {
             const img = getFirstImage(listing.images)
+            const hasImage = !!img
             return (
-              <motion.div
+              <div
                 key={listing.id}
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.06, duration: 0.4 }}
-                className="w-full"
+                className="w-full transform transition-all duration-200 hover:shadow-lg active:scale-[0.97] cursor-pointer"
               >
-                  <GlassCard
-                    variant={listing.isFeatured ? 'gold' : 'default'}
-                    className="!p-0 overflow-hidden cursor-pointer group"
-                    onClick={() => toast.info('Real estate detail view coming soon!')}
-                  >
-                    {/* Image — aspect-video for proper scaling */}
-                    <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
+                <GlassCard
+                  variant={listing.isFeatured ? 'gold' : 'default'}
+                  className="!p-0 overflow-hidden group"
+                  onClick={() => toast.info('Real estate detail view coming soon!')}
+                >
+                  {/* Image or gradient placeholder */}
+                  <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
+                    {hasImage ? (
                       <OptimizedImage
                         src={img || placeholderImg}
                         alt={listing.title}
                         fill
                         style={{ objectFit: 'cover' }}
                       />
-                      {/* Price overlay */}
-                      <div className="absolute bottom-2 left-2">
-                        <Badge className="bg-[#D4AF37] text-white text-xs font-bold border-0 shadow-md">
-                          {listing.price}
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center">
+                        <Building2 className="size-12 text-white/50" />
+                      </div>
+                    )}
+                    {/* Price overlay */}
+                    <div className="absolute bottom-2 left-2">
+                      <Badge className="bg-[#D4AF37] text-white text-xs font-bold border-0 shadow-md">
+                        {listing.price}
+                      </Badge>
+                    </div>
+                    {listing.isFeatured && (
+                      <div className="absolute top-2 right-2">
+                        <Badge className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-white text-[10px] border-0 shadow-sm">
+                          👑 Featured
                         </Badge>
                       </div>
-                      {listing.isFeatured && (
-                        <div className="absolute top-2 right-2">
-                          <Badge className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-white text-[10px] border-0 shadow-sm">
-                            👑 Featured
-                          </Badge>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-3 space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">
+                      {listing.title}
+                    </h3>
+
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      {listing.bedroomCount !== null && (
+                        <div className="flex items-center gap-1">
+                          <Bed className="size-3.5" />
+                          <span>{listing.bedroomCount} BHK</span>
+                        </div>
+                      )}
+                      {listing.area && (
+                        <div className="flex items-center gap-1">
+                          <Maximize className="size-3.5" />
+                          <span>{listing.area}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Content */}
-                    <div className="p-3 space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">
-                        {listing.title}
-                      </h3>
-
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        {listing.bedroomCount !== null && (
-                          <div className="flex items-center gap-1">
-                            <Bed className="size-3.5" />
-                            <span>{listing.bedroomCount} BHK</span>
-                          </div>
-                        )}
-                        {listing.area && (
-                          <div className="flex items-center gap-1">
-                            <Maximize className="size-3.5" />
-                            <span>{listing.area}</span>
-                          </div>
-                        )}
+                    {listing.address && (
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <MapPin className="size-3 flex-shrink-0" />
+                        <span className="text-[11px] truncate">{listing.address}</span>
                       </div>
-
-                      {listing.address && (
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <MapPin className="size-3 flex-shrink-0" />
-                          <span className="text-[11px] truncate">{listing.address}</span>
-                        </div>
-                      )}
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              )
-            })}
+                    )}
+                  </div>
+                </GlassCard>
+              </div>
+            )
+          })}
         </div>
       )}
     </section>

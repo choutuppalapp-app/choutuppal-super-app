@@ -642,7 +642,7 @@ function EmptyShorts() {
 /*  ManaShortsFeed - Main Container                                    */
 /* ------------------------------------------------------------------ */
 
-export function ManaShortsFeed() {
+export default function ManaShortsFeed() {
   /* ---- Store ---- */
   const currentCity = useAppStore((s) => s.currentCity)
   const navigateTo = useAppStore((s) => s.navigateTo)
@@ -956,4 +956,4 @@ export function ManaShortsFeed() {
   )
 }
 
-export default ManaShortsFeed
+

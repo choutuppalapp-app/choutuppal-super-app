@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
 import {
@@ -34,7 +33,6 @@ const CATEGORIES = [
 ]
 
 export function CategoriesSection() {
-  // Use individual selectors to prevent re-rendering on unrelated store changes
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const navigateTo = useAppStore((s) => s.navigateTo)
 
@@ -45,28 +43,20 @@ export function CategoriesSection() {
 
   return (
     <section className="px-4 py-4">
-      <motion.h2
-        initial={false}
-        animate={{ opacity: 1, x: 0 }}
-        className="text-lg font-bold text-gray-800 mb-3"
-      >
+      <h2 className="text-lg font-bold text-gray-800 mb-3">
         🏪 Browse Categories
-      </motion.h2>
+      </h2>
 
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
-        {CATEGORIES.map((category, index) => (
-          <motion.div
+        {CATEGORIES.map((category) => (
+          <div
             key={category.name}
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.04, duration: 0.4 }}
-            whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
             className="cursor-pointer"
           >
-            <GlassCard className="!p-3 flex flex-col items-center gap-2 hover:bg-white/60 transition-all group">
+            <GlassCard className="!p-3 flex flex-col items-center gap-2 hover:bg-white/60 transition-all group active:scale-95">
               <div
-                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${category.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}
+                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${category.bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}
               >
                 <category.icon className={`size-5 sm:size-6 ${category.color}`} />
               </div>
@@ -74,7 +64,7 @@ export function CategoriesSection() {
                 {category.name}
               </span>
             </GlassCard>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

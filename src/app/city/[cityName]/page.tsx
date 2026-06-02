@@ -8,9 +8,9 @@ import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { ErrorBoundary } from '@/components/error-boundary'
 
-// Home sections
+// ─── Static imports (lightweight, needed immediately) ───────────────────
 import { StoriesSection } from '@/components/home/stories-section'
-import { SosBanner } from '@/components/home/sos-banner'
+import { CitySelector } from '@/components/home/city-selector'
 import { BannerAds } from '@/components/home/banner-ads'
 import { CategoriesSection } from '@/components/home/categories-section'
 import { FeaturedListings } from '@/components/home/featured-listings'
@@ -22,30 +22,19 @@ import { DailySpinSection } from '@/components/home/daily-spin-section'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
 import { AnnouncementTicker } from '@/components/home/announcement-ticker'
 import { BecomeAdminCta } from '@/components/home/become-admin-cta'
-
-// Views (static imports)
-import { ListingView } from '@/components/listing-view'
-import { ExploreView } from '@/components/explore-view'
-import { NewsView } from '@/components/news-view'
-import { DashboardView } from '@/components/dashboard-view'
-import { AgentDashboard } from '@/components/agent-dashboard'
-import { SearchView } from '@/components/search-view'
-import { BlogView } from '@/components/blog-view'
-import { BlogDetailView } from '@/components/blog-detail-view'
-import { LearnView } from '@/components/learn-view'
-import { VideoPlayerView } from '@/components/video-player-view'
-import { Footer } from '@/components/footer'
-
-// Auth & Polish
+import { FeaturedProfiles } from '@/components/home/featured-profiles'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
-import { ListingDetailSkeleton, DashboardHeaderSkeleton } from '@/components/skeleton-loaders'
+import { DashboardHeaderSkeleton } from '@/components/skeleton-loaders'
 
-// ─── Dynamic imports (ssr: false) ─────────────────────────────────
-// All dynamic imports grouped AFTER all static imports.
-// This prevents Turbopack HMR module graph errors.
+// ─── Dynamic imports (ssr: false) ──────────────────────────────────────
+// ALL view components use DEFAULT exports and simple import() without .then()
+// This prevents "Invalid Element Type" errors from fragile .then() patterns.
+//
+// PATTERN: dynamic(() => import('...'), { ssr: false })
 
+// HeroSection
 const DynamicHeroSection = dynamic(
-  () => import('@/components/home/hero-section').then(mod => mod.default),
+  () => import('@/components/home/hero-section'),
   {
     ssr: false,
     loading: () => (
@@ -54,42 +43,123 @@ const DynamicHeroSection = dynamic(
   }
 )
 
+// Views — lazy-loaded to reduce initial compilation memory
+const ListingView = dynamic(
+  () => import('@/components/listing-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-40 rounded-xl bg-gray-100 animate-pulse" /><div className="h-8 w-3/4 rounded bg-gray-100 animate-pulse" /></div> }
+)
+
+const ExploreView = dynamic(
+  () => import('@/components/explore-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-20 rounded-xl bg-gray-100 animate-pulse" /><div className="grid grid-cols-2 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-40 rounded-xl bg-gray-100 animate-pulse" />)}</div></div> }
+)
+
+const NewsView = dynamic(
+  () => import('@/components/news-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-8 w-1/2 rounded bg-gray-100 animate-pulse" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3].map(i => <div key={i} className="h-48 rounded-xl bg-gray-100 animate-pulse" />)}</div></div> }
+)
+
+const DashboardView = dynamic(
+  () => import('@/components/dashboard-view'),
+  { ssr: false, loading: () => <div className="max-w-5xl mx-auto px-4 py-6 space-y-6"><DashboardHeaderSkeleton /><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{[1,2].map(i => <div key={i} className="h-40 rounded-xl bg-gray-100 animate-pulse" />)}</div></div> }
+)
+
+const AgentDashboard = dynamic(
+  () => import('@/components/agent-dashboard'),
+  { ssr: false, loading: () => <div className="max-w-5xl mx-auto px-4 py-6 space-y-6"><DashboardHeaderSkeleton /></div> }
+)
+
+const SearchView = dynamic(
+  () => import('@/components/search-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-12 rounded-xl bg-gray-100 animate-pulse" /></div> }
+)
+
+const BlogView = dynamic(
+  () => import('@/components/blog-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-8 w-1/2 rounded bg-gray-100 animate-pulse" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3].map(i => <div key={i} className="h-48 rounded-xl bg-gray-100 animate-pulse" />)}</div></div> }
+)
+
+const BlogDetailView = dynamic(
+  () => import('@/components/blog-detail-view'),
+  { ssr: false, loading: () => <div className="max-w-3xl mx-auto p-6 space-y-4"><div className="h-48 rounded-xl bg-gray-100 animate-pulse" /><div className="h-8 w-3/4 rounded bg-gray-100 animate-pulse" /><div className="h-4 w-full rounded bg-gray-100 animate-pulse" /></div> }
+)
+
+const LearnView = dynamic(
+  () => import('@/components/learn-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-8 w-1/2 rounded bg-gray-100 animate-pulse" /><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{[1,2].map(i => <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />)}</div></div> }
+)
+
+const VideoPlayerView = dynamic(
+  () => import('@/components/video-player-view'),
+  { ssr: false, loading: () => <div className="aspect-video w-full bg-gray-100 animate-pulse rounded-xl" /> }
+)
+
 const AdminView = dynamic(
-  () => import('@/components/admin-view').then((mod) => ({ default: mod.AdminView })),
-  { ssr: false }
+  () => import('@/components/admin-view'),
+  { ssr: false, loading: () => <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto"><div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" /><div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" /></div> }
 )
 
 const SuperAdminSettings = dynamic(
-  () => import('@/components/super-admin-settings').then((mod) => ({ default: mod.SuperAdminSettings })),
+  () => import('@/components/super-admin-settings'),
+  { ssr: false, loading: () => <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto"><div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" /><div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" /></div> }
+)
+
+const CommunityFeed = dynamic(
+  () => import('@/components/community-feed'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-20 rounded-xl bg-gray-100 animate-pulse" />{[1,2].map(i => <div key={i} className="h-48 rounded-xl bg-gray-100 animate-pulse" />)}</div> }
+)
+
+const ProfileView = dynamic(
+  () => import('@/components/profile-view'),
+  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-24 rounded-xl bg-gray-100 animate-pulse" /><div className="h-48 rounded-xl bg-gray-100 animate-pulse" /></div> }
+)
+
+const ManaShortsFeed = dynamic(
+  () => import('@/components/shorts-feed'),
+  { ssr: false, loading: () => <div className="w-full h-[500px] bg-gray-50 animate-pulse rounded-xl" /> }
+)
+
+const IndividualProfilePage = dynamic(
+  () => import('@/components/profile/individual-profile-page'),
   {
     ssr: false,
     loading: () => (
-      <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
-        <div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" />
-        <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />
-        <div className="h-80 w-full rounded-xl bg-gray-100 animate-pulse" />
-        <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
+      <div className="space-y-4 animate-pulse">
+        <div className="h-40 md:h-52 bg-gray-200" />
+        <div className="px-4 -mt-12">
+          <div className="w-24 h-24 rounded-full bg-gray-300" />
+        </div>
+        <div className="px-4 space-y-2">
+          <div className="h-5 w-40 bg-gray-200 rounded" />
+          <div className="h-3 w-64 bg-gray-100 rounded" />
+        </div>
       </div>
     ),
   }
 )
 
-const CommunityFeed = dynamic(
-  () => import('@/components/community-feed').then((mod) => ({ default: mod.CommunityFeed })),
-  { ssr: false }
-)
-
-const ProfileView = dynamic(
-  () => import('@/components/profile-view').then((mod) => ({ default: mod.ProfileView })),
-  { ssr: false }
-)
-
-const ManaShortsFeed = dynamic(
-  () => import('@/components/shorts-feed').then((mod) => ({ default: mod.ManaShortsFeed })),
+const LeaderProfilePage = dynamic(
+  () => import('@/components/profile/leader-profile-page'),
   {
     ssr: false,
-    loading: () => <div className="w-full h-[500px] bg-gray-50 animate-pulse rounded-xl" />,
+    loading: () => (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-48 md:h-64 bg-gray-200" />
+        <div className="px-4 -mt-14">
+          <div className="w-28 h-28 rounded-2xl bg-gray-300" />
+        </div>
+        <div className="px-4 space-y-2">
+          <div className="h-5 w-40 bg-gray-200 rounded" />
+          <div className="h-3 w-64 bg-gray-100 rounded" />
+        </div>
+      </div>
+    ),
   }
+)
+
+const Footer = dynamic(
+  () => import('@/components/footer'),
+  { ssr: false, loading: () => <div className="h-20 bg-gray-50 animate-pulse" /> }
 )
 
 /**
@@ -104,8 +174,9 @@ function HomeView() {
       <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
+      <ErrorBoundary name="CitySelector"><CitySelector /></ErrorBoundary>
+      <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
       <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
-      <ErrorBoundary name="SosBanner"><SosBanner /></ErrorBoundary>
       <ErrorBoundary name="DailySpinSection"><DailySpinSection /></ErrorBoundary>
       <ErrorBoundary name="CategoriesSection"><CategoriesSection /></ErrorBoundary>
       <ErrorBoundary name="FeaturedListings"><FeaturedListings /></ErrorBoundary>
@@ -279,6 +350,10 @@ function ProtectedSuperAdmin() {
  *
  * 3. Zero exit animations. The previous view is destroyed instantly.
  *    No fade-out, no slide-out, no delay. Instant swap.
+ *
+ * 4. ALL views are dynamically imported with ssr: false.
+ *    This reduces initial compilation memory and prevents OOM crashes.
+ *    Each view is lazy-loaded when the user navigates to it.
  * ═══════════════════════════════════════════════════════════════
  */
 export default function CityPage() {
@@ -338,6 +413,8 @@ export default function CityPage() {
         'blog-detail': 'Blog Article',
         community: 'Community',
         profile: 'Profile',
+        'individual-profile': 'Professional Profile',
+        'leader-profile': 'Leader Profile',
         shorts: 'Mana Shorts',
         learn: 'Mana Learn',
         'video-player': 'Watch Video',
@@ -383,6 +460,10 @@ export default function CityPage() {
         return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
       case 'profile':
         return <ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary>
+      case 'individual-profile':
+        return <ErrorBoundary name="IndividualProfilePage"><IndividualProfilePage /></ErrorBoundary>
+      case 'leader-profile':
+        return <ErrorBoundary name="LeaderProfilePage"><LeaderProfilePage /></ErrorBoundary>
       case 'shorts':
         return <ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary>
       case 'learn':
@@ -394,11 +475,13 @@ export default function CityPage() {
     }
   }
 
-  // Shorts view: full-screen layout (also NO AnimatePresence)
-  if (currentView === 'shorts') {
+  // Full-screen views (no container padding, no footer, no max-width)
+  const isFullScreenView = currentView === 'shorts' || currentView === 'individual-profile' || currentView === 'leader-profile'
+
+  if (isFullScreenView) {
     return (
-      <div className="w-full h-[calc(100dvh-3.5rem)] md:h-screen">
-        <ErrorBoundary name="ShortsFullView">
+      <div className={currentView === 'shorts' ? 'w-full h-[calc(100dvh-3.5rem)] md:h-screen' : 'w-full min-h-screen'}>
+        <ErrorBoundary name="FullScreenView">
           {renderView()}
         </ErrorBoundary>
       </div>

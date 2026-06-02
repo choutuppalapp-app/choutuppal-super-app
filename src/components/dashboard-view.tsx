@@ -144,7 +144,7 @@ const TAB_ITEMS = [
 ]
 
 // ─── Component ────────────────────────────────────────────────────
-export function DashboardView() {
+export default function DashboardView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const dashboardTab = useAppStore((s) => s.dashboardTab)
   const setDashboardTab = useAppStore((s) => s.setDashboardTab)

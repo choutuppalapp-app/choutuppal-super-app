@@ -130,7 +130,7 @@ const AGENT_TAB_ITEMS = [
 const CHART_COLORS = ['#4169E1', '#D4AF37', '#E74C3C', '#2ECC71']
 
 // ─── Component ────────────────────────────────────────────────────
-export function AgentDashboard() {
+export default function AgentDashboard() {
   const { user } = useAuth()
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const themePrimary = useAppStore((s) => s.themePrimary)

@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, SlidersHorizontal, Star, MapPin, BadgeCheck,
   Phone, ChevronDown, Store,
@@ -72,9 +71,189 @@ const CATEGORIES = [
 
 const PLACEHOLDER_IMG = 'https://placehold.co/400x250/D4AF37/ffffff?text=Business'
 
-export function ExploreView() {
-  // Use individual selectors to prevent re-rendering on unrelated store changes
+// ─── Realistic dummy listings for Explore view ─────────────────────────
+const DUMMY_LISTINGS: Listing[] = [
+  {
+    id: 'ex1',
+    slug: 'sri-venkateshwara-tiffin',
+    name: 'Sri Venkateshwara Tiffin Center',
+    category: 'Tiffin',
+    description: 'Best dosa and idli in Choutuppal',
+    images: null,
+    whatsappNumber: '919912353705',
+    address: 'Main Road, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 1240,
+    user: { id: 'u1', fullName: 'Venkatesh Goud', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 24, leads: 18 },
+  },
+  {
+    id: 'ex2',
+    slug: 'lakshmi-medical-store',
+    name: 'Lakshmi Medical & General Store',
+    category: 'Medical',
+    description: 'Complete pharmacy with 24/7 availability',
+    images: null,
+    whatsappNumber: '919876543210',
+    address: 'Bus Stand Road, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 890,
+    user: { id: 'u2', fullName: 'Ramesh Babu', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 15, leads: 10 },
+  },
+  {
+    id: 'ex3',
+    slug: 'rajeshwari-salon',
+    name: 'Rajeshwari Beauty Salon',
+    category: 'Salon',
+    description: 'Professional hair cuts, facials, and bridal makeup',
+    images: null,
+    whatsappNumber: '919123456789',
+    address: 'Market Center, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 670,
+    user: { id: 'u3', fullName: 'Rajeshwari Devi', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 19, leads: 12 },
+  },
+  {
+    id: 'ex4',
+    slug: 'sai-ram-plumbing',
+    name: 'Sai Ram Plumbing Works',
+    category: 'Plumber',
+    description: 'Expert plumbing services',
+    images: null,
+    whatsappNumber: '918765432109',
+    address: 'Colony Area, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 320,
+    user: { id: 'u5', fullName: 'Ramu Nayak', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 6, leads: 22 },
+  },
+  {
+    id: 'ex5',
+    slug: 'choutuppal-real-estate',
+    name: 'Choutuppal Real Estate Agency',
+    category: 'Real Estate',
+    description: 'Buy, sell, rent properties in Choutuppal area',
+    images: null,
+    whatsappNumber: '919440123456',
+    address: 'NH-65 Road, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 1500,
+    user: { id: 'u6', fullName: 'Srinivas Reddy', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 30, leads: 45 },
+  },
+  {
+    id: 'ex6',
+    slug: 'patel-electronics',
+    name: 'Patel Electronics & Mobiles',
+    category: 'Electronics',
+    description: 'Mobile phones, laptops, accessories, and repairs',
+    images: null,
+    whatsappNumber: '919988776655',
+    address: 'Market Road, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 540,
+    user: { id: 'u4', fullName: 'Suresh Kumar', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 8, leads: 15 },
+  },
+  {
+    id: 'ex7',
+    slug: 'auto-care-center',
+    name: 'Auto Care Service Center',
+    category: 'Automobile',
+    description: 'Bike and car servicing, oil change, and general repairs',
+    images: null,
+    whatsappNumber: '919998887776',
+    address: 'Highway Road, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 380,
+    user: { id: 'u8', fullName: 'Mohan Reddy', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 7, leads: 20 },
+  },
+  {
+    id: 'ex8',
+    slug: 'sri-krishna-tailors',
+    name: 'Sri Krishna Tailors & Textiles',
+    category: 'Tailor',
+    description: 'Custom stitching for men and women',
+    images: null,
+    whatsappNumber: '919988770055',
+    address: 'Old Market, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 450,
+    user: { id: 'u7', fullName: 'Krishna Murthy', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 11, leads: 30 },
+  },
+  {
+    id: 'ex9',
+    slug: 'rr-hardware',
+    name: 'RR Hardware & Paints',
+    category: 'Hardware',
+    description: 'Building materials, paints, plumbing, and electrical supplies',
+    images: null,
+    whatsappNumber: '919440112233',
+    address: 'Main Road, Choutuppal',
+    isPremium: false,
+    isFeatured: false,
+    viewsCount: 290,
+    user: { id: 'u9', fullName: 'Ravi Kumar', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 5, leads: 16 },
+  },
+  {
+    id: 'ex10',
+    slug: 'vidya-bharathi-school',
+    name: 'Vidya Bharathi High School',
+    category: 'Education',
+    description: 'Top-rated school — Nursery to 10th, CBSE & State syllabus',
+    images: null,
+    whatsappNumber: '919440123456',
+    address: 'NH-65 Road, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 2100,
+    user: { id: 'u6', fullName: 'Principal Sharma', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 32, leads: 45 },
+  },
+  {
+    id: 'ex11',
+    slug: 'mana-services',
+    name: 'Mana Home Services',
+    category: 'Services',
+    description: 'AC repair, pest control, cleaning, and home maintenance',
+    images: null,
+    whatsappNumber: '918765001122',
+    address: 'Bus Stand Area, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 610,
+    user: { id: 'u10', fullName: 'Sridhar Rao', avatarUrl: null },
+    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
+    _count: { reviews: 14, leads: 35 },
+  },
+]
+
+export default function ExploreView() {
   const selectedCity = useAppStore((s) => s.selectedCity)
+  const storeSearchQuery = useAppStore((s) => s.searchQuery)
   const setSelectedListing = useAppStore((s) => s.setSelectedListing)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
@@ -88,6 +267,27 @@ export function ExploreView() {
   const [totalPages, setTotalPages] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
   const [selectedCityId, setSelectedCityId] = useState('')
+  const syncAttempted = useRef(false)
+
+  // Sync store's searchQuery to local state on mount
+  // When user clicks "Real Estate" in bottom nav, it sets store.searchQuery
+  // We need to pick that up here and apply it as a category filter
+  useEffect(() => {
+    if (syncAttempted.current) return
+    syncAttempted.current = true
+
+    if (storeSearchQuery) {
+      // Check if the searchQuery matches a category name
+      const matchedCategory = CATEGORIES.find(
+        (cat) => cat !== 'All' && cat.toLowerCase() === storeSearchQuery.toLowerCase()
+      )
+      if (matchedCategory) {
+        setCategory(matchedCategory)
+      } else {
+        setSearch(storeSearchQuery)
+      }
+    }
+  }, [storeSearchQuery])
 
   // Fetch cities
   useEffect(() => {
@@ -124,11 +324,34 @@ export function ExploreView() {
           const data = await res.json()
           const listingsData = Array.isArray(data?.listings) ? data.listings : []
           const totalPagesNum = data?.pagination?.totalPages || 1
-          setListings((prev) => (reset ? listingsData : [...prev, ...listingsData]))
-          setTotalPages(totalPagesNum)
+
+          if (reset) {
+            // Use API data if available, otherwise fall back to dummy data filtered by category
+            if (listingsData.length > 0) {
+              setListings(listingsData)
+            } else {
+              // Filter dummy data by category and search
+              const filtered = DUMMY_LISTINGS.filter((l) => {
+                const matchesCategory = category === 'All' || l.category === category
+                const matchesSearch = !search || l.name.toLowerCase().includes(search.toLowerCase()) || l.category.toLowerCase().includes(search.toLowerCase())
+                return matchesCategory && matchesSearch
+              })
+              setListings(filtered)
+            }
+            setTotalPages(listingsData.length > 0 ? totalPagesNum : 1)
+          } else {
+            setListings((prev) => [...prev, ...listingsData])
+            setTotalPages(totalPagesNum)
+          }
         }
       } catch {
-        // silently handle
+        // Fall back to dummy data
+        const filtered = DUMMY_LISTINGS.filter((l) => {
+          const matchesCategory = category === 'All' || l.category === category
+          const matchesSearch = !search || l.name.toLowerCase().includes(search.toLowerCase()) || l.category.toLowerCase().includes(search.toLowerCase())
+          return matchesCategory && matchesSearch
+        })
+        setListings(filtered)
       } finally {
         setLoading(false)
         setLoadingMore(false)
@@ -157,6 +380,21 @@ export function ExploreView() {
     e.stopPropagation()
     setLeadFormListingId(listingId)
     setShowLeadForm(true)
+  }
+
+  // Category icon colors for dummy cards
+  const categoryColors: Record<string, string> = {
+    Tiffin: 'from-orange-400 to-orange-600',
+    Medical: 'from-red-400 to-red-600',
+    Salon: 'from-purple-400 to-purple-600',
+    Plumber: 'from-blue-400 to-blue-600',
+    'Real Estate': 'from-[#D4AF37] to-[#FFD700]',
+    Services: 'from-[#4169E1] to-[#6B8DD6]',
+    Electronics: 'from-indigo-400 to-indigo-600',
+    Automobile: 'from-gray-400 to-gray-600',
+    Tailor: 'from-pink-400 to-pink-600',
+    Hardware: 'from-amber-400 to-amber-600',
+    Education: 'from-teal-400 to-teal-600',
   }
 
   // Skeleton grid
@@ -224,18 +462,17 @@ export function ExploreView() {
         {/* Category pills */}
         <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
           {CATEGORIES.map((cat) => (
-            <motion.button
+            <button
               key={cat}
-              whileTap={{ scale: 0.95 }}
               onClick={() => setCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors active:scale-95 ${
                 category === cat
                   ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white shadow-md'
                   : 'bg-white/50 text-gray-600 border border-white/40 hover:bg-white/70'
               }`}
             >
               {cat}
-            </motion.button>
+            </button>
           ))}
         </div>
       </GlassCard>
@@ -243,7 +480,7 @@ export function ExploreView() {
       {/* Results header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">
-          Explore Businesses
+          {category !== 'All' ? `${category} ` : ''}Explore Businesses
           {!loading && (
             <span className="text-sm font-normal text-gray-500 ml-2">
               {listings.length} found
@@ -277,30 +514,36 @@ export function ExploreView() {
                     }
                   })()
                 : []
-              const coverImg = images[0] || PLACEHOLDER_IMG
+              const coverImg = images[0] || ''
+              const hasImage = !!coverImg
+              const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
 
               return (
-                <motion.div
+                <div
                   key={listing.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05, duration: 0.3 }}
-                  whileTap={{ scale: 0.98 }}
                   onClick={() => handleCardClick(listing.slug)}
-                  className="cursor-pointer"
+                  className="cursor-pointer transform transition-all duration-200 hover:shadow-lg active:scale-[0.97]"
                 >
                   <GlassCard
                     variant={listing.isPremium ? 'gold' : 'default'}
-                    className="!p-0 overflow-hidden hover:shadow-xl transition-shadow"
+                    className="!p-0 overflow-hidden"
                   >
-                    {/* Image — aspect-video w-full object-cover */}
+                    {/* Image or gradient placeholder */}
                     <div className="relative aspect-video w-full overflow-hidden">
-                      <OptimizedImage
-                        src={coverImg}
-                        alt={listing.name}
-                        fill
-                        className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-                      />
+                      {hasImage ? (
+                        <OptimizedImage
+                          src={coverImg}
+                          alt={listing.name}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+                          <span className="text-white text-3xl font-bold opacity-40">
+                            {listing.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                       {listing.isPremium && (
                         <Badge className="absolute top-2 right-2 bg-[#D4AF37] text-white border-none text-xs">
@@ -341,20 +584,18 @@ export function ExploreView() {
                         </p>
                       )}
                       <div className="pt-1">
-                        <motion.div whileTap={{ scale: 0.95 }}>
-                          <Button
-                            size="sm"
-                            onClick={(e) => handleGetQuote(e, listing.id)}
-                            className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs h-8"
-                          >
-                            <Phone className="size-3 mr-1" />
-                            Get Quote
-                          </Button>
-                        </motion.div>
+                        <Button
+                          size="sm"
+                          onClick={(e) => handleGetQuote(e, listing.id)}
+                          className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs h-8 active:scale-95 transition-transform"
+                        >
+                          <Phone className="size-3 mr-1" />
+                          Get Quote
+                        </Button>
                       </div>
                     </div>
                   </GlassCard>
-                </motion.div>
+                </div>
               )
             })}
           </div>
@@ -362,25 +603,19 @@ export function ExploreView() {
           {/* Load More */}
           {page < totalPages && (
             <div className="text-center pt-4">
-              <motion.div whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant="outline"
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/5 px-8"
-                >
-                  {loadingMore ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      className="size-4 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full mr-2"
-                    />
-                  ) : (
-                    <ChevronDown className="size-4 mr-1" />
-                  )}
-                  Load More
-                </Button>
-              </motion.div>
+              <Button
+                variant="outline"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/5 px-8 active:scale-95 transition-transform"
+              >
+                {loadingMore ? (
+                  <div className="size-4 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full mr-2 animate-spin" />
+                ) : (
+                  <ChevronDown className="size-4 mr-1" />
+                )}
+                Load More
+              </Button>
             </div>
           )}
         </>

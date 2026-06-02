@@ -1,192 +1,237 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { Home, Search, UserCircle, Phone, MessageCircle, Zap, GraduationCap } from 'lucide-react'
+import { useState } from 'react'
+import { Home, LayoutList, PlusCircle, Building2, UserCircle, Store, Landmark } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import { ListingActionBar } from '@/components/listing-action-bar'
 
 /**
- * Bottom navigation items — 5 tabs:
- * Home, Shorts, Learn, Search, You
+ * Navigation items — 4 side items (the FAB '+' is rendered separately):
+ * Home, Listings, [FAB], Real Estate, Profile/You
+ *
+ * NAVIGATION BEHAVIOUR:
+ * - Home      → navigateTo('home')
+ * - Listings  → navigateTo('explore') with clear search
+ * - Real Estate → navigateTo('explore') with searchQuery='Real Estate'
+ * - You       → navigateTo('dashboard') (requires auth)
  */
 const NAV_ITEMS: Array<{
   view: ViewType
   label: string
   icon: React.ComponentType<{ className?: string }>
   requiresAuth?: boolean
-  isSpecial?: boolean // For the Shorts center button
+  searchQuery?: string
 }> = [
   { view: 'home', label: 'Home', icon: Home },
-  { view: 'shorts', label: 'Shorts', icon: Zap, isSpecial: true },
-  { view: 'learn', label: 'Learn', icon: GraduationCap },
-  { view: 'explore', label: 'Search', icon: Search },
+  { view: 'explore', label: 'Listings', icon: LayoutList, searchQuery: '' },
+  { view: 'explore', label: 'Real Estate', icon: Building2, searchQuery: 'Real Estate' },
   { view: 'dashboard', label: 'You', icon: UserCircle, requiresAuth: true },
 ]
 
 /**
- * MobileBottomNav — position:fixed bottom navigation bar.
+ * MobileBottomNav — Redesigned bottom navigation bar.
  *
- * On normal views: Shows 5-tab bottom nav with gold dot indicator
- * On listing detail view: Shows StickyCTA with Connect + WhatsApp buttons
- * On shorts view: Hidden (full-screen)
+ * Features:
+ * - 4 side tabs + 1 floating center '+' FAB button
+ * - FAB opens a bottom sheet with "Add Listing" / "Add Real Estate"
+ * - Active tab: Royal Blue icon + bold label + highlight line
+ * - Real Estate tab navigates to explore view filtered by "Real Estate"
+ * - ZERO Framer Motion — pure Tailwind transitions, no hydration errors
  *
- * SPEC: fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t
- *       flex justify-around items-center md:hidden
- *       Icons: w-6 h-6, Active: gold dot above
- *       Touch targets: min-h-[48px] min-w-[48px]
- *       Safe area: pb-[env(safe-area-inset-bottom)]
+ * SPEC: fixed bottom-0, bg-white, safe-area-inset, flex justify-around
  */
 export function MobileBottomNav() {
-  // CRITICAL: Use individual selectors, NOT useAppStore()
   const currentView = useAppStore((s) => s.currentView)
   const navigateTo = useAppStore((s) => s.navigateTo)
+  const searchQuery = useAppStore((s) => s.searchQuery)
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
-  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
-  const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
   const showBottomNav = useAppStore((s) => s.showBottomNav)
   const { isAuthenticated, setShowLoginModal } = useAuth()
+
+  const [postSheetOpen, setPostSheetOpen] = useState(false)
 
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug
 
   // Don't show bottom nav on shorts or when explicitly hidden
   if (!showBottomNav && !isDetailPage) return null
 
-  const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
+  const handleNavClick = (view: ViewType, requiresAuth?: boolean, query?: string) => {
     if (requiresAuth && !isAuthenticated) {
       setShowLoginModal(true)
       return
     }
+    // Set search query before navigating so the explore view filters correctly
+    if (query !== undefined) {
+      setSearchQuery(query)
+    }
     navigateTo(view)
   }
 
-  return (
-    <AnimatePresence mode="wait">
-      {isDetailPage ? (
-        <motion.div
-          key="sticky-cta"
-          initial={false}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 20, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]"
-        >
-          <StickyCTA
-            selectedListingSlug={selectedListingSlug}
-            setShowLeadForm={setShowLeadForm}
-            setLeadFormListingId={setLeadFormListingId}
-          />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="bottom-nav"
-          initial={false}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 10, opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t border-gray-200 flex justify-around items-center md:hidden"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        >
-          {NAV_ITEMS.map((item) => {
-            const isActive = currentView === item.view
-            const Icon = item.icon
+  const handlePostAction = (type: 'listing' | 'real-estate') => {
+    setPostSheetOpen(false)
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    // Navigate to admin panel where listing/RE creation lives
+    navigateTo('admin')
+  }
 
-            return (
-              <button
-                key={item.view}
-                onClick={() => handleNavClick(item.view, item.requiresAuth)}
-                className="relative flex flex-col items-center justify-center min-h-[48px] min-w-[48px]"
-              >
-                {/* Gold dot indicator above active icon */}
-                {isActive && (
-                  <motion.div
-                    layoutId="mobileNavDot"
-                    className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
-                )}
-                {item.isSpecial ? (
-                  // Special styling for Shorts button
-                  <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
-                    isActive 
-                      ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8962E]' 
-                      : 'bg-gray-100'
-                  }`}>
-                    <Icon
-                      className={`w-4.5 h-4.5 transition-colors ${
-                        isActive ? 'text-white' : 'text-gray-500'
-                      }`}
-                      strokeWidth={isActive ? 2.5 : 2}
-                    />
-                  </div>
-                ) : (
-                  <Icon
-                    className={`w-6 h-6 transition-colors ${
-                      isActive ? 'text-[#D4AF37]' : 'text-gray-400'
-                    }`}
-                    strokeWidth={isActive ? 2.5 : 1.8}
-                  />
-                )}
-                <span
-                  className={`text-[10px] mt-0.5 font-medium transition-colors ${
-                    isActive ? 'text-[#D4AF37]' : 'text-gray-400'
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </button>
-            )
-          })}
-        </motion.div>
-      )}
-    </AnimatePresence>
+  // ─── Determine which tab is active ────────────────────────────────
+  // Real Estate is active when on explore view AND searchQuery is 'Real Estate'
+  // Listings is active when on explore view AND searchQuery is NOT 'Real Estate'
+  const isRealEstateActive = currentView === 'explore' && searchQuery === 'Real Estate'
+  const isListingsActive = currentView === 'explore' && searchQuery !== 'Real Estate'
+
+  // ─── Detail page: ListingActionBar instead of nav ────────────────────
+  if (isDetailPage) {
+    return <ListingActionBar />
+  }
+
+  // ─── Normal nav with FAB ───────────────────────────────────────────
+  return (
+    <>
+      {/* Nav bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="relative flex justify-around items-end h-16 px-2">
+          {/* Home tab */}
+          <NavItem
+            icon={Home}
+            label="Home"
+            isActive={currentView === 'home'}
+            onClick={() => handleNavClick('home')}
+          />
+
+          {/* Listings tab */}
+          <NavItem
+            icon={LayoutList}
+            label="Listings"
+            isActive={isListingsActive}
+            onClick={() => handleNavClick('explore', false, '')}
+          />
+
+          {/* Center FAB — '+' Button */}
+          <button
+            onClick={() => setPostSheetOpen(true)}
+            className="relative flex flex-col items-center -mt-7 group"
+            aria-label="Create new post"
+          >
+            <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-lg shadow-blue-500/30 active:scale-90 transition-transform duration-200">
+              <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
+            </div>
+            <span className="text-[10px] mt-1 font-medium text-gray-400 group-active:text-[#4169E1] transition-colors">
+              Post
+            </span>
+          </button>
+
+          {/* Real Estate tab */}
+          <NavItem
+            icon={Building2}
+            label="Real Estate"
+            isActive={isRealEstateActive}
+            onClick={() => handleNavClick('explore', false, 'Real Estate')}
+          />
+
+          {/* Profile/You tab */}
+          <NavItem
+            icon={UserCircle}
+            label="You"
+            isActive={currentView === 'dashboard' || currentView === 'profile'}
+            onClick={() => handleNavClick('dashboard', true)}
+          />
+        </div>
+      </div>
+
+      {/* Post bottom sheet */}
+      <Sheet open={postSheetOpen} onOpenChange={setPostSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader className="pb-2">
+            <SheetTitle className="text-lg">What do you want to post?</SheetTitle>
+            <SheetDescription>Choose a category to get started</SheetDescription>
+          </SheetHeader>
+          <div className="flex flex-col gap-3 p-4 pt-2 pb-8">
+            <button
+              onClick={() => handlePostAction('listing')}
+              className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
+            >
+              <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#4169E1] to-[#3155C1] shadow-sm">
+                <Store className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900">Add Listing</p>
+                <p className="text-sm text-gray-500">List your business, shop, or service</p>
+              </div>
+            </button>
+            <button
+              onClick={() => handlePostAction('real-estate')}
+              className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
+            >
+              <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] shadow-sm">
+                <Landmark className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900">Add Real Estate</p>
+                <p className="text-sm text-gray-500">Post a property for sale or rent</p>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   )
 }
 
-/**
- * StickyCTA — Shown instead of BottomNav on listing detail pages.
- * Two action buttons: "Connect via App" and "WhatsApp Chat"
- */
-function StickyCTA({
-  selectedListingSlug,
-  setShowLeadForm,
-  setLeadFormListingId,
+/* ─── Sub-components ──────────────────────────────────────────────────── */
+
+/** Single nav tab item — no Framer Motion, pure Tailwind */
+function NavItem({
+  icon: Icon,
+  label,
+  isActive,
+  onClick,
 }: {
-  selectedListingSlug: string | null
-  setShowLeadForm: (show: boolean) => void
-  setLeadFormListingId: (id: string) => void
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  isActive: boolean
+  onClick: () => void
 }) {
-  const handleConnect = () => {
-    if (selectedListingSlug) {
-      setLeadFormListingId(selectedListingSlug)
-      setShowLeadForm(true)
-    }
-  }
-
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
-    'Hi, I found your business on Choutuppal Super App. I want to know more.'
-  )}`
-
   return (
-    <div className="flex gap-3 p-3">
-      <motion.button
-        whileTap={{ scale: 0.97 }}
-        onClick={handleConnect}
-        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white font-semibold text-sm min-h-[48px] active:opacity-90 shadow-sm"
+    <button
+      onClick={onClick}
+      className="relative flex flex-col items-center justify-center min-h-[48px] min-w-[48px] active:scale-90 transition-all duration-200"
+    >
+      <Icon
+        className={`w-6 h-6 transition-colors duration-200 ${
+          isActive ? 'text-[#4169E1]' : 'text-gray-400'
+        }`}
+        strokeWidth={isActive ? 2.5 : 1.8}
+      />
+      <span
+        className={`text-[10px] mt-0.5 transition-all duration-200 ${
+          isActive ? 'text-[#4169E1] font-bold' : 'text-gray-400 font-medium'
+        }`}
       >
-        <Phone className="w-5 h-5" />
-        Connect via App
-      </motion.button>
-      <motion.a
-        whileTap={{ scale: 0.97 }}
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#25D366] text-white font-semibold text-sm min-h-[48px] active:opacity-90 shadow-sm"
-      >
-        <MessageCircle className="w-5 h-5" />
-        WhatsApp Chat
-      </motion.a>
-    </div>
+        {label}
+      </span>
+      {/* Active highlight line */}
+      <div
+        className={`absolute -bottom-0 h-[2.5px] rounded-full bg-[#4169E1] transition-all duration-300 ${
+          isActive ? 'w-5 scale-y-100' : 'w-0 scale-y-0'
+        }`}
+      />
+    </button>
   )
 }

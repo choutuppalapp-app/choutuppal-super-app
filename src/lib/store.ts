@@ -6,7 +6,7 @@ import {
   type RoutingConfig,
 } from '@/lib/city-routing'
 
-export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'super-admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile' | 'shorts' | 'learn' | 'video-player'
+export type ViewType = 'home' | 'explore' | 'news' | 'listing' | 'dashboard' | 'admin' | 'super-admin' | 'search' | 'blog' | 'blog-detail' | 'community' | 'profile' | 'individual-profile' | 'leader-profile' | 'shorts' | 'learn' | 'video-player'
 
 interface Notification {
   id: string
@@ -173,6 +173,8 @@ interface AppState {
   // Social Network state
   selectedProfileUserId: string | null
   setSelectedProfileUserId: (userId: string | null) => void
+  profileType: 'individual' | 'leader' | null
+  setProfileType: (type: 'individual' | 'leader' | null) => void
   communityTab: 'feed' | 'leaders'
   setCommunityTab: (tab: 'feed' | 'leaders') => void
 
@@ -204,7 +206,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSelectedListing: (slug) => set({ selectedListingSlug: slug, showBottomNav: !slug }),
   setSelectedBlogSlug: (slug) => set({ selectedBlogSlug: slug }),
   setSelectedVideoId: (id) => set({ selectedVideoId: id }),
-  navigateTo: (view) => set({ currentView: view, showBottomNav: view !== 'listing' && view !== 'video-player' && view !== 'shorts' }),
+  navigateTo: (view) => set({ currentView: view, showBottomNav: view !== 'listing' && view !== 'video-player' && view !== 'shorts' && view !== 'individual-profile' && view !== 'leader-profile' }),
 
   // City (Multi-Tenancy)
   selectedCity: 'choutuppal',
@@ -355,6 +357,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Social
   selectedProfileUserId: null,
   setSelectedProfileUserId: (userId) => set({ selectedProfileUserId: userId }),
+  profileType: null,
+  setProfileType: (type) => set({ profileType: type }),
   communityTab: 'feed',
   setCommunityTab: (tab) => set({ communityTab: tab }),
 

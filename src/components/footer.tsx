@@ -4,7 +4,7 @@ import { MapPin, Phone, Mail, Heart, Globe, ExternalLink } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { getCityUrl } from '@/lib/subdomain'
 
-export function Footer() {
+export default function Footer() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedCityName = useAppStore((s) => s.selectedCityName)
   const currentCity = useAppStore((s) => s.currentCity)

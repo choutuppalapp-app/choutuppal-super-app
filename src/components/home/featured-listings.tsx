@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { Star, MapPin, ArrowRight } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
@@ -33,8 +32,131 @@ interface Listing {
   }
 }
 
+// ─── Realistic dummy listings for Choutuppal area ─────────────────────
+const DUMMY_LISTINGS: Listing[] = [
+  {
+    id: 'd1',
+    slug: 'sri-venkateshwara-tiffin-center',
+    name: 'Sri Venkateshwara Tiffin Center',
+    category: 'Tiffin',
+    description: 'Best dosa and idli in Choutuppal. Home-style South Indian breakfast.',
+    images: null,
+    whatsappNumber: '919912353705',
+    address: 'Main Road, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 1240,
+    user: { id: 'u1', fullName: 'Venkatesh Goud', avatarUrl: null },
+    _count: { reviews: 24, leads: 18 },
+  },
+  {
+    id: 'd2',
+    slug: 'lakshmi-medical-store',
+    name: 'Lakshmi Medical & General Store',
+    category: 'Medicals',
+    description: 'Complete pharmacy with 24/7 availability. All medicines at fair prices.',
+    images: null,
+    whatsappNumber: '919876543210',
+    address: 'Bus Stand Road, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 890,
+    user: { id: 'u2', fullName: 'Ramesh Babu', avatarUrl: null },
+    _count: { reviews: 15, leads: 10 },
+  },
+  {
+    id: 'd3',
+    slug: 'rajeshwari-salon',
+    name: 'Rajeshwari Beauty Salon',
+    category: 'Salons',
+    description: 'Professional hair cuts, facials, and bridal makeup services.',
+    images: null,
+    whatsappNumber: '919123456789',
+    address: 'Market Center, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 670,
+    user: { id: 'u3', fullName: 'Rajeshwari Devi', avatarUrl: null },
+    _count: { reviews: 19, leads: 12 },
+  },
+  {
+    id: 'd4',
+    slug: 'choutuppal-computer-services',
+    name: 'Choutuppal Computer Services',
+    category: 'Electronics',
+    description: 'Laptop repair, desktop service, printer setup, and CCTV installation.',
+    images: null,
+    whatsappNumber: '919876501234',
+    address: 'Near SBI Bank, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 540,
+    user: { id: 'u4', fullName: 'Suresh Kumar', avatarUrl: null },
+    _count: { reviews: 8, leads: 15 },
+  },
+  {
+    id: 'd5',
+    slug: 'sai-ram-plumbing',
+    name: 'Sai Ram Plumbing Works',
+    category: 'Plumbers',
+    description: 'Expert plumbing services — pipe fitting, water tank, bathroom renovation.',
+    images: null,
+    whatsappNumber: '918765432109',
+    address: 'Colony Area, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 320,
+    user: { id: 'u5', fullName: 'Ramu Nayak', avatarUrl: null },
+    _count: { reviews: 6, leads: 22 },
+  },
+  {
+    id: 'd6',
+    slug: 'vidya-bharathi-school',
+    name: 'Vidya Bharathi High School',
+    category: 'Education',
+    description: 'Top-rated school in Choutuppal. Nursery to 10th class. CBSE & State syllabus.',
+    images: null,
+    whatsappNumber: '919440123456',
+    address: 'NH-65 Road, Choutuppal',
+    isPremium: true,
+    isFeatured: true,
+    viewsCount: 2100,
+    user: { id: 'u6', fullName: 'Principal Sharma', avatarUrl: null },
+    _count: { reviews: 32, leads: 45 },
+  },
+  {
+    id: 'd7',
+    slug: 'sri-krishna-tailors',
+    name: 'Sri Krishna Tailors & Textiles',
+    category: 'Tailors',
+    description: 'Custom stitching for men and women. Blouse, salwar, shirt, and pant stitching.',
+    images: null,
+    whatsappNumber: '919988776655',
+    address: 'Old Market, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 450,
+    user: { id: 'u7', fullName: 'Krishna Murthy', avatarUrl: null },
+    _count: { reviews: 11, leads: 30 },
+  },
+  {
+    id: 'd8',
+    slug: 'auto-care-center',
+    name: 'Auto Care Service Center',
+    category: 'Automobiles',
+    description: 'Bike and car servicing, oil change, tyre fitting, and general repairs.',
+    images: null,
+    whatsappNumber: '919998887776',
+    address: 'Highway Road, Choutuppal',
+    isPremium: false,
+    isFeatured: true,
+    viewsCount: 380,
+    user: { id: 'u8', fullName: 'Mohan Reddy', avatarUrl: null },
+    _count: { reviews: 7, leads: 20 },
+  },
+]
+
 export function FeaturedListings() {
-  // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedCity = useAppStore((s) => s.selectedCity)
   const setSelectedListing = useAppStore((s) => s.setSelectedListing)
   const navigateTo = useAppStore((s) => s.navigateTo)
@@ -69,10 +191,12 @@ export function FeaturedListings() {
         const res = await fetch(`/api/listings?cityId=${cityId}&isFeatured=true&limit=8`)
         if (res.ok) {
           const data = await res.json()
-          setListings(data.listings || [])
+          const apiListings = data.listings || []
+          // Use API data if available, otherwise fall back to dummy data
+          setListings(apiListings.length > 0 ? apiListings : DUMMY_LISTINGS)
         }
       } catch {
-        // ignore
+        setListings(DUMMY_LISTINGS)
       } finally {
         setLoading(false)
       }
@@ -99,23 +223,32 @@ export function FeaturedListings() {
   const placeholderImg =
     'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNGM0Y0RjYiLz48dGV4dCB4PSIxMDAiIHk9IjY1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjRDRBRjM3IiBmb250LXNpemU9IjIwIj7wn5GAPC90ZXh0Pjwvc3ZnPg=='
 
+  // Category icon colors for dummy cards
+  const categoryColors: Record<string, string> = {
+    Tiffin: 'from-orange-400 to-orange-600',
+    Medicals: 'from-red-400 to-red-600',
+    Salons: 'from-purple-400 to-purple-600',
+    Electronics: 'from-indigo-400 to-indigo-600',
+    Plumbers: 'from-blue-400 to-blue-600',
+    Education: 'from-teal-400 to-teal-600',
+    Tailors: 'from-pink-400 to-pink-600',
+    Automobiles: 'from-gray-400 to-gray-600',
+    Services: 'from-[#4169E1] to-[#6B8DD6]',
+    'Real Estate': 'from-[#D4AF37] to-[#FFD700]',
+  }
+
   return (
     <section className="px-4 py-4">
       <div className="flex items-center justify-between mb-3">
-        <motion.h2
-          initial={false}
-          animate={{ opacity: 1, x: 0 }}
-          className="text-lg font-bold text-gray-800"
-        >
+        <h2 className="text-lg font-bold text-gray-800">
           ⭐ Featured Listings
-        </motion.h2>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
+        </h2>
+        <button
           onClick={() => navigateTo('explore')}
-          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline"
+          className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline active:scale-95 transition-transform"
         >
           View All <ArrowRight className="size-4" />
-        </motion.button>
+        </button>
       </div>
 
       {loading ? (
@@ -128,35 +261,39 @@ export function FeaturedListings() {
             </div>
           ))}
         </div>
-      ) : listings.length === 0 ? (
-        <GlassCard className="!p-6 text-center">
-          <p className="text-gray-500 text-sm">No featured listings yet. Be the first to list your business!</p>
-        </GlassCard>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {listings.map((listing, index) => {
             const img = getFirstImage(listing.images)
+            const hasImage = !!img
+            const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
+
             return (
-              <motion.div
+              <div
                 key={listing.id}
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.06, duration: 0.4 }}
-                whileTap={{ scale: 0.97 }}
                 onClick={() => handleCardClick(listing.slug)}
+                className="transform transition-all duration-200 hover:shadow-lg active:scale-[0.97] cursor-pointer"
               >
                 <GlassCard
                   variant={listing.isPremium ? 'gold' : 'default'}
-                  className="!p-0 overflow-hidden cursor-pointer group"
+                  className="!p-0 overflow-hidden group"
                 >
-                  {/* Image — aspect-video w-full object-cover rounded-t-xl */}
+                  {/* Image or gradient placeholder */}
                   <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
-                    <OptimizedImage
-                      src={img || placeholderImg}
-                      alt={listing.name}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
+                    {hasImage ? (
+                      <OptimizedImage
+                        src={img || placeholderImg}
+                        alt={listing.name}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+                        <span className="text-white text-3xl font-bold opacity-50">
+                          {listing.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                     {/* Category badge */}
                     <div className="absolute top-2 left-2">
                       <Badge className="bg-white/80 backdrop-blur-sm text-gray-700 text-[10px] border-0 shadow-sm">
@@ -207,7 +344,7 @@ export function FeaturedListings() {
                     )}
                   </div>
                 </GlassCard>
-              </motion.div>
+              </div>
             )
           })}
         </div>

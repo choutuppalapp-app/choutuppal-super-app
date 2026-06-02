@@ -1,127 +1,187 @@
+# Worklog
+
 ---
 Task ID: 1
-Agent: Main Debugging Agent
-Task: Deep scan entire project, identify and fix all errors (Console Errors, Hydration Mismatches, Infinite Loops, Broken Imports, UI bugs)
+Agent: Main
+Task: Fix blank white screen - diagnose and fix critical rendering failures
 
 Work Log:
-- Read all critical files: page.tsx, hero-section.tsx, use-coupon-store.ts, login-modal.tsx, spin-wheel.tsx, app-shell.tsx, header.tsx, glass-card.tsx, pricing-section.tsx, apply-coupon.tsx, mobile-bottom-nav.tsx, mobile-bottom-wrapper.tsx, layout.tsx, middleware.ts, settings-initializer.tsx, floating-overlays.tsx
-- Read all API routes: Razorpay create-order, Razorpay verify, push/subscribe, push/send-notification, city/resolve, cities
-- Searched for: Framer Motion `initial={{}}` patterns (70+ instances), `useCouponStore()` direct usage (0), `useAppStore()` destructuring patterns, inline style patterns
-- Ran ESLint: 1 error found (push-notification-banner.tsx setState-in-effect), fixed
-- Verified dev server: Page loads with 200 status, no hydration errors, no infinite loops
+- Diagnosed root cause: Two issues causing blank screen
+  1. **Cross-origin block**: Next.js was blocking `/_next/*` resource requests from the preview panel origin (`preview-chat-*.space-z.ai`), preventing JavaScript chunks from loading
+  2. **OOM crashes**: All 20+ view components were statically imported, causing massive memory usage during Turbopack compilation (1.4GB+), leading to OOM kills
 
-Errors Found & Fixed:
-1. `/api/city/resolve` header mismatch: Middleware sets `x-city-slug` but API read `x-city-subdomain` → Fixed to use `x-city-slug`
-2. `become-admin-cta.tsx` modal used GlassCard (transparent on desktop: `md:bg-white/40`) → Replaced with solid `bg-white rounded-2xl shadow-2xl`
-3. `become-admin-cta.tsx` modal overlay was `bg-black/40` → Changed to `bg-black/50` per rules
-4. `push-notification-banner.tsx` had `initial={{ opacity: 0, height: 0 }}` (hydration risk) → Changed to `initial={false}`
-5. `push-notification-banner.tsx` read `sessionStorage` during render (hydration risk) → Moved to `useState` lazy initializer
-6. `push-notification-banner.tsx` had `setState` in `useEffect` (lint error) → Fixed with lazy initializer pattern
-7. `push-notification-banner.tsx` had unused imports (`Check`, `BellOff`) → Removed
-8. `push-notification-banner.tsx` used inline `style` for button gradient → Changed to Tailwind class
-9. `app-shell.tsx` was dead code (not imported anywhere) → Marked as deprecated with proper comment
+- Verified all component files exist with correct exports (sos-banner.tsx, stories-section.tsx, etc.)
+- Verified root layout.tsx is correct (providers properly wrapped, html/body tags closed)
+- Verified hero-section.tsx has `export default HeroSection`
+- Checked all 21 view components for runtime errors - all clean
 
-Previously Reported Issues (CONFIRMED ALREADY FIXED):
-- use-coupon-store.ts: Uses useShallow + selector hooks (useCouponData, useCouponActions, useAppliedCoupon, useCoupons)
-- login-modal.tsx: Has mounted guard, solid bg-white card, bg-black/60 overlay, no useEffect with setState
-- spin-wheel.tsx: Uses individual selectors from useAppStore, no object destructuring
-- hero-section.tsx: Default export, ssr:false, no inline styles, max-h-[300px]
-- All home section components: Use initial={false}
+- **Fix 1: DynamicHeroSection import pattern**
+  Changed from `dynamic(() => import('...'))` to `dynamic(() => import('...').then(mod => mod.default))` for Turbopack HMR compatibility
+
+- **Fix 2: allowedDevOrigins in next.config.ts**
+  Added `allowedDevOrigins: ['*.space-z.ai', '*.z.ai', 'space-z.ai', 'z.ai']` to allow cross-origin requests from the preview panel
+
+- **Fix 3: Converted all view components to dynamic imports**
+  - ListingView, ExploreView, NewsView, DashboardView, AgentDashboard, SearchView, BlogView, BlogDetailView, LearnView, VideoPlayerView, AdminView, SuperAdminSettings, CommunityFeed, ProfileView, ManaShortsFeed, Footer
+  - Each has a loading skeleton fallback
+  - Each wrapped in ErrorBoundary
+  - This reduced initial compilation from 20+ views to just 13 home sections, cutting memory usage significantly
+
+- **Fix 4: Updated package.json dev script**
+  Added `NODE_OPTIONS='--max-old-space-size=1024'` and `--turbopack` for memory management
 
 Stage Summary:
-- All previously reported critical issues (coupon store loops, login modal depth, spin wheel re-renders) are ALREADY FIXED
-- 4 new bugs found and fixed: API header mismatch, modal transparency, push-banner hydration, dead code
-- Lint: Clean (0 errors, 0 warnings)
-- Dev server: Running clean, page loads with 200 status
-- All preserved features verified: Razorpay API, path/subdomain routing, coupon system, RBAC, PWA/push notifications
+- Server now stays alive and serves pages successfully (GET /city/choutuppal 200)
+- All API endpoints working (banners, cities, settings, stories, listings, news, realestate)
+- No more cross-origin blocks from preview panel
+- No more OOM crashes with dynamic imports
+- Home view loads immediately, other views lazy-load when navigated to
 
 ---
-Task ID: 6-a
-Agent: fix-useAppStore-batch1
-Task: Fix useAppStore() without selectors in batch 1 files
+Task ID: 1
+Agent: Main Agent
+Task: Create IndividualProfilePage and LeaderProfilePage profile components with full integration
 
 Work Log:
-- Fixed my-listings-view.tsx: converted `const { selectedCityName } = useAppStore()` to individual selector
-- Fixed learn-view.tsx: converted `const { navigateTo, setSelectedVideoId, currentUser, themePrimary, themeSecondary } = useAppStore()` to 5 individual selectors
-- Fixed blog-detail-view.tsx: converted `const { selectedBlogSlug, navigateTo, setSelectedBlogSlug, themePrimary, themeSecondary } = useAppStore()` to 5 individual selectors
-- Fixed community-feed.tsx: converted `const { communityTab, setCommunityTab, navigateTo, setSelectedProfileUserId } = useAppStore()` to 4 individual selectors
-- Fixed notification-panel.tsx: converted `const { notifications, clearNotifications } = useAppStore()` to 2 individual selectors
-- Fixed video-player-view.tsx: converted `const { selectedVideoId, navigateTo, setSelectedVideoId, currentUser, themePrimary, themeSecondary } = useAppStore()` to 6 individual selectors
-- Fixed blog-view.tsx: converted `const { selectedCity, navigateTo, setSelectedBlogSlug, themePrimary, themeSecondary } = useAppStore()` to 5 individual selectors
-- Fixed lead-capture-form.tsx: converted `const { showLeadForm, setShowLeadForm, leadFormListingId } = useAppStore()` to 3 individual selectors
-- Fixed jobs-view.tsx: converted `const { selectedCityName } = useAppStore()` to individual selector
-- Fixed mobile-bottom-wrapper.tsx: converted 3 separate `useAppStore()` calls (MobileBottomWrapper, BottomNav, StickyCTA) to individual selectors (8 total selector lines)
-- Fixed listing-view.tsx: converted `const { selectedListingSlug, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()` to 4 individual selectors
-- Fixed saved-view.tsx: converted `const { selectedCityName } = useAppStore()` to individual selector
-- Fixed sos-button.tsx: converted `const { siteSettings } = useAppStore()` to individual selector
-- Fixed search-view.tsx: converted `const { searchQuery, setSearchQuery, selectedCity, setSelectedListing, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()` to 7 individual selectors
-- Fixed news-view.tsx: converted `const { selectedCity } = useAppStore()` to individual selector
-- Fixed admin-view.tsx: converted `const { adminTab, setAdminTab } = useAppStore()` to 2 individual selectors (currentUser already used selector pattern)
+- Explored existing project structure, store, community-feed, and profile-view
+- Created `src/components/profile/individual-profile-page.tsx` — Individual profile page with:
+  - Sticky header that shrinks on scroll (scroll > 100px)
+  - Cover photo with gradient overlay
+  - Circular profile picture with blue verified badge
+  - Name, profession, city, stats (Posts/Followers/Following)
+  - Follow, Message (WhatsApp), Share Profile action buttons
+  - 4 content tabs: About, Services, Gallery, Reviews with animated sliding underline
+  - About tab: Bio, Skills pills, Experience timeline
+  - Services tab: Card grid with pricing and Book Now buttons
+  - Gallery tab: 3-column grid with hover overlays
+  - Reviews tab: Overall rating with bar chart, individual review cards
+  - Realistic placeholder data (Rajesh Kumar, Digital Marketer)
+  - ZERO Framer Motion — all animations via Tailwind CSS transitions
+- Created `src/components/profile/leader-profile-page.tsx` — Leader profile page with:
+  - Grand cover photo with subtle Indian tricolor gradient overlay and tricolor lines
+  - ROUNDED SQUARE avatar (key visual differentiator from individuals) with gold ring
+  - Name in bold, saffron designation, party badge with auto-coloring (BJP/Congress/TRS/TDP)
+  - Follow (Gold gradient), Raise an Issue (red), Official Website (blue) action buttons
+  - 4 content tabs: Vision, Achievements, Events, Contact Office with tricolor line and gold underline
+  - Vision tab: Quote-highlighted vision statement, bio, vision items with gold badges, agenda grid
+  - Achievements tab: Vertical timeline with tricolor gradient line, status badges, before/after placeholders, summary stats
+  - Events tab: Upcoming events with dates, collapsible past events section
+  - Contact Office tab: Address, PA contact, office hours, email, Schedule Meeting CTA
+  - Realistic placeholder data (Komatireddy Venkat Reddy, MLA - Choutuppal)
+  - ZERO Framer Motion — all animations via Tailwind CSS transitions
+- Created `src/components/home/featured-profiles.tsx` — Horizontal scrollable row on home page with quick access to both profile types (4 demo profiles)
+- Updated `src/lib/store.ts`:
+  - Added 'individual-profile' and 'leader-profile' to ViewType
+  - Added `profileType` and `setProfileType` to store
+  - Updated navigateTo to hide bottom nav for profile pages
+- Updated `src/components/profile-view.tsx`:
+  - Smart router that renders LeaderProfilePage for POLITICIAN/GOVT_OFFICIAL profiles, IndividualProfilePage for others
+  - Accepts optional profileData prop, falls back to placeholder data
+- Updated `src/app/city/[cityName]/page.tsx`:
+  - Added dynamic imports for IndividualProfilePage and LeaderProfilePage
+  - Added view cases for 'individual-profile' and 'leader-profile'
+  - Added full-screen layout for profile pages (no max-width constraint, no footer)
+  - Added FeaturedProfiles section to HomeView
+  - Updated document titles for new views
+- Updated `src/components/community-feed.tsx`:
+  - Updated handleProfileClick to accept isLeader flag and navigate to correct profile type
+  - Updated PostCard and LeaderCard to detect leader profiles and pass isLeader flag
+  - LeaderCard navigates to leader-profile, PostCard auto-detects POLITICIAN/GOVT_OFFICIAL
 
 Stage Summary:
-- Converted 16 files from useAppStore() to individual selector pattern
-- This prevents unnecessary re-renders when unrelated store state changes
-- Each file now has a comment: "// Use individual selectors to prevent re-rendering on unrelated store changes"
-- Total of 53 individual selector lines replacing 18 destructured useAppStore() calls
+- Two complete, visually stunning, and distinctly designed profile pages created
+- Individual: Clean professional (White/Gray/Blue #4169E1) with circular avatar
+- Leader: Authoritative patriotic (Deep Blue/Saffron/White/Gold #D4AF37) with rounded square avatar
+- Both pages have sticky shrinking headers, animated tab underlines, and NO Framer Motion
+- Full integration with existing app routing, store, and community feed navigation
+- Featured Profiles section on home page provides quick access to demo both profile types
+- All lint checks pass cleanly
 
 ---
-Task ID: 6-b
-Agent: fix-useAppStore-batch2
-Task: Fix useAppStore() without selectors in batch 2 files
+Task ID: 2
+Agent: Main Agent
+Task: Implement Free Launch Strategy with Payment Toggle, Smart Checkout, and LAUNCH100 Coupon
 
 Work Log:
-- Fixed agent-dashboard.tsx: converted `const { themePrimary, themeSecondary } = useAppStore()` to 2 individual selectors
-- Fixed voice-search-modal.tsx: converted `const { isSearchOpen, setSearchOpen, setSearchQuery } = useAppStore()` to 3 individual selectors
-- Fixed explore-view.tsx: converted `const { selectedCity, setSelectedListing, navigateTo, setShowLeadForm, setLeadFormListingId } = useAppStore()` to 5 individual selectors
-- Fixed profile-view.tsx: converted `const { selectedProfileUserId, navigateTo, currentUser } = useAppStore()` to 3 individual selectors
-- Fixed auth/forbidden-page.tsx: converted `const { navigateTo } = useAppStore()` to 1 individual selector
-- Fixed footer.tsx: converted `const { selectedCityName, currentCity, availableCities, themePrimary, themeSecondary, navigateTo } = useAppStore()` to 6 individual selectors
-- Fixed notifications-view.tsx: converted `const { selectedCityName } = useAppStore()` to 1 individual selector
-- Fixed admin/routing-settings-tab.tsx: converted `const { routingConfig, setRoutingConfig, availableCities, themePrimary, themeSecondary } = useAppStore()` to 5 individual selectors
-- Fixed real-estate-view.tsx: converted `const { selectedCityName } = useAppStore()` to 1 individual selector
-- Fixed city-admin-dashboard.tsx: converted `const { themePrimary, themeSecondary } = useAppStore()` to 2 individual selectors
-- Fixed bottom-nav.tsx: converted `const { currentView, navigateTo, showBottomNav } = useAppStore()` to 3 individual selectors
-- Fixed coin-badge.tsx: converted `const { currentUser, setShowSpinWheel } = useAppStore()` to 2 individual selectors
-- Fixed home/pricing-section.tsx: converted `const { navigateTo } = useAppStore()` to 1 individual selector
-- Fixed dashboard-view.tsx: converted multi-line `const { dashboardTab, setDashboardTab, setSelectedListing, navigateTo } = useAppStore()` to 4 individual selectors
-- Fixed home/news-section.tsx: converted `const { selectedCity } = useAppStore()` to 1 individual selector
-- Fixed home/featured-listings.tsx: converted `const { selectedCity, setSelectedListing, navigateTo } = useAppStore()` to 3 individual selectors
-- Fixed home/categories-section.tsx: converted `const { setSearchQuery, navigateTo } = useAppStore()` to 2 individual selectors
-- Fixed home/whatsapp-community-section.tsx: converted `const { siteSettings } = useAppStore()` to 1 individual selector
-- Fixed home/stories-section.tsx: converted `const { selectedCity } = useAppStore()` to 1 individual selector
-- Fixed home/become-admin-cta.tsx: converted `const { themePrimary, themeSecondary, platformSettings } = useAppStore()` to 3 individual selectors
-- Fixed home/real-estate-section.tsx: converted `const { selectedCity } = useAppStore()` to 1 individual selector
-- Fixed home/hero-section.tsx: converted `const { navigateTo, siteSettings, currentCity } = useAppStore()` to 3 individual selectors
-- Fixed home/daily-spin-section.tsx: converted `const { setShowSpinWheel, currentUser } = useAppStore()` to 2 individual selectors
-- Fixed home/banner-ads.tsx: converted `const { selectedCity } = useAppStore()` to 1 individual selector
+- Created `src/hooks/use-payment-config.ts` — Payment config hook with LocalStorage persistence
+  - `paymentGatewayEnabled` (default: false), `freeListingMessage`, `freeLaunchCouponCode`
+  - `togglePaymentGateway()`, `updateFreeListingMessage()`, `isFreeLaunch` derived state
+  - `getPaymentConfig()` standalone reader for non-hook contexts
+- Updated `src/components/super-admin-settings.tsx`:
+  - Added new "App Config" tab with CreditCard icon
+  - AppConfigTab component with:
+    - Payment Gateway status banner (green=free, blue=paid)
+    - Toggle switch "Enable Payment Gateway" with toast feedback
+    - Free Listing Message input with save button and live preview
+    - Launch Coupon info card showing LAUNCH100 code, 100% OFF, and auto-apply status
+  - Tab routing updated: 'domain' | 'cities' | 'app-config'
+- Updated `src/components/home/pricing-section.tsx`:
+  - Green gradient FREE LAUNCH banner at top with Rocket icon and admin message
+  - Coupon section hidden when in free launch mode (auto-applied instead)
+  - Plan cards show strikethrough original price + "FREE" in green when free launch
+  - "🎉 FREE" badge on all paid plans during free launch
+  - Subscribe button changes to "🎉 Get it for FREE" when free
+  - Auto-apply LAUNCH100 coupon via useEffect when isFreeLaunch
+  - handleSubscribe skips checkout modal entirely in free launch → shows success modal
+  - Success modal with PartyPopper, green gradient, "Congratulations! Your listing is now Premium"
+  - Checkout modal also handles ₹0 after coupon → shows success modal instead of Razorpay
+  - "Activate for FREE" button in checkout when discountedPrice === 0
+- Updated `src/hooks/use-coupon-store.ts`:
+  - Added `_hasSeeded` flag to persist layer
+  - Added `onRehydrateStorage` callback to auto-seed LAUNCH100 coupon
+  - LAUNCH100: 100% discount, no minimum, expires 2026-12-31, max 99999 uses, active by default
 
 Stage Summary:
-- Converted 24 files from useAppStore() to individual selector pattern
-- This prevents unnecessary re-renders when unrelated store state changes
-- Verified: zero remaining `= useAppStore()` without selector in components directory
-- Total of 57 individual selector lines replacing 24 destructured useAppStore() calls
+- Complete free launch payment system implemented
+- Super Admin can toggle payment gateway ON/OFF with instant effect
+- Pricing page dynamically shows FREE banner, strikethrough prices, and free buttons
+- LAUNCH100 coupon auto-seeded and auto-applied during free launch
+- Checkout flow skips Razorpay entirely when price is ₹0
+- Beautiful success modal replaces payment confirmation
+- Seamless transition path: admin toggles gateway ON → Razorpay flow activates
+- All lint checks pass
 
 ---
-Task ID: 1-7
-Agent: main-agent
-Task: Kill infinite loops causing sandbox crashes — fix useAppStore() without selectors across entire codebase
+Task ID: 3
+Agent: Main Agent
+Task: Fix home page not showing — restore HomeView, fix routing, add dummy data, fix bottom nav
 
 Work Log:
-- Identified root cause: 40+ components using `useAppStore()` without selectors, subscribing to entire Zustand store
-- AuthProvider (wraps entire app) was worst offender: `const { setCurrentUser } = useAppStore()` caused ALL children to re-render on every store change
-- Fixed auth-context.tsx: individual selector + useMemo on context value
-- Fixed page.tsx: converted 7 destructured vars to individual selectors
-- Fixed header.tsx: converted 9 destructured vars to individual selectors
-- Fixed mobile-bottom-nav.tsx: converted 6 destructured vars to individual selectors
-- Delegated batch 1 (16 files, 18 calls, 53 selectors) to subagent
-- Delegated batch 2 (24 files, 57 selectors) to subagent
-- Verified: zero remaining `useAppStore()` without selectors in entire src directory
-- Dev server compiles and serves pages successfully: GET /city/choutuppal 200
-- Lint passes cleanly with no errors
+- Diagnosed root cause: `src/app/page.tsx` was rendering `<LeaderProfilePage />` directly instead of redirecting to the city page
+- Fixed `src/app/page.tsx` — Changed from rendering LeaderProfilePage to using `redirect('/city/choutuppal')` so users see the full CityPage with HomeView
+- Fixed `src/components/home/featured-listings.tsx`:
+  - Removed Framer Motion (was causing potential hydration issues)
+  - Added 8 realistic dummy listings for Choutuppal area (Tiffin, Medicals, Salons, Electronics, Plumbers, Education, Tailors, Automobiles)
+  - API data used when available, dummy data as fallback
+  - Gradient placeholders for listings without images
+- Fixed `src/components/home/real-estate-section.tsx`:
+  - Removed Framer Motion
+  - Added 4 realistic dummy RE listings (3BHK house, 2BHK apartment, open plot, commercial shop)
+  - "View All" now navigates to explore with "Real Estate" search query
+  - API data used when available, dummy data as fallback
+- Fixed `src/components/home/categories-section.tsx`:
+  - Removed Framer Motion
+  - Pure Tailwind transitions with `active:scale-95` and `hover:scale-110`
+- Fixed `src/components/mobile-bottom-nav.tsx`:
+  - Real Estate tab now sets `searchQuery='Real Estate'` before navigating to explore
+  - Listings tab clears search query (empty string)
+  - Active state correctly distinguishes between Listings and Real Estate tabs
+  - Added `searchQuery` and `setSearchQuery` store selectors
+- Fixed `src/components/explore-view.tsx`:
+  - Syncs store's `searchQuery` to local search/category on mount
+  - "Real Estate" searchQuery auto-sets category filter to "Real Estate"
+  - Added 11 realistic dummy listings across all categories
+  - Removed Framer Motion — pure Tailwind transitions
+  - Category pills, cards, buttons all use `active:scale-95` instead of `whileTap`
+  - Loading spinner uses CSS `animate-spin` instead of Framer Motion rotation
+  - API data used when available, dummy data filtered as fallback
 
 Stage Summary:
-- Fixed 42+ components from `useAppStore()` (entire store subscription) to individual selectors
-- Auth context value now memoized with useMemo to prevent unnecessary consumer re-renders
-- This eliminates the cascade re-render pattern that caused "Maximum update depth exceeded" and sandbox crashes
-- All API routes responding correctly
-- Zero compilation errors
+- Root page now redirects to /city/choutuppal showing full HomeView with all sections
+- HomeView renders: HeroSection, StoriesSection, BannerAds, AnnouncementTicker, CitySelector, FeaturedProfiles, WhatsAppCommunitySection, DailySpinSection, CategoriesSection, FeaturedListings, RealEstateSection, NewsSection, TestimonialsSection, PricingSection, BecomeAdminCta
+- Featured Listings shows 8 dummy businesses with gradient placeholders
+- Real Estate section shows 4 dummy property listings
+- Bottom Nav tabs all functional: Home→home, Listings→explore, Real Estate→explore+"Real Estate", You→dashboard
+- Explore view syncs with store searchQuery for category filtering
+- All Framer Motion removed from home sections (featured-listings, real-estate-section, categories-section, explore-view)
+- All lint checks pass, dev server compiles cleanly

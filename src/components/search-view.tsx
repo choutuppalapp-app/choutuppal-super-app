@@ -44,7 +44,7 @@ interface SearchResult {
 
 const PLACEHOLDER_IMG = 'https://placehold.co/400x250/4169E1/ffffff?text=Business'
 
-export function SearchView() {
+export default function SearchView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const searchQuery = useAppStore((s) => s.searchQuery)
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)

@@ -125,7 +125,7 @@ function getTimeAgo(dateStr: string): string {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function LearnView() {
+export default function LearnView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const navigateTo = useAppStore((s) => s.navigateTo)
   const setSelectedVideoId = useAppStore((s) => s.setSelectedVideoId)

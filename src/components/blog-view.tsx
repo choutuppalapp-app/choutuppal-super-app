@@ -27,7 +27,7 @@ interface BlogPost {
 
 const PLACEHOLDER_IMG = 'https://placehold.co/600x340/D4AF37/ffffff?text=Blog'
 
-export function BlogView() {
+export default function BlogView() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedCity = useAppStore((s) => s.selectedCity)
   const navigateTo = useAppStore((s) => s.navigateTo)
