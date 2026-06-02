@@ -24,3 +24,24 @@ Stage Summary:
 - Maintenance Mode shows full-screen overlay to non-admin users, Super Admins bypass it
 - When features are OFF, corresponding UI elements completely disappear from home page, bottom nav, header nav, and view routing
 - ZERO Framer Motion remaining in super-admin-settings.tsx (removed all `motion.*` and `AnimatePresence`)
+---
+Task ID: 1
+Agent: Main
+Task: Fix CitySelector hydration error — server/client class mismatch from localStorage reads during render
+
+Work Log:
+- Read current city-selector.tsx — found useState(() => loadVisibleCities()) which reads localStorage in the initializer
+- Identified root cause: server renders with [] (no localStorage), client reads localStorage immediately → different DOM structure and classes
+- First attempt: useState([]) + useEffect to load data → lint error "react-hooks/set-state-in-effect"
+- Final fix: Replaced useState+useEffect with useSyncExternalStore (React-recommended pattern for external stores)
+  - getServerSnapshot() returns [] (server never reads localStorage)
+  - getSnapshot() reads localStorage on client after hydration
+  - subscribe() listens for 'manaCitiesConfigChanged' custom event + StorageEvent for cross-tab sync
+- Removed the early return `null` — section wrapper always renders with hardcoded static classes
+- Verified lint passes clean, dev server shows no errors
+
+Stage Summary:
+- Hydration error permanently fixed using useSyncExternalStore pattern
+- Static <section> with hardcoded classes (px-4 py-4, gap-2, etc.) never changes between server/client
+- Empty state shows inline message instead of returning null
+- File: src/components/home/city-selector.tsx

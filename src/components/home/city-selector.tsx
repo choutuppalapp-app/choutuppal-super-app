@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore, useCallback } from 'react'
 import { MapPin } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
@@ -32,16 +32,15 @@ function getCityColor(index: number) {
   return CITY_COLORS[index % CITY_COLORS.length]
 }
 
-// ─── Load cities from localStorage ────────────────────────────────────────────
-function loadVisibleCities(): CityConfig[] {
-  if (typeof window === 'undefined') return []
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+/** Read visible cities from localStorage. Safe to call anytime. */
+function readVisibleCities(): CityConfig[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    // Filter: only show cities with showOnHome === true
-    // Sort: by priority ascending (1, 2, 3...)
     return parsed
       .filter((c: CityConfig) => c.showOnHome)
       .sort((a: CityConfig, b: CityConfig) => a.priority - b.priority)
@@ -50,96 +49,129 @@ function loadVisibleCities(): CityConfig[] {
   }
 }
 
+// ─── useSyncExternalStore adapters ────────────────────────────────────────────
+// This is the React-recommended pattern for reading external stores like
+// localStorage. It provides built-in hydration safety:
+//   - getServerSnapshot → [] (server never reads localStorage)
+//   - getSnapshot       → actual data from localStorage (client)
+//   - subscribe         → listens for changes and triggers re-render
+
+const EMPTY_CITIES: CityConfig[] = []
+
+function subscribe(callback: () => void) {
+  window.addEventListener('manaCitiesConfigChanged', callback)
+  const storageHandler = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY) callback()
+  }
+  window.addEventListener('storage', storageHandler)
+  return () => {
+    window.removeEventListener('manaCitiesConfigChanged', callback)
+    window.removeEventListener('storage', storageHandler)
+  }
+}
+
+function getSnapshot(): CityConfig[] {
+  return readVisibleCities()
+}
+
+function getServerSnapshot(): CityConfig[] {
+  return EMPTY_CITIES
+}
+
 /**
- * CitySelector — Reads manaCitiesConfig from LocalStorage and displays
- * city cards that the user can click to navigate to /city/[slug].
+ * CitySelector — Displays city cards that the user can click to navigate.
  *
- * Only cities where showOnHome === true are shown, sorted by priority.
- * Listens for the 'manaCitiesConfigChanged' custom event for instant updates.
+ * ─── HYDRATION-SAFE DESIGN ───
+ *
+ * Uses `useSyncExternalStore` to read localStorage, which is the
+ * React-recommended way to subscribe to external stores.
+ *
+ * 1. Server renders with getServerSnapshot() → [] (empty grid + heading)
+ * 2. Client hydrates with the SAME snapshot → [] (identical HTML)
+ * 3. After hydration, getSnapshot() reads localStorage and if data exists,
+ *    React re-renders with the real cities — no mismatch.
+ *
+ * The outer <section>, heading row, and grid container have HARDCODED classes
+ * that NEVER change between server and client.
  */
 export function CitySelector() {
-  const [cities, setCities] = useState<CityConfig[]>(() => loadVisibleCities())
+  const cities = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const selectedCity = useAppStore((s) => s.selectedCity)
   const switchCity = useAppStore((s) => s.switchCity)
 
-  // Listen for changes from the admin panel
-  useEffect(() => {
-    const handler = () => {
-      setCities(loadVisibleCities())
-    }
-    window.addEventListener('manaCitiesConfigChanged', handler)
-    // Also listen for storage events from other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key === STORAGE_KEY) handler()
-    })
-    return () => {
-      window.removeEventListener('manaCitiesConfigChanged', handler)
-    }
-  }, [])
-
-  const handleCityClick = (slug: string) => {
+  const handleCityClick = useCallback((slug: string) => {
     if (slug === selectedCity) return
     switchCity(slug)
-  }
+  }, [selectedCity, switchCity])
 
-  // Don't render anything if no visible cities
-  if (cities.length === 0) return null
+  const hasCities = cities.length > 0
 
   return (
     <section className="px-4 py-4">
+      {/* ── Static heading — NEVER changes between server & client ── */}
       <div className="flex items-center gap-2 mb-3">
         <MapPin className="w-5 h-5 text-[#4169E1]" />
         <h2 className="text-lg font-bold text-gray-800">Explore Cities</h2>
       </div>
 
+      {/* ── Grid container — always present, same classes ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {cities.map((city, index) => {
-          const color = getCityColor(index)
-          const isActive = city.slug === selectedCity
+        {!hasCities ? (
+          /* Empty state — single cell spanning full width */
+          <div className="col-span-2 sm:col-span-3 text-center py-6">
+            <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">No cities configured yet</p>
+          </div>
+        ) : (
+          /* City cards */
+          cities.map((city, index) => {
+            const color = getCityColor(index)
+            const isActive = city.slug === selectedCity
 
-          return (
-            <button
-              key={city.id}
-              onClick={() => handleCityClick(city.slug)}
-              className={`relative overflow-hidden rounded-xl border transition-all duration-200 active:scale-95 ${
-                isActive
-                  ? 'border-[#4169E1] ring-2 ring-[#4169E1]/30 shadow-md'
-                  : `${color.border} hover:shadow-sm`
-              }`}
-            >
-              <GlassCard className={`!p-0 h-full ${color.bg}`}>
-                <div className="p-4 flex flex-col items-center gap-2 text-center">
-                  {/* City initial letter avatar */}
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm ${
-                      isActive ? 'bg-[#4169E1]' : color.accent
-                    }`}
-                  >
-                    {city.name.charAt(0).toUpperCase()}
-                  </div>
-
-                  {/* City name */}
-                  <span
-                    className={`text-sm font-semibold leading-tight ${
-                      isActive ? 'text-[#4169E1]' : color.text
-                    }`}
-                  >
-                    {city.name}
-                  </span>
-
-                  {/* Active indicator */}
-                  {isActive && (
-                    <div className="flex items-center gap-1 text-[10px] text-[#4169E1] font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#4169E1] animate-pulse" />
-                      Current
+            return (
+              <button
+                key={city.id}
+                onClick={() => handleCityClick(city.slug)}
+                className={`relative overflow-hidden rounded-xl border transition-all duration-200 active:scale-95 ${
+                  isActive
+                    ? 'border-[#4169E1] ring-2 ring-[#4169E1]/30 shadow-md'
+                    : `${color.border} hover:shadow-sm`
+                }`}
+              >
+                <GlassCard className={`!p-0 h-full ${color.bg}`}>
+                  <div className="p-4 flex flex-col items-center gap-2 text-center">
+                    {/* City initial letter avatar */}
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm ${
+                        isActive ? 'bg-[#4169E1]' : color.accent
+                      }`}
+                    >
+                      {city.name.charAt(0).toUpperCase()}
                     </div>
-                  )}
-                </div>
-              </GlassCard>
-            </button>
-          )
-        })}
+
+                    {/* City name */}
+                    <span
+                      className={`text-sm font-semibold leading-tight ${
+                        isActive ? 'text-[#4169E1]' : color.text
+                      }`}
+                    >
+                      {city.name}
+                    </span>
+
+                    {/* Active indicator */}
+                    {isActive && (
+                      <div className="flex items-center gap-1 text-[10px] text-[#4169E1] font-medium">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#4169E1] animate-pulse" />
+                        Current
+                      </div>
+                    )}
+                  </div>
+                </GlassCard>
+              </button>
+            )
+          })
+        )}
       </div>
     </section>
   )
