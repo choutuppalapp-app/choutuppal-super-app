@@ -76,12 +76,18 @@ function detectMobile(): boolean {
 
 export function PWAInstallProvider({ children }: { children: React.ReactNode }) {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstalled, setIsInstalled] = useState(checkIsStandalone)
-  const [wasDismissed, setWasDismissed] = useState(checkWasDismissed)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [wasDismissed, setWasDismissed] = useState(false)
   const promptRef = useRef<BeforeInstallPromptEvent | null>(null)
+
+  useEffect(() => {
+    setIsInstalled(checkIsStandalone())
+    setWasDismissed(checkWasDismissed())
+  }, [])
 
   const isIOS = detectIOS()
   const isMobile = detectMobile()
+
 
   // Keep ref in sync
   useEffect(() => {

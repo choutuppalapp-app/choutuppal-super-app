@@ -1,6 +1,6 @@
 'use client'
 
-import { useSyncExternalStore, useCallback } from 'react'
+import { useSyncExternalStore, useCallback, useEffect } from 'react'
 import { getRoutingConfig, saveRoutingConfig } from '@/lib/city-routing'
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -66,10 +66,6 @@ function subscribe(callback: () => void): () => void {
 }
 
 function getSnapshot(): DomainRoutingState {
-  // Lazy hydration: the very first client-side read triggers localStorage
-  if (!isHydrated && typeof window !== 'undefined') {
-    hydrateFromLocalStorage()
-  }
   return currentState
 }
 
@@ -148,8 +144,14 @@ function hydrateFromLocalStorage(): void {
 export function useDomainRouting() {
   // useSyncExternalStore handles SSR hydration safely:
   // getServerSnapshot returns defaults (isLoaded=false),
-  // getSnapshot reads from localStorage on first client call.
+  // getSnapshot reads from currentState.
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isHydrated) {
+      hydrateFromLocalStorage()
+    }
+  }, [])
 
   // --- Actions ---
 

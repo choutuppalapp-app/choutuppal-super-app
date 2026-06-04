@@ -282,7 +282,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // Routing Configuration
-  routingConfig: getRoutingConfig(),
+  routingConfig: {
+    routingMode: 'path',
+    baseDomain: 'mana.in',
+    isCustomDomainActive: false,
+    subdomainRoutingEnabled: false,
+  },
+
   setRoutingConfig: (config) => {
     // Dynamic import to avoid circular dependency at module level
     import('@/lib/city-routing').then(({ saveRoutingConfig }) => {

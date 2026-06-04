@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@/lib/store'
 import type { CityData } from '@/lib/store'
+import { getRoutingConfig } from '@/lib/city-routing'
 
 /**
  * SettingsInitializer — Fetches site settings and the current city
@@ -24,12 +25,19 @@ export function SettingsInitializer() {
   const applyCityTheme = useAppStore((s) => s.applyCityTheme)
   const detectLocation = useAppStore((s) => s.detectLocation)
   const locationDetected = useAppStore((s) => s.locationDetected)
+  const setRoutingConfig = useAppStore((s) => s.setRoutingConfig)
+
+  // Hydrate routing config from localStorage on client mount
+  useEffect(() => {
+    setRoutingConfig(getRoutingConfig())
+  }, [setRoutingConfig])
 
   // Fetch settings and resolve city from subdomain
   useEffect(() => {
     fetchSiteSettings()
     fetchPlatformSettings()
   }, [fetchSiteSettings, fetchPlatformSettings])
+
 
   // Resolve the current city from the subdomain and fetch all cities
   useEffect(() => {

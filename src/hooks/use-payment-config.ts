@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,17 +25,21 @@ const DEFAULT_CONFIG: PaymentConfig = {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function usePaymentConfig() {
-  const [config, setConfig] = useState<PaymentConfig>(() => {
-    if (typeof window === 'undefined') return DEFAULT_CONFIG
+  const [config, setConfig] = useState<PaymentConfig>(DEFAULT_CONFIG)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) return { ...DEFAULT_CONFIG, ...JSON.parse(stored) }
+      if (stored) {
+        setConfig({ ...DEFAULT_CONFIG, ...JSON.parse(stored) })
+      }
     } catch {
       // Use defaults
+    } finally {
+      setIsLoaded(true)
     }
-    return DEFAULT_CONFIG
-  })
-  const [isLoaded, setIsLoaded] = useState(true)
+  }, [])
 
   const saveConfig = useCallback((updates: Partial<PaymentConfig>) => {
     setConfig((prev) => {

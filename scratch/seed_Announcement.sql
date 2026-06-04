@@ -1,0 +1,3 @@
+INSERT INTO public."Announcement" ("id", "text", "isActive", "createdAt") VALUES ('cmp8dtxch0038mavtk1gbopao', '🚨 చౌటుప్పల్ సూపర్ యాప్ డౌన్‌లోడ్ చేసుకోండి! మీ షాప్ ని ఉచితంగా లిస్ట్ చేయండి!', TRUE, '2026-05-16T13:28:49.170Z'::timestamp) ON CONFLICT DO NOTHING;
+INSERT INTO public."Announcement" ("id", "text", "isActive", "createdAt") VALUES ('cmp8dtxch0039mavtb7fqm295', '🎉 రమేష్ మెడికల్స్ పై 20% డిస్కౌంట్ - ఇప్పుడే ఆర్డర్ చేయండి!', TRUE, '2026-05-16T13:28:49.170Z'::timestamp) ON CONFLICT DO NOTHING;
+INSERT INTO public."Announcement" ("id", "text", "isActive", "createdAt") VALUES ('cmp8dtxci003amavtva07lnmn', '📱 చౌటుప్పల్ లో అన్ని షాపులు, రియల్ ఎస్టేట్, వార్తలు ఒకే యాప్‌లో!', TRUE, '2026-05-16T13:28:49.170Z'::timestamp) ON CONFLICT DO NOTHING;

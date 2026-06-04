@@ -109,10 +109,15 @@ function getNextId(cities: CityConfig[]): number {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function CityVisibilityManager() {
-  const [cities, setCities] = useState<CityConfig[]>(() => loadCities())
+  const [cities, setCities] = useState<CityConfig[]>(DEFAULT_CITIES)
+
+  useEffect(() => {
+    setCities(loadCities())
+  }, [])
 
   // Add form state
   const [newCityName, setNewCityName] = useState('')
+
   const [manualSlug, setManualSlug] = useState<string | null>(null)
   const newSlug = manualSlug !== null ? manualSlug : generateSlug(newCityName)
 
