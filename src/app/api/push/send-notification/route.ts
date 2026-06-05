@@ -7,11 +7,17 @@ const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 
 if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    'mailto:support@choutuppal.com',
-    vapidPublicKey,
-    vapidPrivateKey
-  )
+  try {
+    webpush.setVapidDetails(
+      'mailto:support@manacities.in',
+      vapidPublicKey,
+      vapidPrivateKey
+    )
+  } catch (error) {
+    console.warn('Invalid VAPID keys provided. Push notifications will not work.', error)
+  }
+} else {
+  console.warn('VAPID keys are missing. Push notifications are disabled.')
 }
 
 interface SendNotificationPayload {
