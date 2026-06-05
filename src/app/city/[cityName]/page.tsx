@@ -218,16 +218,15 @@ function HomeView() {
 }
 
 function ProtectedDashboard() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading, login } = useAuth()
+  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
       autoLoginAttempted.current = true
-      if (process.env.NODE_ENV === 'development') { login('8888888888', '1234') }
-      else { setShowLoginModal(true) }
+      setShowLoginModal(true)
     }
-  }, [isAuthenticated, isLoading, setShowLoginModal, login])
+  }, [isAuthenticated, isLoading, setShowLoginModal])
 
   if (isLoading) {
     return (
@@ -256,16 +255,15 @@ function ProtectedDashboard() {
 }
 
 function ProtectedAdmin() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading, login } = useAuth()
+  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
       autoLoginAttempted.current = true
-      if (process.env.NODE_ENV === 'development') { login('9999999999', '1234') }
-      else { setShowLoginModal(true) }
+      setShowLoginModal(true)
     }
-  }, [isAuthenticated, isLoading, setShowLoginModal, login])
+  }, [isAuthenticated, isLoading, setShowLoginModal])
 
   if (isLoading) {
     return (
@@ -309,16 +307,15 @@ function ProtectedAdmin() {
 }
 
 function ProtectedSuperAdmin() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading, login } = useAuth()
+  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
       autoLoginAttempted.current = true
-      if (process.env.NODE_ENV === 'development') { login('9999999999', '1234') }
-      else { setShowLoginModal(true) }
+      setShowLoginModal(true)
     }
-  }, [isAuthenticated, isLoading, setShowLoginModal, login])
+  }, [isAuthenticated, isLoading, setShowLoginModal])
 
   if (isLoading) {
     return (

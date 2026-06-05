@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { useAppStore } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface AuthUser {
   id: string
@@ -24,219 +26,201 @@ interface AuthContextType {
   user: AuthUser | null
   isLoading: boolean
   isAuthenticated: boolean
-  login: (phone: string, otp: string) => Promise<{ success: boolean; error?: string }>
-  loginWithMagicLink: (email: string) => Promise<{ success: boolean; error?: string }>
-  signup: (fullName: string, phone: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signup: (fullName: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>
   logout: () => void
   showLoginModal: boolean
   setShowLoginModal: (show: boolean) => void
-  loginStep: 'phone' | 'otp' | 'email'
-  setLoginStep: (step: 'phone' | 'otp' | 'email') => void
-  pendingPhone: string
-  setPendingPhone: (phone: string) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Demo accounts for development
-const DEMO_ACCOUNTS: Record<string, AuthUser> = {
-  '9999999999': {
-    id: 'admin-user-1',
-    fullName: 'Mosin Md',
-    phone: '9999999999',
-    email: 'admin@choutuppal.com',
-    role: 'super_admin',
-    coinsBalance: 5000,
-    subscriptionTier: 'premium',
-    managedCityId: null,
-  },
-  '8888888888': {
-    id: 'demo-user-1',
-    fullName: 'Guest User',
-    phone: '8888888888',
-    email: 'guest@choutuppal.com',
+/**
+ * Fetch or create a profile row in the `profiles` table.
+ * Falls back to sensible defaults if the row doesn't exist yet
+ * (e.g., first Google OAuth login).
+ */
+async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', supabaseUser.id)
+    .single()
+
+  if (profile) {
+    return {
+      id: profile.id,
+      fullName: profile.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+      email: profile.email || supabaseUser.email,
+      phone: profile.phone || supabaseUser.phone || null,
+      role: profile.role || 'user',
+      coinsBalance: profile.coins_balance ?? 0,
+      subscriptionTier: profile.subscription_tier || 'free',
+      avatarUrl: profile.avatar_url || supabaseUser.user_metadata?.avatar_url || null,
+      managedCityId: profile.managed_city_id || null,
+      agentCityId: profile.agent_city_id || null,
+      isAgentApproved: profile.is_agent_approved ?? false,
+      totalEarnings: profile.total_earnings ?? 0,
+      pendingPayout: profile.pending_payout ?? 0,
+      upiId: profile.upi_id || null,
+    }
+  }
+
+  // Profile row doesn't exist yet — create one (first login via OAuth)
+  const newProfile = {
+    id: supabaseUser.id,
+    full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+    email: supabaseUser.email,
+    phone: supabaseUser.phone || null,
     role: 'user',
-    coinsBalance: 50,
-    subscriptionTier: 'free',
-  },
-  '5555555551': {
-    id: 'city-admin-1',
-    fullName: 'Venkat Rao',
-    phone: '5555555551',
-    email: 'venkat@choutuppal.com',
-    role: 'city_admin',
-    coinsBalance: 0,
-    subscriptionTier: 'premium',
-    managedCityId: 'choutuppal',
-    totalEarnings: 8500,
-    pendingPayout: 3200,
-    upiId: 'venkatrao@upi',
-  },
-  '6666666661': {
-    id: 'agent-user-1',
-    fullName: 'Rajesh Agent',
-    phone: '6666666661',
-    email: 'rajesh@choutuppal.com',
-    role: 'agent',
-    coinsBalance: 200,
-    subscriptionTier: 'free',
-    agentCityId: 'choutuppal',
-    isAgentApproved: true,
-    totalEarnings: 4500,
-    pendingPayout: 1800,
-    upiId: 'rajesh@paytm',
-  },
+    coins_balance: 25, // Welcome bonus
+    subscription_tier: 'free',
+    avatar_url: supabaseUser.user_metadata?.avatar_url || null,
+  }
+
+  await supabase.from('profiles').upsert(newProfile, { onConflict: 'id' })
+
+  return {
+    id: newProfile.id,
+    fullName: newProfile.full_name,
+    email: newProfile.email,
+    phone: newProfile.phone,
+    role: 'user',
+    coinsBalance: newProfile.coins_balance,
+    subscriptionTier: newProfile.subscription_tier,
+    avatarUrl: newProfile.avatar_url,
+    managedCityId: null,
+    agentCityId: null,
+    isAgentApproved: false,
+    totalEarnings: 0,
+    pendingPayout: 0,
+    upiId: null,
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [loginStep, setLoginStep] = useState<'phone' | 'otp' | 'email'>('phone')
-  const [pendingPhone, setPendingPhone] = useState('')
+
   // CRITICAL: Use individual selector, NOT useAppStore() — subscribing to the
   // entire store would re-render AuthProvider (and the ENTIRE app tree) on every
   // state change, causing maximum update depth crashes.
   const setCurrentUser = useAppStore((s) => s.setCurrentUser)
 
-  // Check for existing session on mount
+  const syncToStore = useCallback((authUser: AuthUser | null) => {
+    if (authUser) {
+      setCurrentUser({
+        id: authUser.id,
+        fullName: authUser.fullName,
+        role: authUser.role,
+        coinsBalance: authUser.coinsBalance,
+        subscriptionTier: authUser.subscriptionTier,
+        managedCityId: authUser.managedCityId || null,
+        agentCityId: authUser.agentCityId || null,
+        isAgentApproved: authUser.isAgentApproved,
+        totalEarnings: authUser.totalEarnings,
+        pendingPayout: authUser.pendingPayout,
+        upiId: authUser.upiId || null,
+      })
+    } else {
+      setCurrentUser(null)
+    }
+  }, [setCurrentUser])
+
+  // Listen for Supabase auth state changes
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('choutuppal_auth_user')
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser) as AuthUser
-        setUser(parsed)
-        setCurrentUser({
-          id: parsed.id,
-          fullName: parsed.fullName,
-          role: parsed.role,
-          coinsBalance: parsed.coinsBalance,
-          subscriptionTier: parsed.subscriptionTier,
-          managedCityId: parsed.managedCityId || null,
-          agentCityId: parsed.agentCityId || null,
-          isAgentApproved: parsed.isAgentApproved,
-          totalEarnings: parsed.totalEarnings,
-          pendingPayout: parsed.pendingPayout,
-          upiId: parsed.upiId || null,
-        })
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        try {
+          const profile = await fetchProfile(session.user)
+          setUser(profile)
+          syncToStore(profile)
+        } catch (err) {
+          console.error('Failed to fetch profile:', err)
+        }
       }
-    } catch {
-      // No saved session
-    } finally {
       setIsLoading(false)
-    }
-  }, [setCurrentUser])
-
-  const persistUser = useCallback((authUser: AuthUser) => {
-    setUser(authUser)
-    localStorage.setItem('choutuppal_auth_user', JSON.stringify(authUser))
-    setCurrentUser({
-      id: authUser.id,
-      fullName: authUser.fullName,
-      role: authUser.role,
-      coinsBalance: authUser.coinsBalance,
-      subscriptionTier: authUser.subscriptionTier,
-      managedCityId: authUser.managedCityId || null,
-      agentCityId: authUser.agentCityId || null,
-      isAgentApproved: authUser.isAgentApproved,
-      totalEarnings: authUser.totalEarnings,
-      pendingPayout: authUser.pendingPayout,
-      upiId: authUser.upiId || null,
     })
-  }, [setCurrentUser])
 
-  const login = useCallback(async (phone: string, otp: string): Promise<{ success: boolean; error?: string }> => {
-    // In production, this would verify OTP via Supabase Auth
-    // For now, accept any 4-digit OTP with known phone numbers
-    if (otp.length !== 4) {
-      return { success: false, error: 'Please enter a valid 4-digit OTP' }
-    }
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            const profile = await fetchProfile(session.user)
+            setUser(profile)
+            syncToStore(profile)
+            setShowLoginModal(false)
+          } catch (err) {
+            console.error('Failed to fetch profile on sign in:', err)
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
+          syncToStore(null)
+        }
+      }
+    )
 
-    const account = DEMO_ACCOUNTS[phone]
-    if (account) {
-      persistUser(account)
-      setShowLoginModal(false)
-      setLoginStep('phone')
-      setPendingPhone('')
-      return { success: true }
-    }
+    return () => subscription.unsubscribe()
+  }, [syncToStore])
 
-    // For any phone number with valid OTP, create a new user
-    const newUser: AuthUser = {
-      id: `user-${Date.now()}`,
-      fullName: phone === pendingPhone ? `User ${phone.slice(-4)}` : `User ${phone.slice(-4)}`,
-      phone,
-      role: 'user',
-      coinsBalance: 10,
-      subscriptionTier: 'free',
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      return { success: false, error: error.message }
     }
-    persistUser(newUser)
-    setShowLoginModal(false)
-    setLoginStep('phone')
-    setPendingPhone('')
     return { success: true }
-  }, [persistUser, pendingPhone])
+  }, [])
 
-  const loginWithMagicLink = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
-    // In production, this would send a magic link via Supabase Auth
-    // For now, auto-login as demo user
-    const newUser: AuthUser = {
-      id: `user-email-${Date.now()}`,
-      fullName: email.split('@')[0],
+  const signup = useCallback(async (fullName: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const { error } = await supabase.auth.signUp({
       email,
-      role: 'user',
-      coinsBalance: 10,
-      subscriptionTier: 'free',
+      password,
+      options: {
+        data: { full_name: fullName },
+      },
+    })
+    if (error) {
+      return { success: false, error: error.message }
     }
-    persistUser(newUser)
-    setShowLoginModal(false)
-    setLoginStep('phone')
     return { success: true }
-  }, [persistUser])
+  }, [])
 
-  const signup = useCallback(async (fullName: string, phone: string): Promise<{ success: boolean; error?: string }> => {
-    if (!fullName || !phone) {
-      return { success: false, error: 'Name and phone are required' }
+  const loginWithGoogle = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/callback`
+          : undefined,
+      },
+    })
+    if (error) {
+      return { success: false, error: error.message }
     }
-    // In production, this would create a Supabase Auth account
-    const newUser: AuthUser = {
-      id: `user-${Date.now()}`,
-      fullName,
-      phone,
-      role: 'user',
-      coinsBalance: 25, // Welcome bonus
-      subscriptionTier: 'free',
-    }
-    persistUser(newUser)
-    setShowLoginModal(false)
-    setLoginStep('phone')
-    setPendingPhone('')
     return { success: true }
-  }, [persistUser])
+  }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
     setUser(null)
-    localStorage.removeItem('choutuppal_auth_user')
-    setCurrentUser(null)
-  }, [setCurrentUser])
+    syncToStore(null)
+  }, [syncToStore])
 
-  // Memoize context value to prevent re-rendering ALL consumers when
-  // AuthProvider re-renders for unrelated reasons (e.g., pendingPhone change)
   const value: AuthContextType = useMemo(() => ({
     user,
     isLoading,
     isAuthenticated: !!user,
     login,
-    loginWithMagicLink,
     signup,
+    loginWithGoogle,
     logout,
     showLoginModal,
     setShowLoginModal,
-    loginStep,
-    setLoginStep,
-    pendingPhone,
-    setPendingPhone,
-  }), [user, isLoading, login, loginWithMagicLink, signup, logout, showLoginModal, loginStep, pendingPhone])
+  }), [user, isLoading, login, signup, loginWithGoogle, logout, showLoginModal])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

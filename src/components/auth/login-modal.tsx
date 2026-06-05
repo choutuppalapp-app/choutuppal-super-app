@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import {
-  X, Phone, Mail, ArrowRight, Shield, Sparkles,
-  Lock, User, ChevronRight,
+  X, Mail, ArrowRight, Shield, Sparkles,
+  Lock, User, ChevronRight, Eye, EyeOff,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,102 +12,97 @@ import { useAuth } from '@/lib/auth-context'
 import { useMounted } from '@/hooks/use-mounted'
 
 /**
- * LoginModal — COMPLETE REWRITE
+ * LoginModal — Email/Password + Google OAuth
  *
  * RULES ENFORCED:
  * 1. Full-screen overlay: fixed inset-0 bg-black/60 backdrop-blur-sm
  * 2. Card: bg-white rounded-xl shadow-2xl — NO transparency, NO GlassCard
  * 3. NO Framer Motion — all animations use CSS transitions
  * 4. Mounted guard — don't render until after hydration
- * 5. No useEffect with setState that could cause infinite loops
- * 6. All inputs: bg-white border-gray-200 — solid, readable
- * 7. All text: text-gray-800 / text-gray-600 — dark, readable on white
+ * 5. All inputs: bg-white border-gray-200 — solid, readable
+ * 6. All text: text-gray-800 / text-gray-600 — dark, readable on white
  */
 
 export function LoginModal() {
   const {
     showLoginModal, setShowLoginModal,
-    login, loginWithMagicLink, signup,
-    loginStep, setLoginStep,
-    pendingPhone, setPendingPhone,
+    login, signup, loginWithGoogle,
   } = useAuth()
 
   const mounted = useMounted()
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [authMethod, setAuthMethod] = useState<'phone' | 'email'>('phone')
+  const [successMsg, setSuccessMsg] = useState('')
   const [isSignup, setIsSignup] = useState(false)
-
-  // Mounted guard — prevents hydration mismatch (via useSyncExternalStore)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleClose = () => {
     setShowLoginModal(false)
-    setLoginStep('phone')
-    setPhone('')
-    setOtp('')
     setEmail('')
+    setPassword('')
     setFullName('')
     setError('')
+    setSuccessMsg('')
     setLoading(false)
+    setShowPassword(false)
   }
 
-  const handleSendOTP = async () => {
-    if (!phone || phone.length < 10) {
-      setError('Please enter a valid phone number')
-      return
-    }
-    setLoading(true)
-    setError('')
-    await new Promise((r) => setTimeout(r, 800))
-    setPendingPhone(phone)
-    setLoginStep('otp')
-    setLoading(false)
-  }
-
-  const handleVerifyOTP = async () => {
-    if (!otp || otp.length !== 4) {
-      setError('Please enter the 4-digit OTP')
-      return
-    }
-    setLoading(true)
-    setError('')
-    const result = await login(pendingPhone, otp)
-    if (!result.success) {
-      setError(result.error || 'Verification failed')
-    }
-    setLoading(false)
-  }
-
-  const handleMagicLink = async () => {
+  const handleEmailLogin = async () => {
     if (!email || !email.includes('@')) {
-      setError('Please enter a valid email')
+      setError('Please enter a valid email address')
+      return
+    }
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters')
       return
     }
     setLoading(true)
     setError('')
-    const result = await loginWithMagicLink(email)
+    const result = await login(email, password)
     if (!result.success) {
-      setError(result.error || 'Failed to send magic link')
+      setError(result.error || 'Login failed. Check your credentials.')
     }
     setLoading(false)
   }
 
   const handleSignup = async () => {
-    if (!fullName || !phone || phone.length < 10) {
-      setError('Please fill in all fields')
+    if (!fullName) {
+      setError('Please enter your full name')
+      return
+    }
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters')
       return
     }
     setLoading(true)
     setError('')
-    const result = await signup(fullName, phone)
+    const result = await signup(fullName, email, password)
     if (!result.success) {
       setError(result.error || 'Signup failed')
+    } else {
+      setSuccessMsg('Account created! Check your email to confirm, then sign in.')
+      setIsSignup(false)
+      setPassword('')
     }
     setLoading(false)
+  }
+
+  const handleGoogleLogin = async () => {
+    setLoading(true)
+    setError('')
+    const result = await loginWithGoogle()
+    if (!result.success) {
+      setError(result.error || 'Google sign-in failed')
+      setLoading(false)
+    }
+    // Don't setLoading(false) on success — page will redirect
   }
 
   // Don't render until client-side mount to prevent hydration mismatch
@@ -141,7 +136,7 @@ export function LoginModal() {
             <Shield className="size-6" />
           </div>
           <h2 className="text-xl font-bold text-white">
-            {isSignup ? 'Join Choutuppal' : 'Welcome Back'}
+            {isSignup ? 'Join Mana Cities' : 'Welcome Back'}
           </h2>
           <p className="text-sm text-white/80 mt-1">
             {isSignup
@@ -159,99 +154,44 @@ export function LoginModal() {
             </div>
           )}
 
-          {/* ─── Phone + OTP login ─── */}
-          {!isSignup && authMethod === 'phone' && loginStep === 'phone' && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-gray-800">Phone Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    className="pl-10 bg-white border-gray-200 h-12 text-gray-800 placeholder:text-gray-400"
-                    autoFocus
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  Demo: 9999999999 (Super Admin) · 5555555551 (City Admin) · 6666666661 (Agent) · 8888888888 (User)
-                </p>
-              </div>
-              <Button
-                onClick={handleSendOTP}
-                disabled={loading || phone.length < 10}
-                className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white h-12 font-semibold hover:from-[#C9A533] hover:to-[#A88518] transition-all"
-              >
-                {loading ? (
-                  <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
-                ) : (
-                  <>Send OTP <ArrowRight className="size-4 ml-2" /></>
-                )}
-              </Button>
-              <div className="relative flex items-center">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="px-3 text-xs text-gray-400">or</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-              <button
-                onClick={() => setAuthMethod('email')}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition-colors"
-              >
-                <Mail className="size-4" />
-                Sign in with Email
-              </button>
+          {/* Success banner */}
+          {successMsg && (
+            <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
+              {successMsg}
             </div>
           )}
 
-          {!isSignup && authMethod === 'phone' && loginStep === 'otp' && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  We sent a code to <span className="font-semibold text-gray-800">{pendingPhone}</span>
-                </p>
-                <p className="text-xs text-gray-400 mt-1">Enter any 4-digit code to continue</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-sm font-medium text-gray-800">Verification Code</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                  <Input
-                    id="otp"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Enter 4-digit OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="pl-10 bg-white border-gray-200 h-12 text-center text-lg tracking-widest font-bold text-gray-800"
-                    autoFocus
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={handleVerifyOTP}
-                disabled={loading || otp.length !== 4}
-                className="w-full bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white h-12 font-semibold hover:from-[#3b5fd4] hover:to-[#2a4cb0] transition-all"
-              >
-                {loading ? (
-                  <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
-                ) : (
-                  <>Verify & Login <ArrowRight className="size-4 ml-2" /></>
-                )}
-              </Button>
-              <button
-                onClick={() => { setLoginStep('phone'); setOtp(''); setError(''); }}
-                className="w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                ← Change phone number
-              </button>
-            </div>
-          )}
+          {/* ─── Google OAuth Button ─── */}
+          <Button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            variant="outline"
+            className="w-full h-12 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-all flex items-center justify-center gap-3"
+          >
+            {loading ? (
+              <span className="size-5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin inline-block" />
+            ) : (
+              <>
+                <svg className="size-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
+              </>
+            )}
+          </Button>
 
-          {/* ─── Email login ─── */}
-          {!isSignup && authMethod === 'email' && (
+          {/* Divider */}
+          <div className="relative flex items-center">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="px-3 text-xs text-gray-400">or continue with email</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* ─── Email/Password Login ─── */}
+          {!isSignup && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-800">Email Address</Label>
@@ -265,32 +205,44 @@ export function LoginModal() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-white border-gray-200 h-12 text-gray-800 placeholder:text-gray-400"
                     autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && document.getElementById('password')?.focus()}
                   />
                 </div>
-                <p className="text-xs text-gray-500">
-                  We&apos;ll send you a magic link to sign in
-                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-800">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 bg-white border-gray-200 h-12 text-gray-800 placeholder:text-gray-400"
+                    onKeyDown={(e) => e.key === 'Enter' && handleEmailLogin()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
               </div>
               <Button
-                onClick={handleMagicLink}
-                disabled={loading || !email.includes('@')}
-                className="w-full bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white h-12 font-semibold hover:from-[#3b5fd4] hover:to-[#2a4cb0] transition-all"
+                onClick={handleEmailLogin}
+                disabled={loading || !email.includes('@') || password.length < 6}
+                className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white h-12 font-semibold hover:from-[#C9A533] hover:to-[#A88518] transition-all"
               >
                 {loading ? (
                   <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
                 ) : (
-                  <>
-                    <Sparkles className="size-4 mr-2" />
-                    Send Magic Link
-                  </>
+                  <>Sign In <ArrowRight className="size-4 ml-2" /></>
                 )}
               </Button>
-              <button
-                onClick={() => { setAuthMethod('phone'); setError(''); }}
-                className="w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                ← Sign in with phone instead
-              </button>
             </div>
           )}
 
@@ -312,17 +264,40 @@ export function LoginModal() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signupPhone" className="text-sm font-medium text-gray-800">Phone Number</Label>
+                <Label htmlFor="signupEmail" className="text-sm font-medium text-gray-800">Email Address</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                   <Input
-                    id="signupPhone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    id="signupEmail"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-white border-gray-200 h-12 text-gray-800 placeholder:text-gray-400"
                   />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signupPassword" className="text-sm font-medium text-gray-800">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                  <Input
+                    id="signupPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Min. 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 bg-white border-gray-200 h-12 text-gray-800 placeholder:text-gray-400"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-[#D4AF37]/5 border border-[#D4AF37]/20">
@@ -333,7 +308,7 @@ export function LoginModal() {
               </div>
               <Button
                 onClick={handleSignup}
-                disabled={loading || !fullName || phone.length < 10}
+                disabled={loading || !fullName || !email.includes('@') || password.length < 6}
                 className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white h-12 font-semibold hover:from-[#C9A533] hover:to-[#A88518] transition-all"
               >
                 {loading ? (
@@ -351,8 +326,8 @@ export function LoginModal() {
               onClick={() => {
                 setIsSignup(!isSignup)
                 setError('')
-                setLoginStep('phone')
-                setAuthMethod('phone')
+                setSuccessMsg('')
+                setPassword('')
               }}
               className="text-sm text-[#4169E1] hover:underline font-medium"
             >
