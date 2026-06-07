@@ -27,8 +27,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signup: (fullName: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>
+  signup: (fullName: string, phone: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   showLoginModal: boolean
   setShowLoginModal: (show: boolean) => void
@@ -170,12 +169,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true }
   }, [])
 
-  const signup = useCallback(async (fullName: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const signup = useCallback(async (fullName: string, phone: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, phone: phone },
       },
     })
     if (error) {
@@ -184,20 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true }
   }, [])
 
-  const loginWithGoogle = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: typeof window !== 'undefined'
-          ? `${window.location.origin}/auth/callback`
-          : undefined,
-      },
-    })
-    if (error) {
-      return { success: false, error: error.message }
-    }
-    return { success: true }
-  }, [])
+
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
@@ -211,11 +197,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     login,
     signup,
-    loginWithGoogle,
     logout,
     showLoginModal,
     setShowLoginModal,
-  }), [user, isLoading, login, signup, loginWithGoogle, logout, showLoginModal])
+  }), [user, isLoading, login, signup, logout, showLoginModal])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
