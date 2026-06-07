@@ -194,7 +194,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
       prevStoryIdRef.current = currentStory.id
       // Resetting progress when story changes is intentional —
       // this is a state sync with the external animation system
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setProgress(0)
       progressElapsedRef.current = 0
       progressStartRef.current = 0
