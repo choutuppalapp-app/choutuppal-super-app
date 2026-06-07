@@ -42,60 +42,47 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
  * (e.g., first Google OAuth login).
  */
 async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
-  const { data: profile } = await supabase
-    .from('profiles')
+  const { data: userRecord } = await supabase
+    .from('User')
     .select('*')
-    .eq('id', supabaseUser.id)
+    .eq('email', supabaseUser.email)
     .single()
 
-  if (profile) {
+  if (userRecord) {
+    const roleMap: Record<string, AuthUser['role']> = {
+      'SUPER_ADMIN': 'super_admin',
+      'CITY_ADMIN': 'city_admin',
+      'AGENT': 'agent',
+      'USER': 'user'
+    }
+    
     return {
-      id: profile.id,
-      fullName: profile.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-      email: profile.email || supabaseUser.email,
-      phone: profile.phone || supabaseUser.phone || null,
-      role: profile.role || 'user',
-      coinsBalance: profile.coins_balance ?? 0,
-      subscriptionTier: profile.subscription_tier || 'free',
-      avatarUrl: profile.avatar_url || supabaseUser.user_metadata?.avatar_url || null,
-      managedCityId: profile.managed_city_id || null,
-      agentCityId: profile.agent_city_id || null,
-      isAgentApproved: profile.is_agent_approved ?? false,
-      totalEarnings: profile.total_earnings ?? 0,
-      pendingPayout: profile.pending_payout ?? 0,
-      upiId: profile.upi_id || null,
+      id: userRecord.id,
+      fullName: userRecord.fullName || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+      email: userRecord.email || supabaseUser.email,
+      phone: userRecord.phone || supabaseUser.phone || null,
+      role: roleMap[userRecord.role] || 'user',
+      coinsBalance: userRecord.coinsBalance ?? 0,
+      subscriptionTier: userRecord.subscriptionTier || 'free',
+      avatarUrl: userRecord.avatarUrl || supabaseUser.user_metadata?.avatar_url || null,
+      managedCityId: userRecord.managedCityId || null,
+      agentCityId: userRecord.agentCityId || null,
+      isAgentApproved: userRecord.isAgentApproved ?? false,
+      totalEarnings: userRecord.totalEarnings ?? 0,
+      pendingPayout: userRecord.pendingPayout ?? 0,
+      upiId: userRecord.upiId || null,
     }
   }
 
-  // Profile row doesn't exist yet — create one (first login via OAuth)
-  const newProfile = {
+  // Fallback if trigger hasn't fired yet
+  return {
     id: supabaseUser.id,
-    full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+    fullName: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
     email: supabaseUser.email,
     phone: supabaseUser.phone || null,
     role: 'user',
-    coins_balance: 25, // Welcome bonus
-    subscription_tier: 'free',
-    avatar_url: supabaseUser.user_metadata?.avatar_url || null,
-  }
-
-  await supabase.from('profiles').upsert(newProfile, { onConflict: 'id' })
-
-  return {
-    id: newProfile.id,
-    fullName: newProfile.full_name,
-    email: newProfile.email,
-    phone: newProfile.phone,
-    role: 'user',
-    coinsBalance: newProfile.coins_balance,
-    subscriptionTier: newProfile.subscription_tier,
-    avatarUrl: newProfile.avatar_url,
-    managedCityId: null,
-    agentCityId: null,
-    isAgentApproved: false,
-    totalEarnings: 0,
-    pendingPayout: 0,
-    upiId: null,
+    coinsBalance: 10,
+    subscriptionTier: 'free',
   }
 }
 

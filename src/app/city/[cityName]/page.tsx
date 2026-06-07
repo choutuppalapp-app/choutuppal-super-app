@@ -250,6 +250,8 @@ function ProtectedDashboard() {
     )
   }
 
+  if (user?.role === 'super_admin') return <SuperAdminSettings />
+  if (user?.role === 'city_admin' || user?.role === 'admin') return <AdminView />
   if (user?.role === 'agent') return <AgentDashboard />
   return <DashboardView />
 }
