@@ -42,18 +42,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
  * (e.g., first Google OAuth login).
  */
 async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
-  const { data: userRecord } = await supabase
+  const { data: userRecord, error } = await supabase
     .from('User')
     .select('*')
     .eq('email', supabaseUser.email)
     .single()
 
+  console.log("DB Fetch Error:", error);
+  console.log("User Record Data:", userRecord);
+
   if (userRecord) {
+    console.log("User Role from DB:", userRecord.role);
     const roleMap: Record<string, AuthUser['role']> = {
       'SUPER_ADMIN': 'super_admin',
+      'super_admin': 'super_admin',
       'CITY_ADMIN': 'city_admin',
+      'city_admin': 'city_admin',
       'AGENT': 'agent',
-      'USER': 'user'
+      'agent': 'agent',
+      'USER': 'user',
+      'user': 'user'
     }
     
     return {
@@ -61,7 +69,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
       fullName: userRecord.fullName || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
       email: userRecord.email || supabaseUser.email,
       phone: userRecord.phone || supabaseUser.phone || null,
-      role: roleMap[userRecord.role] || 'user',
+      role: roleMap[userRecord.role as string] || userRecord.role || 'user',
       coinsBalance: userRecord.coinsBalance ?? 0,
       subscriptionTier: userRecord.subscriptionTier || 'free',
       avatarUrl: userRecord.avatarUrl || supabaseUser.user_metadata?.avatar_url || null,

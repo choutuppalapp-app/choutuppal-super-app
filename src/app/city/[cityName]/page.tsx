@@ -250,9 +250,10 @@ function ProtectedDashboard() {
     )
   }
 
-  if (user?.role === 'super_admin') return <SuperAdminSettings />
-  if (user?.role === 'city_admin' || user?.role === 'admin') return <AdminView />
-  if (user?.role === 'agent') return <AgentDashboard />
+  const role = user?.role?.toLowerCase() || '';
+  if (role === 'super_admin') return <SuperAdminSettings />
+  if (role === 'city_admin' || role === 'admin') return <AdminView />
+  if (role === 'agent') return <AgentDashboard />
   return <DashboardView />
 }
 
@@ -289,8 +290,8 @@ function ProtectedAdmin() {
     )
   }
 
-  const isAdminRole = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin'
-  if (!isAdminRole) {
+  const role = user?.role?.toLowerCase() || '';
+  if (role !== 'super_admin' && role !== 'city_admin' && role !== 'admin') {
     if (process.env.NODE_ENV === 'development') {
       return (
         <div className="max-w-7xl mx-auto">
@@ -340,7 +341,8 @@ function ProtectedSuperAdmin() {
     )
   }
 
-  const isSuperAdmin = user?.role === 'super_admin'
+  const role = user?.role?.toLowerCase() || ''
+  const isSuperAdmin = role === 'super_admin'
   if (!isSuperAdmin) {
     if (process.env.NODE_ENV === 'development') {
       return (
