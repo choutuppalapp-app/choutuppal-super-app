@@ -60,7 +60,7 @@ function getRoutingConfigFromCookie(request: NextRequest): {
   return { baseDomain: 'mana.in', subdomainRoutingEnabled: false }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const url = request.nextUrl
   const pathname = url.pathname
   const hostname = request.headers.get('host') || ''
