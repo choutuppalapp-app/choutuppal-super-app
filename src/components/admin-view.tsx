@@ -2498,7 +2498,7 @@ export default function AdminView() {
                           background: 'rgba(255,255,255,0.95)',
                           backdropFilter: 'blur(10px)',
                         }}
-                        formatter={(value: number) => [`₹${value.toLocaleString()}`, '']}
+                        formatter={(value: any) => [`₹${value.toLocaleString()}`, '']}
                       />
                       <Legend />
                     </PieChart>
@@ -2531,7 +2531,7 @@ export default function AdminView() {
                           background: 'rgba(255,255,255,0.95)',
                           backdropFilter: 'blur(10px)',
                         }}
-                        formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                        formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Revenue']}
                       />
                       <Legend />
                       <Line
@@ -3115,7 +3115,7 @@ export default function AdminView() {
                           background: 'rgba(255,255,255,0.95)',
                           backdropFilter: 'blur(10px)',
                         }}
-                        formatter={(value: number) => [`₹${value}`, 'Revenue']}
+                        formatter={(value: any) => [`₹${value}`, 'Revenue']}
                       />
                       <Legend />
                       <Bar dataKey="revenue" fill="#D4AF37" radius={[6, 6, 0, 0]} />
@@ -3255,7 +3255,7 @@ export default function AdminView() {
                         cx="50%"
                         cy="50%"
                         outerRadius={70}
-                        label={({ category, count }) => `${category}: ${count}`}
+                        label={(props: any) => `${props.category}: ${props.count}`}
                         labelLine={false}
                       >
                         {stats.listingsByCategory.map((_, index) => {

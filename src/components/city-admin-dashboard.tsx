@@ -910,7 +910,7 @@ export function CityAdminDashboard() {
                               <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
                               <Tooltip
                                 contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-                                formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, undefined as unknown as string]}
+                                formatter={(value: any) => [`₹${value.toLocaleString('en-IN')}`, undefined as unknown as string]}
                               />
                               <Area type="monotone" dataKey="Revenue" stroke="#D4AF37" strokeWidth={2.5} fill="url(#colorRevenue)" />
                               <Area type="monotone" dataKey="Commission" stroke="#4169E1" strokeWidth={2.5} fill="url(#colorCommission)" />

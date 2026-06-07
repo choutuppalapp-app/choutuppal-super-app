@@ -737,7 +737,7 @@ export default function AgentDashboard() {
                                   ))}
                                 </Pie>
                                 <Tooltip
-                                  formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Earnings']}
+                                  formatter={(value: any) => [`₹${value.toLocaleString('en-IN')}`, 'Earnings']}
                                   contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }}
                                 />
                                 <Legend
@@ -764,7 +764,7 @@ export default function AgentDashboard() {
                               <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9ca3af" />
                               <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
                               <Tooltip
-                                formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Earnings']}
+                                formatter={(value: any) => [`₹${value.toLocaleString('en-IN')}`, 'Earnings']}
                                 contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }}
                               />
                               <Line
