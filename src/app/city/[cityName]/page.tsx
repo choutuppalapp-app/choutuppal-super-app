@@ -11,7 +11,6 @@ import { ErrorBoundary } from '@/components/error-boundary'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
 import { StoriesSection } from '@/components/home/stories-section'
-import { CitySelector } from '@/components/home/city-selector'
 import { BannerAds } from '@/components/home/banner-ads'
 import { CategoriesSection } from '@/components/home/categories-section'
 import { FeaturedListings } from '@/components/home/featured-listings'
@@ -190,7 +189,6 @@ function HomeView() {
       <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
-      <ErrorBoundary name="CitySelector"><CitySelector /></ErrorBoundary>
       {config.enableLeaderProfiles && (
         <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
       )}
