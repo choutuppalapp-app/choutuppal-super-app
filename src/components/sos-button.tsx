@@ -49,7 +49,7 @@ export function SosButton() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const siteSettings = useAppStore((s) => s.siteSettings)
 
-  const whatsappNumber = siteSettings.whatsappSupportNumber || '919912353705'
+  const whatsappNumber = siteSettings.whatsappSupportNumber || '918790083706'
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi%20Choutuppal%20Team`
 
   return (

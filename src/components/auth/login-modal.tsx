@@ -133,7 +133,7 @@ export function LoginModal() {
             <Shield className="size-6" />
           </div>
           <h2 className="text-xl font-bold text-white">
-            {isSignup ? 'Join Mana Cities' : 'Welcome Back'}
+            {isSignup ? 'Join Choutuppal' : 'Welcome Back'}
           </h2>
           <p className="text-sm text-white/80 mt-1">
             {isSignup

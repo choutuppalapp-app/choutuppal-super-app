@@ -37,7 +37,7 @@ const DUMMY_RE_LISTINGS: RealEstateListing[] = [
     bedroomCount: 3,
     area: '1,800 sq.ft',
     isFeatured: true,
-    ownerPhone: '919912353705',
+    ownerPhone: '918790083706',
     city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
   },
   {

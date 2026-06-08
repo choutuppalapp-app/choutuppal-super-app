@@ -75,12 +75,12 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   metaTitle: null,
   metaDescription: null,
   ogImageUrl: null,
-  whatsappSupportNumber: '919912353705',
+  whatsappSupportNumber: '918790083706',
   whatsappCommunityLink: '',
   whatsappChannelLink: '',
-  contactName: 'Mosin Md',
+  contactName: 'Citizen CSC',
   contactAddress: 'Choutuppal, Yadadri, Telangana-508252',
-  contactPhone: '9912353705',
+  contactPhone: '8790083706',
 }
 
 const DEFAULT_CITY: CityData = {

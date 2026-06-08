@@ -339,12 +339,12 @@ model SiteSetting {
   metaDescription String?
   ogImageUrl      String?
   // Contact & WhatsApp Integration
-  whatsappSupportNumber  String   @default("919912353705")
+  whatsappSupportNumber  String   @default("918790083706")
   whatsappCommunityLink  String   @default("")
   whatsappChannelLink    String   @default("")
-  contactName            String   @default("Mosin Md")
+  contactName            String   @default("Citizen CSC")
   contactAddress         String   @default("Choutuppal, Yadadri, Telangana-508252")
-  contactPhone           String   @default("9912353705")
+  contactPhone           String   @default("8790083706")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

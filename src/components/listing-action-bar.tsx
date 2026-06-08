@@ -44,9 +44,9 @@ function isRealEstateCategory(category: string): boolean {
 // ─── WhatsApp message builder ─────────────────────────────────────────────────
 function buildWhatsAppMessage(title: string, category: string): string {
   if (isRealEstateCategory(category)) {
-    return `Hi, I saw your property listing '${title}' on Mana Cities App. Is it still available? Can you share more details and the exact location?`
+    return `Hi, I saw your property listing '${title}' on Choutuppal App. Is it still available? Can you share more details and the exact location?`
   }
-  return `Hi, I am interested in your ad '${title}' on Mana Cities App. Is this still available? Please let me know the details and price.`
+  return `Hi, I am interested in your ad '${title}' on Choutuppal App. Is this still available? Please let me know the details and price.`
 }
 
 // ─── Google Maps URL builder ──────────────────────────────────────────────────

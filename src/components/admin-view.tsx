@@ -5898,7 +5898,7 @@ export default function AdminView() {
                     <Input
                       value={settings.contactName || ''}
                       onChange={(e) => setSettings({ ...settings, contactName: e.target.value })}
-                      placeholder="Mosin Md"
+                      placeholder="Citizen CSC"
                       className="bg-white/50 border-white/40"
                     />
                   </div>
@@ -5907,7 +5907,7 @@ export default function AdminView() {
                     <Input
                       value={settings.contactPhone || ''}
                       onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
-                      placeholder="9912353705"
+                      placeholder="8790083706"
                       className="bg-white/50 border-white/40"
                     />
                   </div>
@@ -5929,10 +5929,10 @@ export default function AdminView() {
                     <Input
                       value={settings.whatsappSupportNumber || ''}
                       onChange={(e) => setSettings({ ...settings, whatsappSupportNumber: e.target.value })}
-                      placeholder="919912353705"
+                      placeholder="918790083706"
                       className="bg-white/50 border-white/40"
                     />
-                    <p className="text-xs text-gray-400">With country code, no + sign (e.g., 919912353705)</p>
+                    <p className="text-xs text-gray-400">With country code, no + sign (e.g., 918790083706)</p>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">WhatsApp Community Invite Link</Label>

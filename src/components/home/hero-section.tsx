@@ -27,7 +27,7 @@ const HeroSection = () => {
   const cityName = currentCity.name || 'Choutuppal'
   const brandName = currentCity.brandName || 'Choutuppal App'
   const heroImageUrl = currentCity.heroImageUrl || siteSettings.heroImageUrl || null
-  const whatsappNumber = siteSettings.whatsappSupportNumber || '919912353705'
+  const whatsappNumber = siteSettings.whatsappSupportNumber || '918790083706'
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(brandName)}%20Team`
   const isChoutuppal = currentCity.slug === 'choutuppal'
 

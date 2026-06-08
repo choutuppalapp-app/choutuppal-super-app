@@ -80,7 +80,7 @@ const DUMMY_LISTINGS: Listing[] = [
     category: 'Tiffin',
     description: 'Best dosa and idli in Choutuppal',
     images: null,
-    whatsappNumber: '919912353705',
+    whatsappNumber: '918790083706',
     address: 'Main Road, Choutuppal',
     isPremium: true,
     isFeatured: true,

@@ -9,7 +9,7 @@ const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 if (vapidPublicKey && vapidPrivateKey) {
   try {
     webpush.setVapidDetails(
-      'mailto:support@manacities.in',
+      'mailto:contact@choutuppal.in',
       vapidPublicKey,
       vapidPrivateKey
     )

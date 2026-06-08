@@ -16,12 +16,12 @@ export async function GET() {
             'Find the best local businesses, services, real estate, news, and more — all in one super app built for Choutuppal.',
           primaryColor: '#D4AF37',
           accentColor: '#4169E1',
-          whatsappSupportNumber: '919912353705',
+          whatsappSupportNumber: '918790083706',
           whatsappCommunityLink: '',
           whatsappChannelLink: '',
-          contactName: 'Mosin Md',
+          contactName: 'Citizen CSC',
           contactAddress: 'Choutuppal, Yadadri, Telangana-508252',
-          contactPhone: '9912353705',
+          contactPhone: '8790083706',
         },
       })
       return NextResponse.json(defaultSettings)

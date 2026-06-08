@@ -133,28 +133,34 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="size-3.5 shrink-0" style={{ color: secondary }} />
-                <a href="tel:9912353705" className="hover:text-gray-800 transition-colors">
-                  +91 99123 53705
+                <a href="tel:8790083706" className="hover:text-gray-800 transition-colors">
+                  +91 8790083706
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="size-3.5 shrink-0" style={{ color: secondary }} />
-                hello@choutuppal.app
+                <a href="mailto:contact@choutuppal.in" className="hover:text-gray-800 transition-colors">
+                  contact@choutuppal.in
+                </a>
               </li>
               <li className="text-xs text-gray-400 mt-1">
-                Managed by Mosin Md
+                Managed by Citizen CSC
               </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-400">
-            &copy; {new Date().getFullYear()} {brandName}. All rights reserved.
+            &copy; {new Date().getFullYear()} Citizen CSC. All Rights Reserved.
           </p>
+          <div className="flex items-center gap-4 text-xs text-gray-400">
+            <a href="/terms" className="hover:text-gray-800 transition-colors">Terms & Conditions</a>
+            <a href="/privacy" className="hover:text-gray-800 transition-colors">Privacy Policy</a>
+          </div>
           <p className="text-xs text-gray-400 flex items-center gap-1">
-            Made with <Heart className="size-3 text-red-400" /> in Telangana
+            Powered by Citizen CSC
           </p>
         </div>
       </div>
