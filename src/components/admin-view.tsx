@@ -195,6 +195,12 @@ interface SiteSettings {
   whatsappSupportNumber: string
   whatsappCommunityLink: string
   whatsappChannelLink: string
+  heroWhatsappText: string
+  franchiseWhatsappText: string
+  agentWhatsappText: string
+  instagramUrl: string
+  facebookUrl: string
+  youtubeUrl: string
   contactName: string
   contactAddress: string
   contactPhone: string
