@@ -7,9 +7,6 @@ import {
   Bell, Menu, X, FileText, Loader2, Download,
   Crown,
 } from 'lucide-react'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
@@ -43,11 +40,8 @@ export function Header({ className }: HeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   // CRITICAL: Use individual selectors, NOT useAppStore() — prevents re-render
   // on every unrelated store change (spin wheel, search, notifications, etc.)
-  const selectedCity = useAppStore((s) => s.selectedCity)
-  const switchCity = useAppStore((s) => s.switchCity)
   const currentView = useAppStore((s) => s.currentView)
   const navigateTo = useAppStore((s) => s.navigateTo)
-  const availableCities = useAppStore((s) => s.availableCities)
   const currentCity = useAppStore((s) => s.currentCity)
   const locationLoading = useAppStore((s) => s.locationLoading)
   const themePrimary = useAppStore((s) => s.themePrimary)
@@ -123,31 +117,6 @@ export function Header({ className }: HeaderProps) {
             {renderLogo('md')}
             {renderBrandText('md')}
           </button>
-
-          <div className="h-6 w-px bg-gray-200" />
-
-          <div className="flex items-center gap-1">
-            <Select value={selectedCity} onValueChange={(val) => {
-              const city = availableCities.find((c) => c.slug === val)
-              if (city) switchCity(city.slug)
-            }}>
-              <SelectTrigger
-                className="w-[140px] h-8 text-xs bg-transparent border-gray-200 transition-colors"
-                style={{ borderColor: `${primary}40` }}
-              >
-                <MapPin className="size-3.5 mr-1" style={{ color: primary }} />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableCities.map((city) => (
-                  <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {locationLoading && (
-              <Loader2 className="size-3.5 animate-spin" style={{ color: primary }} />
-            )}
-          </div>
         </div>
 
         {/* Center: Nav Links */}
@@ -218,23 +187,6 @@ export function Header({ className }: HeaderProps) {
             {renderLogo('sm')}
             {renderBrandText('sm')}
           </button>
-          <div className="flex items-center gap-1">
-            <Select value={selectedCity} onValueChange={(val) => {
-              const city = availableCities.find((c) => c.slug === val)
-              if (city) switchCity(city.slug)
-            }}>
-              <SelectTrigger className="w-auto bg-transparent border-0 h-7 px-1 text-xs">
-                <MapPin className="size-3 mr-0.5" style={{ color: primary }} />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableCities.map((city) => (
-                  <SelectItem key={city.slug} value={city.slug}>{city.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {locationLoading && <Loader2 className="size-3 animate-spin" style={{ color: primary }} />}
-          </div>
         </div>
 
         <div className="flex items-center gap-0">
