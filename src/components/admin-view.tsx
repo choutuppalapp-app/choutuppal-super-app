@@ -5955,14 +5955,79 @@ export default function AdminView() {
                   />
                   <p className="text-xs text-gray-400">Leave empty to hide Channel button on Home</p>
                 </div>
-                <motion.div whileTap={{ scale: 0.95 }}>
+                
+                <Separator className="my-2" />
+                <h4 className="font-medium text-sm text-gray-700">Custom WhatsApp Texts</h4>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Hero Chat Text</Label>
+                    <Input
+                      value={settings.heroWhatsappText || ''}
+                      onChange={(e) => setSettings({ ...settings, heroWhatsappText: e.target.value })}
+                      placeholder="నమస్కారం..."
+                      className="bg-white/50 border-white/40"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Franchise Text</Label>
+                    <Input
+                      value={settings.franchiseWhatsappText || ''}
+                      onChange={(e) => setSettings({ ...settings, franchiseWhatsappText: e.target.value })}
+                      placeholder="నా నగరానికి ఫ్రాంచైజీ కోసం..."
+                      className="bg-white/50 border-white/40"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Agent Text</Label>
+                    <Input
+                      value={settings.agentWhatsappText || ''}
+                      onChange={(e) => setSettings({ ...settings, agentWhatsappText: e.target.value })}
+                      placeholder="ఏజెంట్ గా చేరాలనుకుంటున్నాను..."
+                      className="bg-white/50 border-white/40"
+                    />
+                  </div>
+                </div>
+
+                <Separator className="my-2" />
+                <h4 className="font-medium text-sm text-gray-700">Social Media Links</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Instagram URL</Label>
+                    <Input
+                      value={settings.instagramUrl || ''}
+                      onChange={(e) => setSettings({ ...settings, instagramUrl: e.target.value })}
+                      placeholder="https://instagram.com/..."
+                      className="bg-white/50 border-white/40"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Facebook URL</Label>
+                    <Input
+                      value={settings.facebookUrl || ''}
+                      onChange={(e) => setSettings({ ...settings, facebookUrl: e.target.value })}
+                      placeholder="https://facebook.com/..."
+                      className="bg-white/50 border-white/40"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">YouTube URL</Label>
+                    <Input
+                      value={settings.youtubeUrl || ''}
+                      onChange={(e) => setSettings({ ...settings, youtubeUrl: e.target.value })}
+                      placeholder="https://youtube.com/..."
+                      className="bg-white/50 border-white/40"
+                    />
+                  </div>
+                </div>
+
+                <motion.div whileTap={{ scale: 0.95 }} className="pt-2">
                   <Button
                     onClick={handleSaveSettings}
                     disabled={savingSettings}
                     className="bg-[#25D366] hover:bg-[#128C7E] text-white"
                   >
                     {savingSettings ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
-                    Save WhatsApp & Contact
+                    Save Marketing & Contact
                   </Button>
                 </motion.div>
               </div>

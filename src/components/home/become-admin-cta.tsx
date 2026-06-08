@@ -34,10 +34,13 @@ interface CtaState {
   franchiseeFee: string
   agentCommissionListing: string
   agentCommissionBanner: string
+  whatsappSupportNumber: string
+  franchiseWhatsappText: string
+  agentWhatsappText: string
 }
 
 type CtaAction =
-  | { type: 'LOAD'; themePrimary: string; themeSecondary: string; franchiseeFee: string; agentCommissionListing: string; agentCommissionBanner: string }
+  | { type: 'LOAD'; themePrimary: string; themeSecondary: string; franchiseeFee: string; agentCommissionListing: string; agentCommissionBanner: string; whatsappSupportNumber: string; franchiseWhatsappText: string; agentWhatsappText: string; }
 
 const initialState: CtaState = {
   isLoaded: false,
@@ -46,6 +49,9 @@ const initialState: CtaState = {
   franchiseeFee: '50000',
   agentCommissionListing: '20',
   agentCommissionBanner: '15',
+  whatsappSupportNumber: '918790083706',
+  franchiseWhatsappText: 'నా నగరానికి ఫ్రాంచైజీ కోసం అప్లై చేయాలనుకుంటున్నాను',
+  agentWhatsappText: 'చౌతుప్పల్ యాప్ లో ఏజెంట్ గా చేరాలనుకుంటున్నాను',
 }
 
 function ctaReducer(state: CtaState, action: CtaAction): CtaState {
@@ -58,6 +64,9 @@ function ctaReducer(state: CtaState, action: CtaAction): CtaState {
         franchiseeFee: action.franchiseeFee,
         agentCommissionListing: action.agentCommissionListing,
         agentCommissionBanner: action.agentCommissionBanner,
+        whatsappSupportNumber: action.whatsappSupportNumber,
+        franchiseWhatsappText: action.franchiseWhatsappText,
+        agentWhatsappText: action.agentWhatsappText,
       }
     default:
       return state
@@ -88,6 +97,9 @@ export function BecomeAdminCta() {
       franchiseeFee: platformSettings?.city_admin_fee || '50000',
       agentCommissionListing: platformSettings?.agent_commission_listing || '20',
       agentCommissionBanner: platformSettings?.agent_commission_banner || '15',
+      whatsappSupportNumber: useAppStore.getState().siteSettings.whatsappSupportNumber || '918790083706',
+      franchiseWhatsappText: useAppStore.getState().siteSettings.franchiseWhatsappText || 'నా నగరానికి ఫ్రాంచైజీ కోసం అప్లై చేయాలనుకుంటున్నాను',
+      agentWhatsappText: useAppStore.getState().siteSettings.agentWhatsappText || 'చౌతుప్పల్ యాప్ లో ఏజెంట్ గా చేరాలనుకుంటున్నాను',
     })
   }, [])
 
@@ -223,8 +235,8 @@ export function BecomeAdminCta() {
 
             <Button
               onClick={() => {
-                setApplicationType('city_admin')
-                handleCtaClick()
+                const url = `https://wa.me/${state.whatsappSupportNumber}?text=${encodeURIComponent(state.franchiseWhatsappText)}`
+                window.open(url, '_blank')
               }}
               size="lg"
               className="rounded-xl px-8 py-3 text-base font-bold shadow-xl transition-all duration-200 active:scale-95"
@@ -234,7 +246,7 @@ export function BecomeAdminCta() {
               }}
             >
               <Crown className="size-5 mr-2" />
-              Apply for Franchisee
+              Apply via WhatsApp
             </Button>
           </div>
         </GlassCard>
@@ -289,8 +301,8 @@ export function BecomeAdminCta() {
 
             <Button
               onClick={() => {
-                setApplicationType('agent')
-                handleCtaClick()
+                const url = `https://wa.me/${state.whatsappSupportNumber}?text=${encodeURIComponent(state.agentWhatsappText)}`
+                window.open(url, '_blank')
               }}
               size="default"
               className="rounded-xl px-6 py-2.5 text-sm font-bold shadow-lg transition-all duration-200 active:scale-95"
@@ -300,7 +312,7 @@ export function BecomeAdminCta() {
               }}
             >
               <Users className="size-4 mr-2" />
-              Join as Agent
+              Join via WhatsApp
             </Button>
           </div>
         </GlassCard>

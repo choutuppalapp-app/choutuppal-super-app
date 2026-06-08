@@ -43,6 +43,12 @@ export interface SiteSettings {
   whatsappSupportNumber: string
   whatsappCommunityLink: string
   whatsappChannelLink: string
+  heroWhatsappText: string
+  franchiseWhatsappText: string
+  agentWhatsappText: string
+  instagramUrl: string
+  facebookUrl: string
+  youtubeUrl: string
   contactName: string
   contactAddress: string
   contactPhone: string
@@ -78,6 +84,12 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   whatsappSupportNumber: '918790083706',
   whatsappCommunityLink: '',
   whatsappChannelLink: '',
+  heroWhatsappText: 'నమస్కారం, చౌతుప్పల్ యాప్ గురించి సమాచారం కావాలి',
+  franchiseWhatsappText: 'నా నగరానికి ఫ్రాంచైజీ కోసం అప్లై చేయాలనుకుంటున్నాను',
+  agentWhatsappText: 'చౌతుప్పల్ యాప్ లో ఏజెంట్ గా చేరాలనుకుంటున్నాను',
+  instagramUrl: '',
+  facebookUrl: '',
+  youtubeUrl: '',
   contactName: 'Citizen CSC',
   contactAddress: 'Choutuppal, Yadadri, Telangana-508252',
   contactPhone: '8790083706',
