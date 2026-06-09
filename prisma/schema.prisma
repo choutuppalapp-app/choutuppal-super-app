@@ -348,6 +348,7 @@ model SiteSetting {
   instagramUrl           String   @default("")
   facebookUrl            String   @default("")
   youtubeUrl             String   @default("")
+
   contactName            String   @default("Citizen CSC")
   contactAddress         String   @default("Choutuppal, Yadadri, Telangana-508252")
   contactPhone           String   @default("8790083706")
