@@ -47,7 +47,7 @@ export default function Footer() {
               everything local — all in one place.
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              Powered by mana.in — Scalable multi-city platform, white-label ready.
+              Powered by Citizen CSC — choutuppal.in
             </p>
           </div>
 
