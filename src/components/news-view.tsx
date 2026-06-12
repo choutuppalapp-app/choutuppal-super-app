@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
+import Link from 'next/link'
 
 interface NewsArticle {
   id: string
@@ -162,50 +163,52 @@ export default function NewsView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <GlassCard variant="gold" className="!p-0 overflow-hidden">
-                <div className="relative max-h-[250px] h-48 sm:h-[250px] overflow-hidden">
-                  {articles[0].imageUrl ? (
-                    <OptimizedImage
-                      src={articles[0].imageUrl}
-                      alt={articles[0].title}
-                      fill
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
-                      <Newspaper className="w-12 h-12 text-white/40" />
+              <Link href={`/news/${articles[0].id}`} className="block">
+                <GlassCard variant="gold" className="!p-0 overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative max-h-[250px] h-48 sm:h-[250px] overflow-hidden">
+                    {articles[0].imageUrl ? (
+                      <OptimizedImage
+                        src={articles[0].imageUrl}
+                        alt={articles[0].title}
+                        fill
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
+                        <Newspaper className="w-12 h-12 text-white/40" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                      <Badge className="bg-[#D4AF37] text-white border-none mb-2 text-xs">
+                        Featured
+                      </Badge>
+                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1 line-clamp-2">
+                        {articles[0].title}
+                      </h2>
+                      <div className="flex items-center gap-3 text-xs text-white/80">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          {formatDate(articles[0].createdAt)}
+                        </span>
+                        {articles[0].city && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="size-3" />
+                            {articles[0].city.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {articles[0].content && (
+                    <div className="p-4 sm:p-6">
+                      <p className="text-sm text-gray-600 line-clamp-3">
+                        {articles[0].content}
+                      </p>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                    <Badge className="bg-[#D4AF37] text-white border-none mb-2 text-xs">
-                      Featured
-                    </Badge>
-                    <h2 className="text-lg sm:text-xl font-bold text-white mb-1 line-clamp-2">
-                      {articles[0].title}
-                    </h2>
-                    <div className="flex items-center gap-3 text-xs text-white/80">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="size-3" />
-                        {formatDate(articles[0].createdAt)}
-                      </span>
-                      {articles[0].city && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="size-3" />
-                          {articles[0].city.name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {articles[0].content && (
-                  <div className="p-4 sm:p-6">
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {articles[0].content}
-                    </p>
-                  </div>
-                )}
-              </GlassCard>
+                </GlassCard>
+              </Link>
             </motion.div>
           )}
 
@@ -218,55 +221,57 @@ export default function NewsView() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05, duration: 0.3 }}
               >
-                <GlassCard className="!p-0 overflow-hidden">
-                  <div className="flex gap-4 p-4">
-                    {/* Thumbnail */}
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0">
-                      {article.imageUrl ? (
-                        <OptimizedImage
-                          src={article.imageUrl}
-                          alt={article.title}
-                          fill
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
-                          <Newspaper className="w-5 h-5 text-white/50" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">
-                        {article.title}
-                      </h3>
-                      {article.content && (
-                        <p className="text-sm text-gray-500 line-clamp-2 mb-2">
-                          {article.content}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-3 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Clock className="size-3" />
-                          {getTimeAgo(article.createdAt)}
-                        </span>
-                        {article.source && (
-                          <span className="flex items-center gap-1">
-                            <ExternalLink className="size-3" />
-                            {article.source}
-                          </span>
-                        )}
-                        {article.city && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="size-3" />
-                            {article.city.name}
-                          </span>
+                <Link href={`/news/${article.id}`} className="block">
+                  <GlassCard className="!p-0 overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="flex gap-4 p-4">
+                      {/* Thumbnail */}
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0">
+                        {article.imageUrl ? (
+                          <OptimizedImage
+                            src={article.imageUrl}
+                            alt={article.title}
+                            fill
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
+                            <Newspaper className="w-5 h-5 text-white/50" />
+                          </div>
                         )}
                       </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">
+                          {article.title}
+                        </h3>
+                        {article.content && (
+                          <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+                            {article.content}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 text-xs text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <Clock className="size-3" />
+                            {getTimeAgo(article.createdAt)}
+                          </span>
+                          {article.source && (
+                            <span className="flex items-center gap-1">
+                              <ExternalLink className="size-3" />
+                              {article.source}
+                            </span>
+                          )}
+                          {article.city && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="size-3" />
+                              {article.city.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </GlassCard>
+                  </GlassCard>
+                </Link>
               </motion.div>
             ))}
           </div>

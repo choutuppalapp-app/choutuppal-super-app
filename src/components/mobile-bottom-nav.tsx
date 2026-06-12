@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, LayoutList, PlusCircle, Building2, UserCircle, Store, Landmark } from 'lucide-react'
+import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -15,41 +15,6 @@ import {
 } from '@/components/ui/sheet'
 import { ListingActionBar } from '@/components/listing-action-bar'
 
-/**
- * Navigation items — 4 side items (the FAB '+' is rendered separately):
- * Home, Listings, [FAB], Real Estate, Profile/You
- *
- * NAVIGATION BEHAVIOUR:
- * - Home      → navigateTo('home')
- * - Listings  → navigateTo('explore') with clear search
- * - Real Estate → navigateTo('explore') with searchQuery='Real Estate'
- * - You       → navigateTo('dashboard') (requires auth)
- */
-const NAV_ITEMS: Array<{
-  view: ViewType
-  label: string
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number; style?: React.CSSProperties }>
-  requiresAuth?: boolean
-  searchQuery?: string
-}> = [
-  { view: 'home', label: 'Home', icon: Home },
-  { view: 'explore', label: 'Listings', icon: LayoutList, searchQuery: '' },
-  { view: 'explore', label: 'Real Estate', icon: Building2, searchQuery: 'Real Estate' },
-  { view: 'dashboard', label: 'You', icon: UserCircle, requiresAuth: true },
-]
-
-/**
- * MobileBottomNav — Redesigned bottom navigation bar.
- *
- * Features:
- * - 4 side tabs + 1 floating center '+' FAB button
- * - FAB opens a bottom sheet with "Add Listing" / "Add Real Estate"
- * - Active tab: Royal Blue icon + bold label + highlight line
- * - Real Estate tab navigates to explore view filtered by "Real Estate"
- * - ZERO Framer Motion — pure Tailwind transitions, no hydration errors
- *
- * SPEC: fixed bottom-0, bg-white, safe-area-inset, flex justify-around
- */
 export function MobileBottomNav() {
   const currentView = useAppStore((s) => s.currentView)
   const navigateTo = useAppStore((s) => s.navigateTo)
@@ -64,7 +29,6 @@ export function MobileBottomNav() {
 
   const isDetailPage = currentView === 'listing' && !!selectedListingSlug
 
-  // Don't show bottom nav on shorts or when explicitly hidden
   if (!showBottomNav && !isDetailPage) return null
 
   const handleNavClick = (view: ViewType, requiresAuth?: boolean, query?: string) => {
@@ -72,7 +36,6 @@ export function MobileBottomNav() {
       setShowLoginModal(true)
       return
     }
-    // Set search query before navigating so the explore view filters correctly
     if (query !== undefined) {
       setSearchQuery(query)
     }
@@ -85,31 +48,34 @@ export function MobileBottomNav() {
       setShowLoginModal(true)
       return
     }
-    // Navigate to admin panel where listing/RE creation lives
     navigateTo('admin')
   }
 
-  // ─── Determine which tab is active ────────────────────────────────
-  // Real Estate is active when on explore view AND searchQuery is 'Real Estate'
-  // Listings is active when on explore view AND searchQuery is NOT 'Real Estate'
   const isRealEstateActive = currentView === 'explore' && searchQuery === 'Real Estate'
-  const isListingsActive = currentView === 'explore' && searchQuery !== 'Real Estate'
 
-  // ─── Detail page: ListingActionBar instead of nav ────────────────────
   if (isDetailPage) {
     return <ListingActionBar />
   }
 
-  // ─── Normal nav with FAB ───────────────────────────────────────────
   return (
     <>
+      {/* Floating Action Button (FAB) moved above nav */}
+      {(config.enableListings || config.enableRealEstate) && (
+        <button
+          onClick={() => setPostSheetOpen(true)}
+          className="fixed bottom-20 right-4 z-[60] flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-xl shadow-blue-500/30 active:scale-90 transition-transform duration-200 md:hidden"
+          aria-label="Create new post"
+        >
+          <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
+        </button>
+      )}
+
       {/* Nav bar */}
       <div
         className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="relative flex justify-around items-end h-16 px-2">
-          {/* Home tab — always visible */}
+        <div className="relative flex justify-between items-center h-16 px-4">
           <NavItem
             icon={Home}
             label="Home"
@@ -117,33 +83,20 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('home')}
           />
 
-          {/* Listings tab — hidden when enableListings is OFF */}
-          {config.enableListings && (
-            <NavItem
-              icon={LayoutList}
-              label="Listings"
-              isActive={isListingsActive}
-              onClick={() => handleNavClick('explore', false, '')}
-            />
-          )}
+          <NavItem
+            icon={Newspaper}
+            label="News"
+            isActive={currentView === 'news'}
+            onClick={() => handleNavClick('news')}
+          />
+          
+          <NavItem
+            icon={BookOpen}
+            label="Blog"
+            isActive={currentView === 'blog'}
+            onClick={() => handleNavClick('blog')}
+          />
 
-          {/* Center FAB — '+' Button — hidden when both listings and RE are off */}
-          {(config.enableListings || config.enableRealEstate) && (
-            <button
-              onClick={() => setPostSheetOpen(true)}
-              className="relative flex flex-col items-center -mt-7 group"
-              aria-label="Create new post"
-            >
-              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-lg shadow-blue-500/30 active:scale-90 transition-transform duration-200">
-                <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
-              </div>
-              <span className="text-[10px] mt-1 font-medium text-gray-400 group-active:text-[#4169E1] transition-colors">
-                Post
-              </span>
-            </button>
-          )}
-
-          {/* Real Estate tab — hidden when enableRealEstate is OFF */}
           {config.enableRealEstate && (
             <NavItem
               icon={Building2}
@@ -153,7 +106,6 @@ export function MobileBottomNav() {
             />
           )}
 
-          {/* Profile/You tab — always visible */}
           <NavItem
             icon={UserCircle}
             label="You"

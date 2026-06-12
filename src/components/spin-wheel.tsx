@@ -122,6 +122,11 @@ export function SpinWheel() {
 
   const handleSpin = async () => {
     if (isSpinning) return
+    if (!currentUser) {
+      toast.error('Please login to spin the wheel!')
+      return
+    }
+    
     setIsSpinning(true)
     setResult(null)
     setWonCouponCode(null)
@@ -139,10 +144,10 @@ export function SpinWheel() {
       setIsSpinning(false)
       setResult(winningSegment)
 
-      if (winningSegment.type === 'coins' && winningSegment.value > 0 && currentUser) {
+      if (winningSegment.type === 'coins' && winningSegment.value > 0) {
         setCurrentUser({
           ...currentUser,
-          coinsBalance: currentUser.coinsBalance + winningSegment.value,
+          coinsBalance: (currentUser.coinsBalance || 0) + winningSegment.value,
         })
         toast.success(`You won ${winningSegment.value} coins!`)
       } else if (winningSegment.type === 'coupon' && winningSegment.couponDiscount) {
@@ -169,7 +174,7 @@ export function SpinWheel() {
         await fetch('/api/spin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ result: winningSegment.value }),
+          body: JSON.stringify({ userId: currentUser.id, result: winningSegment.value }),
         })
       } catch { /* API not available */ }
     }, 4000)
