@@ -20,7 +20,7 @@ interface SpinSegment {
   label: string
   value: number
   color: string
-  type: 'coins' | 'coupon' | 'free_listing' | 'none'
+  type: 'coins' | 'coupon' | 'discount' | 'free_listing' | 'none'
   probability: number
   couponDiscount?: number
 }
