@@ -1,7 +1,7 @@
 {
-  "name": "Choutuppal 2.0 - Your Hyper-Local Super App",
+  "name": "Choutuppal App - Your Super App",
   "short_name": "Choutuppal",
-  "description": "Discover businesses, services, real estate, and local news in Choutuppal. Your city's digital revolution.",
+  "description": "Discover businesses, news, and services in Choutuppal.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -11,6 +11,12 @@
   "lang": "en",
   "categories": ["business", "lifestyle", "social"],
   "icons": [
+    {
+      "src": "/icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icons/icon-72x72.png",
       "sizes": "72x72",

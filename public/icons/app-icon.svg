@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a3fdb;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#3a5be8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D4AF37;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="letter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0e8c8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bg)" />
+  <!-- Bold "C" letter -->
+  <text
+    x="256"
+    y="340"
+    font-family="'Arial Black', 'Impact', sans-serif"
+    font-size="280"
+    font-weight="900"
+    text-anchor="middle"
+    fill="url(#letter)"
+    letter-spacing="-10"
+  >C</text>
+  <!-- Gold accent ring at bottom -->
+  <rect x="100" y="420" width="312" height="12" rx="6" fill="#D4AF37" opacity="0.8" />
+</svg>

@@ -35,9 +35,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://choutuppal.com'),
-  title: "Choutuppal 2.0 - Your Hyper-Local Super App",
-  description: "Discover businesses, services, real estate, and local news in Choutuppal. Your city's digital revolution.",
+  metadataBase: new URL('https://choutuppal.in'),
+  title: "Choutuppal App - Your Super App",
+  description: "Discover businesses, news, and services in Choutuppal.",
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -56,21 +56,21 @@ export const metadata: Metadata = {
     startupImage: ['/icons/icon-192x192.png'],
   },
   openGraph: {
-    title: "Choutuppal 2.0 - Your Hyper-Local Super App",
-    description: "Discover businesses, services, real estate, and local news in Choutuppal. Your city's digital revolution.",
-    siteName: "Choutuppal 2.0",
+    title: "Choutuppal App - Your Super App",
+    description: "Discover businesses, news, and services in Choutuppal.",
+    siteName: "Choutuppal App",
     type: "website",
     locale: "en_IN",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Choutuppal 2.0" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Choutuppal App" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Choutuppal 2.0 - Your Hyper-Local Super App",
-    description: "Discover businesses, services, real estate, and local news in Choutuppal.",
+    title: "Choutuppal App - Your Super App",
+    description: "Discover businesses, news, and services in Choutuppal.",
     images: ["/og-image.png"],
   },
   keywords: ["Choutuppal", "local business", "real estate", "Telangana", "hyper-local", "super app"],
-  authors: [{ name: "Choutuppal 2.0 Team" }],
+  authors: [{ name: "Choutuppal App Team" }],
 };
 
 export default function RootLayout({
