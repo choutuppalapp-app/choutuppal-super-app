@@ -392,10 +392,11 @@ model BannerAd {
   city City? @relation(fields: [cityId], references: [id])
 }
 
-// ─── Announcement ────────────────────────────────────────────
+// ─── Announcement (Ticker) ────────────────────────────────────
 model Announcement {
   id        String   @id @default(cuid())
-  text      String   // The Telugu announcement text
+  text      String   // The announcement/ticker text (supports Telugu)
+  citySlug  String?  // Optional: null = global (shown everywhere), set = city-specific
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 }

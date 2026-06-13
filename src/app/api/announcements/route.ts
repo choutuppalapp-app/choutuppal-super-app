@@ -7,9 +7,16 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get('activeOnly') !== 'false'
+    const citySlug = searchParams.get('citySlug') || null
 
-    const where: Record<string, unknown> = {}
+    // Build filter: always match global (no citySlug) + optionally match specific city
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {}
     if (activeOnly) where.isActive = true
+    if (citySlug) {
+      // Return announcements that are global (null) OR match the requested city
+      where.OR = [{ citySlug: null }, { citySlug }]
+    }
 
     const announcements = await db.announcement.findMany({
       where,
@@ -27,7 +34,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { text, isActive } = body
+    const { text, isActive, citySlug } = body
 
     if (!text || typeof text !== 'string' || !text.trim()) {
       return NextResponse.json({ error: 'Announcement text is required' }, { status: 400 })
@@ -37,6 +44,7 @@ export async function POST(request: Request) {
       data: {
         text: text.trim(),
         isActive: isActive !== undefined ? Boolean(isActive) : true,
+        citySlug: citySlug || null,
       },
     })
 

@@ -1,75 +1,81 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import { Volume2 } from 'lucide-react'
+import { useAppStore } from '@/lib/store'
 
 interface Announcement {
   id: string
   text: string
   isActive: boolean
+  citySlug: string | null
 }
 
 export function AnnouncementTicker() {
+  const selectedCity = useAppStore((s) => s.selectedCity)
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [loading, setLoading] = useState(true)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    async function fetchAnnouncements() {
+    async function fetch_() {
       try {
         const res = await fetch('/api/announcements?activeOnly=true')
         if (res.ok) {
-          const data = await res.json()
-          if (Array.isArray(data) && data.length > 0) {
-            setAnnouncements(data)
+          const data: Announcement[] = await res.json()
+          if (Array.isArray(data)) {
+            // Keep global announcements (no citySlug) and ones matching current city
+            const filtered = data.filter(
+              (a) => !a.citySlug || a.citySlug === selectedCity
+            )
+            setAnnouncements(filtered)
           }
         }
       } catch {
         // Silently fail — ticker is non-critical
       } finally {
-        setLoading(false)
+        setReady(true)
       }
     }
-    fetchAnnouncements()
-  }, [])
+    fetch_()
+  }, [selectedCity])
 
-  // Don't render anything if no announcements or still loading
-  if (loading || announcements.length === 0) return null
+  if (!ready || announcements.length === 0) return null
 
-  // Join announcements with stars
-  const tickerText = announcements.map((a) => a.text).join('  ✦  ')
+  // Join with bullet separators, triple for seamless CSS marquee loop
+  const tickerText = announcements.map((a) => a.text).join('   •   ')
+  const repeatedText = `${tickerText}   •   ${tickerText}   •   ${tickerText}`
 
   return (
-    <div className="w-full bg-[#4169E1]/10 backdrop-blur-md border-b border-[#D4AF37]/30 py-2 overflow-hidden relative">
-      {/* Fixed badge on the left */}
-      <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center bg-[#4169E1]/15 backdrop-blur-sm border-r border-[#D4AF37]/20 px-3">
-        <span className="text-xs font-bold text-[#4169E1] whitespace-nowrap flex items-center gap-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          తాజా వార్త:
+    <div className="w-full flex items-center bg-gray-900 border-y border-yellow-500/30 overflow-hidden select-none">
+      {/* Left badge — speaker icon + label */}
+      <div className="flex-shrink-0 flex items-center gap-1.5 bg-yellow-500 px-3 py-2 self-stretch">
+        <Volume2 className="w-3.5 h-3.5 text-gray-900 flex-shrink-0" />
+        <span className="text-gray-900 text-[11px] font-black uppercase tracking-wider whitespace-nowrap hidden sm:block">
+          LIVE
         </span>
       </div>
 
-      {/* Scrolling text container */}
-      <div className="ml-24 overflow-hidden" ref={scrollRef}>
-        <div className="flex animate-marquee">
-          <div className="flex-shrink-0 pr-16">
-            <p className="text-sm font-semibold text-[#4169E1] whitespace-nowrap">
-              {tickerText}
-            </p>
-          </div>
-          {/* Duplicate for seamless loop */}
-          <div className="flex-shrink-0 pr-16">
-            <p className="text-sm font-semibold text-[#4169E1] whitespace-nowrap">
-              {tickerText}
-            </p>
-          </div>
-          {/* Triple it for very long seamless loops */}
-          <div className="flex-shrink-0 pr-16">
-            <p className="text-sm font-semibold text-[#4169E1] whitespace-nowrap">
-              {tickerText}
-            </p>
-          </div>
+      {/* Scrolling ticker text */}
+      <div className="flex-1 overflow-hidden py-2">
+        <div
+          className="flex whitespace-nowrap"
+          style={{
+            animation: 'ticker-scroll 35s linear infinite',
+          }}
+        >
+          <span className="text-yellow-300 text-sm font-semibold px-6 whitespace-nowrap">
+            {repeatedText}
+          </span>
         </div>
       </div>
+
+      {/* Inline keyframe style */}
+      <style>{`
+        @keyframes ticker-scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-33.333%); }
+        }
+      `}</style>
     </div>
   )
 }

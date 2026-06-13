@@ -186,8 +186,9 @@ function HomeView() {
   return (
     <div className="space-y-4 md:space-y-8">
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
-      <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
+      {/* Ticker sits directly below Stories, full-width with no padding */}
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
+      <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
       {config.enableLeaderProfiles && (
         <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
@@ -249,8 +250,8 @@ function ProtectedDashboard() {
   }
 
   const role = user?.role?.toLowerCase() || '';
-  if (role === 'super_admin') return <SuperAdminSettings />
-  if (role === 'city_admin' || role === 'admin') return <AdminView />
+  // super_admin and city_admin both use the unified AdminView (role-aware tabs inside)
+  if (role === 'super_admin' || role === 'city_admin' || role === 'admin') return <ProtectedAdmin />
   if (role === 'agent') return <AgentDashboard />
   return <DashboardView />
 }
@@ -289,7 +290,8 @@ function ProtectedAdmin() {
   }
 
   const role = user?.role?.toLowerCase() || '';
-  if (role !== 'super_admin' && role !== 'city_admin' && role !== 'admin') {
+  const isAdminRole = role === 'super_admin' || role === 'city_admin' || role === 'admin'
+  if (!isAdminRole) {
     if (process.env.NODE_ENV === 'development') {
       return (
         <div className="max-w-7xl mx-auto">
@@ -304,6 +306,9 @@ function ProtectedAdmin() {
     return <ForbiddenPage />
   }
 
+  // Unified panel: AdminView is role-aware internally.
+  // super_admin sees all tabs (including global settings & all cities).
+  // city_admin sees only their city's data.
   return <AdminView />
 }
 
@@ -339,24 +344,8 @@ function ProtectedSuperAdmin() {
     )
   }
 
-  const role = user?.role?.toLowerCase() || ''
-  const isSuperAdmin = role === 'super_admin'
-  if (!isSuperAdmin) {
-    if (process.env.NODE_ENV === 'development') {
-      return (
-        <div className="max-w-4xl mx-auto">
-          <div className="mx-4 mt-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
-            <AlertTriangle className="size-4 shrink-0" />
-            Dev Mode: Viewing Super Admin settings as non-super-admin user.
-          </div>
-          <SuperAdminSettings />
-        </div>
-      )
-    }
-    return <ForbiddenPage />
-  }
-
-  return <SuperAdminSettings />
+  // super-admin view is now unified with admin — redirect to ProtectedAdmin
+  return <ProtectedAdmin />
 }
 
 /**
@@ -486,7 +475,8 @@ export default function CityPage() {
       case 'admin':
         return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
       case 'super-admin':
-        return <ErrorBoundary name="ProtectedSuperAdmin"><ProtectedSuperAdmin /></ErrorBoundary>
+        // Alias: unified admin panel (super_admin role sees all tabs inside AdminView)
+        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
       case 'search':
         return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog':
