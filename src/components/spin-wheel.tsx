@@ -102,7 +102,7 @@ export function SpinWheel() {
     if (!showSpinWheel || !mounted || wheelDrawn.current) return
     const canvas = canvasRef.current
     if (!canvas) return
-    const size = Math.min(window.innerWidth - 80, 320)
+    const size = Math.min(window.innerWidth - 40, 360)
     canvas.width = size
     canvas.height = size
     const ctx = canvas.getContext('2d')
@@ -183,10 +183,10 @@ export function SpinWheel() {
   if (!mounted) {
     return (
       <Dialog open={false} onOpenChange={() => {}}>
-        <DialogContent className="bg-white border border-gray-200 shadow-2xl max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[#D4AF37]">
-              <Sparkles className="size-5" />
+        <DialogContent className="bg-gradient-to-br from-blue-600 to-purple-600 border border-purple-400/50 shadow-2xl max-w-sm overflow-hidden z-[60] p-6 mx-auto w-[95vw]">
+          <DialogHeader className="text-center mb-2">
+            <DialogTitle className="flex items-center justify-center gap-2 text-3xl font-extrabold text-white drop-shadow-md">
+              <Sparkles className="size-7 text-[#FFD700]" />
               Spin & Win!
             </DialogTitle>
           </DialogHeader>
@@ -197,25 +197,26 @@ export function SpinWheel() {
 
   return (
     <Dialog open={showSpinWheel} onOpenChange={setShowSpinWheel}>
-      <DialogContent className="bg-white border border-gray-200 shadow-2xl max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#D4AF37]">
-            <Sparkles className="size-5" />
+      <DialogContent className="bg-gradient-to-br from-blue-600 to-purple-600 border border-purple-400/50 shadow-2xl shadow-purple-500/50 sm:rounded-2xl rounded-2xl max-w-sm overflow-hidden z-[60] p-6 mx-auto w-[95vw]">
+        <DialogHeader className="text-center mb-2">
+          <DialogTitle className="flex items-center justify-center gap-2 text-3xl font-extrabold text-white drop-shadow-md">
+            <Sparkles className="size-7 text-[#FFD700]" />
             Spin & Win!
           </DialogTitle>
-          <DialogDescription>
-            Spin the wheel to earn coins and discount coupons
+          <DialogDescription className="text-purple-100 font-medium text-base">
+            Spin daily to win amazing rewards!
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative flex flex-col items-center py-4">
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
-            <div className="w-0 h-0 border-l-[10px] border-r-[10px] border-t-[16px] border-l-transparent border-r-transparent border-t-[#D4AF37] drop-shadow-md" />
+        <div className="relative flex flex-col items-center py-2">
+          {/* Pointer */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
+            <div className="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-[#FFD700] drop-shadow-xl" style={{ filter: "drop-shadow(0px 4px 4px rgba(0,0,0,0.5))" }} />
           </div>
 
-          <div className="relative">
+          <div className="relative mt-4">
             <div
-              className="rounded-full shadow-xl transition-transform"
+              className="rounded-full shadow-[0_0_25px_rgba(0,0,0,0.4)] transition-transform bg-white/10 p-1 border-2 border-white/20"
               style={{
                 transform: `rotate(${rotation}deg)`,
                 transition: isSpinning ? 'transform 4s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
@@ -225,58 +226,56 @@ export function SpinWheel() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-8 relative z-20 -top-6">
             <Button
               onClick={handleSpin}
               disabled={isSpinning}
-              className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white font-bold px-8 shadow-lg disabled:opacity-60 active:scale-95 transition-transform"
-              size="lg"
+              className={`bg-gradient-to-r from-[#FFD700] to-[#F59E0B] hover:from-[#FDE047] hover:to-[#F59E0B] text-amber-950 font-extrabold text-2xl px-10 py-7 rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.5)] disabled:opacity-60 transition-all ${isSpinning ? '' : 'animate-bounce'}`}
             >
-              {isSpinning ? 'Spinning...' : 'SPIN NOW'}
+              {isSpinning ? 'SPINNING...' : 'SPIN NOW!'}
             </Button>
           </div>
 
           {result && !isSpinning && (
-            <div className="mt-4 text-center w-full">
+            <div className="mt-2 text-center w-full z-30">
               {result.type === 'coins' && result.value > 0 ? (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37]/10 to-[#4169E1]/10 border border-[#D4AF37]/20">
-                  <Award className="size-5 text-[#D4AF37]" />
-                  <span className="font-semibold text-gray-800">You won {result.value} coins!</span>
+                <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white shadow-xl border-2 border-[#D4AF37]">
+                  <Award className="size-6 text-[#D4AF37]" />
+                  <span className="font-bold text-gray-900 text-lg">You won {result.value} coins!</span>
                 </div>
               ) : result.type === 'coupon' && wonCouponCode ? (
-                <div className="rounded-xl border border-[#E74C3C]/30 bg-gradient-to-r from-[#E74C3C]/5 to-[#9B59B6]/5 p-4">
+                <div className="rounded-2xl border-2 border-[#E74C3C] bg-white shadow-xl p-5">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <Ticket className="size-5 text-[#E74C3C]" />
-                    <span className="font-bold text-gray-800">{result.couponDiscount}% OFF Coupon!</span>
+                    <Ticket className="size-6 text-[#E74C3C]" />
+                    <span className="font-extrabold text-gray-900 text-lg">{result.couponDiscount}% OFF Coupon!</span>
                   </div>
                   <div className="flex items-center justify-center gap-2 mb-3">
-                    <code className="px-3 py-1.5 rounded-lg bg-[#4169E1]/10 text-[#4169E1] font-mono font-bold text-sm tracking-widest">
+                    <code className="px-4 py-2 rounded-xl bg-[#4169E1]/10 text-[#4169E1] font-mono font-bold text-base tracking-widest border border-[#4169E1]/20">
                       {wonCouponCode}
                     </code>
                     <button
                       onClick={() => handleCopyCoupon(wonCouponCode)}
-                      className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                      className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
                       title="Copy code"
                     >
-                      <Copy className="w-4 h-4 text-gray-600" />
+                      <Copy className="w-5 h-5 text-gray-600" />
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500">Valid for 7 days · Apply at checkout</p>
+                  <p className="text-sm text-gray-600 font-medium">Valid for 7 days · Apply at checkout</p>
                   <Button
                     onClick={() => {
                       setShowSpinWheel(false)
                       toast.info('Apply your coupon on the Pricing Plans section!', { duration: 4000 })
                     }}
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 text-[#4169E1] border-[#4169E1]/30 hover:bg-[#4169E1]/5"
+                    variant="default"
+                    className="mt-3 w-full bg-[#4169E1] hover:bg-blue-700 text-white font-bold rounded-xl"
                   >
                     Apply on Checkout →
                   </Button>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 border border-gray-200">
-                  <span className="font-medium text-gray-500">Better luck next time!</span>
+                <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/90 backdrop-blur-sm border-2 border-white shadow-xl">
+                  <span className="font-bold text-gray-800 text-lg">Better luck next time!</span>
                 </div>
               )}
             </div>
