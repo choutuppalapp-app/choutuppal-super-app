@@ -51,7 +51,8 @@ export function MobileBottomNav() {
     navigateTo('admin')
   }
 
-  const isRealEstateActive = currentView === 'explore' && searchQuery === 'Real Estate'
+  const isExploreActive = currentView === 'explore'
+  const isUpdatesActive = currentView === 'news' || currentView === 'blog'
 
   if (isDetailPage) {
     return <ListingActionBar />
@@ -59,23 +60,13 @@ export function MobileBottomNav() {
 
   return (
     <>
-      {/* Floating Action Button (FAB) moved above nav */}
-      {(config.enableListings || config.enableRealEstate) && (
-        <button
-          onClick={() => setPostSheetOpen(true)}
-          className="fixed bottom-20 right-4 z-[60] flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-xl shadow-blue-500/30 active:scale-90 transition-transform duration-200 md:hidden"
-          aria-label="Create new post"
-        >
-          <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
-        </button>
-      )}
-
       {/* Nav bar */}
       <div
         className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="relative flex justify-between items-center h-16 px-4">
+        <div className="relative flex justify-around items-end h-16 px-2">
+          {/* 1. Home */}
           <NavItem
             icon={Home}
             label="Home"
@@ -83,29 +74,39 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('home')}
           />
 
+          {/* 2. News & Blog */}
           <NavItem
             icon={Newspaper}
-            label="News"
-            isActive={currentView === 'news'}
+            label="Updates"
+            isActive={isUpdatesActive}
             onClick={() => handleNavClick('news')}
           />
-          
-          <NavItem
-            icon={BookOpen}
-            label="Blog"
-            isActive={currentView === 'blog'}
-            onClick={() => handleNavClick('blog')}
-          />
 
-          {config.enableRealEstate && (
-            <NavItem
-              icon={Building2}
-              label="Real Estate"
-              isActive={isRealEstateActive}
-              onClick={() => handleNavClick('explore', false, 'Real Estate')}
-            />
+          {/* 3. Center FAB */}
+          {(config.enableListings || config.enableRealEstate) && (
+            <button
+              onClick={() => setPostSheetOpen(true)}
+              className="relative flex flex-col items-center -mt-7 group"
+              aria-label="Create new post"
+            >
+              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-lg shadow-blue-500/30 active:scale-90 transition-transform duration-200">
+                <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <span className="text-[10px] mt-1 font-medium text-gray-400 group-active:text-[#4169E1] transition-colors">
+                Add
+              </span>
+            </button>
           )}
 
+          {/* 4. Explore (Listings & Real Estate) */}
+          <NavItem
+            icon={Building2}
+            label="Explore"
+            isActive={isExploreActive}
+            onClick={() => handleNavClick('explore', false, '')}
+          />
+
+          {/* 5. You */}
           <NavItem
             icon={UserCircle}
             label="You"

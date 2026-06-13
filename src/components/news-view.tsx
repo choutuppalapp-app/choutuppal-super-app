@@ -101,6 +101,19 @@ export default function NewsView() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      {/* Combined Updates Tab UI */}
+      <div className="flex gap-4 border-b border-gray-200">
+        <button className="px-4 py-2 text-sm font-bold text-[#4169E1] border-b-2 border-[#4169E1]">
+          Local News
+        </button>
+        <button 
+          onClick={() => useAppStore.getState().navigateTo('blog')}
+          className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+        >
+          Blog Posts
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

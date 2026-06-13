@@ -108,6 +108,19 @@ export default function BlogView() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      {/* Combined Updates Tab UI */}
+      <div className="flex gap-4 border-b border-gray-200">
+        <button 
+          onClick={() => navigateTo('news')}
+          className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+        >
+          Local News
+        </button>
+        <button className="px-4 py-2 text-sm font-bold text-[#4169E1] border-b-2 border-[#4169E1]">
+          Blog Posts
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
