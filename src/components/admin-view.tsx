@@ -438,6 +438,7 @@ export default function AdminView() {
     id: string; fullName: string; phone: string; email: string | null;
     role: string; subscriptionTier: string; coinsBalance: number;
     createdAt: string; city: { name: string } | null;
+    agentCityId?: string | null; managedCityId?: string | null;
     _count: { listings: number; leads: number };
   }>>([])
   const [userSearch, setUserSearch] = useState('')
@@ -1237,12 +1238,12 @@ export default function AdminView() {
     }
   }
 
-  const handleUserAction = async (userId: string, action: string, value?: string) => {
+  const handleUserAction = async (userId: string, action: string, value?: string, extraPayload?: any) => {
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action, value }),
+        body: JSON.stringify({ userId, action, value, ...extraPayload }),
       })
       if (res.ok) {
         toast.success(`Action "${action}" successful`)
@@ -3871,25 +3872,42 @@ export default function AdminView() {
                           {new Date(u.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: '2-digit' })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            {u.role === 'banned' ? (
-                              <Button size="sm" variant="outline" className="h-6 text-xs border-green-300 text-green-600" onClick={() => handleUserAction(u.id, 'unban')}>
-                                Unban
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline" className="h-6 text-xs border-red-300 text-red-600" onClick={() => handleUserAction(u.id, 'ban')}>
-                                <Ban className="size-3 mr-0.5" />Ban
-                              </Button>
+                          <div className="flex flex-col gap-2 items-end">
+                            <Select
+                              value={u.role}
+                              disabled={!isSuperAdmin}
+                              onValueChange={(newRole) => handleUserAction(u.id, 'changeRole', undefined, { newRole })}
+                            >
+                              <SelectTrigger className="h-7 w-32 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="agent">Agent</SelectItem>
+                                <SelectItem value="city_admin">City Manager</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="super_admin">Super Admin</SelectItem>
+                                <SelectItem value="banned">Banned</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            
+                            {(u.role === 'agent' || u.role === 'city_admin') && (
+                              <Select
+                                value={u.role === 'agent' ? u.agentCityId || '' : u.managedCityId || ''}
+                                disabled={!isSuperAdmin}
+                                onValueChange={(cityId) => handleUserAction(u.id, 'changeRole', undefined, { newRole: u.role, cityId })}
+                              >
+                                <SelectTrigger className="h-7 w-32 text-xs border-dashed border-gray-300">
+                                  <SelectValue placeholder="Select City" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {cities.map(c => (
+                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             )}
-                            {u.role !== 'admin' ? (
-                              <Button size="sm" variant="outline" className="h-6 text-xs border-purple-300 text-purple-600" onClick={() => handleUserAction(u.id, 'makeAdmin')}>
-                                <ShieldCheck className="size-3 mr-0.5" />Admin
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline" className="h-6 text-xs border-gray-300 text-gray-600" onClick={() => handleUserAction(u.id, 'removeAdmin')}>
-                                Remove
-                              </Button>
-                            )}
+                            <div className="flex gap-1 mt-1">
                             <Dialog open={addCoinsDialog === u.id} onOpenChange={(open) => { if (!open) setAddCoinsDialog(null) }}>
                               <DialogTrigger asChild>
                                 <Button size="sm" variant="outline" className="h-6 text-xs border-[#D4AF37]/30 text-[#D4AF37]" onClick={() => setAddCoinsDialog(u.id)}>
@@ -3915,6 +3933,7 @@ export default function AdminView() {
                                 </DialogFooter>
                               </DialogContent>
                             </Dialog>
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>

@@ -83,6 +83,35 @@ export async function PATCH(request: NextRequest) {
         await db.user.update({ where: { id: userId }, data: { role: 'user' } })
         return NextResponse.json({ success: true, message: 'Admin role removed' })
       }
+      case 'changeRole': {
+        const { newRole, cityId } = body
+        if (!newRole) {
+          return NextResponse.json({ error: 'newRole is required for changeRole' }, { status: 400 })
+        }
+        
+        const updateData: any = { role: newRole }
+        
+        // Reset role-specific fields
+        if (newRole === 'agent') {
+          updateData.isAgentApproved = true
+          if (cityId) updateData.agentCityId = cityId
+        } else if (newRole === 'city_admin' || newRole === 'city_manager') {
+          updateData.role = 'city_admin' // normalize to city_admin
+          if (cityId) updateData.managedCityId = cityId
+        } else {
+          // If changing to normal user or super_admin, clear city assignments
+          updateData.agentCityId = null
+          updateData.managedCityId = null
+          updateData.isAgentApproved = false
+        }
+        
+        await db.user.update({
+          where: { id: userId },
+          data: updateData,
+        })
+        
+        return NextResponse.json({ success: true, message: `Role updated to ${newRole}` })
+      }
       case 'addCoins': {
         const amount = parseInt(value) || 0
         if (amount === 0) return NextResponse.json({ error: 'Amount must be > 0' }, { status: 400 })

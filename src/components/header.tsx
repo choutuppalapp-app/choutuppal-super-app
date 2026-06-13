@@ -28,8 +28,7 @@ const NAV_LINKS: Array<{
   { view: 'community', label: 'Community', icon: Users },
   { view: 'blog', label: 'Blog', icon: FileText },
   { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
-  { view: 'admin', label: 'Admin', icon: Shield, adminOnly: true, requiresAuth: true },
-  { view: 'super-admin', label: 'Super Admin', icon: Crown, superAdminOnly: true, requiresAuth: true },
+  { view: 'admin', label: 'Admin Panel', icon: Shield, adminOnly: true, requiresAuth: true },
 ]
 
 interface HeaderProps {
@@ -123,7 +122,7 @@ export function Header({ className }: HeaderProps) {
         <nav className="flex items-center gap-1">
           {NAV_LINKS.map((item) => {
             if (item.adminOnly && !isAdmin) return null
-            if (item.superAdminOnly && !isSuperAdmin) return null
+            if (item.view === 'dashboard' && isAdmin) return null
             // Feature toggle filtering for desktop nav
             if (item.view === 'blog' && !config.enableBlog) return null
             if (item.view === 'news' && !config.enableBlog) return null
@@ -266,7 +265,7 @@ export function Header({ className }: HeaderProps) {
               <nav className="flex-1 py-2 overflow-y-auto">
                 {NAV_LINKS.map((item) => {
                   if (item.adminOnly && !isAdmin) return null
-                  if (item.superAdminOnly && !isSuperAdmin) return null
+                  if (item.view === 'dashboard' && isAdmin) return null
                   // Feature toggle filtering for drawer nav
                   if (item.view === 'blog' && !config.enableBlog) return null
                   if (item.view === 'news' && !config.enableBlog) return null
