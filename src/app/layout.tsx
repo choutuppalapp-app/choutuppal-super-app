@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://choutuppal.in'),
   title: "Choutuppal App - Your Super App",
-  description: "Discover businesses, news, and services in Choutuppal.",
+  description: "Discover businesses, news, services, and everything local in Choutuppal — all in one place!",
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -57,17 +57,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Choutuppal App - Your Super App",
-    description: "Discover businesses, news, and services in Choutuppal.",
+    description: "Discover businesses, news, services, and everything local in Choutuppal — all in one place!",
     siteName: "Choutuppal App",
+    url: "https://choutuppal.in",
     type: "website",
     locale: "en_IN",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Choutuppal App" }],
+    images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Choutuppal App - Your Super App",
-    description: "Discover businesses, news, and services in Choutuppal.",
-    images: ["/og-image.png"],
+    description: "Discover businesses, news, services, and everything local in Choutuppal — all in one place!",
+    images: ["/opengraph-image"],
   },
   keywords: ["Choutuppal", "local business", "real estate", "Telangana", "hyper-local", "super app"],
   authors: [{ name: "Choutuppal App Team" }],
