@@ -7,14 +7,12 @@ import { useAuth } from '@/lib/auth-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OptimizedImage } from '@/components/optimized-image'
 
-// Lazy-load heavy modal components to reduce initial bundle size.
-// Using React.lazy + Suspense instead of next/dynamic to avoid
-// Turbopack HMR "module factory not available" errors caused by
-// nested dynamic imports inside statically-imported components.
-import { lazy, Suspense } from 'react'
+// Using next/dynamic with ssr: false to avoid window is not defined errors
+// and hydration mismatches for heavy touch-based components.
+import dynamic from 'next/dynamic'
 
-const StoryViewer = lazy(() => import('@/components/story-viewer'))
-const StoryCreator = lazy(() => import('@/components/story-creator'))
+const StoryViewer = dynamic(() => import('@/components/story-viewer'), { ssr: false })
+const StoryCreator = dynamic(() => import('@/components/story-creator'), { ssr: false })
 
 interface StoryItem {
   id: string
@@ -126,9 +124,27 @@ export function StoriesSection() {
           <div className="flex flex-col items-center gap-1 flex-shrink-0">
             <button
               onClick={handleYourStoryClick}
-              className="relative w-[68px] h-[68px] rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-[#D4AF37] transition-colors"
+              className="relative w-[68px] h-[68px] rounded-full flex items-center justify-center transition-transform active:scale-95"
             >
-              <Plus className="text-gray-400 hover:text-[#D4AF37] transition-colors" size={24} />
+              {isAuthenticated && user?.avatarUrl ? (
+                <div className="w-full h-full rounded-full border-2 border-transparent overflow-hidden relative">
+                  <OptimizedImage
+                    src={user.avatarUrl}
+                    alt="Your Story"
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    fallbackType="avatar"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                  <span className="text-gray-400 font-bold text-xs">You</span>
+                </div>
+              )}
+              {/* Overlaid + Icon (WhatsApp style) */}
+              <div className="absolute bottom-0 right-0 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10">
+                <Plus className="text-white" strokeWidth={3} size={14} />
+              </div>
             </button>
             <span className="text-[10px] text-gray-500 w-16 text-center truncate font-medium">Your Story</span>
           </div>
@@ -180,7 +196,7 @@ export function StoriesSection() {
                         ? 'bg-gradient-to-tr from-[#D4AF37] to-[#FDB931] shadow-md shadow-yellow-200'
                         : isViewed
                           ? 'bg-gray-200 opacity-50'
-                          : 'bg-gradient-to-tr from-gray-400 to-gray-500'
+                          : 'bg-gradient-to-tr from-blue-600 to-purple-600'
                     }`}
                   >
                     <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-gray-100 relative">
@@ -225,29 +241,25 @@ export function StoriesSection() {
 
       {/* Story Viewer - handles its own AnimatePresence internally */}
       {viewerOpen && (
-        <Suspense fallback={null}>
-          <StoryViewer
-            stories={stories}
-            initialStoryIndex={viewerStoryIndex}
-            onClose={() => setViewerOpen(false)}
-          />
-        </Suspense>
+        <StoryViewer
+          stories={stories}
+          initialStoryIndex={viewerStoryIndex}
+          onClose={() => setViewerOpen(false)}
+        />
       )}
 
       {/* Story Creator - handles its own AnimatePresence internally */}
       {creatorOpen && cityId && user && (
-        <Suspense fallback={null}>
-          <StoryCreator
-            isOpen={creatorOpen}
-            onClose={() => setCreatorOpen(false)}
-            cityId={cityId}
-            userId={user.id}
-            onStoryCreated={() => {
-              setCreatorOpen(false)
-              fetchStories()
-            }}
-          />
-        </Suspense>
+        <StoryCreator
+          isOpen={creatorOpen}
+          onClose={() => setCreatorOpen(false)}
+          cityId={cityId}
+          userId={user.id}
+          onStoryCreated={() => {
+            setCreatorOpen(false)
+            fetchStories()
+          }}
+        />
       )}
     </>
   )

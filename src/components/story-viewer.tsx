@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Volume2, VolumeX, Music, Pause } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { toast } from 'sonner'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -568,16 +569,17 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           </div>
         </div>
 
-        {/* ---- Bottom Gradient ---- */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none">
-          <div className="pointer-events-auto px-4 pb-6 pt-12 flex items-end justify-between gap-3">
+        {/* ---- Bottom Gradient & Interactions ---- */}
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-4 pt-12 gap-3">
+          
+          <div className="pointer-events-auto flex items-end justify-between gap-3">
             {/* Music Pill */}
             <div className="min-w-0 flex-1">
               {currentStory.music && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5 max-w-full"
+                  className="inline-flex items-center gap-1.5 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 max-w-full border border-white/10"
                 >
                   <motion.span
                     animate={
@@ -592,10 +594,10 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                   >
                     <Music className="w-3.5 h-3.5 text-white" />
                   </motion.span>
-                  <span className="text-white text-xs truncate">
+                  <span className="text-white text-xs truncate font-medium">
                     {currentStory.music.name}
                     {currentStory.music.artist && (
-                      <span className="text-white/50">
+                      <span className="text-white/60">
                         {' '}
                         · {currentStory.music.artist}
                       </span>
@@ -611,7 +613,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                 e.stopPropagation()
                 setAudioMuted((m) => !m)
               }}
-              className="p-2 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-colors flex-shrink-0"
+              className="p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors flex-shrink-0"
               aria-label={audioMuted ? 'Unmute' : 'Mute'}
             >
               {audioMuted ? (
@@ -619,6 +621,48 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               ) : (
                 <Volume2 className="w-5 h-5 text-white" />
               )}
+            </button>
+          </div>
+
+          {/* WhatsApp-Style Reply Input */}
+          <div className="pointer-events-auto flex items-center gap-3">
+            <div className="flex-1">
+              <input 
+                type="text" 
+                placeholder={`Reply to ${currentStory.user.fullName.split(' ')[0]}...`}
+                className="w-full bg-black/30 hover:bg-black/40 focus:bg-black/60 backdrop-blur-md border border-white/30 text-white placeholder:text-white/80 rounded-full py-3 px-5 outline-none transition-all text-sm font-medium"
+                onFocus={(e) => {
+                  setPaused(true)
+                }}
+                onBlur={() => setPaused(false)}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    toast.success('Reply sent!')
+                    ;(e.target as HTMLInputElement).value = ''
+                    ;(e.target as HTMLInputElement).blur()
+                  }
+                }}
+              />
+            </div>
+            <button 
+              className="flex-shrink-0 flex items-center justify-center text-2xl hover:scale-110 transition-transform"
+              onPointerDown={(e) => {
+                 e.stopPropagation()
+                 toast.success('Reacted with ❤️')
+              }}
+            >
+              ❤️
+            </button>
+            <button 
+              className="flex-shrink-0 flex items-center justify-center text-2xl hover:scale-110 transition-transform"
+              onPointerDown={(e) => {
+                 e.stopPropagation()
+                 toast.success('Reacted with 🔥')
+              }}
+            >
+              🔥
             </button>
           </div>
         </div>
