@@ -248,13 +248,14 @@ export function StoriesSection() {
         />
       )}
 
-      {/* Story Creator - handles its own AnimatePresence internally */}
-      {creatorOpen && cityId && user && (
+      {/* Story Creator — mounts immediately so it can fire the native file picker.
+          cityId/userId are passed but the component handles loading gracefully. */}
+      {creatorOpen && (
         <StoryCreator
           isOpen={creatorOpen}
           onClose={() => setCreatorOpen(false)}
-          cityId={cityId}
-          userId={user.id}
+          cityId={cityId ?? ''}
+          userId={user?.id ?? ''}
           onStoryCreated={() => {
             setCreatorOpen(false)
             fetchStories()
