@@ -294,7 +294,7 @@ export default function DashboardView() {
       })
       if (res.ok) {
         alert('Listing published successfully!')
-        toast.success('Listing created successfully!')
+        alert('Listing published successfully!'); toast.success('Listing created successfully!')
         setIsCreatingListing(false)
         fetchListings()
         setFormData({
@@ -303,12 +303,12 @@ export default function DashboardView() {
         })
       } else {
         alert('Failed to publish. Check console.')
-        toast.error('Failed to create listing')
+        const errData = await res.text(); console.error('Submit API error:', errData); alert('Failed to publish. Check console.'); toast.error('Failed to create listing')
       }
     } catch (err) {
       console.error(err)
       alert('Failed to publish. Check console.')
-      toast.error('Something went wrong')
+      console.error('Submit error:', err); alert('Failed to publish. Check console.'); toast.error('Something went wrong')
     } finally {
       setUploading(false)
     }
@@ -337,7 +337,7 @@ export default function DashboardView() {
         setIsCreatingBanner(false)
         fetchBanners()
       } else {
-        toast.error('Failed to create banner')
+        const errData = await res.text(); console.error('Banner submit API error:', errData); toast.error('Failed to create banner')
       }
     } catch {
       toast.error('Something went wrong')
