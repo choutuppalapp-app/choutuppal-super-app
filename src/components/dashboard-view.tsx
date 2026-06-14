@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyListings } from '@/components/empty-states'
 import dynamic from 'next/dynamic'
 import { RichTextEditor } from '@/components/rich-text-editor'
-import { supabase } from '@/lib/supabase'
+
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -202,7 +202,7 @@ export default function DashboardView() {
     }
   }
 
-    const compressAndUpload = async (file: File, folder: string) => {
+      const compressAndUpload = async (file: File, folder: string) => {
     let fileToUpload = file
     if (file.type.startsWith('image/')) {
       try {
@@ -214,25 +214,12 @@ export default function DashboardView() {
       }
     }
     
-    // Upload to Supabase 'listing-images' bucket
-    const fileExt = fileToUpload.name.split('.').pop()
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`
-    const filePath = `${folder}/${fileName}`
-
-    const { data, error } = await supabase.storage
-      .from('listing-images')
-      .upload(filePath, fileToUpload)
-
-    if (error) {
-      console.error('Supabase upload error:', error)
-      throw new Error('Upload failed')
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('listing-images')
-      .getPublicUrl(filePath)
-
-    return { url: publicUrl }
+    const uploadData = new FormData()
+    uploadData.append('file', fileToUpload)
+    uploadData.append('folder', folder)
+    const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
+    if (!res.ok) throw new Error('Upload failed')
+    return await res.json()
   }
 
   const handleListingFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,6 +267,7 @@ export default function DashboardView() {
 
   const submitListing = async () => {
     if (!currentUser || !formData.name || !formData.category) return
+    console.log('Submitting:', formData)
     setUploading(true)
     try {
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
@@ -305,6 +293,7 @@ export default function DashboardView() {
         }),
       })
       if (res.ok) {
+        alert('Listing published successfully!')
         toast.success('Listing created successfully!')
         setIsCreatingListing(false)
         fetchListings()
@@ -313,9 +302,12 @@ export default function DashboardView() {
           coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: ''
         })
       } else {
+        alert('Failed to publish. Check console.')
         toast.error('Failed to create listing')
       }
-    } catch {
+    } catch (err) {
+      console.error(err)
+      alert('Failed to publish. Check console.')
       toast.error('Something went wrong')
     } finally {
       setUploading(false)
@@ -997,6 +989,66 @@ export default function DashboardView() {
             <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
               <Button onClick={submitListing} disabled={uploading || !formData.name || !formData.category} className="w-full max-w-lg mx-auto h-14 text-lg font-extrabold rounded-xl bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center">
                 {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Listing'}
+              </Button>
+            </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Banner Form Modal */}
+      <AnimatePresence>
+        {isCreatingBanner && (
+          <motion.div 
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[100] bg-white md:bg-black/50 flex flex-col md:items-center md:justify-center md:p-6"
+          >
+            <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-md md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+            <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingBanner(false)}>
+                <X className="w-6 h-6" />
+              </Button>
+              <span className="text-gray-900 font-black text-lg">New Banner Ad</span>
+              <div className="w-10"></div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
+              <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                
+                <div className="flex flex-col gap-2">
+                  <span className="text-gray-800 font-bold text-sm">Banner Image *</span>
+                  <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
+                    {bannerData.imageUrl ? (
+                      <Image src={bannerData.imageUrl} alt="Banner" fill className="object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <UploadCloud className="w-6 h-6 text-purple-500" />
+                        <span className="font-bold text-sm">Upload Banner</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleBannerFileChange} />
+                  </label>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-gray-800 font-bold text-sm">Target Link / URL</span>
+                  <Input placeholder="https://..." value={bannerData.linkUrl || ''} onChange={e => setBannerData({...bannerData, linkUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-purple-500" />
+                </div>
+                
+                {/* Fallback required field */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-gray-800 font-bold text-sm">Internal Title *</span>
+                  <Input placeholder="E.g., Diwali Sale" value={bannerData.title || ''} onChange={e => setBannerData({...bannerData, title: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-purple-500" />
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
+              <Button onClick={submitBanner} disabled={uploading || !bannerData.title || !bannerData.imageUrl} className="w-full max-w-lg mx-auto h-14 text-lg font-extrabold rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center">
+                {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Banner'}
               </Button>
             </div>
             </div>
