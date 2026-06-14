@@ -73,6 +73,7 @@ export async function PUT(
     const updateData: Record<string, unknown> = {}
     const allowedFields = [
       'name', 'category', 'description', 'services', 'images',
+      'coverImage', 'logoUrl', 'gallery', 'instagramUrl', 'facebookUrl', 'youtubeUrl',
       'whatsappNumber', 'address', 'latitude', 'longitude',
       'isPremium', 'isFeatured', 'operatingHours',
     ]
@@ -81,7 +82,7 @@ export async function PUT(
       if (body[field] !== undefined) {
         if (field === 'services' && typeof body[field] !== 'string') {
           updateData[field] = JSON.stringify(body[field])
-        } else if (field === 'images' && typeof body[field] !== 'string') {
+        } else if ((field === 'images' || field === 'gallery') && typeof body[field] !== 'string') {
           updateData[field] = JSON.stringify(body[field])
         } else {
           updateData[field] = body[field]

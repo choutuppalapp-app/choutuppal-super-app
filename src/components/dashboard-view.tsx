@@ -24,6 +24,11 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyListings } from '@/components/empty-states'
+import dynamic from 'next/dynamic'
+import { Instagram, Facebook, Youtube, UploadCloud } from 'lucide-react'
+import 'react-quill/dist/quill.snow.css'
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -124,7 +129,9 @@ export default function DashboardView() {
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
-    name: '', category: '', description: '', whatsappNumber: '', imageUrls: [] as string[], cityId: ''
+    name: '', category: '', description: '', whatsappNumber: '', cityId: '',
+    coverImage: '', logoUrl: '', gallery: [] as string[],
+    instagramUrl: '', facebookUrl: '', youtubeUrl: ''
   })
   const [bannerData, setBannerData] = useState({
     title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
@@ -229,12 +236,31 @@ export default function DashboardView() {
     toast.info('Compressing image...')
     try {
       const data = await compressAndUpload(files[0], 'choutuppal/listings')
-      setFormData({ name: '', category: '', description: '', whatsappNumber: '', imageUrls: [data.url], cityId: '' })
+      setFormData({
+        name: '', category: '', description: '', whatsappNumber: '', cityId: '',
+        coverImage: data.url, logoUrl: '', gallery: [],
+        instagramUrl: '', facebookUrl: '', youtubeUrl: ''
+      })
       setIsCreatingListing(true)
     } catch {
       toast.error('Failed to upload image')
     }
     e.target.value = ''
+  }
+
+  const handleExtraUpload = async (file: File, type: 'logo' | 'gallery') => {
+    toast.info('Compressing image...')
+    try {
+      const data = await compressAndUpload(file, 'choutuppal/listings')
+      if (type === 'logo') {
+        setFormData(prev => ({ ...prev, logoUrl: data.url }))
+      } else {
+        setFormData(prev => ({ ...prev, gallery: [...prev.gallery, data.url] }))
+      }
+      toast.success('Uploaded successfully')
+    } catch {
+      toast.error('Upload failed')
+    }
   }
 
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,7 +293,12 @@ export default function DashboardView() {
           category: formData.category,
           description: formData.description || null,
           whatsappNumber: formData.whatsappNumber || null,
-          images: formData.imageUrls.length > 0 ? formData.imageUrls : null,
+          coverImage: formData.coverImage || null,
+          logoUrl: formData.logoUrl || null,
+          gallery: formData.gallery.length > 0 ? formData.gallery : null,
+          instagramUrl: formData.instagramUrl || null,
+          facebookUrl: formData.facebookUrl || null,
+          youtubeUrl: formData.youtubeUrl || null,
         }),
       })
       if (res.ok) {
@@ -697,8 +728,8 @@ export default function DashboardView() {
 
             {/* Media Preview Area */}
             <div className="flex-1 relative bg-black flex flex-col justify-center items-center">
-              {isCreatingListing && formData.imageUrls[0] && (
-                <Image src={formData.imageUrls[0]} alt="Preview" fill className="object-cover opacity-80" />
+              {isCreatingListing && formData.coverImage && (
+                <Image src={formData.coverImage} alt="Preview" fill className="object-cover opacity-30" />
               )}
               {isCreatingBanner && bannerData.imageUrl && (
                 <Image src={bannerData.imageUrl} alt="Preview" fill className="object-cover opacity-80" />
@@ -708,7 +739,7 @@ export default function DashboardView() {
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent pt-20 pb-safe-bottom">
                 <div className="px-6 pb-6 space-y-4 max-w-lg mx-auto">
                   {isCreatingListing ? (
-                    <>
+                    <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
                       <Input placeholder="Business Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-transparent border-none text-3xl font-bold text-white placeholder:text-gray-400 placeholder:font-bold focus-visible:ring-0 px-0 h-auto" autoFocus />
                       <Select value={formData.category} onValueChange={val => setFormData({...formData, category: val})}>
                         <SelectTrigger className="bg-white/10 border-white/20 text-white rounded-xl h-12">
@@ -719,11 +750,53 @@ export default function DashboardView() {
                         </SelectContent>
                       </Select>
                       <Input placeholder="WhatsApp Number" type="tel" value={formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 placeholder:text-gray-400" />
-                      <Textarea placeholder="Short description..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl resize-none placeholder:text-gray-400 min-h-[80px]" />
-                      <Button onClick={submitListing} disabled={uploading || !formData.name || !formData.category} className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-black shadow-lg shadow-[#D4AF37]/30">
+                      
+                      {/* Logo Upload */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-white font-medium text-sm">Logo (Optional)</span>
+                        <label className="flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white rounded-xl h-12 cursor-pointer hover:bg-white/20 transition">
+                          <UploadCloud className="w-5 h-5" />
+                          <span>{formData.logoUrl ? 'Logo Uploaded' : 'Upload Logo'}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'logo')} />
+                        </label>
+                      </div>
+
+                      {/* Gallery Upload */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-white font-medium text-sm">Gallery Photos (Up to 5)</span>
+                        <label className="flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white rounded-xl h-12 cursor-pointer hover:bg-white/20 transition" style={{ opacity: formData.gallery.length >= 5 ? 0.5 : 1, pointerEvents: formData.gallery.length >= 5 ? 'none' : 'auto' }}>
+                          <UploadCloud className="w-5 h-5" />
+                          <span>Upload Photos ({formData.gallery.length}/5)</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'gallery')} />
+                        </label>
+                      </div>
+
+                      {/* Rich Text Description */}
+                      <div className="bg-white/95 rounded-xl overflow-hidden text-black mb-4 pb-12">
+                        <ReactQuill theme="snow" value={formData.description} onChange={val => setFormData({...formData, description: val})} placeholder="Write a stylish description..." className="h-40" />
+                      </div>
+                      
+                      {/* Social Links */}
+                      <div className="space-y-3 pt-2 border-t border-white/10">
+                        <span className="text-white font-medium text-sm">Social Media Links (Optional)</span>
+                        <div className="relative">
+                          <Instagram className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                          <Input placeholder="Instagram Profile URL" value={formData.instagramUrl} onChange={e => setFormData({...formData, instagramUrl: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 pl-10 placeholder:text-gray-400" />
+                        </div>
+                        <div className="relative">
+                          <Facebook className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                          <Input placeholder="Facebook Page URL" value={formData.facebookUrl} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 pl-10 placeholder:text-gray-400" />
+                        </div>
+                        <div className="relative">
+                          <Youtube className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                          <Input placeholder="YouTube Channel URL" value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 pl-10 placeholder:text-gray-400" />
+                        </div>
+                      </div>
+
+                      <Button onClick={submitListing} disabled={uploading || !formData.name || !formData.category} className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-black shadow-lg shadow-[#D4AF37]/30 mt-4 shrink-0">
                         {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Post Listing'}
                       </Button>
-                    </>
+                    </div>
                   ) : (
                     <>
                       <Input placeholder="Banner Title / Shop Name" value={bannerData.title} onChange={e => setBannerData({...bannerData, title: e.target.value})} className="bg-transparent border-none text-3xl font-bold text-white placeholder:text-gray-400 placeholder:font-bold focus-visible:ring-0 px-0 h-auto" autoFocus />

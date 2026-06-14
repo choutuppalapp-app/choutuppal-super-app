@@ -1,18 +1,16 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  ArrowLeft, MapPin, Clock, Star, Share2, QrCode,
-  BadgeCheck, Phone, Eye, MessageSquare, ChevronLeft,
-  ChevronRight, Grid3X3, Image as ImageIcon, MessageCircle,
+  ArrowLeft, MapPin, Clock, Star, Share2,
+  BadgeCheck, Phone, Eye, MessageCircle,
+  Instagram, Facebook, Youtube, Download, Link2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import {
   Carousel,
   CarouselContent,
@@ -21,13 +19,12 @@ import {
   CarouselNext,
 } from '@/components/ui/carousel'
 import { GlassCard } from '@/components/glass-card'
-import { WhatsAppButton } from '@/components/whatsapp-button'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
-import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 import { OptimizedImage } from '@/components/optimized-image'
 import { ListingDetailSkeleton } from '@/components/skeleton-loaders'
+import DOMPurify from 'dompurify'
 
 interface ListingData {
   id: string
@@ -35,8 +32,12 @@ interface ListingData {
   name: string
   category: string
   description: string | null
-  services: string | null
-  images: string | null
+  coverImage: string | null
+  logoUrl: string | null
+  gallery: string[] | null
+  instagramUrl: string | null
+  facebookUrl: string | null
+  youtubeUrl: string | null
   whatsappNumber: string | null
   address: string | null
   latitude: number | null
@@ -70,10 +71,6 @@ interface ListingData {
       avatarUrl: string | null
     }
   }>
-  _count: {
-    reviews: number
-    leads: number
-  }
 }
 
 interface ReviewStats {
@@ -81,18 +78,12 @@ interface ReviewStats {
   averageRating: number
 }
 
-const PLACEHOLDER_IMAGES = [
-  'https://placehold.co/800x400/D4AF37/ffffff?text=Business+Photo+1',
-  'https://placehold.co/800x400/4169E1/ffffff?text=Business+Photo+2',
-  'https://placehold.co/800x400/B8962E/ffffff?text=Business+Photo+3',
-]
+const PLACEHOLDER_COVER = 'https://placehold.co/800x400/D4AF37/ffffff?text=No+Cover'
+const PLACEHOLDER_LOGO = 'https://placehold.co/200x200/D4AF37/ffffff?text=Logo'
 
 export default function ListingView() {
-  // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
   const navigateTo = useAppStore((s) => s.navigateTo)
-  const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
-  const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
   const { user } = useAuth()
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -101,7 +92,6 @@ export default function ListingView() {
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
-  const [activeSlide, setActiveSlide] = useState(0)
 
   const fetchListing = useCallback(async () => {
     if (!selectedListingSlug) return
@@ -112,14 +102,12 @@ export default function ListingView() {
         const data = await res.json()
         setListing(data)
 
-        // Fetch review stats
         const reviewRes = await fetch(`/api/reviews?listingId=${data.id}`)
         if (reviewRes.ok) {
           const reviewData = await reviewRes.json()
           setReviewStats(reviewData.stats || { total: 0, averageRating: 0 })
         }
 
-        // Increment views
         fetch(`/api/listings/${selectedListingSlug}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -137,59 +125,48 @@ export default function ListingView() {
     fetchListing()
   }, [fetchListing])
 
-  const parsedImages = listing?.images
-    ? (() => {
-        try {
-          const imgs = JSON.parse(listing.images)
-          return Array.isArray(imgs) ? imgs : []
-        } catch {
-          return []
-        }
-      })()
-    : []
-
-  const displayImages = parsedImages.length > 0 ? parsedImages : PLACEHOLDER_IMAGES
-
-  const parsedServices = listing?.services
-    ? (() => {
-        try {
-          const svcs = JSON.parse(listing.services)
-          return Array.isArray(svcs) ? svcs : []
-        } catch {
-          return []
-        }
-      })()
-    : []
-
-  const handleGetQuote = () => {
-    if (listing) {
-      setLeadFormListingId(listing.id)
-      setShowLeadForm(true)
-    }
-  }
-
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/listing/${listing?.slug || ''}`
     if (navigator.share) {
       try {
         await navigator.share({
           title: listing?.name || 'Check out this listing',
-          text: listing?.description || '',
+          text: `Check out ${listing?.name} on Choutuppal App!`,
           url: shareUrl,
         })
-      } catch {
-        // User cancelled share
-      }
+      } catch {}
     } else {
       await navigator.clipboard.writeText(shareUrl)
       toast.success('Link copied to clipboard!')
     }
   }
 
+  const handleShareStatus = () => {
+    const shareUrl = `${window.location.origin}/listing/${listing?.slug || ''}`
+    const text = `Check out ${listing?.name} on Choutuppal App! ${shareUrl}`
+    window.open(`whatsapp://send?text=${encodeURIComponent(text)}`)
+  }
+
+  const generateVCard = () => {
+    if (!listing) return
+    const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${listing.name}
+TEL:${listing.whatsappNumber || listing.user.phone}
+URL:${window.location.origin}/listing/${listing.slug}
+END:VCARD`
+    const blob = new Blob([vcard], { type: 'text/vcard' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${listing.name.replace(/\s+/g, '_')}.vcf`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!reviewName || !listing) return
-
     setSubmittingReview(true)
     try {
       const res = await fetch('/api/reviews', {
@@ -202,7 +179,6 @@ export default function ListingView() {
           comment: reviewComment,
         }),
       })
-
       if (res.ok) {
         toast.success('Review submitted successfully!')
         setReviewName('')
@@ -217,33 +193,27 @@ export default function ListingView() {
     }
   }
 
-  if (loading) {
-    return <ListingDetailSkeleton />
-  }
-
+  if (loading) return <ListingDetailSkeleton />
   if (!listing) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-gray-500 text-lg">Listing not found</p>
-        <motion.div whileTap={{ scale: 0.95 }}>
-          <Button
-            onClick={() => navigateTo('explore')}
-            className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white"
-          >
-            <ArrowLeft className="size-4 mr-2" />
-            Back to Explore
-          </Button>
-        </motion.div>
+        <Button onClick={() => navigateTo('explore')} className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white">
+          <ArrowLeft className="size-4 mr-2" /> Back to Explore
+        </Button>
       </div>
     )
   }
 
+  const cleanDescription = listing.description ? (typeof window !== 'undefined' ? DOMPurify.sanitize(listing.description) : listing.description) : ''
+  const galleryImages = Array.isArray(listing.gallery) && listing.gallery.length > 0 ? listing.gallery : []
+
   return (
-    <div className="pb-24 md:pb-8 bg-gray-50 min-h-screen">
+    <div className="pb-36 md:pb-36 bg-gray-50 min-h-screen">
       {/* Cover Photo Header */}
       <div className="relative h-64 sm:h-80 w-full">
         <OptimizedImage
-          src={displayImages[0] || 'https://placehold.co/800x400/D4AF37/ffffff?text=No+Cover'}
+          src={listing.coverImage || PLACEHOLDER_COVER}
           alt={`${listing.name} cover`}
           fill
           className="object-cover"
@@ -252,12 +222,7 @@ export default function ListingView() {
         
         {/* Back button overlay */}
         <motion.div whileTap={{ scale: 0.95 }} className="absolute top-4 left-4 z-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateTo('explore')}
-            className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigateTo('explore')} className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10">
             <ArrowLeft className="size-5" />
           </Button>
         </motion.div>
@@ -276,7 +241,7 @@ export default function ListingView() {
         <div className="absolute -bottom-12 left-6">
           <div className="size-24 rounded-full border-4 border-white bg-white shadow-xl overflow-hidden relative">
             <OptimizedImage
-              src={displayImages[0] || 'https://placehold.co/200x200/D4AF37/ffffff?text=Logo'}
+              src={listing.logoUrl || PLACEHOLDER_LOGO}
               alt={`${listing.name} logo`}
               fill
               className="object-cover"
@@ -310,11 +275,35 @@ export default function ListingView() {
           </div>
         </div>
 
-        {/* About Section */}
-        {listing.description && (
+        {/* Social Links */}
+        {(listing.instagramUrl || listing.facebookUrl || listing.youtubeUrl) && (
+          <div className="flex items-center gap-3">
+            {listing.instagramUrl && (
+              <a href={listing.instagramUrl} target="_blank" rel="noreferrer" className="p-2 bg-pink-50 text-pink-500 rounded-full hover:bg-pink-100 transition">
+                <Instagram className="size-5" />
+              </a>
+            )}
+            {listing.facebookUrl && (
+              <a href={listing.facebookUrl} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition">
+                <Facebook className="size-5" />
+              </a>
+            )}
+            {listing.youtubeUrl && (
+              <a href={listing.youtubeUrl} target="_blank" rel="noreferrer" className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition">
+                <Youtube className="size-5" />
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* About Section (HTML) */}
+        {cleanDescription && (
           <GlassCard>
             <h2 className="text-xl font-bold text-gray-900 mb-3 border-b pb-2">About Us</h2>
-            <p className="text-gray-600 leading-relaxed text-[15px]">{listing.description}</p>
+            <div 
+              className="prose prose-sm max-w-none text-gray-600 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: cleanDescription }}
+            />
             
             <div className="mt-4 space-y-3 pt-3 border-t">
               {listing.address && (
@@ -343,22 +332,28 @@ export default function ListingView() {
           </GlassCard>
         )}
 
-        {/* Photo Gallery Grid */}
-        {displayImages.length > 1 && (
+        {/* Photo Gallery Carousel */}
+        {galleryImages.length > 0 && (
           <GlassCard>
             <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Gallery</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {displayImages.map((img: string, idx: number) => (
-                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-sm group">
-                  <OptimizedImage
-                    src={img}
-                    alt={`${listing.name} gallery ${idx + 1}`}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                </div>
-              ))}
-            </div>
+            <Carousel className="w-full">
+              <CarouselContent>
+                {galleryImages.map((img: string, idx: number) => (
+                  <CarouselItem key={idx} className="basis-[80%] md:basis-1/2 lg:basis-1/3">
+                    <div className="p-1">
+                      <div className="relative aspect-square rounded-xl overflow-hidden shadow-sm group">
+                        <OptimizedImage
+                          src={img}
+                          alt={`${listing.name} gallery ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </GlassCard>
         )}
 
@@ -366,7 +361,7 @@ export default function ListingView() {
         <GlassCard>
           <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Reviews</h2>
           {reviewStats.total > 0 ? (
-            <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+            <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
               {(listing.reviews || []).map((review) => (
                 <div key={review.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100">
                   <div className="flex items-center justify-between mb-2">
@@ -391,29 +386,13 @@ export default function ListingView() {
               Write a Review
             </h3>
             <form onSubmit={handleSubmitReview} className="space-y-3">
-              <Input
-                placeholder="Your Name"
-                value={reviewName}
-                onChange={(e) => setReviewName(e.target.value)}
-                required
-                className="bg-white"
-              />
+              <Input placeholder="Your Name" value={reviewName} onChange={(e) => setReviewName(e.target.value)} required className="bg-white" />
               <div className="flex gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    onClick={() => setReviewRating(i + 1)}
-                    className={`size-8 cursor-pointer transition-colors ${i < reviewRating ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-gray-200'}`}
-                  />
+                  <Star key={i} onClick={() => setReviewRating(i + 1)} className={`size-8 cursor-pointer transition-colors ${i < reviewRating ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-gray-200'}`} />
                 ))}
               </div>
-              <Textarea
-                placeholder="Share your experience..."
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                rows={3}
-                className="bg-white resize-none"
-              />
+              <Textarea placeholder="Share your experience..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="bg-white resize-none" />
               <Button type="submit" disabled={submittingReview || !reviewName} className="w-full bg-[#4169E1] text-white rounded-xl">
                 {submittingReview ? 'Submitting...' : 'Submit Review'}
               </Button>
@@ -421,54 +400,55 @@ export default function ListingView() {
           </div>
         </GlassCard>
 
-        <div className="h-20"></div>
+        <div className="h-10"></div>
       </div>
 
-      {/* Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-          {/* WhatsApp (Green) */}
+      {/* Sticky Action Footer (2-Row Layout) */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 flex flex-col gap-2">
+        {/* Row 1: Direct Communication */}
+        <div className="flex items-center gap-2">
           <a
             href={`https://wa.me/${listing.whatsappNumber || listing.user.whatsappNumber}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-green-500 hover:bg-green-600 transition-colors text-white"
+            target="_blank" rel="noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
           >
-            <MessageCircle className="size-6 mb-1" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">WhatsApp</span>
+            <MessageCircle className="size-5" />
+            WhatsApp
           </a>
-
-          {/* Call (Blue) */}
           <a
             href={`tel:${listing.whatsappNumber || listing.user.phone}`}
-            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-blue-500 hover:bg-blue-600 transition-colors text-white"
+            className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors"
           >
-            <Phone className="size-6 mb-1" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Call</span>
+            <Phone className="size-5" />
+            Call
           </a>
+          {listing.latitude && listing.longitude && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${listing.latitude},${listing.longitude}`}
+              target="_blank" rel="noreferrer"
+              className="flex-none flex items-center justify-center p-3 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-colors aspect-square"
+            >
+              <MapPin className="size-5" />
+            </a>
+          )}
+        </div>
 
-          {/* Location (Red) */}
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${listing.latitude || ''},${listing.longitude || ''}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-red-500 hover:bg-red-600 transition-colors text-white"
-          >
-            <MapPin className="size-6 mb-1" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Map</span>
-          </a>
-
-          {/* Share (Purple) */}
-          <button
-            onClick={handleShare}
-            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-purple-500 hover:bg-purple-600 transition-colors text-white"
-          >
-            <Share2 className="size-6 mb-1" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Share</span>
+        {/* Row 2: Smart Share Options */}
+        <div className="flex items-center gap-2">
+          <button onClick={handleShareStatus} className="flex-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors border border-emerald-200">
+            <MessageCircle className="size-4" />
+            Status
+          </button>
+          <button onClick={generateVCard} className="flex-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors border border-blue-200">
+            <Download className="size-4" />
+            Save
+          </button>
+          <button onClick={handleShare} className="flex-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition-colors border border-purple-200">
+            <Share2 className="size-4" />
+            Share
           </button>
         </div>
       </div>
     </div>
   )
 }
-

@@ -179,6 +179,12 @@ model Listing {
   description   String?
   services      String?  // JSON string of services
   images        String?  // JSON string of image URLs
+  coverImage    String?
+  logoUrl       String?
+  gallery       String?  // JSON string of gallery image URLs
+  instagramUrl  String?
+  facebookUrl   String?
+  youtubeUrl    String?
   whatsappNumber String?
   address       String?
   latitude      Float?
