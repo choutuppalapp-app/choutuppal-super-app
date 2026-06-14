@@ -23,9 +23,7 @@ import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyListings } from '@/components/empty-states'
 import dynamic from 'next/dynamic'
-import 'react-quill/dist/quill.snow.css'
-
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
+import { RichTextEditor } from '@/components/rich-text-editor'
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -768,9 +766,11 @@ export default function DashboardView() {
                 {/* Rich Text Description */}
                 <div className="flex flex-col gap-1.5 pt-2">
                   <span className="text-gray-800 font-bold text-sm">Description</span>
-                  <div className="bg-white rounded-xl overflow-hidden text-gray-900 border border-gray-200 pb-12 focus-within:ring-2 focus-within:ring-[#4169E1]">
-                    <ReactQuill theme="snow" value={formData.description} onChange={val => setFormData({...formData, description: val})} placeholder="Write a stylish description using bold, italics, bullets..." className="h-40 border-none" />
-                  </div>
+                    <RichTextEditor
+                      content={formData.description}
+                      onChange={val => setFormData({...formData, description: val})}
+                      placeholder="Write a stylish description using bold, italics, bullets..."
+                    />
                 </div>
                 
                 {/* Social Links */}
