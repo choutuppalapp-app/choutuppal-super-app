@@ -613,7 +613,7 @@ export default function DashboardView() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen [&]:bg-gray-50 [&]:text-gray-900">
       {/* Top Header */}
       <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between">
         <div>
