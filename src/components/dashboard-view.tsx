@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyListings } from '@/components/empty-states'
 import dynamic from 'next/dynamic'
 import { RichTextEditor } from '@/components/rich-text-editor'
+import { supabase } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -201,19 +202,37 @@ export default function DashboardView() {
     }
   }
 
-  const compressAndUpload = async (file: File, folder: string) => {
+    const compressAndUpload = async (file: File, folder: string) => {
     let fileToUpload = file
     if (file.type.startsWith('image/')) {
-      const imageCompression = (await import('browser-image-compression')).default
-      const options = { maxSizeMB: 1, maxWidthOrHeight: 800, useWebWorker: true, initialQuality: 0.6 }
-      fileToUpload = await imageCompression(file, options)
+      try {
+        const imageCompression = (await import('browser-image-compression')).default
+        const options = { maxSizeMB: 1, maxWidthOrHeight: 800, useWebWorker: true, initialQuality: 0.6 }
+        fileToUpload = await imageCompression(file, options)
+      } catch (err) {
+        console.error('Image compression error:', err)
+      }
     }
-    const uploadData = new FormData()
-    uploadData.append('file', fileToUpload)
-    uploadData.append('folder', folder)
-    const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
-    if (!res.ok) throw new Error('Upload failed')
-    return await res.json()
+    
+    // Upload to Supabase 'listing-images' bucket
+    const fileExt = fileToUpload.name.split('.').pop()
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`
+    const filePath = `${folder}/${fileName}`
+
+    const { data, error } = await supabase.storage
+      .from('listing-images')
+      .upload(filePath, fileToUpload)
+
+    if (error) {
+      console.error('Supabase upload error:', error)
+      throw new Error('Upload failed')
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('listing-images')
+      .getPublicUrl(filePath)
+
+    return { url: publicUrl }
   }
 
   const handleListingFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -884,14 +903,14 @@ export default function DashboardView() {
                   
                   <div className="flex flex-col gap-1.5">
                     <span className="text-gray-800 font-bold text-sm">Category *</span>
-                    <Select value={formData.category} onValueChange={val => setFormData({...formData, category: val})}>
-                      <SelectTrigger className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus:ring-[#4169E1]">
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-60">
-                        {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={formData.category} 
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-12 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
+                    >
+                      <option value="" disabled>Select Category</option>
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -905,17 +924,34 @@ export default function DashboardView() {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-gray-800 font-bold text-sm flex items-center justify-between">
                       WhatsApp Number
-                      <label className="flex items-center gap-1.5 text-xs text-[#4169E1] font-bold cursor-pointer bg-[#4169E1]/5 px-2 py-1 rounded">
-                        {formData.sameAsPhone ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                        <span onClick={() => setFormData({...formData, sameAsPhone: !formData.sameAsPhone})}>Same as Phone</span>
+                      <label className="flex items-center gap-1.5 text-xs text-[#4169E1] font-bold cursor-pointer bg-[#4169E1]/5 px-2 py-1 rounded select-none">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 accent-[#4169E1] rounded border-gray-300"
+                          checked={formData.sameAsPhone}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            setFormData({
+                              ...formData, 
+                              sameAsPhone: isChecked, 
+                              whatsappNumber: isChecked ? formData.phoneNumber : formData.whatsappNumber
+                            });
+                          }}
+                        />
+                        <span>Same as Phone</span>
                       </label>
                     </span>
-                    {!formData.sameAsPhone && (
-                      <div className="relative">
-                        <MessageCircle className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                        <Input placeholder="WhatsApp Number" type="tel" value={formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#25D366]" />
-                      </div>
-                    )}
+                    <div className="relative">
+                      <MessageCircle className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                      <Input 
+                        placeholder="WhatsApp Number" 
+                        type="tel" 
+                        value={formData.sameAsPhone ? formData.phoneNumber : formData.whatsappNumber} 
+                        onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} 
+                        disabled={formData.sameAsPhone}
+                        className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#25D366] disabled:bg-gray-100 disabled:text-gray-500" 
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
