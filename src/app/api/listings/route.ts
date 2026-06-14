@@ -131,6 +131,7 @@ export async function POST(request: Request) {
         instagramUrl: body.instagramUrl || null,
         facebookUrl: body.facebookUrl || null,
         youtubeUrl: body.youtubeUrl || null,
+        phoneNumber: body.phoneNumber || null,
         whatsappNumber: body.whatsappNumber || null,
         address: body.address || null,
         latitude: body.latitude || null,

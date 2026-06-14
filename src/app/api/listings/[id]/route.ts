@@ -74,7 +74,7 @@ export async function PUT(
     const allowedFields = [
       'name', 'category', 'description', 'services', 'images',
       'coverImage', 'logoUrl', 'gallery', 'instagramUrl', 'facebookUrl', 'youtubeUrl',
-      'whatsappNumber', 'address', 'latitude', 'longitude',
+      'phoneNumber', 'whatsappNumber', 'address', 'latitude', 'longitude',
       'isPremium', 'isFeatured', 'operatingHours',
     ]
 

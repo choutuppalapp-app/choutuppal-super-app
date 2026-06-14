@@ -185,6 +185,7 @@ model Listing {
   instagramUrl  String?
   facebookUrl   String?
   youtubeUrl    String?
+  phoneNumber   String?
   whatsappNumber String?
   address       String?
   latitude      Float?

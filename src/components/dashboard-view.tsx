@@ -9,7 +9,7 @@ import {
   Loader2, X, Image as ImageIcon, MapPin, Search,
   Heart, CreditCard, HelpCircle, LogOut, FileText,
   BadgeDollarSign,
-  ArrowUpRight, Globe
+  ArrowUpRight, Globe, CheckSquare, Square
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -129,7 +129,9 @@ export default function DashboardView() {
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
-    name: '', category: '', description: '', whatsappNumber: '', cityId: '',
+    name: '', category: '', description: '',
+    phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
+    address: '',
     coverImage: '', logoUrl: '', gallery: [] as string[],
     instagramUrl: '', facebookUrl: '', youtubeUrl: ''
   })
@@ -238,6 +240,7 @@ export default function DashboardView() {
       const data = await compressAndUpload(files[0], 'choutuppal/listings')
       setFormData({
         name: '', category: '', description: '', whatsappNumber: '', cityId: '',
+        phoneNumber: '', sameAsPhone: false, address: '',
         coverImage: data.url, logoUrl: '', gallery: [],
         instagramUrl: '', facebookUrl: '', youtubeUrl: ''
       })
@@ -292,7 +295,8 @@ export default function DashboardView() {
           name: formData.name,
           category: formData.category,
           description: formData.description || null,
-          whatsappNumber: formData.whatsappNumber || null,
+          phoneNumber: formData.phoneNumber || null,
+          whatsappNumber: formData.sameAsPhone ? formData.phoneNumber : (formData.whatsappNumber || null),
           coverImage: formData.coverImage || null,
           logoUrl: formData.logoUrl || null,
           gallery: formData.gallery.length > 0 ? formData.gallery : null,
@@ -728,73 +732,155 @@ export default function DashboardView() {
 
             {/* Media Preview Area */}
             <div className="flex-1 relative bg-black flex flex-col justify-center items-center">
-              {isCreatingListing && formData.coverImage && (
-                <Image src={formData.coverImage} alt="Preview" fill className="object-cover opacity-30" />
-              )}
+              {/* Cover preview moved inside form */}
               {isCreatingBanner && bannerData.imageUrl && (
                 <Image src={bannerData.imageUrl} alt="Preview" fill className="object-cover opacity-80" />
               )}
               
               {/* Inputs Overlay at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent pt-20 pb-safe-bottom">
-                <div className="px-6 pb-6 space-y-4 max-w-lg mx-auto">
+              <div className="absolute bottom-0 left-0 right-0 bg-transparent pt-20 pb-0">
+                <div className="w-full max-w-lg mx-auto">
                   {isCreatingListing ? (
-                    <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                      <Input placeholder="Business Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-transparent border-none text-3xl font-bold text-white placeholder:text-gray-400 placeholder:font-bold focus-visible:ring-0 px-0 h-auto" autoFocus />
-                      <Select value={formData.category} onValueChange={val => setFormData({...formData, category: val})}>
-                        <SelectTrigger className="bg-white/10 border-white/20 text-white rounded-xl h-12">
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-slate-700 text-white max-h-60">
-                          {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Input placeholder="WhatsApp Number" type="tel" value={formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 placeholder:text-gray-400" />
-                      
+                    <div className="max-h-[75vh] overflow-y-auto space-y-5 pr-2 custom-scrollbar bg-white rounded-t-3xl p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+                      <div className="text-center mb-2">
+                        <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#4169E1] to-[#D4AF37]">Create Listing</h3>
+                        <p className="text-sm text-gray-500 font-medium mt-1">Fill out the details below</p>
+                      </div>
+
+                      {/* Single Cover Upload */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-gray-700 font-bold text-sm">Cover Photo *</span>
+                        <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-600 rounded-xl h-24 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
+                          {formData.coverImage ? (
+                            <Image src={formData.coverImage} alt="Cover" fill className="object-cover" />
+                          ) : (
+                            <>
+                              <UploadCloud className="w-6 h-6 text-[#D4AF37]" />
+                              <span className="font-medium">Upload Cover</span>
+                            </>
+                          )}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleListingFileChange(e)} />
+                        </label>
+                      </div>
+
                       {/* Logo Upload */}
                       <div className="flex flex-col gap-2">
-                        <span className="text-white font-medium text-sm">Logo (Optional)</span>
-                        <label className="flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white rounded-xl h-12 cursor-pointer hover:bg-white/20 transition">
-                          <UploadCloud className="w-5 h-5" />
-                          <span>{formData.logoUrl ? 'Logo Uploaded' : 'Upload Logo'}</span>
+                        <span className="text-gray-700 font-bold text-sm">Business Logo (Optional)</span>
+                        <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-600 rounded-xl h-16 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
+                          {formData.logoUrl ? (
+                            <div className="w-12 h-12 relative rounded-full overflow-hidden">
+                              <Image src={formData.logoUrl} alt="Logo" fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <>
+                              <UploadCloud className="w-5 h-5 text-[#4169E1]" />
+                              <span className="font-medium">Upload Logo</span>
+                            </>
+                          )}
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'logo')} />
                         </label>
                       </div>
 
                       {/* Gallery Upload */}
                       <div className="flex flex-col gap-2">
-                        <span className="text-white font-medium text-sm">Gallery Photos (Up to 5)</span>
-                        <label className="flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white rounded-xl h-12 cursor-pointer hover:bg-white/20 transition" style={{ opacity: formData.gallery.length >= 5 ? 0.5 : 1, pointerEvents: formData.gallery.length >= 5 ? 'none' : 'auto' }}>
-                          <UploadCloud className="w-5 h-5" />
-                          <span>Upload Photos ({formData.gallery.length}/5)</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'gallery')} />
-                        </label>
+                        <span className="text-gray-700 font-bold text-sm flex justify-between">
+                          <span>Gallery Photos</span>
+                          <span className="text-[#D4AF37]">{formData.gallery.length}/5</span>
+                        </span>
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                          {formData.gallery.map((img, i) => (
+                            <div key={i} className="w-20 h-20 shrink-0 relative rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                              <Image src={img} alt="Gallery" fill className="object-cover" />
+                            </div>
+                          ))}
+                          {formData.gallery.length < 5 && (
+                            <label className="w-20 h-20 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                              <Plus className="w-5 h-5" />
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'gallery')} />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Business Details */}
+                      <div className="space-y-4 pt-2 border-t border-gray-100">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-700 font-bold text-sm">Business Name *</span>
+                          <Input placeholder="Enter business name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#D4AF37]" autoFocus />
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-700 font-bold text-sm">Category *</span>
+                          <Select value={formData.category} onValueChange={val => setFormData({...formData, category: val})}>
+                            <SelectTrigger className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus:ring-[#D4AF37]">
+                              <SelectValue placeholder="Select Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-60">
+                              {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-700 font-bold text-sm">Phone Number *</span>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                            <Input placeholder="e.g., 9876543210" type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#D4AF37]" />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-700 font-bold text-sm flex items-center justify-between">
+                            WhatsApp Number
+                            <label className="flex items-center gap-1 text-xs text-[#4169E1] cursor-pointer">
+                              {formData.sameAsPhone ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                              <span onClick={() => setFormData({...formData, sameAsPhone: !formData.sameAsPhone})}>Same as Phone</span>
+                            </label>
+                          </span>
+                          {!formData.sameAsPhone && (
+                            <div className="relative">
+                              <MessageCircle className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                              <Input placeholder="WhatsApp Number" type="tel" value={formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#25D366]" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-700 font-bold text-sm">Address / Maps Link</span>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                            <Input placeholder="Full address or Google Maps link" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#D4AF37]" />
+                          </div>
+                        </div>
                       </div>
 
                       {/* Rich Text Description */}
-                      <div className="bg-white/95 rounded-xl overflow-hidden text-black mb-4 pb-12">
-                        <ReactQuill theme="snow" value={formData.description} onChange={val => setFormData({...formData, description: val})} placeholder="Write a stylish description..." className="h-40" />
+                      <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-100">
+                        <span className="text-gray-700 font-bold text-sm">Description</span>
+                        <div className="bg-white rounded-xl overflow-hidden text-black border border-gray-200 pb-12 focus-within:ring-2 focus-within:ring-[#D4AF37]">
+                          <ReactQuill theme="snow" value={formData.description} onChange={val => setFormData({...formData, description: val})} placeholder="Write a stylish description using bold, italics, bullets..." className="h-40" />
+                        </div>
                       </div>
                       
                       {/* Social Links */}
-                      <div className="space-y-3 pt-2 border-t border-white/10">
-                        <span className="text-white font-medium text-sm">Social Media Links (Optional)</span>
+                      <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <span className="text-gray-700 font-bold text-sm">Social Media (Optional)</span>
                         <div className="relative">
-                          <Instagram className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                          <Input placeholder="Instagram Profile URL" value={formData.instagramUrl} onChange={e => setFormData({...formData, instagramUrl: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 pl-10 placeholder:text-gray-400" />
+                          <Instagram className="absolute left-3 top-3.5 w-5 h-5 text-pink-500" />
+                          <Input placeholder="Instagram Profile URL" value={formData.instagramUrl} onChange={e => setFormData({...formData, instagramUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-pink-500" />
                         </div>
                         <div className="relative">
-                          <Facebook className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                          <Input placeholder="Facebook Page URL" value={formData.facebookUrl} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 pl-10 placeholder:text-gray-400" />
+                          <Facebook className="absolute left-3 top-3.5 w-5 h-5 text-blue-600" />
+                          <Input placeholder="Facebook Page URL" value={formData.facebookUrl} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-blue-600" />
                         </div>
                         <div className="relative">
-                          <Youtube className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                          <Input placeholder="YouTube Channel URL" value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} className="bg-white/10 border-white/20 text-white rounded-xl h-12 pl-10 placeholder:text-gray-400" />
+                          <Youtube className="absolute left-3 top-3.5 w-5 h-5 text-red-600" />
+                          <Input placeholder="YouTube Channel URL" value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-red-600" />
                         </div>
                       </div>
 
-                      <Button onClick={submitListing} disabled={uploading || !formData.name || !formData.category} className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-black shadow-lg shadow-[#D4AF37]/30 mt-4 shrink-0">
-                        {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Post Listing'}
+                      <Button onClick={submitListing} disabled={uploading || !formData.name || !formData.category} className="w-full h-14 text-lg font-extrabold rounded-2xl bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white shadow-[0_8px_20px_rgba(212,175,55,0.3)] mt-6 shrink-0 transition-transform hover:scale-[1.02] active:scale-95">
+                        {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Listing'}
                       </Button>
                     </div>
                   ) : (
