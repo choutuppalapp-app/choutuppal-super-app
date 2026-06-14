@@ -391,7 +391,7 @@ export default function DashboardView() {
 
       {/* Quick Stats */}
       <h3 className="text-lg font-bold text-gray-900">Quick Stats</h3>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
           <Store className="w-6 h-6 text-[#4169E1]" />
           <span className="text-2xl font-bold text-gray-900">{listings.length}</span>
@@ -611,16 +611,55 @@ export default function DashboardView() {
   )
 
   return (
-    <div className="min-h-screen [&]:bg-gray-50 [&]:text-gray-900">
+    <div className="min-h-screen [&]:bg-gray-50 [&]:text-gray-900 md:flex">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:bg-white md:border-r md:border-gray-200 md:shadow-sm md:z-40">
+        <div className="p-6 flex flex-col gap-8 h-full">
+          <div>
+            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#4169E1] to-[#D4AF37]">Choutuppal</h2>
+            <p className="text-xs text-gray-500 font-medium tracking-wider uppercase mt-1">Super App</p>
+          </div>
+          
+          <div className="flex flex-col gap-2 flex-1">
+            {TAB_ITEMS.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.key
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10 text-[#4169E1]' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-[#4169E1]' : 'text-gray-400'}`} />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {user && (
+            <div className="flex items-center gap-3 pt-6 border-t border-gray-100">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#4169E1] to-[#D4AF37] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                {user.fullName?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-bold text-gray-900 line-clamp-1">{user.fullName}</span>
+                <span className="text-xs text-gray-500">{user.phone}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+\n      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
       {/* Top Header */}
-      <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between">
+      <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between md:hidden">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
           <p className="text-sm font-medium text-gray-500">Manage your business</p>
         </div>
       </div>
 
-      <div className="p-4 md:p-6 md:pb-24 max-w-lg mx-auto w-full">
+      <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-5xl mx-auto w-full">
         {activeTab === 'home' && renderHome()}
         {activeTab === 'business' && renderBusiness()}
         {activeTab === 'wallet' && renderWallet()}
@@ -628,7 +667,7 @@ export default function DashboardView() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe-bottom z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe-bottom z-40 md:hidden">
         <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
           {TAB_ITEMS.map((tab) => {
             const Icon = tab.icon
@@ -659,9 +698,9 @@ export default function DashboardView() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] bg-white flex flex-col"
+            className="fixed inset-0 z-[100] bg-white md:bg-black/50 flex flex-col md:items-center md:justify-center md:p-6"
           >
-            {/* Header */}
+            <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">\n            {/* Header */}
             <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
               <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingListing(false)}>
                 <X className="w-6 h-6" />
@@ -799,9 +838,11 @@ export default function DashboardView() {
                 {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Listing'}
               </Button>
             </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 }
