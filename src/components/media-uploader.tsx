@@ -1,4 +1,5 @@
 'use client'
+import { supabase } from '@/lib/supabase'
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
@@ -97,19 +98,18 @@ export function MediaUploader({
         setProgress((prev) => Math.min(prev + 15, 90))
       }, 500)
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const { data: uploadResult, error } = await supabase.storage
+        .from('listing-images')
+        .upload(`${folder}/${Date.now()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, fileToUpload, { cacheControl: '3600', upsert: false });
 
       clearInterval(progressInterval)
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || 'Upload failed')
+      if (error) {
+        throw new Error('Upload failed')
       }
 
-      const data = await res.json()
+      const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(uploadResult.path);
+      const data = { url: urlData.publicUrl };
       setProgress(100)
 
       // Clean up local blob URL and use Cloudinary URL
@@ -292,17 +292,16 @@ export function MultiMediaUploader({
       formData.append('file', file)
       formData.append('folder', folder)
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const { data: uploadResult, error } = await supabase.storage
+        .from('listing-images')
+        .upload(`${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, file, { cacheControl: '3600', upsert: false });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || 'Upload failed')
+      if (error) {
+        throw new Error('Upload failed')
       }
 
-      const data = await res.json()
+      const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(uploadResult.path);
+      const data = { url: urlData.publicUrl };
       onChange([...value, data.url])
       toast.success('Image uploaded!')
     } catch (error) {

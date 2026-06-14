@@ -1,4 +1,5 @@
 'use client'
+import { supabase } from '@/lib/supabase'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -1493,13 +1494,13 @@ export function CityAdminDashboard() {
                                   fileToUpload = await imageCompression(file, options)
                                 }
 
-                                const uploadData = new FormData()
-                                uploadData.append('file', fileToUpload)
-                                uploadData.append('folder', 'choutuppal/banners')
+                                const { data: uploadResult, error } = await supabase.storage
+                                  .from('listing-images')
+                                  .upload(`choutuppal/banners/${Date.now()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, fileToUpload, { cacheControl: '3600', upsert: false });
 
-                                const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
-                                if (!res.ok) throw new Error('Upload failed')
-                                const data = await res.json()
+                                if (error) throw new Error('Upload failed');
+                                const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(uploadResult.path);
+                                const data = { url: urlData.publicUrl };
 
                                 setBannerForm((prev) => ({ ...prev, imageUrl: data.url }))
                                 setShowBannerForm(true)

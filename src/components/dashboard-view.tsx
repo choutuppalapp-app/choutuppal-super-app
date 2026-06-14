@@ -214,12 +214,17 @@ export default function DashboardView() {
       }
     }
     
-    const uploadData = new FormData()
-    uploadData.append('file', fileToUpload)
-    uploadData.append('folder', folder)
-    const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
-    if (!res.ok) throw new Error('Upload failed')
-    return await res.json()
+    const { data, error } = await supabase.storage
+      .from('listing-images')
+      .upload(`${folder}/${Date.now()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, fileToUpload, { cacheControl: '3600', upsert: false });
+
+    if (error) {
+      console.error('Upload error:', error);
+      alert('Image upload failed: ' + error.message);
+      throw new Error('Upload failed');
+    }
+    const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(data.path);
+    return { url: urlData.publicUrl };
   }
 
   const handleListingFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
