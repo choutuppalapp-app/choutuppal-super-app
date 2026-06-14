@@ -51,8 +51,25 @@ export function MediaUploader({
       validation.warnings.forEach((w) => toast.warning(w))
     }
 
+    let fileToUpload = file;
+    // Auto compress if image
+    if (file.type.startsWith('image/')) {
+      try {
+        const imageCompression = (await import('browser-image-compression')).default;
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+          initialQuality: 0.6,
+        };
+        fileToUpload = await imageCompression(file, options);
+      } catch (error) {
+        console.error('Compression error:', error);
+      }
+    }
+
     // Show local preview immediately
-    const localUrl = URL.createObjectURL(file)
+    const localUrl = URL.createObjectURL(fileToUpload)
     setPreview(localUrl)
     setPreviewType(file.type.startsWith('video/') ? 'video' : 'image')
 
@@ -72,7 +89,7 @@ export function MediaUploader({
 
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', fileToUpload)
       formData.append('folder', folder)
 
       // Simulate progress

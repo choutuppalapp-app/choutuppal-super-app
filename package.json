@@ -1,6 +1,6 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
-  "version": "1.2.2",
+  "name": "choutuppal-app",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -59,6 +59,7 @@
     "@tiptap/react": "^3.23.1",
     "@tiptap/starter-kit": "^3.23.1",
     "@types/pg": "^8.20.0",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

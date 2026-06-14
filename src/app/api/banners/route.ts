@@ -7,11 +7,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const cityId = searchParams.get('cityId')
+    const userId = searchParams.get('userId')
     const all = searchParams.get('all') === 'true'
 
     const where: Record<string, unknown> = {}
     if (!all) where.isActive = true
     if (cityId) where.cityId = cityId
+    if (userId) where.userId = userId
 
     const ads = await db.bannerAd.findMany({
       where,
@@ -29,7 +31,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { title, imageUrl, shopName, offerText, linkUrl, cityId, isActive } = body
+    const { title, imageUrl, shopName, offerText, linkUrl, cityId, isActive, userId } = body
 
     if (!title || typeof title !== 'string' || !title.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -43,6 +45,7 @@ export async function POST(request: Request) {
         offerText: offerText || null,
         linkUrl: linkUrl || null,
         cityId: cityId || null,
+        userId: userId || null,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
       },
     })

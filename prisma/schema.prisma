@@ -95,6 +95,7 @@ model User {
   subscriptions     Subscription[]
   stories           Story[]
   blogs             Blog[]
+  bannerAds         BannerAd[]
   adminRequests     AdminRequest[]
   // Financial relations
   buyerTransactions    Transaction[]  @relation("TransactionBuyer")
@@ -380,6 +381,7 @@ model SpinPrize {
 // ─── Banner Ad ───────────────────────────────────────────────
 model BannerAd {
   id        String   @id @default(cuid())
+  userId    String?  // The user who created the banner
   title     String
   imageUrl  String?
   shopName  String   @default("")
@@ -390,6 +392,7 @@ model BannerAd {
   createdAt DateTime @default(now())
 
   city City? @relation(fields: [cityId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 }
 
 // ─── Announcement (Ticker) ────────────────────────────────────

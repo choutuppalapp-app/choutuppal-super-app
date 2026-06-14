@@ -239,453 +239,233 @@ export default function ListingView() {
   }
 
   return (
-    <div className="pb-24 md:pb-8">
-      {/* Hero Image Slider */}
-      <div className="relative">
-        <Carousel
-          opts={{ loop: true }}
-          setApi={(api) => {
-            if (api) {
-              const autoPlay = setInterval(() => api.scrollNext(), 4000)
-              return () => clearInterval(autoPlay)
-            }
-          }}
-          className="w-full"
-        >
-          <CarouselContent>
-            {displayImages.map((img: string, idx: number) => (
-              <CarouselItem key={idx}>
-                <div className="relative aspect-video w-full overflow-hidden">
-                  <OptimizedImage
-                    src={img}
-                    alt={`${listing.name} - Photo ${idx + 1}`}
-                    fill
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-3 bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/80" />
-          <CarouselNext className="right-3 bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/80" />
-        </Carousel>
-
-        {/* Slide indicators */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {displayImages.map((_: string, idx: number) => (
-            <div
-              key={idx}
-              className={`w-2 h-2 rounded-full transition-all ${
-                idx === activeSlide ? 'bg-white w-4' : 'bg-white/50'
-              }`}
-            />
-          ))}
-        </div>
-
+    <div className="pb-24 md:pb-8 bg-gray-50 min-h-screen">
+      {/* Cover Photo Header */}
+      <div className="relative h-64 sm:h-80 w-full">
+        <OptimizedImage
+          src={displayImages[0] || 'https://placehold.co/800x400/D4AF37/ffffff?text=No+Cover'}
+          alt={`${listing.name} cover`}
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/30" />
+        
         {/* Back button overlay */}
-        <motion.div whileTap={{ scale: 0.95 }} className="absolute top-4 left-4">
+        <motion.div whileTap={{ scale: 0.95 }} className="absolute top-4 left-4 z-10">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigateTo('explore')}
-            className="bg-white/60 backdrop-blur-md hover:bg-white/80 rounded-full size-10"
+            className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10"
           >
             <ArrowLeft className="size-5" />
           </Button>
         </motion.div>
 
-        {/* Premium badge overlay */}
+        {/* Premium badge */}
         {listing.isPremium && (
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 z-10">
             <Badge className="bg-[#D4AF37] text-white border-none shadow-lg gap-1 px-3 py-1">
               <BadgeCheck className="size-3.5" />
-              Verified Premium
+              Premium
             </Badge>
           </div>
         )}
+
+        {/* Overlapping Logo */}
+        <div className="absolute -bottom-12 left-6">
+          <div className="size-24 rounded-full border-4 border-white bg-white shadow-xl overflow-hidden relative">
+            <OptimizedImage
+              src={displayImages[0] || 'https://placehold.co/200x200/D4AF37/ffffff?text=Logo'}
+              alt={`${listing.name} logo`}
+              fill
+              className="object-cover"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-6 relative z-10 space-y-6">
-        {/* Business Name & Category */}
-        <GlassCard variant={listing.isPremium ? 'gold' : 'default'}>
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {listing.name}
-                </h1>
-                {listing.isPremium && (
-                  <BadgeCheck className="size-6 text-[#D4AF37] shrink-0" />
-                )}
+      <div className="max-w-4xl mx-auto px-4 mt-16 relative z-10 space-y-6">
+        {/* Business Header Info */}
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 flex items-center gap-2">
+            {listing.name}
+            {listing.isPremium && <BadgeCheck className="size-6 text-[#D4AF37]" />}
+          </h1>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] px-3 py-1 text-sm rounded-full">
+              {listing.category}
+            </Badge>
+            {reviewStats.total > 0 && (
+              <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                <Star className="size-4 text-[#D4AF37] fill-[#D4AF37]" />
+                <span className="text-sm font-bold text-gray-800">{reviewStats.averageRating}</span>
+                <span className="text-sm text-gray-500">({reviewStats.total})</span>
               </div>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <Badge
-                  variant="secondary"
-                  className="bg-[#4169E1]/10 text-[#4169E1] border-[#4169E1]/20"
-                >
-                  {listing.category}
-                </Badge>
-                {listing.isFeatured && (
-                  <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20">
-                    Featured
-                  </Badge>
-                )}
-                <div className="flex items-center gap-1 text-sm text-gray-500">
-                  <Eye className="size-3.5" />
-                  {listing.viewsCount} views
-                </div>
-              </div>
-              {/* Rating */}
-              {reviewStats.total > 0 && (
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`size-4 ${
-                          i < Math.round(reviewStats.averageRating)
-                            ? 'text-[#D4AF37] fill-[#D4AF37]'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {reviewStats.averageRating}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    ({reviewStats.total} reviews)
-                  </span>
-                </div>
-              )}
+            )}
+            <div className="flex items-center gap-1 text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              <Eye className="size-4" />
+              {listing.viewsCount} views
             </div>
           </div>
-        </GlassCard>
+        </div>
 
         {/* About Section */}
-        <GlassCard>
-          <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <div className="w-1 h-5 bg-[#D4AF37] rounded-full" />
-            About
-          </h2>
-          {listing.description && (
-            <p className="text-gray-600 leading-relaxed mb-4">{listing.description}</p>
-          )}
-          <div className="space-y-2">
-            {listing.operatingHours && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="size-4 text-[#4169E1] shrink-0" />
-                {listing.operatingHours}
-              </div>
-            )}
-            {listing.address && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin className="size-4 text-[#4169E1] shrink-0" />
-                {listing.address}
-              </div>
-            )}
-          </div>
-        </GlassCard>
-
-        {/* Services/Menu Grid */}
-        {parsedServices.length > 0 && (
+        {listing.description && (
           <GlassCard>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <div className="w-1 h-5 bg-[#4169E1] rounded-full" />
-              Services & Menu
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {parsedServices.map((svc: { name?: string; price?: string; item?: string; cost?: string }, idx: number) => {
-                const name = svc.name || svc.item || `Service ${idx + 1}`
-                const price = svc.price || svc.cost || ''
-                return (
-                  <motion.div
-                    key={idx}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-white/40 hover:bg-white/60 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-gray-700">{name}</span>
-                    {price && (
-                      <span className="text-sm font-bold text-[#D4AF37]">&#8377;{price}</span>
-                    )}
-                  </motion.div>
-                )
-              })}
+            <h2 className="text-xl font-bold text-gray-900 mb-3 border-b pb-2">About Us</h2>
+            <p className="text-gray-600 leading-relaxed text-[15px]">{listing.description}</p>
+            
+            <div className="mt-4 space-y-3 pt-3 border-t">
+              {listing.address && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-50 rounded-full text-red-500 shrink-0">
+                    <MapPin className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Location</p>
+                    <p className="text-sm text-gray-600">{listing.address}</p>
+                  </div>
+                </div>
+              )}
+              {listing.operatingHours && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-50 rounded-full text-blue-500 shrink-0">
+                    <Clock className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Timing</p>
+                    <p className="text-sm text-gray-600">{listing.operatingHours}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </GlassCard>
         )}
 
-        {/* Photo Gallery */}
+        {/* Photo Gallery Grid */}
         {displayImages.length > 1 && (
           <GlassCard>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <div className="w-1 h-5 bg-[#D4AF37] rounded-full" />
-              Photo Gallery
-            </h2>
-            <div className="columns-2 sm:columns-3 gap-3 space-y-3">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Gallery</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {displayImages.map((img: string, idx: number) => (
-                <motion.div
-                  key={idx}
-                  whileHover={{ scale: 1.02 }}
-                  className="break-inside-avoid rounded-xl overflow-hidden shadow-md"
-                >
+                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-sm group">
                   <OptimizedImage
                     src={img}
                     alt={`${listing.name} gallery ${idx + 1}`}
-                    width={400}
-                    height={400}
-                    className="w-full aspect-square sm:aspect-auto object-cover"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
                   />
-                </motion.div>
+                </div>
               ))}
             </div>
           </GlassCard>
         )}
 
-        {/* Map Section */}
-        <GlassCard>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <div className="w-1 h-5 bg-[#4169E1] rounded-full" />
-            Location
-          </h2>
-          <div className="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden bg-gradient-to-br from-[#4169E1]/10 to-[#D4AF37]/10 border border-white/40">
-            {/* Static map placeholder */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center mb-3 shadow-lg">
-                <MapPin className="size-10 text-[#D4AF37]" />
-              </div>
-              {listing.address && (
-                <p className="text-sm text-gray-600 text-center px-4 max-w-xs">{listing.address}</p>
-              )}
-              {listing.latitude && listing.longitude && (
-                <p className="text-xs text-gray-400 mt-1">
-                  {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
-                </p>
-              )}
-            </div>
-            {/* Grid lines to simulate map */}
-            <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#4169E1" strokeWidth="0.5" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-          </div>
-        </GlassCard>
-
         {/* Reviews Section */}
         <GlassCard>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <div className="w-1 h-5 bg-[#D4AF37] rounded-full" />
-            Reviews
-            {reviewStats.total > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {reviewStats.total}
-              </Badge>
-            )}
-          </h2>
-
-          {reviewStats.total > 0 && (
-            <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-[#D4AF37]/5 border border-[#D4AF37]/10">
-              <div className="text-3xl font-bold text-[#D4AF37]">
-                {reviewStats.averageRating}
-              </div>
-              <div>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`size-4 ${
-                        i < Math.round(reviewStats.averageRating)
-                          ? 'text-[#D4AF37] fill-[#D4AF37]'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Based on {reviewStats.total} reviews
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Review list */}
-          <div className="space-y-3 max-h-64 overflow-y-auto pr-1 mb-4">
-            {(listing.reviews || []).length > 0 ? (
-              (listing.reviews || []).map((review) => (
-                <div
-                  key={review.id}
-                  className="p-3 rounded-xl bg-white/50 border border-white/30"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm text-gray-800">
-                      {review.user.fullName}
-                    </span>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Reviews</h2>
+          {reviewStats.total > 0 ? (
+            <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+              {(listing.reviews || []).map((review) => (
+                <div key={review.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-sm text-gray-900">{review.user.fullName}</span>
                     <div className="flex gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`size-3 ${
-                            i < review.rating
-                              ? 'text-[#D4AF37] fill-[#D4AF37]'
-                              : 'text-gray-300'
-                          }`}
-                        />
+                        <Star key={i} className={`size-3.5 ${i < review.rating ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-gray-300'}`} />
                       ))}
                     </div>
                   </div>
-                  {review.comment && (
-                    <p className="text-sm text-gray-600">{review.comment}</p>
-                  )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    {new Date(review.createdAt).toLocaleDateString('en-IN', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </p>
+                  {review.comment && <p className="text-sm text-gray-700 mt-1">{review.comment}</p>}
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No reviews yet. Be the first to review!
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-6">No reviews yet. Be the first to review!</p>
+          )}
 
-          {/* Add Review Form */}
-          <Separator className="my-4" />
-          <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-            <MessageSquare className="size-4 text-[#4169E1]" />
-            Write a Review
-          </h3>
-          <form onSubmit={handleSubmitReview} className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="review-name" className="text-sm">Your Name</Label>
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <MessageCircle className="size-5 text-[#4169E1]" />
+              Write a Review
+            </h3>
+            <form onSubmit={handleSubmitReview} className="space-y-3">
               <Input
-                id="review-name"
-                placeholder="Enter your name"
+                placeholder="Your Name"
                 value={reviewName}
                 onChange={(e) => setReviewName(e.target.value)}
                 required
-                className="bg-white/50 border-white/40"
+                className="bg-white"
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm">Rating</Label>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <motion.button
+                  <Star
                     key={i}
-                    whileTap={{ scale: 0.9 }}
-                    type="button"
                     onClick={() => setReviewRating(i + 1)}
-                  >
-                    <Star
-                      className={`size-7 cursor-pointer transition-colors ${
-                        i < reviewRating
-                          ? 'text-[#D4AF37] fill-[#D4AF37]'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </motion.button>
+                    className={`size-8 cursor-pointer transition-colors ${i < reviewRating ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-gray-200'}`}
+                  />
                 ))}
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="review-comment" className="text-sm">Comment</Label>
               <Textarea
-                id="review-comment"
                 placeholder="Share your experience..."
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
                 rows={3}
-                className="bg-white/50 border-white/40 resize-none"
+                className="bg-white resize-none"
               />
-            </div>
-            <motion.div whileTap={{ scale: 0.95 }}>
-              <Button
-                type="submit"
-                disabled={submittingReview || !reviewName}
-                className="bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white"
-              >
+              <Button type="submit" disabled={submittingReview || !reviewName} className="w-full bg-[#4169E1] text-white rounded-xl">
                 {submittingReview ? 'Submitting...' : 'Submit Review'}
               </Button>
-            </motion.div>
-          </form>
-        </GlassCard>
-
-        {/* Action Buttons - Hidden on mobile, replaced by sticky CTA */}
-        <div className="hidden md:block">
-          <GlassCard>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
-                <Button
-                  onClick={handleGetQuote}
-                  className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#C5A233] hover:to-[#A8882A] text-white font-semibold py-3 shadow-md"
-                >
-                  <Phone className="size-4 mr-2" />
-                  Get Quote
-                </Button>
-              </motion.div>
-              {(listing.whatsappNumber || listing.user.whatsappNumber) && (
-                <div className="flex-1">
-                  <WhatsAppButton
-                    whatsappNumber={listing.whatsappNumber || listing.user.whatsappNumber || ''}
-                    businessName={listing.name}
-                    className="w-full py-3"
-                  />
-                </div>
-              )}
-              <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
-                <Button
-                  variant="outline"
-                  onClick={handleShare}
-                  className="w-full border-[#4169E1]/30 text-[#4169E1] hover:bg-[#4169E1]/5 py-3"
-                >
-                  <Share2 className="size-4 mr-2" />
-                  Share
-                </Button>
-              </motion.div>
-            </div>
-          </GlassCard>
-        </div>
-
-        {/* QR Code Section */}
-        <GlassCard variant="gold" className="text-center">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center justify-center gap-2">
-            <QrCode className="size-5 text-[#D4AF37]" />
-            Quick Access
-          </h2>
-          <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-3">
-            <QRCodeSVG
-              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/listing/${listing.slug}`}
-              size={160}
-              bgColor="#ffffff"
-              fgColor="#1a1a1a"
-              level="M"
-              includeMargin={false}
-            />
+            </form>
           </div>
-          <p className="text-sm text-gray-500">Scan to visit this page</p>
         </GlassCard>
 
-        {/* Back Button */}
-        <div className="pt-2 pb-4">
-          <motion.div whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="ghost"
-              onClick={() => navigateTo('explore')}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <ArrowLeft className="size-4 mr-2" />
-              Back to Explore
-            </Button>
-          </motion.div>
+        <div className="h-20"></div>
+      </div>
+
+      {/* Sticky Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+          {/* WhatsApp (Green) */}
+          <a
+            href={`https://wa.me/${listing.whatsappNumber || listing.user.whatsappNumber}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-green-500 hover:bg-green-600 transition-colors text-white"
+          >
+            <MessageCircle className="size-6 mb-1" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">WhatsApp</span>
+          </a>
+
+          {/* Call (Blue) */}
+          <a
+            href={`tel:${listing.whatsappNumber || listing.user.phone}`}
+            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-blue-500 hover:bg-blue-600 transition-colors text-white"
+          >
+            <Phone className="size-6 mb-1" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Call</span>
+          </a>
+
+          {/* Location (Red) */}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${listing.latitude || ''},${listing.longitude || ''}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-red-500 hover:bg-red-600 transition-colors text-white"
+          >
+            <MapPin className="size-6 mb-1" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Map</span>
+          </a>
+
+          {/* Share (Purple) */}
+          <button
+            onClick={handleShare}
+            className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-purple-500 hover:bg-purple-600 transition-colors text-white"
+          >
+            <Share2 className="size-6 mb-1" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Share</span>
+          </button>
         </div>
       </div>
     </div>

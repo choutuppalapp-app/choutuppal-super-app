@@ -18,7 +18,7 @@ import {
   PieChart as PieChartIcon, Clock, Ban, ShieldCheck,
   Landmark, UserPlus, Percent, Wallet, MapPin, IndianRupee,
   CreditCard, ArrowRightLeft, FileCheck, Pencil,
-  Music, Disc3, Ticket,
+  Music, Disc3, Ticket, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -4808,7 +4808,7 @@ export default function AdminView() {
               onClick={() => {
                 setEditingBanner(null)
                 setBannerForm({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', cityId: '', isActive: true })
-                setShowBannerForm(true)
+                document.getElementById('banner-file-input')?.click()
               }}
               className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white"
             >
@@ -4816,58 +4816,89 @@ export default function AdminView() {
             </Button>
           </div>
 
+          {/* Hidden File Input for 1-Click Banner Creation */}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            id="banner-file-input"
+            onChange={async (e) => {
+              const files = e.target.files
+              if (!files || files.length === 0) return
+
+              toast.info('Compressing and uploading image...')
+              try {
+                const file = files[0]
+                let fileToUpload = file
+                if (file.type.startsWith('image/')) {
+                  const imageCompression = (await import('browser-image-compression')).default
+                  const options = { maxSizeMB: 1, maxWidthOrHeight: 800, useWebWorker: true, initialQuality: 0.6 }
+                  fileToUpload = await imageCompression(file, options)
+                }
+
+                const uploadData = new FormData()
+                uploadData.append('file', fileToUpload)
+                uploadData.append('folder', 'choutuppal/banners')
+
+                const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
+                if (!res.ok) throw new Error('Upload failed')
+                const data = await res.json()
+
+                setBannerForm((prev) => ({ ...prev, imageUrl: data.url }))
+                setShowBannerForm(true)
+              } catch (err) {
+                toast.error('Failed to upload image')
+              }
+              e.target.value = ''
+            }}
+          />
+
           {/* Banner Form Dialog */}
           <Dialog open={showBannerForm} onOpenChange={setShowBannerForm}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add New Banner'}</DialogTitle>
-                <DialogDescription>
-                  {editingBanner ? 'Update banner details' : 'Create a new promotional banner ad'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-2">
+            <DialogContent className="sm:max-w-md max-h-[95vh] overflow-y-auto p-0 border-0 bg-white shadow-2xl rounded-xl">
+              <div className="relative w-full aspect-[21/9] bg-gray-100 flex items-center justify-center overflow-hidden">
+                {bannerForm.imageUrl ? (
+                  <img src={bannerForm.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <Megaphone className="size-16 text-gray-300" />
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 bg-black/40 text-white hover:bg-black/60 rounded-full"
+                  onClick={() => setShowBannerForm(false)}
+                >
+                  <X className="size-5" />
+                </Button>
+              </div>
+
+              <div className="p-5 space-y-4">
                 <div>
-                  <Label className="text-sm font-medium">Title *</Label>
+                  <Label className="text-sm font-semibold">Title *</Label>
                   <Input
                     value={bannerForm.title}
                     onChange={(e) => setBannerForm((prev) => ({ ...prev, title: e.target.value }))}
                     placeholder="e.g., 50% Off on All Medicines!"
-                    className="mt-1"
+                    className="mt-1 bg-gray-50 border-gray-200"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Shop Name</Label>
+                  <Label className="text-sm font-semibold">Shop Name</Label>
                   <Input
                     value={bannerForm.shopName}
                     onChange={(e) => setBannerForm((prev) => ({ ...prev, shopName: e.target.value }))}
                     placeholder="e.g., Ramesh Medicals"
-                    className="mt-1"
+                    className="mt-1 bg-gray-50 border-gray-200"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Offer Text (Telugu/English)</Label>
+                  <Label className="text-sm font-semibold">Offer Text</Label>
                   <Input
                     value={bannerForm.offerText}
                     onChange={(e) => setBannerForm((prev) => ({ ...prev, offerText: e.target.value }))}
                     placeholder="e.g., 20% డిస్కౌంట్!"
-                    className="mt-1"
+                    className="mt-1 bg-gray-50 border-gray-200"
                   />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Image URL</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      value={bannerForm.imageUrl}
-                      onChange={(e) => setBannerForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                      placeholder="https://... (leave empty for gradient)"
-                      className="flex-1"
-                    />
-                    <MediaUploader
-                      value={bannerForm.imageUrl}
-                      onChange={(url: string) => setBannerForm((prev) => ({ ...prev, imageUrl: url }))}
-                      guideline="banner"
-                    />
-                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Link URL</Label>

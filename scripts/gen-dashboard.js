@@ -1,4 +1,7 @@
-'use client'
+const fs = require('fs');
+const path = require('path');
+
+const content = `'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,7 +12,7 @@ import {
   Loader2, X, Image as ImageIcon, MapPin, Search,
   Heart, CreditCard, HelpCircle, LogOut, FileText,
   BadgeDollarSign,
-  ArrowUpRight, Globe
+  ArrowUpRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -93,7 +96,7 @@ const TAB_ITEMS = [
 
 export default function DashboardView() {
   const [activeTab, setActiveTab] = useState('home')
-  const { user, logout } = useAuth()
+  const { user, signOut } = useAuth()
   const currentUser = user ? {
     id: user.id,
     fullName: user.fullName,
@@ -134,7 +137,7 @@ export default function DashboardView() {
   const fetchListings = useCallback(() => {
     if (!currentUser) return
     setLoadingListings(true)
-    fetch(`/api/listings?userId=${currentUser.id}&limit=50`)
+    fetch(\`/api/listings?userId=\${currentUser.id}&limit=50\`)
       .then((res) => res.json())
       .then((data) => setListings(data.listings || []))
       .catch(() => toast.error('Failed to load listings'))
@@ -144,7 +147,7 @@ export default function DashboardView() {
   const fetchBanners = useCallback(() => {
     if (!currentUser) return
     setLoadingBanners(true)
-    fetch(`/api/banners?userId=${currentUser.id}&all=true`)
+    fetch(\`/api/banners?userId=\${currentUser.id}&all=true\`)
       .then((res) => res.json())
       .then((data) => setBanners(Array.isArray(data) ? data : []))
       .catch(() => toast.error('Failed to load banners'))
@@ -153,7 +156,7 @@ export default function DashboardView() {
 
   const fetchCoins = useCallback(() => {
     if (!currentUser) return
-    fetch(`/api/coins?userId=${currentUser.id}`)
+    fetch(\`/api/coins?userId=\${currentUser.id}\`)
       .then((res) => res.json())
       .then((data) => {
         setCoinBalance(data.balance ?? 0)
@@ -195,7 +198,7 @@ export default function DashboardView() {
       })
       if (res.ok) {
         const data = await res.json()
-        toast.success(`Claimed ${data.amount} coins!`)
+        toast.success(\`Claimed \${data.amount} coins!\`)
         setClaimedToday(true)
         fetchCoins()
       } else {
@@ -511,7 +514,7 @@ export default function DashboardView() {
           <Button 
             onClick={handleDailyClaim} 
             disabled={claimedToday || claimingDaily}
-            className={`rounded-full ${claimedToday ? 'bg-slate-700 text-gray-400' : 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg shadow-[#10B981]/20'}`}
+            className={\`rounded-full \${claimedToday ? 'bg-slate-700 text-gray-400' : 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg shadow-[#10B981]/20'}\`}
           >
             {claimedToday ? 'Claimed' : claimingDaily ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Claim 10'}
           </Button>
@@ -556,7 +559,7 @@ export default function DashboardView() {
               {tx.amount > 0 ? <ArrowUpRight className="w-4 h-4 text-green-500" /> : <Loader2 className="w-4 h-4 text-red-500" />}
               <span className="text-sm text-white">{tx.reason}</span>
             </div>
-            <span className={`font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <span className={\`font-bold \${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}\`}>
               {tx.amount > 0 ? '+' : ''}{tx.amount}
             </span>
           </div>
@@ -604,7 +607,7 @@ export default function DashboardView() {
       </div>
 
       <div className="pt-6">
-        <Button variant="outline" className="w-full border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-400 py-6 rounded-2xl flex items-center justify-center space-x-2" onClick={() => logout()}>
+        <Button variant="outline" className="w-full border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-400 py-6 rounded-2xl flex items-center justify-center space-x-2" onClick={() => signOut()}>
           <LogOut className="w-5 h-5" />
           <span>Log Out</span>
         </Button>
@@ -641,10 +644,10 @@ export default function DashboardView() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex flex-col items-center justify-center w-16 h-14 rounded-xl transition-all ${isActive ? 'text-[#D4AF37]' : 'text-gray-500 hover:text-gray-300'}`}
+                className={\`flex flex-col items-center justify-center w-16 h-14 rounded-xl transition-all \${isActive ? 'text-[#D4AF37]' : 'text-gray-500 hover:text-gray-300'}\`}
               >
-                <div className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all ${isActive ? 'bg-[#D4AF37]/10' : ''}`}>
-                  <Icon className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : 'scale-100'}`} strokeWidth={isActive ? 2.5 : 2} />
+                <div className={\`relative flex items-center justify-center w-10 h-10 rounded-full transition-all \${isActive ? 'bg-[#D4AF37]/10' : ''}\`}>
+                  <Icon className={\`w-6 h-6 transition-transform \${isActive ? 'scale-110' : 'scale-100'}\`} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
                 <span className="text-[10px] font-medium mt-0.5">{tab.label}</span>
               </button>
@@ -665,7 +668,7 @@ export default function DashboardView() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-gradient-to-r from-[#D4AF37]/20 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37]' : 'text-gray-400 hover:text-white hover:bg-slate-800'}`}
+                  className={\`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all \${isActive ? 'bg-gradient-to-r from-[#D4AF37]/20 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37]' : 'text-gray-400 hover:text-white hover:bg-slate-800'}\`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-bold">{tab.label}</span>
@@ -743,3 +746,7 @@ export default function DashboardView() {
     </div>
   )
 }
+`
+
+fs.writeFileSync(path.join('src', 'components', 'dashboard-view.tsx'), content)
+console.log('Done writing dashboard-view.tsx')

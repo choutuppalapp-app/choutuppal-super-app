@@ -10,7 +10,7 @@ import {
   Newspaper, LayoutGrid, ShieldCheck, BadgeDollarSign,
   Banknote, CircleDot, MessageSquare, ExternalLink,
   UserCheck, UserX, BarChart3, PiggyBank, HandCoins,
-  Receipt, CalendarDays, ArrowDownToLine,
+  Receipt, CalendarDays, ArrowDownToLine, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -1467,13 +1467,48 @@ export function CityAdminDashboard() {
                               onClick={() => {
                                 setEditingBanner(null)
                                 setBannerForm({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', isActive: true })
-                                setShowBannerForm(true)
+                                document.getElementById('city-banner-file-input')?.click()
                               }}
                               className="bg-[#D4AF37] text-white"
                             >
                               <Plus className="size-3.5 mr-1" />Add Banner
                             </Button>
                           </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            id="city-banner-file-input"
+                            onChange={async (e) => {
+                              const files = e.target.files
+                              if (!files || files.length === 0) return
+
+                              toast.info('Compressing and uploading image...')
+                              try {
+                                const file = files[0]
+                                let fileToUpload = file
+                                if (file.type.startsWith('image/')) {
+                                  const imageCompression = (await import('browser-image-compression')).default
+                                  const options = { maxSizeMB: 1, maxWidthOrHeight: 800, useWebWorker: true, initialQuality: 0.6 }
+                                  fileToUpload = await imageCompression(file, options)
+                                }
+
+                                const uploadData = new FormData()
+                                uploadData.append('file', fileToUpload)
+                                uploadData.append('folder', 'choutuppal/banners')
+
+                                const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
+                                if (!res.ok) throw new Error('Upload failed')
+                                const data = await res.json()
+
+                                setBannerForm((prev) => ({ ...prev, imageUrl: data.url }))
+                                setShowBannerForm(true)
+                              } catch (err) {
+                                toast.error('Failed to upload image')
+                              }
+                              e.target.value = ''
+                            }}
+                          />
                           {bannersLoading ? (
                             <div className="flex justify-center py-8">
                               <Loader2 className="size-6 animate-spin text-[#D4AF37]" />
@@ -1528,14 +1563,26 @@ export function CityAdminDashboard() {
 
                         {/* Banner Form Dialog */}
                         <Dialog open={showBannerForm} onOpenChange={setShowBannerForm}>
-                          <DialogContent className="sm:max-w-lg">
-                            <DialogHeader>
-                              <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add Banner'}</DialogTitle>
-                              <DialogDescription>{managedCityId ? `Banner for: ${managedCityId}` : 'Create a banner ad for your city.'}</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
+                          <DialogContent className="sm:max-w-md max-h-[95vh] overflow-y-auto p-0 border-0 bg-white shadow-2xl rounded-xl">
+                            <div className="relative w-full aspect-[21/9] bg-gray-100 flex items-center justify-center overflow-hidden">
+                              {bannerForm.imageUrl ? (
+                                <img src={bannerForm.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                              ) : (
+                                <Megaphone className="size-16 text-gray-300" />
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 bg-black/40 text-white hover:bg-black/60 rounded-full"
+                                onClick={() => setShowBannerForm(false)}
+                              >
+                                <X className="size-5" />
+                              </Button>
+                            </div>
+
+                            <div className="p-5 space-y-4">
                               <div>
-                                <Label>Title *</Label>
+                                <Label className="text-sm font-semibold">Title *</Label>
                                 <Input
                                   value={bannerForm.title}
                                   onChange={(e) => setBannerForm((p) => ({ ...p, title: e.target.value }))}
