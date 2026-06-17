@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     } else if (referredByAgentId) {
       // Show both approved and pending for agent's referrals
     } else {
-      where.isApproved = true
+      where.status = 'APPROVED'
     }
 
     if (cityId) {
@@ -137,6 +137,7 @@ export async function POST(request: Request) {
         latitude: body.latitude || null,
         longitude: body.longitude || null,
         isApproved: false,
+        status: 'PENDING',
         isPremium: false,
         isFeatured: false,
         operatingHours: body.operatingHours || null,

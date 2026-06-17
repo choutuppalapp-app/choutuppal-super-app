@@ -7,12 +7,24 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const cityId = searchParams.get('cityId')
+    const citySlug = searchParams.get('citySlug')
     const userId = searchParams.get('userId')
     const all = searchParams.get('all') === 'true'
 
     const where: Record<string, unknown> = {}
-    if (!all) where.isActive = true
-    if (cityId) where.cityId = cityId
+    if (!all) {
+      where.isActive = true
+      where.status = 'APPROVED'
+    }
+    if (cityId) {
+      where.cityId = cityId
+    } else if (citySlug) {
+      const city = await db.city.findUnique({ where: { slug: citySlug } })
+      if (city) {
+        where.cityId = city.id
+      }
+    }
+    
     if (userId) where.userId = userId
 
     const ads = await db.bannerAd.findMany({
@@ -47,6 +59,7 @@ export async function POST(request: Request) {
         cityId: cityId || null,
         userId: userId || null,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
+        status: 'PENDING',
       },
     })
 

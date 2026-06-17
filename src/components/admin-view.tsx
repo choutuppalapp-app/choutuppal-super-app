@@ -129,6 +129,7 @@ interface AdminListing {
   name: string
   category: string
   images?: string | null
+  status: string
   isApproved: boolean
   isPremium: boolean
   isFeatured: boolean
@@ -147,6 +148,7 @@ interface RealEstateListing {
   ownerPhone: string
   bedroomCount?: number | null
   area?: string | null
+  status: string
   isApproved: boolean
   isFeatured: boolean
   createdAt: string
@@ -238,6 +240,7 @@ interface BannerAdItem {
   linkUrl: string | null
   cityId: string | null
   isActive: boolean
+  status: string
   createdAt: string
 }
 
@@ -1844,10 +1847,11 @@ export default function AdminView() {
     }
   }
 
-  const getListingStatusBadge = (listing: AdminListing | RealEstateListing) => {
+  const getListingStatusBadge = (listing: AdminListing | RealEstateListing | BannerAdItem) => {
     if ('isPremium' in listing && listing.isPremium) return <Badge className="bg-purple-100 text-purple-700 border-purple-200">Premium</Badge>
-    if (listing.isFeatured) return <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20">Featured</Badge>
-    if (listing.isApproved) return <Badge className="bg-green-100 text-green-700 border-green-200">Approved</Badge>
+    if ('isFeatured' in listing && listing.isFeatured) return <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20">Featured</Badge>
+    if (listing.status === 'APPROVED') return <Badge className="bg-green-100 text-green-700 border-green-200">Approved</Badge>
+    if (listing.status === 'REJECTED') return <Badge className="bg-red-100 text-red-700 border-red-200">Rejected</Badge>
     return <Badge className="bg-orange-100 text-orange-700 border-orange-200">Pending</Badge>
   }
 
@@ -3587,7 +3591,7 @@ export default function AdminView() {
                               <TableCell className="text-sm">{listing.user.fullName}</TableCell>
                               <TableCell>
                                 <div className="flex gap-1 flex-wrap">
-                                  {!listing.isApproved && (
+                                  {listing.status !== 'APPROVED' && (
                                     <motion.div whileTap={{ scale: 0.9 }}>
                                       <Button
                                         size="sm" variant="outline"
@@ -3598,7 +3602,7 @@ export default function AdminView() {
                                       </Button>
                                     </motion.div>
                                   )}
-                                  {listing.isApproved && (
+                                  {listing.status !== 'REJECTED' && (
                                     <Dialog open={rejectDialogId === listing.id} onOpenChange={(open) => { if (!open) setRejectDialogId(null) }}>
                                       <DialogTrigger asChild>
                                         <Button
@@ -3738,7 +3742,7 @@ export default function AdminView() {
                               <TableCell className="text-sm">{listing.user.fullName}</TableCell>
                               <TableCell>
                                 <div className="flex gap-1 flex-wrap">
-                                  {!listing.isApproved && (
+                                  {listing.status !== 'APPROVED' && (
                                     <motion.div whileTap={{ scale: 0.9 }}>
                                       <Button
                                         size="sm" variant="outline"
@@ -3749,7 +3753,7 @@ export default function AdminView() {
                                       </Button>
                                     </motion.div>
                                   )}
-                                  {listing.isApproved && (
+                                  {listing.status !== 'REJECTED' && (
                                     <motion.div whileTap={{ scale: 0.9 }}>
                                       <Button
                                         size="sm" variant="outline"
@@ -4991,14 +4995,43 @@ export default function AdminView() {
                         <TableCell className="text-sm text-gray-600">{banner.shopName || '—'}</TableCell>
                         <TableCell className="text-sm text-[#D4AF37] font-medium">{banner.offerText || '—'}</TableCell>
                         <TableCell>
-                          <button onClick={() => handleToggleBannerActive(banner)}>
-                            <Badge className={banner.isActive ? 'bg-green-100 text-green-700 border-green-200 cursor-pointer' : 'bg-gray-100 text-gray-500 border-gray-200 cursor-pointer'}>
-                              {banner.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </button>
+                          <div className="flex gap-2 items-center">
+                            {getListingStatusBadge(banner)}
+                            <button onClick={() => handleToggleBannerActive(banner)}>
+                              <Badge className={banner.isActive ? 'bg-green-100 text-green-700 border-green-200 cursor-pointer' : 'bg-gray-100 text-gray-500 border-gray-200 cursor-pointer'}>
+                                {banner.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </button>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1 flex-wrap">
+                            {banner.status !== 'APPROVED' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async () => {
+                                  await fetch('/api/banners', { method: 'PUT', body: JSON.stringify({ id: banner.id, status: 'APPROVED' }) })
+                                  setBannerAds(bannerAds.map(b => b.id === banner.id ? { ...b, status: 'APPROVED' } : b))
+                                }}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              >
+                                <CheckCircle className="size-3.5" />
+                              </Button>
+                            )}
+                            {banner.status !== 'REJECTED' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async () => {
+                                  await fetch('/api/banners', { method: 'PUT', body: JSON.stringify({ id: banner.id, status: 'REJECTED' }) })
+                                  setBannerAds(bannerAds.map(b => b.id === banner.id ? { ...b, status: 'REJECTED' } : b))
+                                }}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <XCircle className="size-3.5" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"

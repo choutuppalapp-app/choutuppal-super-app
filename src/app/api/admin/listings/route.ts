@@ -15,9 +15,11 @@ export async function GET(request: Request) {
     const where: Record<string, unknown> = {}
 
     if (status === 'approved') {
-      where.isApproved = true
+      where.status = 'APPROVED'
     } else if (status === 'pending') {
-      where.isApproved = false
+      where.status = 'PENDING'
+    } else if (status === 'rejected') {
+      where.status = 'REJECTED'
     } else if (status === 'featured') {
       where.isFeatured = true
     } else if (status === 'premium') {
@@ -96,9 +98,11 @@ export async function PATCH(request: Request) {
 
     switch (action) {
       case 'approve':
+        updateData.status = 'APPROVED'
         updateData.isApproved = true
         break
       case 'reject':
+        updateData.status = 'REJECTED'
         updateData.isApproved = false
         break
       case 'feature':

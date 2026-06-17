@@ -47,7 +47,7 @@ export function ShareButtons({ title, text, showLabels = false }: { title: strin
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {navigator.share && (
+      {typeof navigator !== 'undefined' && 'share' in navigator && (
         <Button onClick={handleShare} variant="outline" size={showLabels ? "default" : "icon"} className="rounded-full">
           <Share2 className="size-4" />
           {showLabels && <span className="ml-2">Share</span>}

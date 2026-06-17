@@ -11,8 +11,9 @@ export async function GET(request: Request) {
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
-    if (status === 'approved') where.isApproved = true
-    if (status === 'pending') where.isApproved = false
+    if (status === 'approved') where.status = 'APPROVED'
+    if (status === 'pending') where.status = 'PENDING'
+    if (status === 'rejected') where.status = 'REJECTED'
     if (status === 'featured') where.isFeatured = true
 
     const [listings, total] = await Promise.all([
@@ -62,9 +63,11 @@ export async function PATCH(request: Request) {
     const updateData: Record<string, unknown> = {}
     switch (body.action) {
       case 'approve':
+        updateData.status = 'APPROVED'
         updateData.isApproved = true
         break
       case 'reject':
+        updateData.status = 'REJECTED'
         updateData.isApproved = false
         break
       case 'feature':

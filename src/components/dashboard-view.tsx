@@ -35,15 +35,35 @@ interface UserListing {
   name: string
   category: string
   description: string | null
+  phoneNumber: string | null
   whatsappNumber: string | null
   images: string | null
   coverImage: string | null
+  logoUrl: string | null
+  instagramUrl: string | null
+  facebookUrl: string | null
+  youtubeUrl: string | null
+  address: string | null
   cityId: string
   isApproved: boolean
   isPremium: boolean
   isFeatured: boolean
   viewsCount: number
   leadsCount?: number
+  createdAt: string
+  city?: { id: string; name: string; slug: string }
+}
+
+interface RealEstateListing {
+  id: string
+  title: string
+  price: string
+  images?: string | null
+  ownerPhone: string
+  bedroomCount?: number | null
+  area?: string | null
+  isApproved: boolean
+  isFeatured: boolean
   createdAt: string
   city?: { id: string; name: string; slug: string }
 }
@@ -102,6 +122,7 @@ export default function DashboardView() {
 
   // State
   const [listings, setListings] = useState<UserListing[]>([])
+  const [realEstateListings, setRealEstateListings] = useState<RealEstateListing[]>([])
   const [loadingListings, setLoadingListings] = useState(true)
   const [banners, setBanners] = useState<BannerAd[]>([])
   const [loadingBanners, setLoadingBanners] = useState(true)
@@ -122,7 +143,8 @@ export default function DashboardView() {
     phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
     address: '',
     coverImage: '', logoUrl: '', gallery: [] as string[],
-    instagramUrl: '', facebookUrl: '', youtubeUrl: ''
+    instagramUrl: '', facebookUrl: '', youtubeUrl: '',
+    price: '', bedroomCount: '', area: ''
   })
   const [bannerData, setBannerData] = useState({
     title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
@@ -133,6 +155,12 @@ export default function DashboardView() {
   // Data Fetching with SWR
   const { data: listingsData, isLoading: loadingListingsSWR, mutate: fetchListings } = useSWR(
     currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
+    fetcher,
+    { dedupingInterval: 60000 }
+  )
+
+  const { data: realEstateData, mutate: fetchRealEstate } = useSWR(
+    currentUser ? `/api/realestate?userId=${currentUser.id}&limit=50` : null,
     fetcher,
     { dedupingInterval: 60000 }
   )
@@ -157,6 +185,12 @@ export default function DashboardView() {
       setLoadingListings(false)
     }
   }, [listingsData])
+
+  useEffect(() => {
+    if (realEstateData) {
+      setRealEstateListings(realEstateData.listings || [])
+    }
+  }, [realEstateData])
 
   useEffect(() => {
     if (bannersData) {
@@ -283,37 +317,55 @@ export default function DashboardView() {
     setUploading(true)
     try {
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
-      const url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
+      let url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
       const method = editingListingId ? 'PUT' : 'POST'
+      let body: any = {
+        userId: currentUser.id,
+        cityId: formData.cityId || cities[0]?.id || 'default',
+        slug,
+        name: formData.name,
+        category: formData.category,
+        description: formData.description || null,
+        phoneNumber: formData.phoneNumber || null,
+        whatsappNumber: formData.sameAsPhone ? formData.phoneNumber : (formData.whatsappNumber || null),
+        address: formData.address || null,
+        coverImage: formData.coverImage || null,
+        logoUrl: formData.logoUrl || null,
+        gallery: formData.gallery.length > 0 ? formData.gallery : null,
+        instagramUrl: formData.instagramUrl || null,
+        facebookUrl: formData.facebookUrl || null,
+        youtubeUrl: formData.youtubeUrl || null,
+      }
+
+      if (formData.category === 'Real Estate') {
+        url = editingListingId ? `/api/realestate/${editingListingId}` : '/api/realestate'
+        const imagesArr = formData.coverImage ? [formData.coverImage, ...formData.gallery] : formData.gallery
+        body = {
+          userId: currentUser.id,
+          cityId: formData.cityId || cities[0]?.id || 'default',
+          title: formData.name,
+          price: formData.price,
+          images: imagesArr.length > 0 ? JSON.stringify(imagesArr) : null,
+          ownerPhone: formData.phoneNumber,
+          bedroomCount: formData.bedroomCount ? parseInt(formData.bedroomCount) : null,
+          area: formData.area || null,
+        }
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          cityId: formData.cityId || cities[0]?.id || 'default',
-          slug,
-          name: formData.name,
-          category: formData.category,
-          description: formData.description || null,
-          phoneNumber: formData.phoneNumber || null,
-          whatsappNumber: formData.sameAsPhone ? formData.phoneNumber : (formData.whatsappNumber || null),
-          address: formData.address || null,
-          coverImage: formData.coverImage || null,
-          logoUrl: formData.logoUrl || null,
-          gallery: formData.gallery.length > 0 ? formData.gallery : null,
-          instagramUrl: formData.instagramUrl || null,
-          facebookUrl: formData.facebookUrl || null,
-          youtubeUrl: formData.youtubeUrl || null,
-        }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
         toast.success(editingListingId ? 'Listing updated successfully!' : 'Listing created successfully!')
         setIsCreatingListing(false)
         setEditingListingId(null)
         fetchListings()
+        fetchRealEstate()
         setFormData({
           name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
-          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: ''
+          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''
         })
       } else {
         const errData = await res.text(); console.error('Submit API error:', errData); toast.error(editingListingId ? 'Failed to update listing' : 'Failed to create listing')
@@ -367,6 +419,32 @@ export default function DashboardView() {
       }
     } catch {
       toast.error('Failed to delete')
+    }
+  }
+
+  const deleteRealEstate = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this property?')) return
+    try {
+      const res = await fetch(`/api/realestate/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast.success('Property deleted')
+        fetchRealEstate()
+      }
+    } catch {
+      toast.error('Failed to delete')
+    }
+  }
+
+  const deleteBanner = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this banner?')) return
+    try {
+      const res = await fetch(`/api/banners?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast.success('Banner deleted')
+        fetchBanners()
+      }
+    } catch {
+      toast.error('Failed to delete banner')
     }
   }
 
@@ -437,7 +515,6 @@ export default function DashboardView() {
   
   const renderBusiness = () => {
     const businessListings = listings.filter(l => l.category !== 'Real Estate');
-    const realEstateListings = listings.filter(l => l.category === 'Real Estate');
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
@@ -494,7 +571,8 @@ export default function DashboardView() {
                               address: listing.address || '',
                               coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
                               gallery: listing.images ? JSON.parse(listing.images) : [],
-                              instagramUrl: listing.instagramUrl || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || ''
+                              instagramUrl: listing.instagramUrl || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || '',
+                              price: '', bedroomCount: '', area: ''
                             })
                             setIsCreatingListing(true)
                           }}
@@ -545,12 +623,13 @@ export default function DashboardView() {
                   <div key={listing.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
                     <div className="flex p-4 gap-4">
                       <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-200">
-                        <Image src={listing.images ? JSON.parse(listing.images)[0] : (listing.coverImage || 'https://placehold.co/400x400/eeeeee/999999?text=No+Image')} alt={listing.name} fill className="object-cover" />
+                        <Image src={listing.images ? JSON.parse(listing.images)[0] : 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'} alt={listing.title} fill className="object-cover" />
                       </div>
                       <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                         <div>
-                          <h4 className="font-bold text-gray-900 md:text-lg truncate">{listing.name}</h4>
+                          <h4 className="font-bold text-gray-900 md:text-lg truncate">{listing.title}</h4>
                           <p className="text-xs md:text-sm text-gray-500 truncate">{listing.city?.name}</p>
+                          <p className="text-xs font-semibold text-[#D4AF37] mt-1">{listing.price}</p>
                         </div>
                         <div className="flex items-center gap-3 mt-2">
                           <Badge className={listing.isApproved ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
@@ -562,14 +641,20 @@ export default function DashboardView() {
                         <button 
                           onClick={() => {
                             setEditingListingId(listing.id)
+                            let imagesArr: string[] = []
+                            try {
+                              if (listing.images) imagesArr = JSON.parse(listing.images)
+                            } catch (e) {}
+                            
                             setFormData({
-                              name: listing.name, category: listing.category, description: listing.description || '',
-                              phoneNumber: listing.phoneNumber || '', whatsappNumber: listing.whatsappNumber || '', 
-                              cityId: listing.cityId, sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
-                              address: listing.address || '',
-                              coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
-                              gallery: listing.images ? JSON.parse(listing.images) : [],
-                              instagramUrl: listing.instagramUrl || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || ''
+                              name: listing.title, category: 'Real Estate', description: '',
+                              phoneNumber: listing.ownerPhone, whatsappNumber: '', 
+                              cityId: listing.city?.id || '', sameAsPhone: false,
+                              address: '',
+                              coverImage: imagesArr[0] || '', logoUrl: '',
+                              gallery: imagesArr.slice(1),
+                              instagramUrl: '', facebookUrl: '', youtubeUrl: '',
+                              price: listing.price, bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '', area: listing.area || ''
                             })
                             setIsCreatingListing(true)
                           }}
@@ -578,7 +663,7 @@ export default function DashboardView() {
                           <Edit2 className="w-5 h-5" />
                         </button>
                         <button 
-                          onClick={() => deleteListing(listing.id)}
+                          onClick={() => deleteRealEstate(listing.id)}
                           className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -630,6 +715,27 @@ export default function DashboardView() {
                       <Badge className={banner.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
                         {banner.isActive ? 'Active' : 'Inactive'}
                       </Badge>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            // Re-use banner creating modal
+                            setBannerData({
+                              title: banner.title, shopName: banner.shopName || '', offerText: banner.offerText || '', 
+                              linkUrl: banner.linkUrl || '', imageUrl: banner.imageUrl || '', cityId: banner.cityId || ''
+                            })
+                            setIsCreatingBanner(true)
+                          }}
+                          className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => deleteBanner(banner.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -901,7 +1007,7 @@ export default function DashboardView() {
           >
             <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">\n            {/* Header */}
             <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: ''}) }}>
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''}) }}>
                 <X className="w-6 h-6" />
               </Button>
               <span className="text-gray-900 font-black text-lg">{editingListingId ? 'Edit Listing' : 'New Listing'}</span>
@@ -926,6 +1032,7 @@ export default function DashboardView() {
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={handleListingFileChange} />
                   </label>
+                  <p className="text-xs text-gray-500">Recommended size: 800x400px. Max size: 1MB.</p>
                 </div>
 
                 {/* Gallery Upload */}
@@ -947,6 +1054,7 @@ export default function DashboardView() {
                       </label>
                     )}
                   </div>
+                  <p className="text-xs text-gray-500">Square images recommended. Max size: 1MB each.</p>
                 </div>
 
                 {/* Business Details */}
@@ -967,6 +1075,23 @@ export default function DashboardView() {
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
+
+                  {formData.category === 'Real Estate' && (
+                    <>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-sm">Price (e.g., ₹50 Lakhs) *</span>
+                        <Input placeholder="Enter price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-sm">Bedroom Count (e.g., 2, 3)</span>
+                        <Input placeholder="Number of bedrooms" type="number" value={formData.bedroomCount} onChange={e => setFormData({...formData, bedroomCount: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-sm">Area (e.g., 1200 sqft)</span>
+                        <Input placeholder="Property area" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex flex-col gap-1.5">
                     <span className="text-gray-800 font-bold text-sm">Phone Number *</span>

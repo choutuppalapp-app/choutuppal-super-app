@@ -191,6 +191,7 @@ model Listing {
   latitude      Float?
   longitude     Float?
   isApproved    Boolean  @default(false)
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
   isPremium     Boolean  @default(false)
   isFeatured    Boolean  @default(false)
   viewsCount    Int      @default(0)
@@ -221,6 +222,7 @@ model RealEstateListing {
   bedroomCount Int?
   area        String?
   isApproved  Boolean  @default(false)
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
   isFeatured  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -396,6 +398,7 @@ model BannerAd {
   linkUrl   String?
   cityId    String?
   isActive  Boolean  @default(true)
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
   createdAt DateTime @default(now())
 
   city City? @relation(fields: [cityId], references: [id])
