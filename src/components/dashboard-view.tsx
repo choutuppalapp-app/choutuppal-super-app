@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Store, Building2, Wallet, Settings, 
-  Crown, Coins, Eye, Phone, Plus, Pencil,
+  Crown, Coins, Eye, Phone, Plus, Pencil, Edit2, Trash2,
   Gift, Zap, Star, MessageCircle, ChevronRight,
   Loader2, X, Image as ImageIcon, MapPin, Search,
   Heart, CreditCard, HelpCircle, LogOut, FileText,
@@ -70,6 +70,7 @@ interface City {
   id: string
   name: string
   slug: string
+  [key: string]: any // allow dynamic fields for edit
 }
 
 const CATEGORIES = [
