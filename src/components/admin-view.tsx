@@ -455,6 +455,13 @@ export default function AdminView() {
   const [addCoinsDialog, setAddCoinsDialog] = useState<string | null>(null)
   const [addCoinsAmount, setAddCoinsAmount] = useState('')
 
+  //  Agent Management 
+  const [agentUsers, setAgentUsers] = useState<any[]>([])
+  const [agentUsersLoading, setAgentUsersLoading] = useState(false)
+  const [selectedAgentForListings, setSelectedAgentForListings] = useState<any | null>(null)
+  const [agentListings, setAgentListings] = useState<any[]>([])
+  const [agentListingsLoading, setAgentListingsLoading] = useState(false)
+
   // ─── Bulk Actions ──────────────────────────────────────────────────────────
   const [selectedListings, setSelectedListings] = useState<Set<string>>(new Set())
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
@@ -822,6 +829,54 @@ export default function AdminView() {
   }, [userSearch, userRoleFilter])
 
   useEffect(() => { fetchAdminUsers() }, [fetchAdminUsers])
+
+  const fetchAgents = useCallback(() => {
+    setAgentUsersLoading(true)
+    fetch('/api/admin/users?role=agent&limit=1000')
+      .then((res) => res.json())
+      .then((data) => setAgentUsers(Array.isArray(data) ? data : []))
+      .catch(() => setAgentUsers([]))
+      .finally(() => setAgentUsersLoading(false))
+  }, [])
+
+  useEffect(() => { fetchAgents() }, [fetchAgents])
+
+  const viewAgentListings = async (agent: any) => {
+    setSelectedAgentForListings(agent)
+    setAgentListingsLoading(true)
+    try {
+      const res = await fetch(`/api/listings?userId=${agent.id}&limit=100`)
+      const data = await res.json()
+      setAgentListings(data.listings || [])
+    } catch (error) {
+      toast.error('Failed to load listings')
+    } finally {
+      setAgentListingsLoading(false)
+    }
+  }
+
+  const handleAgentManagementAction = async (agentId: string, action: string, newRole?: string) => {
+    try {
+      const payload: any = { userId: agentId, action }
+      if (newRole) payload.newRole = newRole
+
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        toast.success('Agent updated successfully')
+        fetchAgents()
+        fetchAdminUsers()
+      } else {
+        toast.error('Failed to update agent')
+      }
+    } catch (e) {
+      toast.error('An error occurred')
+    }
+  }
 
   // ─── Fetch Banner Ads (Admin) ────────────────────────────────────────────
   const fetchBannerAds = useCallback(() => {
@@ -3902,6 +3957,123 @@ export default function AdminView() {
                 )}
               </TabsContent>
             </Tabs>
+          </GlassCard>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════════════
+            TAB: AGENT MANAGEMENT
+        ═══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="agents" className="mt-4 space-y-4">
+          <GlassCard>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                <Users className="size-4 text-[#D4AF37]" />
+                Agent Management
+                <Badge variant="secondary">{agentUsers.length} agents</Badge>
+              </h3>
+            </div>
+            
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <Table>
+                <TableHeader className="bg-gray-50/50">
+                  <TableRow>
+                    <TableHead>Agent</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Assigned City</TableHead>
+                    <TableHead className="text-center">Total Listings</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agentUsersLoading ? (
+                    <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="animate-spin size-6 mx-auto text-gray-400" /></TableCell></TableRow>
+                  ) : agentUsers.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-gray-500">No agents found.</TableCell></TableRow>
+                  ) : (
+                    agentUsers.map((agent: any) => (
+                      <TableRow key={agent.id}>
+                        <TableCell>
+                          <div className="font-medium text-gray-900">{agent.fullName}</div>
+                          <div className="text-xs text-gray-500">{agent.email || 'No email'}</div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{agent.phone}</TableCell>
+                        <TableCell>
+                          {agent.agentCity ? (
+                            <Badge variant="outline" className="bg-[#4169E1]/5 border-[#4169E1]/20 text-[#4169E1]">
+                              <MapPin className="size-3 mr-1" />{agent.agentCity.name}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400 text-xs italic">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="font-bold">
+                            {agent._count?.listings || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => viewAgentListings(agent)}>
+                                  <Eye className="size-3.5 mr-1" /> View Details
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+                                <DialogHeader>
+                                  <DialogTitle>Listings by {selectedAgentForListings?.fullName}</DialogTitle>
+                                </DialogHeader>
+                                <div className="flex-1 overflow-y-auto p-1">
+                                  {agentListingsLoading ? (
+                                    <div className="flex justify-center py-12"><Loader2 className="animate-spin size-8 text-gray-400" /></div>
+                                  ) : agentListings.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-500">No listings posted by this agent yet.</div>
+                                  ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {agentListings.map((listing) => (
+                                        <div key={listing.id} className="flex gap-3 p-3 border rounded-xl items-center hover:bg-gray-50 transition-colors">
+                                          <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 relative overflow-hidden">
+                                            {listing.coverImage ? (
+                                              <Image src={listing.coverImage} alt={listing.name} fill className="object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center"><ImageIcon className="size-5 text-gray-400" /></div>
+                                            )}
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <h4 className="font-bold text-sm truncate">{listing.name}</h4>
+                                            <p className="text-xs text-gray-500 truncate">{listing.category}</p>
+                                            <Badge variant="secondary" className="mt-1 text-[10px] uppercase bg-green-100 text-green-700">{listing.status}</Badge>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              className="bg-red-50 text-red-600 hover:bg-red-100 border-none"
+                              onClick={() => handleAgentManagementAction(agent.id, 'ban')}
+                            >
+                              <Ban className="size-3.5 mr-1" /> Suspend
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleAgentManagementAction(agent.id, 'changeRole', 'user')}
+                            >
+                              Downgrade
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </GlassCard>
         </TabsContent>
 

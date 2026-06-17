@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const createdListings = []
+    const createdListings: any[] = []
 
     for (const item of listings) {
       if (!item.name || !item.category) continue
