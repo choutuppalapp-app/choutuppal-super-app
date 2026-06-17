@@ -41,6 +41,7 @@ interface UserListing {
   coverImage: string | null
   logoUrl: string | null
   instagramUrl: string | null
+  instagramUsername: string | null
   facebookUrl: string | null
   youtubeUrl: string | null
   address: string | null
@@ -146,7 +147,7 @@ export default function DashboardView() {
     phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
     address: '',
     coverImage: '', logoUrl: '', gallery: [] as string[],
-    instagramUrl: '', facebookUrl: '', youtubeUrl: '',
+    instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
     price: '', bedroomCount: '', area: ''
   })
   const [bannerData, setBannerData] = useState({
@@ -336,6 +337,7 @@ export default function DashboardView() {
         logoUrl: formData.logoUrl || null,
         gallery: formData.gallery.length > 0 ? formData.gallery : null,
         instagramUrl: formData.instagramUrl || null,
+        instagramUsername: formData.instagramUsername || null,
         facebookUrl: formData.facebookUrl || null,
         youtubeUrl: formData.youtubeUrl || null,
       }
@@ -368,7 +370,7 @@ export default function DashboardView() {
         fetchRealEstate()
         setFormData({
           name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
-          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''
+          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''
         })
       } else {
         const errData = await res.text(); console.error('Submit API error:', errData); toast.error(editingListingId ? 'Failed to update listing' : 'Failed to create listing')
@@ -578,7 +580,7 @@ export default function DashboardView() {
                               address: listing.address || '',
                               coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
                               gallery: listing.images ? JSON.parse(listing.images) : [],
-                              instagramUrl: listing.instagramUrl || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || '',
+                              instagramUrl: listing.instagramUrl || '', instagramUsername: listing.instagramUsername || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || '',
                               price: '', bedroomCount: '', area: ''
                             })
                             setIsCreatingListing(true)
@@ -664,7 +666,7 @@ export default function DashboardView() {
                               address: '',
                               coverImage: imagesArr[0] || '', logoUrl: '',
                               gallery: imagesArr.slice(1),
-                              instagramUrl: '', facebookUrl: '', youtubeUrl: '',
+                              instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
                               price: listing.price, bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '', area: listing.area || ''
                             })
                             setIsCreatingListing(true)
@@ -1022,7 +1024,7 @@ export default function DashboardView() {
           >
             <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">\n            {/* Header */}
             <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''}) }}>
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''}) }}>
                 <X className="w-6 h-6" />
               </Button>
               <span className="text-gray-900 font-black text-lg">{editingListingId ? 'Edit Listing' : 'New Listing'}</span>
@@ -1174,6 +1176,10 @@ export default function DashboardView() {
                   <div className="relative">
                     <Instagram className="absolute left-3 top-3.5 w-5 h-5 text-pink-500" />
                     <Input placeholder="Instagram Profile URL" value={formData.instagramUrl} onChange={e => setFormData({...formData, instagramUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-pink-500" />
+                  </div>
+                  <div className="relative">
+                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 text-pink-500 size-5" />
+                    <Input placeholder="Instagram Username (e.g. yourbusiness)" value={formData.instagramUsername || ''} onChange={e => setFormData({...formData, instagramUsername: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-pink-500" />
                   </div>
                   <div className="relative">
                     <Facebook className="absolute left-3 top-3.5 w-5 h-5 text-blue-600" />

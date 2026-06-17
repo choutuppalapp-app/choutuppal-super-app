@@ -41,6 +41,7 @@ interface ListingData {
   logoUrl: string | null
   gallery: string[] | null
   instagramUrl: string | null
+  instagramUsername: string | null
   facebookUrl: string | null
   youtubeUrl: string | null
   phoneNumber: string | null
@@ -319,6 +320,49 @@ END:VCARD`
                 ))}
               </CarouselContent>
             </Carousel>
+          </div>
+        )}
+
+        {/* Instagram Integration Section */}
+        {listing.instagramUsername && (
+          <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-pink-100 p-5 md:p-6 overflow-hidden">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-pink-200 pb-3">
+              <Instagram className="size-6 text-pink-500" />
+              Follow Us on Instagram
+            </h2>
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="flex-1 text-center sm:text-left">
+                <p className="text-gray-700 mb-4 font-medium text-sm sm:text-base">Check out our latest updates, offers, and gallery on Instagram!</p>
+                <a 
+                  href={`https://instagram.com/${listing.instagramUsername.replace('@', '')}`}
+                  target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
+                >
+                  <Instagram className="size-5" />
+                  @{listing.instagramUsername.replace('@', '')}
+                </a>
+              </div>
+              <div className="w-full sm:w-1/2 flex justify-center">
+                <div 
+                  className="w-full max-w-[300px] aspect-[4/3] bg-white rounded-xl shadow-lg p-1 relative overflow-hidden cursor-pointer group"
+                  onClick={() => window.open(`https://instagram.com/${listing.instagramUsername?.replace('@', '')}`, '_blank')}
+                >
+                   <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1 p-1">
+                      <div className="rounded-lg w-full h-full bg-gradient-to-br from-pink-200 to-purple-200 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="rounded-lg w-full h-full bg-gradient-to-br from-yellow-200 to-orange-200 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="rounded-lg w-full h-full bg-gradient-to-br from-orange-200 to-pink-200 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="rounded-lg w-full h-full flex items-center justify-center bg-gray-50 border border-pink-100 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <span className="text-pink-500 font-bold text-sm">View More</span>
+                      </div>
+                   </div>
+                   <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px] flex items-center justify-center group-hover:backdrop-blur-none transition-all">
+                      <div className="bg-white/90 px-4 py-2 rounded-full font-bold text-pink-600 shadow-xl flex items-center gap-2">
+                         <Instagram className="size-4" /> Open App
+                      </div>
+                   </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

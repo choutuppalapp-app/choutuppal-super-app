@@ -73,7 +73,7 @@ export async function PUT(
     const updateData: Record<string, unknown> = {}
     const allowedFields = [
       'name', 'category', 'description', 'services', 'images',
-      'coverImage', 'logoUrl', 'gallery', 'instagramUrl', 'facebookUrl', 'youtubeUrl',
+      'coverImage', 'logoUrl', 'gallery', 'instagramUrl', 'instagramUsername', 'facebookUrl', 'youtubeUrl',
       'phoneNumber', 'whatsappNumber', 'address', 'latitude', 'longitude',
       'isPremium', 'isFeatured', 'operatingHours',
     ]

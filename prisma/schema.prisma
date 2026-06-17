@@ -184,6 +184,7 @@ model Listing {
   logoUrl       String?
   gallery       String?  // JSON string of gallery image URLs
   instagramUrl  String?
+  instagramUsername String?
   facebookUrl   String?
   youtubeUrl    String?
   phoneNumber   String?

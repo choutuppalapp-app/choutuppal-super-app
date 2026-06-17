@@ -129,6 +129,7 @@ export async function POST(request: Request) {
         logoUrl: body.logoUrl || null,
         gallery: body.gallery ? JSON.stringify(body.gallery) : null,
         instagramUrl: body.instagramUrl || null,
+        instagramUsername: body.instagramUsername || null,
         facebookUrl: body.facebookUrl || null,
         youtubeUrl: body.youtubeUrl || null,
         phoneNumber: body.phoneNumber || null,
