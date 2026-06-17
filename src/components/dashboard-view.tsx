@@ -45,6 +45,7 @@ interface UserListing {
   youtubeUrl: string | null
   address: string | null
   cityId: string
+  status: string
   isApproved: boolean
   isPremium: boolean
   isFeatured: boolean
@@ -62,6 +63,7 @@ interface RealEstateListing {
   ownerPhone: string
   bedroomCount?: number | null
   area?: string | null
+  status: string
   isApproved: boolean
   isFeatured: boolean
   createdAt: string
@@ -77,6 +79,7 @@ interface BannerAd {
   linkUrl: string | null
   cityId: string | null
   isActive: boolean
+  status: string
 }
 
 interface CoinTransaction {
@@ -555,9 +558,13 @@ export default function DashboardView() {
                           <p className="text-xs md:text-sm text-gray-500 truncate">{listing.category} • {listing.city?.name}</p>
                         </div>
                         <div className="flex items-center gap-3 mt-2">
-                          <Badge className={listing.isApproved ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
-                            {listing.isApproved ? 'Active' : 'Pending'}
-                          </Badge>
+                          {listing.status === 'PENDING' ? (
+                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending Approval</Badge>
+                          ) : (
+                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                              {listing.status === 'APPROVED' ? 'Active' : 'Rejected'}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2 ml-auto">
@@ -632,9 +639,13 @@ export default function DashboardView() {
                           <p className="text-xs font-semibold text-[#D4AF37] mt-1">{listing.price}</p>
                         </div>
                         <div className="flex items-center gap-3 mt-2">
-                          <Badge className={listing.isApproved ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
-                            {listing.isApproved ? 'Active' : 'Pending'}
-                          </Badge>
+                          {listing.status === 'PENDING' ? (
+                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending Approval</Badge>
+                          ) : (
+                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                              {listing.status === 'APPROVED' ? 'Active' : 'Rejected'}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2 ml-auto">
@@ -712,9 +723,13 @@ export default function DashboardView() {
                       </div>
                     </div>
                     <div className="p-3 bg-white flex justify-between items-center">
-                      <Badge className={banner.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
-                        {banner.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                      {banner.status === 'PENDING' ? (
+                        <Badge className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>
+                      ) : (
+                        <Badge className={banner.isActive && banner.status === 'APPROVED' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
+                          {banner.isActive && banner.status === 'APPROVED' ? 'Active' : 'Inactive'}
+                        </Badge>
+                      )}
                       <div className="flex gap-2">
                         <button 
                           onClick={() => {

@@ -386,7 +386,7 @@ export default function AdminView() {
 
   // ─── Tab 3: Listing Moderation ─────────────────────────────────────────────
   const [modSubTab, setModSubTab] = useState('business')
-  const [listingFilter, setListingFilter] = useState('all')
+  const [listingFilter, setListingFilter] = useState('pending')
   const [adminListings, setAdminListings] = useState<AdminListing[]>([])
   const [reListings, setReListings] = useState<RealEstateListing[]>([])
   const [listingsLoading, setListingsLoading] = useState(false)
@@ -1947,7 +1947,7 @@ export default function AdminView() {
               <Building2 className="size-3.5 mr-1" />Cities
             </TabsTrigger>
             <TabsTrigger value="moderation" className="text-xs sm:text-sm">
-              <Shield className="size-3.5 mr-1" />Moderate
+              <Shield className="size-3.5 mr-1" />Pending Approvals
             </TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">
               <UserCog className="size-3.5 mr-1" />Users
@@ -3478,6 +3478,9 @@ export default function AdminView() {
                   <TabsTrigger value="realestate" className="text-xs">
                     <Building2 className="size-3.5 mr-1" />Real Estate
                   </TabsTrigger>
+                  <TabsTrigger value="banners" className="text-xs">
+                    <Megaphone className="size-3.5 mr-1" />Banners
+                  </TabsTrigger>
                 </TabsList>
                 <Select value={listingFilter} onValueChange={setListingFilter}>
                   <SelectTrigger className="w-[140px] bg-white/50 border-white/40 h-8 text-xs">
@@ -3778,6 +3781,92 @@ export default function AdminView() {
                             </TableRow>
                           )
                         })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Banners Moderation */}
+              <TabsContent value="banners">
+                {bannerLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="size-6 animate-spin text-[#D4AF37]" />
+                  </div>
+                ) : bannerAds.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Megaphone className="size-7 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">No {listingFilter === 'all' ? '' : listingFilter} banners</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto max-h-[600px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Image</TableHead>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Shop</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bannerAds
+                          .filter(b => {
+                            if (listingFilter === 'pending') return b.status === 'PENDING'
+                            if (listingFilter === 'approved') return b.status === 'APPROVED'
+                            return true
+                          })
+                          .map((banner) => (
+                          <TableRow key={banner.id}>
+                            <TableCell>
+                              {banner.imageUrl ? (
+                                <img src={banner.imageUrl} alt="" className="w-16 h-10 object-cover rounded" />
+                              ) : (
+                                <div className="w-16 h-10 bg-gray-100 rounded" />
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium text-sm max-w-[200px] truncate">{banner.title}</TableCell>
+                            <TableCell className="text-sm text-gray-600">{banner.shopName || '—'}</TableCell>
+                            <TableCell>{getListingStatusBadge(banner)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1 flex-wrap">
+                                {banner.status !== 'APPROVED' && (
+                                  <motion.div whileTap={{ scale: 0.9 }}>
+                                    <Button
+                                      size="sm" variant="outline"
+                                      onClick={async () => {
+                                        await fetch('/api/banners', { method: 'PUT', body: JSON.stringify({ id: banner.id, status: 'APPROVED' }) })
+                                        setBannerAds(bannerAds.map(b => b.id === banner.id ? { ...b, status: 'APPROVED' } : b))
+                                        toast.success('Banner Approved')
+                                      }}
+                                      className="h-7 text-xs border-green-300 text-green-600 hover:bg-green-50"
+                                    >
+                                      <CheckCircle className="size-3 mr-0.5" />Approve
+                                    </Button>
+                                  </motion.div>
+                                )}
+                                {banner.status !== 'REJECTED' && (
+                                  <motion.div whileTap={{ scale: 0.9 }}>
+                                    <Button
+                                      size="sm" variant="outline"
+                                      onClick={async () => {
+                                        await fetch('/api/banners', { method: 'PUT', body: JSON.stringify({ id: banner.id, status: 'REJECTED' }) })
+                                        setBannerAds(bannerAds.map(b => b.id === banner.id ? { ...b, status: 'REJECTED' } : b))
+                                        toast.success('Banner Rejected')
+                                      }}
+                                      className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                                    >
+                                      <XCircle className="size-3 mr-0.5" />Reject
+                                    </Button>
+                                  </motion.div>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </div>
