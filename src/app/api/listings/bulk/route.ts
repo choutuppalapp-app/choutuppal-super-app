@@ -43,9 +43,10 @@ export async function POST(request: Request) {
           isFeatured: false,
           
           // Optional real estate fields or others passed from CSV
-          price: item.price || null,
-          bedroomCount: item.bedroomCount ? parseInt(item.bedroomCount, 10) : null,
-          area: item.area || null,
+          // (Commented out because these might not exist in the base schema natively yet)
+          // price: item.price || null,
+          // bedroomCount: item.bedroomCount ? parseInt(item.bedroomCount, 10) : null,
+          // area: item.area || null,
         }
       })
       createdListings.push(newListing)
