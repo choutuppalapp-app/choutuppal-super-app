@@ -18,6 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
