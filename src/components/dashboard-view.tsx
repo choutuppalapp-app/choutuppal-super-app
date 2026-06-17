@@ -114,6 +114,7 @@ export default function DashboardView() {
   const [isCreatingListing, setIsCreatingListing] = useState(false)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
+  const [editingListingId, setEditingListingId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
     name: '', category: '', description: '',
@@ -281,8 +282,10 @@ export default function DashboardView() {
     setUploading(true)
     try {
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
-      const res = await fetch('/api/listings', {
-        method: 'POST',
+      const url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
+      const method = editingListingId ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUser.id,
@@ -303,22 +306,19 @@ export default function DashboardView() {
         }),
       })
       if (res.ok) {
-        alert('Listing published successfully!')
-        alert('Listing published successfully!'); toast.success('Listing created successfully!')
+        toast.success(editingListingId ? 'Listing updated successfully!' : 'Listing created successfully!')
         setIsCreatingListing(false)
+        setEditingListingId(null)
         fetchListings()
         setFormData({
           name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
           coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: ''
         })
       } else {
-        alert('Failed to publish. Check console.')
-        const errData = await res.text(); console.error('Submit API error:', errData); alert('Failed to publish. Check console.'); toast.error('Failed to create listing')
+        const errData = await res.text(); console.error('Submit API error:', errData); toast.error(editingListingId ? 'Failed to update listing' : 'Failed to create listing')
       }
     } catch (err) {
-      console.error(err)
-      alert('Failed to publish. Check console.')
-      console.error('Submit error:', err); alert('Failed to publish. Check console.'); toast.error('Something went wrong')
+      console.error('Submit error:', err); toast.error('Something went wrong')
     } finally {
       setUploading(false)
     }
@@ -482,6 +482,32 @@ export default function DashboardView() {
                           </Badge>
                         </div>
                       </div>
+                      <div className="flex gap-2 ml-auto">
+                        <button 
+                          onClick={() => {
+                            setEditingListingId(listing.id)
+                            setFormData({
+                              name: listing.name, category: listing.category, description: listing.description || '',
+                              phoneNumber: listing.phoneNumber || '', whatsappNumber: listing.whatsappNumber || '', 
+                              cityId: listing.cityId, sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
+                              address: listing.address || '',
+                              coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
+                              gallery: listing.images ? JSON.parse(listing.images) : [],
+                              instagramUrl: listing.instagramUrl || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || ''
+                            })
+                            setIsCreatingListing(true)
+                          }}
+                          className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => deleteListing(listing.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -530,6 +556,32 @@ export default function DashboardView() {
                             {listing.isApproved ? 'Active' : 'Pending'}
                           </Badge>
                         </div>
+                      </div>
+                      <div className="flex gap-2 ml-auto">
+                        <button 
+                          onClick={() => {
+                            setEditingListingId(listing.id)
+                            setFormData({
+                              name: listing.name, category: listing.category, description: listing.description || '',
+                              phoneNumber: listing.phoneNumber || '', whatsappNumber: listing.whatsappNumber || '', 
+                              cityId: listing.cityId, sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
+                              address: listing.address || '',
+                              coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
+                              gallery: listing.images ? JSON.parse(listing.images) : [],
+                              instagramUrl: listing.instagramUrl || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || ''
+                            })
+                            setIsCreatingListing(true)
+                          }}
+                          className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => deleteListing(listing.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -848,10 +900,10 @@ export default function DashboardView() {
           >
             <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">\n            {/* Header */}
             <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingListing(false)}>
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', facebookUrl: '', youtubeUrl: ''}) }}>
                 <X className="w-6 h-6" />
               </Button>
-              <span className="text-gray-900 font-black text-lg">New Listing</span>
+              <span className="text-gray-900 font-black text-lg">{editingListingId ? 'Edit Listing' : 'New Listing'}</span>
               <div className="w-10"></div>
             </div>
 
@@ -864,7 +916,7 @@ export default function DashboardView() {
                   <span className="text-gray-800 font-bold text-sm">Cover Photo *</span>
                   <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
                     {formData.coverImage ? (
-                      <Image src={formData.coverImage} alt="Cover" fill className="object-cover" />
+                      <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
                     ) : (
                       <div className="flex flex-col items-center gap-1">
                         <UploadCloud className="w-6 h-6 text-[#4169E1]" />
@@ -884,7 +936,7 @@ export default function DashboardView() {
                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                     {formData.gallery.map((img, i) => (
                       <div key={i} className="w-20 h-20 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                        <Image src={img} alt="Gallery" fill className="object-cover" />
+                        <img src={img} alt="Gallery" className="w-full h-full object-cover" />
                       </div>
                     ))}
                     {formData.gallery.length < 5 && (
@@ -997,8 +1049,12 @@ export default function DashboardView() {
 
             {/* Sticky Submit Button */}
             <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-              <Button onClick={submitListing} disabled={uploading || !formData.name || !formData.category} className="w-full max-w-lg mx-auto h-14 text-lg font-extrabold rounded-xl bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center">
-                {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Listing'}
+              <Button 
+                onClick={submitListing} 
+                disabled={uploading || !formData.name || !formData.category}
+                className="w-full max-w-lg mx-auto h-14 rounded-2xl bg-gradient-to-r from-[#4169E1] to-[#1E3A8A] text-white font-bold text-lg shadow-md transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center"
+              >
+                {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingListingId ? 'Update Listing' : 'Publish Listing')}
               </Button>
             </div>
             </div>
@@ -1032,7 +1088,7 @@ export default function DashboardView() {
                   <span className="text-gray-800 font-bold text-sm">Banner Image *</span>
                   <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
                     {bannerData.imageUrl ? (
-                      <Image src={bannerData.imageUrl} alt="Banner" fill className="object-cover" />
+                      <img src={bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" />
                     ) : (
                       <div className="flex flex-col items-center gap-1">
                         <UploadCloud className="w-6 h-6 text-purple-500" />

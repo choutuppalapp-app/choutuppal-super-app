@@ -63,7 +63,8 @@ export function BannerAds() {
   useEffect(() => {
     async function fetchAds() {
       try {
-        const res = await fetch(`/api/banners?cityId=${selectedCity === 'choutuppal' ? '' : ''}`)
+        const url = selectedCity ? `/api/banners?citySlug=${selectedCity}&active=true` : `/api/banners?active=true`
+        const res = await fetch(url)
         if (res.ok) {
           const data = await res.json()
           if (Array.isArray(data) && data.length > 0) {
@@ -109,7 +110,14 @@ export function BannerAds() {
       <div className="relative w-full overflow-hidden px-4">
           <div
             key={currentIndex}
-            className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer transition-opacity duration-300"
+            onClick={() => {
+              if (currentAd?.linkUrl) window.open(currentAd.linkUrl, '_blank')
+            }}
+            className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer transition-opacity duration-300 border-2 border-transparent"
+            style={{
+              backgroundClip: 'padding-box, border-box',
+              backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, #4169E1, #D4AF37)'
+            }}
           >
             {/* Image or gradient background */}
             {hasImage ? (

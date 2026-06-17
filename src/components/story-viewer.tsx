@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Volume2, VolumeX, Music, Pause } from 'lucide-react'
+import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
 
 /* ------------------------------------------------------------------ */
@@ -79,6 +80,8 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
     Math.min(initialStoryIndex, Math.max(stories.length - 1, 0))
   )
 
+  const { user: currentUser } = useAuth()
+
   const currentStory = stories[currentIndex] ?? null
   const currentUserStories = currentStory ? userGroups.get(currentStory.user.id) ?? [] : []
   const indexInUserGroup = currentStory
@@ -128,6 +131,22 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
+
+  const handleDeleteStory = async () => {
+    if (!currentStory) return
+    if (!confirm('Are you sure you want to delete this story?')) return
+    try {
+      const res = await fetch(`/api/stories/${currentStory.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast.success('Story deleted')
+        onCloseRef.current()
+      } else {
+        toast.error('Failed to delete story')
+      }
+    } catch {
+      toast.error('Failed to delete story')
+    }
+  }
 
   /* ---------------------------------------------------------------- */
   /*  Duration for current story                                       */
@@ -554,17 +573,39 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                 )}
               </div>
 
-              {/* Close button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onCloseRef.current()
-                }}
-                className="p-1.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
-                aria-label="Close story viewer"
-              >
-                <X className="w-6 h-6 text-white" />
-              </button>
+              <div className="flex items-center gap-2">
+                {currentUser?.id === currentStory.user.id && (
+                  <div className="flex items-center gap-2 mr-1">
+                    <div className="flex items-center gap-1 text-white/90 bg-black/40 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <Eye className="w-3 h-3" />
+                      <span>{currentStory.viewsCount}</span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPaused(true)
+                        handleDeleteStory()
+                        setPaused(false)
+                      }}
+                      className="p-1.5 rounded-full hover:bg-red-500/20 transition-colors flex-shrink-0"
+                      aria-label="Delete story"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                )}
+                {/* Close button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onCloseRef.current()
+                  }}
+                  className="p-1.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                  aria-label="Close story viewer"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
