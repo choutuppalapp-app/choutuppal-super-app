@@ -121,11 +121,10 @@ export function BannerAds() {
           >
             {/* Image or gradient background */}
             {hasImage ? (
-              <OptimizedImage
+              <img
                 src={currentAd.imageUrl!}
                 alt={currentAd.title || 'Promotion'}
-                fill
-                style={{ objectFit: 'cover', objectPosition: 'center' }}
+                className="w-full h-full object-cover rounded-lg"
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>
