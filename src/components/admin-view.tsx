@@ -19,7 +19,7 @@ import {
   PieChart as PieChartIcon, Clock, Ban, ShieldCheck,
   Landmark, UserPlus, Percent, Wallet, MapPin, IndianRupee,
   CreditCard, ArrowRightLeft, FileCheck, Pencil,
-  Music, Disc3, Ticket, X,
+  Music, Disc3, Ticket, X, MoreVertical, HelpCircle, Briefcase, Handshake, Play, Pause, Activity, ClipboardCheck
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -411,6 +411,10 @@ export default function AdminView() {
     isPublished: true,
   })
   const [savingNews, setSavingNews] = useState(false)
+  const [siteSettings, setSiteSettings] = useState<any[]>([])
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [claims, setClaims] = useState<any[]>([])
+  const [claimsLoading, setClaimsLoading] = useState(false)
   const [deleteNewsDialog, setDeleteNewsDialog] = useState<string | null>(null)
 
   // ─── Tab 6: Gamification ───────────────────────────────────────────────────
@@ -696,6 +700,28 @@ export default function AdminView() {
   }, [])
 
   useEffect(() => { fetchCities() }, [fetchCities])
+
+  // Helper to load claims
+  const fetchClaims = async () => {
+    setClaimsLoading(true)
+    try {
+      const res = await fetch('/api/claims')
+      if (res.ok) setClaims(await res.json())
+    } catch {
+      toast.error('Failed to load claims')
+    } finally {
+      setClaimsLoading(false)
+    }
+  }
+
+  // Load appropriate data on tab change
+  useEffect(() => {
+    if (adminTab === 'requests') {
+      fetchAdminRequests()
+    } else if (adminTab === 'claims') {
+      fetchClaims()
+    }
+  }, [adminTab])
 
   // ─── Fetch Business Listings ───────────────────────────────────────────────
   const fetchAdminListings = useCallback(() => {
@@ -1948,6 +1974,9 @@ export default function AdminView() {
             </TabsTrigger>
             <TabsTrigger value="moderation" className="text-xs sm:text-sm">
               <Shield className="size-3.5 mr-1" />Pending Approvals
+            </TabsTrigger>
+            <TabsTrigger value="claims" className="text-xs sm:text-sm">
+              <ClipboardCheck className="size-3.5 mr-1" />Claim Requests
             </TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">
               <UserCog className="size-3.5 mr-1" />Users
@@ -6490,6 +6519,74 @@ export default function AdminView() {
             </div>
           </GlassCard>
         </TabsContent>
+        {/* ═══════════════════════════════════════════════════════════════════════
+            TAB: CLAIM REQUESTS
+        ═══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="claims" className="mt-4 space-y-4">
+          <GlassCard>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <ClipboardCheck className="size-5 text-[#4169E1]" />
+                Business Claim Requests
+              </h2>
+            </div>
+            {claimsLoading ? (
+              <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin text-[#4169E1]" /></div>
+            ) : claims.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">No claim requests pending.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Listing</TableHead>
+                      <TableHead>Phone Provided</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {claims.map((claim: any) => (
+                      <TableRow key={claim.id}>
+                        <TableCell>
+                          <div className="font-medium text-sm">{claim.user?.fullName}</div>
+                          <div className="text-xs text-gray-500">{claim.user?.email}</div>
+                        </TableCell>
+                        <TableCell className="font-medium">{claim.listing?.name}</TableCell>
+                        <TableCell>{claim.phoneNumber}</TableCell>
+                        <TableCell>
+                          <Badge className={
+                            claim.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                            claim.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }>
+                            {claim.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {claim.status === 'PENDING' && (
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="text-green-600 border-green-200" onClick={async () => {
+                                await fetch('/api/claims', { method: 'PUT', body: JSON.stringify({ id: claim.id, action: 'approve' }) })
+                                fetchClaims()
+                              }}>Approve</Button>
+                              <Button size="sm" variant="outline" className="text-red-600 border-red-200" onClick={async () => {
+                                await fetch('/api/claims', { method: 'PUT', body: JSON.stringify({ id: claim.id, action: 'reject' }) })
+                                fetchClaims()
+                              }}>Reject</Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </GlassCard>
+        </TabsContent>
+
       </Tabs>
     </div>
   )

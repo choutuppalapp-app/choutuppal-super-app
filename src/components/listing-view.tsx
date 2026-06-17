@@ -8,6 +8,16 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import {
   Carousel,
   CarouselContent,
@@ -40,6 +50,7 @@ interface ListingData {
   longitude: number | null
   isPremium: boolean
   isFeatured: boolean
+  isClaimed: boolean
   viewsCount: number
   operatingHours: string | null
   user: {
@@ -59,6 +70,42 @@ export default function ListingView() {
   const { user } = useAuth()
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Claim logic
+  const [showClaimDialog, setShowClaimDialog] = useState(false)
+  const [claimPhone, setClaimPhone] = useState('')
+  const [claimSubmitting, setClaimSubmitting] = useState(false)
+
+  const handleClaimSubmit = async () => {
+    if (!claimPhone) {
+      toast.error('Please enter your phone number.')
+      return
+    }
+    if (!user) {
+      toast.error('Please login to claim a business.')
+      return
+    }
+    setClaimSubmitting(true)
+    try {
+      const res = await fetch('/api/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: listing?.id, phoneNumber: claimPhone, userId: user.id }),
+      })
+      if (res.ok) {
+        toast.success('Claim request submitted successfully! Admin will review shortly.')
+        setShowClaimDialog(false)
+        setClaimPhone('')
+      } else {
+        const err = await res.json()
+        toast.error(err.error || 'Failed to submit claim.')
+      }
+    } catch {
+      toast.error('Network error.')
+    } finally {
+      setClaimSubmitting(false)
+    }
+  }
 
   const fetchListing = useCallback(async () => {
     if (!selectedListingSlug) return
@@ -180,27 +227,39 @@ END:VCARD`
       </div>
 
       <div className="max-w-4xl mx-auto px-4 mt-16 relative z-10 space-y-6">
-        {/* Profile Section */}
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 leading-tight mb-2">
-            {listing.name}
-          </h1>
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <Badge className="bg-[#4169E1] text-white hover:bg-[#3151b0] px-3 py-1 rounded-md text-sm font-medium shadow-sm">
-              {listing.category}
-            </Badge>
-            <div className="flex items-center gap-1 text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-md shadow-sm border border-gray-100">
-              <Eye className="size-4" />
-              {listing.viewsCount} views
+        {/* Title & Stats */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight">
+              {listing.name}
+            </h1>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-[#4169E1]/10 text-[#4169E1] hover:bg-[#4169E1]/20">
+                {listing.category}
+              </Badge>
+              {listing.isClaimed === false && (
+                <Badge 
+                  onClick={() => setShowClaimDialog(true)}
+                  className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer animate-pulse"
+                >
+                  🎯 Claim This Business
+                </Badge>
+              )}
             </div>
           </div>
-          {listing.address && (
-            <div className="flex items-start gap-2 text-gray-600 mt-2 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-              <MapPin className="size-5 text-[#D4AF37] shrink-0 mt-0.5" />
-              <span className="text-sm font-medium leading-relaxed">{listing.address}</span>
-            </div>
-          )}
+          
+          <div className="flex items-center gap-4 mt-4 md:mt-0 text-sm text-gray-500 bg-white px-3 py-1 rounded-md shadow-sm border border-gray-100">
+            <Eye className="size-4" />
+            {listing.viewsCount} views
+          </div>
         </div>
+
+        {listing.address && (
+          <div className="flex items-start gap-2 text-gray-600 mt-2 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+            <MapPin className="size-5 text-[#D4AF37] shrink-0 mt-0.5" />
+            <span className="text-sm font-medium leading-relaxed">{listing.address}</span>
+          </div>
+        )}
 
         {/* Social Bar */}
         {(listing.instagramUrl || listing.facebookUrl || listing.youtubeUrl) && (
@@ -298,7 +357,7 @@ END:VCARD`
           </div>
 
           {/* Bottom Row: Smart Sharing */}
-          <div className="flex items-center gap-2 h-11">
+          <GlassCard className="flex items-center gap-2 h-11 p-1">
             <button onClick={handleShareStatus} className="flex-1 h-full flex items-center justify-center gap-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold border border-green-200 hover:bg-green-100 transition-colors">
               <MessageCircle className="size-3.5" />
               Status
@@ -315,9 +374,43 @@ END:VCARD`
               <Share2 className="size-3.5" />
               Share
             </button>
-          </div>
+          </GlassCard>
         </div>
       </div>
+
+      {/* Claim Business Dialog */}
+      <Dialog open={showClaimDialog} onOpenChange={setShowClaimDialog}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">Claim Your Business</DialogTitle>
+            <DialogDescription className="text-gray-500 mt-2">
+              Are you the owner of <b>{listing.name}</b>? Please provide your contact number. Our team will verify and transfer ownership to your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-semibold">Your Phone Number</Label>
+              <Input 
+                id="phone"
+                placeholder="e.g. 9876543210" 
+                value={claimPhone}
+                onChange={(e) => setClaimPhone(e.target.value)}
+                className="bg-gray-50"
+              />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setShowClaimDialog(false)}>Cancel</Button>
+            <Button 
+              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white" 
+              onClick={handleClaimSubmit}
+              disabled={claimSubmitting}
+            >
+              {claimSubmitting ? 'Submitting...' : 'Submit Claim Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

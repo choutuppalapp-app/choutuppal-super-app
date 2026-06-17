@@ -110,7 +110,8 @@ model User {
   likes               Like[]
   following           Follow[]         @relation("UserFollowing")
   followers           Follow[]         @relation("UserFollowers")
-  verificationRequest VerificationRequest?
+  verificationRequests VerificationRequest[]
+  claimRequests   ClaimRequest[]
 
   // Shorts & Learn relations
   shorts              Short[]
@@ -199,6 +200,7 @@ model Listing {
   qrCodeUrl     String?
   // Agent referral tracking
   referredByAgentId String? // If an agent referred this listing
+  isClaimed     Boolean  @default(true) // Set to false for bulk uploads
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -207,6 +209,7 @@ model Listing {
   leads    Lead[]
   reviews  Review[]
   shorts   Short[]
+  claimRequests ClaimRequest[]
 }
 
 // ─── Real Estate Listing ─────────────────────────────────────
@@ -665,3 +668,18 @@ model VideoProgress {
 
   @@unique([userId, videoId])
 }
+
+// --- Claim Request -------------------------------------------
+model ClaimRequest {
+  id          String   @id @default(cuid())
+  listingId   String
+  userId      String
+  phoneNumber String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
