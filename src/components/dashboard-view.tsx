@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyListings } from '@/components/empty-states'
+import useSWR from 'swr'
 import dynamic from 'next/dynamic'
 import { RichTextEditor } from '@/components/rich-text-editor'
 
@@ -125,58 +126,61 @@ export default function DashboardView() {
     title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
   })
 
-  // Data Fetching
-  const fetchListings = useCallback(() => {
-    if (!currentUser) return
-    setLoadingListings(true)
-    fetch(`/api/listings?userId=${currentUser.id}&limit=50`)
-      .then((res) => res.json())
-      .then((data) => setListings(data.listings || []))
-      .catch(() => toast.error('Failed to load listings'))
-      .finally(() => setLoadingListings(false))
-  }, [currentUser])
+  const fetcher = (url: string) => fetch(url).then(res => res.json())
 
-  const fetchBanners = useCallback(() => {
-    if (!currentUser) return
-    setLoadingBanners(true)
-    fetch(`/api/banners?userId=${currentUser.id}&all=true`)
-      .then((res) => res.json())
-      .then((data) => setBanners(Array.isArray(data) ? data : []))
-      .catch(() => toast.error('Failed to load banners'))
-      .finally(() => setLoadingBanners(false))
-  }, [currentUser])
+  // Data Fetching with SWR
+  const { data: listingsData, isLoading: loadingListingsSWR, mutate: fetchListings } = useSWR(
+    currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
+    fetcher,
+    { dedupingInterval: 60000 }
+  )
 
-  const fetchCoins = useCallback(() => {
-    if (!currentUser) return
-    fetch(`/api/coins?userId=${currentUser.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setCoinBalance(data.balance ?? 0)
-        setCoinTransactions(data.transactions ?? [])
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const hasClaimedToday = (data.transactions ?? []).some(
-          (tx: CoinTransaction) => tx.reason === 'Daily login reward' && new Date(tx.createdAt) >= today
-        )
-        setClaimedToday(hasClaimedToday)
-      })
-      .catch(() => {})
-  }, [currentUser])
+  const { data: bannersData, isLoading: loadingBannersSWR, mutate: fetchBanners } = useSWR(
+    currentUser ? `/api/banners?userId=${currentUser.id}&all=true` : null,
+    fetcher,
+    { dedupingInterval: 60000 }
+  )
+
+  const { data: coinsData, mutate: fetchCoins } = useSWR(
+    currentUser ? `/api/coins?userId=${currentUser.id}` : null,
+    fetcher,
+    { dedupingInterval: 60000 }
+  )
+
+  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000 })
 
   useEffect(() => {
-    if (currentUser) {
-      fetchListings()
-      fetchBanners()
-      fetchCoins()
+    if (listingsData) {
+      setListings(listingsData.listings || [])
+      setLoadingListings(false)
     }
-  }, [currentUser, fetchListings, fetchBanners, fetchCoins])
+  }, [listingsData])
 
   useEffect(() => {
-    fetch('/api/cities')
-      .then((res) => res.json())
-      .then((data) => setCities(Array.isArray(data) ? data : []))
-      .catch(() => {})
-  }, [])
+    if (bannersData) {
+      setBanners(Array.isArray(bannersData) ? bannersData : [])
+      setLoadingBanners(false)
+    }
+  }, [bannersData])
+
+  useEffect(() => {
+    if (coinsData) {
+      setCoinBalance(coinsData.balance ?? 0)
+      setCoinTransactions(coinsData.transactions ?? [])
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const hasClaimedToday = (coinsData.transactions ?? []).some(
+        (tx: CoinTransaction) => tx.reason === 'Daily login reward' && new Date(tx.createdAt) >= today
+      )
+      setClaimedToday(hasClaimedToday)
+    }
+  }, [coinsData])
+
+  useEffect(() => {
+    if (citiesData) {
+      setCities(Array.isArray(citiesData) ? citiesData : [])
+    }
+  }, [citiesData])
 
   // Handlers
   const handleDailyClaim = async () => {
