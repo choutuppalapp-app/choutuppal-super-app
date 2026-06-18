@@ -90,7 +90,7 @@ export function BannerAds() {
     return (
       <div className="w-full bg-white py-3">
         <div className="px-4">
-          <div className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl bg-gray-100 animate-pulse" />
+          <div className="w-full aspect-[16/9] bg-gray-100 animate-pulse rounded-lg" />
         </div>
       </div>
     )
@@ -108,7 +108,7 @@ export function BannerAds() {
             onClick={() => {
               if (currentAd?.linkUrl) window.open(currentAd.linkUrl, '_blank', 'noopener,noreferrer')
             }}
-            className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer transition-opacity duration-300 border-2 border-transparent"
+            className="w-full aspect-[16/9] overflow-hidden bg-gray-100 rounded-lg relative shadow-sm cursor-pointer transition-opacity duration-300 border-2 border-transparent"
             style={{
               backgroundClip: 'padding-box, border-box',
               backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, #4169E1, #D4AF37)'
