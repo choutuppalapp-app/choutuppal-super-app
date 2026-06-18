@@ -19,7 +19,7 @@ import {
   PieChart as PieChartIcon, Clock, Ban, ShieldCheck,
   Landmark, UserPlus, Percent, Wallet, MapPin, IndianRupee,
   CreditCard, ArrowRightLeft, FileCheck, Pencil,
-  Music, Disc3, Ticket, X, MoreVertical, HelpCircle, Briefcase, Handshake, Play, Pause, Activity, ClipboardCheck
+  Music, Disc3, Ticket, X, MoreVertical, HelpCircle, Briefcase, Handshake, Play, Pause, Activity, ClipboardCheck, Folder
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -462,6 +462,12 @@ export default function AdminView() {
   const [agentListings, setAgentListings] = useState<any[]>([])
   const [agentListingsLoading, setAgentListingsLoading] = useState(false)
 
+  // ─── Category Management ───────────────────────────────────────────────────
+  const [categories, setCategories] = useState<any[]>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryIcon, setNewCategoryIcon] = useState('')
+
   // ─── Bulk Actions ──────────────────────────────────────────────────────────
   const [selectedListings, setSelectedListings] = useState<Set<string>>(new Set())
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
@@ -840,6 +846,76 @@ export default function AdminView() {
   }, [])
 
   useEffect(() => { fetchAgents() }, [fetchAgents])
+
+  // ─── Categories ────────────────────────────────────────────────────────────
+  const fetchCategories = useCallback(() => {
+    setCategoriesLoading(true)
+    fetch('/api/admin/categories')
+      .then((res) => res.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => setCategories([]))
+      .finally(() => setCategoriesLoading(false))
+  }, [])
+
+  useEffect(() => { fetchCategories() }, [fetchCategories])
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName) return toast.error('Name is required')
+    try {
+      const res = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCategoryName, icon: newCategoryIcon })
+      })
+      if (res.ok) {
+        toast.success('Category created')
+        setNewCategoryName('')
+        setNewCategoryIcon('')
+        fetchCategories()
+      } else {
+        const errorData = await res.json()
+        toast.error(errorData.error || 'Failed to create')
+      }
+    } catch {
+      toast.error('Failed to create category')
+    }
+  }
+
+  const handleUpdateCategory = async (id: string, updates: any) => {
+    try {
+      const res = await fetch('/api/admin/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates })
+      })
+      if (res.ok) {
+        toast.success('Category updated')
+        fetchCategories()
+      } else {
+        toast.error('Failed to update')
+      }
+    } catch {
+      toast.error('Failed to update category')
+    }
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return
+    try {
+      const res = await fetch(`/api/admin/categories?id=${id}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        toast.success('Category deleted')
+        fetchCategories()
+      } else {
+        toast.error('Failed to delete')
+      }
+    } catch {
+      toast.error('Failed to delete category')
+    }
+  }
+
 
   const viewAgentListings = async (agent: any) => {
     setSelectedAgentForListings(agent)
@@ -2032,6 +2108,9 @@ export default function AdminView() {
             </TabsTrigger>
             <TabsTrigger value="claims" className="text-xs sm:text-sm">
               <ClipboardCheck className="size-3.5 mr-1" />Claim Requests
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm">
+              <Folder className="size-3.5 mr-1" />Categories
             </TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">
               <UserCog className="size-3.5 mr-1" />Users
@@ -4065,6 +4144,88 @@ export default function AdminView() {
                               onClick={() => handleAgentManagementAction(agent.id, 'changeRole', 'user')}
                             >
                               Downgrade
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </GlassCard>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════════════
+            TAB: CATEGORY MANAGEMENT
+        ═══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="categories" className="mt-4 space-y-4">
+          <GlassCard>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                <Folder className="size-4 text-[#D4AF37]" />
+                Manage Categories
+                <Badge variant="secondary">{categories.length} active</Badge>
+              </h3>
+            </div>
+            
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 mb-6 flex flex-col sm:flex-row gap-3 items-end">
+              <div className="flex-1 w-full space-y-1">
+                <Label>Category Name</Label>
+                <Input 
+                  placeholder="e.g. Restaurants" 
+                  value={newCategoryName} 
+                  onChange={(e) => setNewCategoryName(e.target.value)} 
+                />
+              </div>
+              <div className="flex-1 w-full space-y-1">
+                <Label>Icon Name (lucide-react, optional)</Label>
+                <Input 
+                  placeholder="e.g. Store" 
+                  value={newCategoryIcon} 
+                  onChange={(e) => setNewCategoryIcon(e.target.value)} 
+                />
+              </div>
+              <Button onClick={handleCreateCategory} className="w-full sm:w-auto bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white hover:opacity-90">
+                <Plus className="size-4 mr-2" /> Add Category
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <Table>
+                <TableHeader className="bg-gray-50/50">
+                  <TableRow>
+                    <TableHead>Category Name</TableHead>
+                    <TableHead>Slug</TableHead>
+                    <TableHead className="text-center">Active</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categoriesLoading ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader2 className="animate-spin size-6 mx-auto text-gray-400" /></TableCell></TableRow>
+                  ) : categories.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-gray-500">No categories found.</TableCell></TableRow>
+                  ) : (
+                    categories.map((cat: any) => (
+                      <TableRow key={cat.id}>
+                        <TableCell className="font-medium text-gray-900">{cat.name}</TableCell>
+                        <TableCell className="text-xs text-gray-500 font-mono">{cat.slug}</TableCell>
+                        <TableCell className="text-center">
+                          <Switch 
+                            checked={cat.isActive} 
+                            onCheckedChange={(val) => handleUpdateCategory(cat.id, { isActive: val })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDeleteCategory(cat.id)}
+                            >
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         </TableCell>

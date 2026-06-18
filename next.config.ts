@@ -5,7 +5,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  reactStrictMode: false,
+  compress: true,
+  reactStrictMode: true,
   // Allow cross-origin requests from the preview panel
   // Next.js uses wildcard domain matching via matchWildcardDomain()
   // '*.space-z.ai' matches any subdomain of space-z.ai
@@ -44,6 +45,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
       },
     ],
     dangerouslyAllowSVG: true,

@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyListings } from '@/components/empty-states'
 import useSWR from 'swr'
 import dynamic from 'next/dynamic'
-import { RichTextEditor } from '@/components/rich-text-editor'
+const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -132,6 +132,14 @@ export default function DashboardView() {
   const [loadingBanners, setLoadingBanners] = useState(true)
   const [coinBalance, setCoinBalance] = useState(0)
   const [coinTransactions, setCoinTransactions] = useState<CoinTransaction[]>([])
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
+
+  useEffect(() => {
+    fetch('/api/admin/categories?active=true')
+      .then(r => r.json())
+      .then(data => setDynamicCategories(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
   const [claimedToday, setClaimedToday] = useState(false)
   const [claimingDaily, setClaimingDaily] = useState(false)
   const [cities, setCities] = useState<City[]>([])
@@ -1089,7 +1097,9 @@ export default function DashboardView() {
                       className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-12 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
                     >
                       <option value="" disabled>Select Category</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {(dynamicCategories.length > 0 ? dynamicCategories.map(c => c.name) : CATEGORIES).map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
 

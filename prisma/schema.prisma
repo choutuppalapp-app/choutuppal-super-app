@@ -131,6 +131,17 @@ model PlatformSetting {
   updatedAt DateTime @updatedAt
 }
 
+// ─── Dynamic Categories ─────────────────────────────────────
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  icon      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ─── Transaction (Financial Tracking) ───────────────────────
 model Transaction {
   id             String   @id @default(cuid())

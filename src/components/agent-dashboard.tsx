@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Store, Eye, Phone, Plus, Pencil, Trash2, Edit2,
@@ -17,7 +17,8 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import useSWR from 'swr'
-import { RichTextEditor } from '@/components/rich-text-editor'
+import dynamic from 'next/dynamic'
+const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 import Papa from 'papaparse'
 
 interface UserListing {
@@ -61,6 +62,14 @@ export default function AgentDashboard() {
   const { data: citiesData } = useSWR('/api/cities', fetcher)
   const cities = citiesData?.cities || []
   const choutuppalCityId = cities.find((c: any) => c.slug === 'choutuppal')?.id || ''
+
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
+  useEffect(() => {
+    fetch('/api/admin/categories?active=true')
+      .then(r => r.json())
+      .then(data => setDynamicCategories(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
 
   // --- Single Listing Form State ---
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -341,8 +350,10 @@ export default function AgentDashboard() {
                        <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val})}>
                          <SelectTrigger className="h-11 bg-gray-50 border-gray-200"><SelectValue placeholder="Select Category" /></SelectTrigger>
                          <SelectContent>
-                           {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                         </SelectContent>
+                          {(dynamicCategories.length > 0 ? dynamicCategories.map(c => c.name) : CATEGORIES).map(c => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
                        </Select>
                      </div>
                    </div>
