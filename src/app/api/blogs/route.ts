@@ -1,4 +1,4 @@
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
 

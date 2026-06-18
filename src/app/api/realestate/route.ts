@@ -38,8 +38,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { title, price, images, ownerPhone, bedroomCount, area, cityId, userId } = body
 
-    if (!title || !price || !ownerPhone || !cityId || !userId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!title || !price || !ownerPhone || !cityId || !userId || bedroomCount === undefined || bedroomCount === null || !area) {
+      return NextResponse.json({ error: 'Missing required fields: title, price, ownerPhone, cityId, userId, bedroomCount, area' }, { status: 400 })
     }
 
     const listing = await db.realEstateListing.create({

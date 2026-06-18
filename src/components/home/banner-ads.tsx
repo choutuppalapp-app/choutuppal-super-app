@@ -111,7 +111,7 @@ export function BannerAds() {
           <div
             key={currentIndex}
             onClick={() => {
-              if (currentAd?.linkUrl) window.open(currentAd.linkUrl, '_blank')
+              if (currentAd?.linkUrl) window.open(currentAd.linkUrl, '_blank', 'noopener,noreferrer')
             }}
             className="w-full max-h-[250px] aspect-[2/1] md:aspect-[3/1] rounded-xl overflow-hidden relative shadow-sm cursor-pointer transition-opacity duration-300 border-2 border-transparent"
             style={{

@@ -374,21 +374,25 @@ END:VCARD`
         <div className="max-w-4xl mx-auto flex flex-col gap-2">
           {/* Top Row: Communication */}
           <div className="flex items-center gap-2 h-14">
-            <a
-              href={`tel:${phoneToCall}`}
-              className="flex-1 h-full flex items-center justify-center gap-2 rounded-xl bg-[#4169E1] hover:bg-[#3151b0] text-white font-bold transition-colors shadow-sm"
-            >
-              <Phone className="size-5" />
-              <span className="text-sm">Call</span>
-            </a>
-            <a
-              href={`https://wa.me/${phoneToWA}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`}
-              target="_blank" rel="noreferrer"
-              className="flex-1 h-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#1DA851] text-white font-bold transition-colors shadow-sm"
-            >
-              <MessageCircle className="size-5" />
-              <span className="text-sm">WhatsApp</span>
-            </a>
+            {phoneToCall && (
+              <a
+                href={`tel:${phoneToCall}`}
+                className="flex-1 h-full flex items-center justify-center gap-2 rounded-xl bg-[#4169E1] hover:bg-[#3151b0] text-white font-bold transition-colors shadow-sm"
+              >
+                <Phone className="size-5" />
+                <span className="text-sm">Call</span>
+              </a>
+            )}
+            {phoneToWA && (
+              <a
+                href={`https://wa.me/${phoneToWA}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`}
+                target="_blank" rel="noreferrer"
+                className="flex-1 h-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#1DA851] text-white font-bold transition-colors shadow-sm"
+              >
+                <MessageCircle className="size-5" />
+                <span className="text-sm">WhatsApp</span>
+              </a>
+            )}
             {listing.latitude && listing.longitude && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${listing.latitude},${listing.longitude}`}

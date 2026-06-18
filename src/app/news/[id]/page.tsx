@@ -89,9 +89,7 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
             {/* Content */}
             <div className="prose prose-gray max-w-none prose-p:leading-relaxed prose-p:text-gray-600 prose-headings:text-gray-900">
               {news.content ? (
-                news.content.split('\n').map((paragraph, idx) => (
-                  <p key={idx}>{paragraph}</p>
-                ))
+                <div dangerouslySetInnerHTML={{ __html: news.content }} />
               ) : (
                 <p className="italic text-gray-400">No content available.</p>
               )}
