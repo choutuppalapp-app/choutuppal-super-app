@@ -17,6 +17,8 @@ import { PWAInstallProvider } from "@/components/pwa-install-provider";
 import { PWAInstallPopup } from "@/components/pwa-install-popup";
 import { PWAIOSBanner } from "@/components/pwa-ios-banner";
 
+export const dynamic = 'force-dynamic';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

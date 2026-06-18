@@ -4389,6 +4389,24 @@ export default function AdminView() {
                                 </DialogFooter>
                               </DialogContent>
                             </Dialog>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 text-red-500 border-red-500/30 hover:bg-red-50"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this user?')) {
+                                  fetch(`/api/admin/users/${u.id}`, { method: 'DELETE' })
+                                    .then(res => res.json())
+                                    .then(() => {
+                                      setAdminUsers(prev => prev.filter(user => user.id !== u.id))
+                                      toast.success('User deleted successfully')
+                                    })
+                                    .catch(() => toast.error('Failed to delete user'))
+                                }
+                              }}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
                             </div>
                           </div>
                         </TableCell>
