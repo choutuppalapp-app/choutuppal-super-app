@@ -26,58 +26,6 @@ interface RealEstateListing {
   }
 }
 
-// ─── Realistic dummy real estate data for Choutuppal area ──────────
-const DUMMY_RE_LISTINGS: RealEstateListing[] = [
-  {
-    id: 're1',
-    title: '3 BHK Independent House — Gated Community',
-    price: '₹55 Lakhs',
-    images: null,
-    address: 'NH-65 Highway, Choutuppal',
-    bedroomCount: 3,
-    area: '1,800 sq.ft',
-    isFeatured: true,
-    ownerPhone: '918790083706',
-    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
-  },
-  {
-    id: 're2',
-    title: '2 BHK Apartment — Near Bus Stand',
-    price: '₹28 Lakhs',
-    images: null,
-    address: 'Bus Stand Road, Choutuppal',
-    bedroomCount: 2,
-    area: '1,100 sq.ft',
-    isFeatured: true,
-    ownerPhone: '919876543210',
-    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
-  },
-  {
-    id: 're3',
-    title: 'Open Plot — 200 Sq.Yards',
-    price: '₹18 Lakhs',
-    images: null,
-    address: 'Colony Extension, Choutuppal',
-    bedroomCount: null,
-    area: '200 sq.yd',
-    isFeatured: false,
-    ownerPhone: '919440123456',
-    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
-  },
-  {
-    id: 're4',
-    title: 'Commercial Shop — Main Road',
-    price: '₹12,000/month',
-    images: null,
-    address: 'Main Road, Choutuppal',
-    bedroomCount: null,
-    area: '500 sq.ft',
-    isFeatured: true,
-    ownerPhone: '918765432109',
-    city: { id: '', name: 'Choutuppal', slug: 'choutuppal' },
-  },
-]
-
 export function RealEstateSection() {
   const selectedCity = useAppStore((s) => s.selectedCity)
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
@@ -114,11 +62,11 @@ export function RealEstateSection() {
         if (res.ok) {
           const data = await res.json()
           const apiListings = Array.isArray(data) ? data : (data?.listings || [])
-          // Use API data if available, otherwise fall back to dummy data
-          setListings(apiListings.length > 0 ? apiListings : DUMMY_RE_LISTINGS)
+          // Use API data only
+          setListings(apiListings)
         }
       } catch {
-        setListings(DUMMY_RE_LISTINGS)
+        setListings([])
       } finally {
         setLoading(false)
       }

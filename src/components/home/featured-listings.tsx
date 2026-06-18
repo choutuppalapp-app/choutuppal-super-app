@@ -31,131 +31,6 @@ interface Listing {
     leads: number
   }
 }
-
-// ─── Realistic dummy listings for Choutuppal area ─────────────────────
-const DUMMY_LISTINGS: Listing[] = [
-  {
-    id: 'd1',
-    slug: 'sri-venkateshwara-tiffin-center',
-    name: 'Sri Venkateshwara Tiffin Center',
-    category: 'Tiffin',
-    description: 'Best dosa and idli in Choutuppal. Home-style South Indian breakfast.',
-    images: null,
-    whatsappNumber: '918790083706',
-    address: 'Main Road, Choutuppal',
-    isPremium: true,
-    isFeatured: true,
-    viewsCount: 1240,
-    user: { id: 'u1', fullName: 'Venkatesh Goud', avatarUrl: null },
-    _count: { reviews: 24, leads: 18 },
-  },
-  {
-    id: 'd2',
-    slug: 'lakshmi-medical-store',
-    name: 'Lakshmi Medical & General Store',
-    category: 'Medicals',
-    description: 'Complete pharmacy with 24/7 availability. All medicines at fair prices.',
-    images: null,
-    whatsappNumber: '919876543210',
-    address: 'Bus Stand Road, Choutuppal',
-    isPremium: false,
-    isFeatured: true,
-    viewsCount: 890,
-    user: { id: 'u2', fullName: 'Ramesh Babu', avatarUrl: null },
-    _count: { reviews: 15, leads: 10 },
-  },
-  {
-    id: 'd3',
-    slug: 'rajeshwari-salon',
-    name: 'Rajeshwari Beauty Salon',
-    category: 'Salons',
-    description: 'Professional hair cuts, facials, and bridal makeup services.',
-    images: null,
-    whatsappNumber: '919123456789',
-    address: 'Market Center, Choutuppal',
-    isPremium: true,
-    isFeatured: true,
-    viewsCount: 670,
-    user: { id: 'u3', fullName: 'Rajeshwari Devi', avatarUrl: null },
-    _count: { reviews: 19, leads: 12 },
-  },
-  {
-    id: 'd4',
-    slug: 'choutuppal-computer-services',
-    name: 'Choutuppal Computer Services',
-    category: 'Electronics',
-    description: 'Laptop repair, desktop service, printer setup, and CCTV installation.',
-    images: null,
-    whatsappNumber: '919876501234',
-    address: 'Near SBI Bank, Choutuppal',
-    isPremium: false,
-    isFeatured: true,
-    viewsCount: 540,
-    user: { id: 'u4', fullName: 'Suresh Kumar', avatarUrl: null },
-    _count: { reviews: 8, leads: 15 },
-  },
-  {
-    id: 'd5',
-    slug: 'sai-ram-plumbing',
-    name: 'Sai Ram Plumbing Works',
-    category: 'Plumbers',
-    description: 'Expert plumbing services — pipe fitting, water tank, bathroom renovation.',
-    images: null,
-    whatsappNumber: '918765432109',
-    address: 'Colony Area, Choutuppal',
-    isPremium: false,
-    isFeatured: true,
-    viewsCount: 320,
-    user: { id: 'u5', fullName: 'Ramu Nayak', avatarUrl: null },
-    _count: { reviews: 6, leads: 22 },
-  },
-  {
-    id: 'd6',
-    slug: 'vidya-bharathi-school',
-    name: 'Vidya Bharathi High School',
-    category: 'Education',
-    description: 'Top-rated school in Choutuppal. Nursery to 10th class. CBSE & State syllabus.',
-    images: null,
-    whatsappNumber: '919440123456',
-    address: 'NH-65 Road, Choutuppal',
-    isPremium: true,
-    isFeatured: true,
-    viewsCount: 2100,
-    user: { id: 'u6', fullName: 'Principal Sharma', avatarUrl: null },
-    _count: { reviews: 32, leads: 45 },
-  },
-  {
-    id: 'd7',
-    slug: 'sri-krishna-tailors',
-    name: 'Sri Krishna Tailors & Textiles',
-    category: 'Tailors',
-    description: 'Custom stitching for men and women. Blouse, salwar, shirt, and pant stitching.',
-    images: null,
-    whatsappNumber: '919988776655',
-    address: 'Old Market, Choutuppal',
-    isPremium: false,
-    isFeatured: true,
-    viewsCount: 450,
-    user: { id: 'u7', fullName: 'Krishna Murthy', avatarUrl: null },
-    _count: { reviews: 11, leads: 30 },
-  },
-  {
-    id: 'd8',
-    slug: 'auto-care-center',
-    name: 'Auto Care Service Center',
-    category: 'Automobiles',
-    description: 'Bike and car servicing, oil change, tyre fitting, and general repairs.',
-    images: null,
-    whatsappNumber: '919998887776',
-    address: 'Highway Road, Choutuppal',
-    isPremium: false,
-    isFeatured: true,
-    viewsCount: 380,
-    user: { id: 'u8', fullName: 'Mohan Reddy', avatarUrl: null },
-    _count: { reviews: 7, leads: 20 },
-  },
-]
-
 export function FeaturedListings() {
   const selectedCity = useAppStore((s) => s.selectedCity)
   const setSelectedListing = useAppStore((s) => s.setSelectedListing)
@@ -192,11 +67,11 @@ export function FeaturedListings() {
         if (res.ok) {
           const data = await res.json()
           const apiListings = data.listings || []
-          // Use API data if available, otherwise fall back to dummy data
-          setListings(apiListings.length > 0 ? apiListings : DUMMY_LISTINGS)
+          // Use API data only
+          setListings(apiListings)
         }
       } catch {
-        setListings(DUMMY_LISTINGS)
+        setListings([])
       } finally {
         setLoading(false)
       }
