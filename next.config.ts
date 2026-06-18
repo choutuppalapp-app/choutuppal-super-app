@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  generateBuildId: () => 'fresh-build-' + Date.now(),
   output: "standalone",
   typescript: {
     ignoreBuildErrors: true,
