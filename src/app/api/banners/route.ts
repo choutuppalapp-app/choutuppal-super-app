@@ -58,8 +58,8 @@ export async function POST(request: Request) {
         linkUrl: linkUrl || null,
         cityId: cityId || null,
         userId: userId || null,
-        isActive: isActive !== undefined ? Boolean(isActive) : true,
-        status: 'PENDING',
+        isActive: true,
+        status: 'APPROVED',
       },
     })
 

@@ -725,7 +725,7 @@ export default function DashboardView() {
                 {banners.map((banner) => (
                   <div key={banner.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
                     <div className="h-32 relative bg-gray-100">
-                      {banner.imageUrl && <Image src={banner.imageUrl} alt={banner.title} fill className="object-cover" />}
+                      {banner.imageUrl && <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                       <div className="absolute bottom-3 left-4 right-4">
                         <h4 className="font-bold text-white md:text-lg truncate">{banner.title}</h4>
