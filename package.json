@@ -1,6 +1,6 @@
 {
   "name": "choutuppal-2.0",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -51,6 +51,8 @@
     "@tiptap/react": "^3.23.1",
     "@tiptap/starter-kit": "^3.23.1",
     "@types/cookie": "^0.6.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
