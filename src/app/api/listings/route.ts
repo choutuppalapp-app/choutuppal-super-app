@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
@@ -90,6 +89,10 @@ export async function GET(request: Request) {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    }, {
+      headers: {
+        'Cache-Control': 's-maxage=60, stale-while-revalidate=30'
+      }
     })
   } catch (error) {
     console.error('Error fetching listings:', error)

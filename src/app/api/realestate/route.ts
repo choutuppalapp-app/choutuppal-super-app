@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
@@ -26,7 +26,11 @@ export async function GET(request: Request) {
       ],
     })
 
-    return NextResponse.json(listings)
+    return NextResponse.json(listings, {
+      headers: {
+        'Cache-Control': 's-maxage=60, stale-while-revalidate=30'
+      }
+    })
   } catch (error) {
     console.error('Error fetching real estate listings:', error)
     return NextResponse.json({ error: 'Failed to fetch real estate listings' }, { status: 500 })
