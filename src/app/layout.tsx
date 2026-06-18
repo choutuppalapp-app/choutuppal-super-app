@@ -36,8 +36,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://choutuppal.in'),
-  title: "Choutuppal App - Your Super App",
-  description: "Discover businesses, news, services, and everything local in Choutuppal — all in one place!",
+  title: "చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App",
+  description: "ఇకపై మన ఊరి షాపులు, హాస్పిటల్స్, రియల్ ఎస్టేట్ వివరాలు అన్నీ ఒకే క్లిక్ లో! చౌటుప్పల్ సొంత సూపర్ యాప్ ని ఇప్పుడే ఓపెన్ చేయండి.",
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -56,19 +56,18 @@ export const metadata: Metadata = {
     startupImage: ['/icons/icon-192x192.png'],
   },
   openGraph: {
-    title: "Choutuppal App - Your Super App",
-    description: "Discover businesses, news, services, and everything local in Choutuppal — all in one place!",
-    siteName: "Choutuppal App",
-    url: "https://choutuppal.in",
-    type: "website",
-    locale: "en_IN",
-    images: ["/opengraph-image"],
+    title: 'చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App',
+    description: 'మన ఊరి సర్వీస్ మీ చేతిలో! బిజినెస్ లిస్టింగ్స్, న్యూస్, రియల్ ఎస్టేట్ మరియు రోజువారీ ఆఫర్స్ కోసం ఇన్స్టాల్ చేయండి.',
+    url: 'https://choutuppal.in',
+    siteName: 'Choutuppal App',
+    images: [{ url: '/logo.png', width: 1200, height: 630, alt: 'Choutuppal App' }],
+    type: 'website',
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Choutuppal App - Your Super App",
-    description: "Discover businesses, news, services, and everything local in Choutuppal — all in one place!",
-    images: ["/opengraph-image"],
+    card: 'summary_large_image',
+    title: 'చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App',
+    description: 'మన ఊరి సర్వీస్ మీ చేతిలో! బిజినెస్ లిస్టింగ్స్, న్యూస్, రియల్ ఎస్టేట్ మరియు రోజువారీ ఆఫర్స్ కోసం ఇన్స్టాల్ చేయండి.',
+    images: ['/logo.png'],
   },
   keywords: ["Choutuppal", "local business", "real estate", "Telangana", "hyper-local", "super app"],
   authors: [{ name: "Choutuppal App Team" }],
