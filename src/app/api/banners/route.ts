@@ -16,14 +16,8 @@ export async function GET(request: Request) {
       where.isActive = true
       where.status = 'APPROVED'
     }
-    if (cityId) {
-      where.cityId = cityId
-    } else if (citySlug) {
-      const city = await db.city.findUnique({ where: { slug: citySlug } })
-      if (city) {
-        where.cityId = city.id
-      }
-    }
+    // Single city architecture: return all approved banners.
+    // Ignored cityId and citySlug filtering.
     
     if (userId) where.userId = userId
 

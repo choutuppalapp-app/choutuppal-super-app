@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import useSWR from 'swr'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 
@@ -59,26 +60,20 @@ export function BannerAds() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  // Fetch real ads from API
+  const { data, isLoading } = useSWR(
+    `/api/banners?active=true`,
+    (url) => fetch(url).then(res => res.json()),
+    { revalidateOnMount: true, revalidateIfStale: true }
+  )
+
   useEffect(() => {
-    async function fetchAds() {
-      try {
-        const url = selectedCity ? `/api/banners?citySlug=${selectedCity}&active=true` : `/api/banners?active=true`
-        const res = await fetch(url)
-        if (res.ok) {
-          const data = await res.json()
-          if (Array.isArray(data) && data.length > 0) {
-            setAds(data)
-          }
-        }
-      } catch {
-        // Use fallback
-      } finally {
-        setLoading(false)
-      }
+    if (data && Array.isArray(data) && data.length > 0) {
+      setAds(data)
+    } else if (data && Array.isArray(data) && data.length === 0) {
+      setAds(FALLBACK_ADS)
     }
-    fetchAds()
-  }, [selectedCity])
+    setLoading(false)
+  }, [data])
 
   // Auto-scroll logic (3 seconds interval)
   const adsCount = ads.length
