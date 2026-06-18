@@ -168,28 +168,28 @@ export default function DashboardView() {
   const { data: listingsData, isLoading: loadingListingsSWR, mutate: fetchListings } = useSWR(
     currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 60000 }
+    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const { data: realEstateData, mutate: fetchRealEstate } = useSWR(
     currentUser ? `/api/realestate?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 60000 }
+    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const { data: bannersData, isLoading: loadingBannersSWR, mutate: fetchBanners } = useSWR(
     currentUser ? `/api/banners?userId=${currentUser.id}&all=true` : null,
     fetcher,
-    { dedupingInterval: 60000 }
+    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const { data: coinsData, mutate: fetchCoins } = useSWR(
     currentUser ? `/api/coins?userId=${currentUser.id}` : null,
     fetcher,
-    { dedupingInterval: 60000 }
+    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
   )
 
-  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000 })
+  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true })
 
   useEffect(() => {
     if (listingsData) {

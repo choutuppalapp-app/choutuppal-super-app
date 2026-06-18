@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'choutuppal-v1'
+const CACHE_NAME = 'choutuppal-v2'
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -18,12 +18,12 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
-// Activate — clean old caches
+// Activate - clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
-    )
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key))
+    })
   )
   self.clients.claim()
 })
