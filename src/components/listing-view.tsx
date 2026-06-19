@@ -53,6 +53,7 @@ interface ListingData {
   isFeatured: boolean
   isClaimed: boolean
   viewsCount: number
+  rating: number
   operatingHours: string | null
   user: {
     id: string
@@ -71,6 +72,7 @@ export default function ListingView() {
   const { user } = useAuth()
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   // Claim logic
   const [showClaimDialog, setShowClaimDialog] = useState(false)
@@ -246,10 +248,38 @@ END:VCARD`
                   🎯 Claim This Business
                 </Badge>
               )}
+              <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-100 text-yellow-700">
+                <Star className="size-3.5 fill-yellow-500 text-yellow-500" />
+                <span className="text-sm font-bold">{listing.rating || 5.0}</span>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-4 mt-4 md:mt-0 text-sm text-gray-500 bg-white px-3 py-1 rounded-md shadow-sm border border-gray-100">
+          <div className="hidden md:flex items-center gap-4 mt-4 md:mt-0">
+            {phoneToCall && (
+              <Button onClick={() => window.location.href = `tel:${phoneToCall}`} className="bg-[#4169E1] hover:bg-[#3151b0] text-white">
+                <Phone className="size-4 mr-2" /> Call
+              </Button>
+            )}
+            {phoneToWA && (
+              <Button onClick={() => window.open(`https://wa.me/${phoneToWA}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`)} className="bg-[#25D366] hover:bg-[#1DA851] text-white">
+                <MessageCircle className="size-4 mr-2" /> WhatsApp
+              </Button>
+            )}
+            <Button variant="outline" onClick={generateVCard} className="border-gray-200 hover:bg-gray-50">
+              <Download className="size-4 mr-2" /> Save
+            </Button>
+            {listing.latitude && listing.longitude && (
+              <Button variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude},${listing.longitude}`)} className="border-gray-200 hover:bg-gray-50">
+                <MapPin className="size-4 mr-2" /> Location
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleShare} className="border-gray-200 hover:bg-gray-50">
+              <Share2 className="size-4 mr-2" /> Share
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4 mt-4 md:mt-0 md:hidden text-sm text-gray-500 bg-white px-3 py-1 rounded-md shadow-sm border border-gray-100">
             <Eye className="size-4" />
             {listing.viewsCount} views
           </div>
@@ -298,28 +328,25 @@ END:VCARD`
         )}
 
         {/* Gallery Section */}
-        {galleryImages.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6 overflow-hidden">
+        {/* Gallery Section */}
+        {galleryImages.length > 0 && (          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6 overflow-hidden">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
               <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
               Gallery
             </h2>
-            <Carousel className="w-full">
-              <CarouselContent className="-ml-2">
-                {galleryImages.map((img: string, idx: number) => (
-                  <CarouselItem key={idx} className="pl-2 basis-[85%] sm:basis-1/2 lg:basis-1/3">
-                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                      <OptimizedImage
-                        src={img}
-                        alt={`${listing.name} gallery ${idx + 1}`}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {galleryImages.map((img: string, idx: number) => (
+                <div key={idx} onClick={() => setSelectedImage(img)} className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer group">
+                  <OptimizedImage
+                    src={img}
+                    alt={`${listing.name} gallery ${idx + 1}`}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -370,7 +397,7 @@ END:VCARD`
       </div>
 
       {/* Sticky Action Footer (2 Rows) */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-50">
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-50 md:hidden">
         <div className="max-w-4xl mx-auto flex flex-col gap-2">
           {/* Top Row: Communication */}
           <div className="flex items-center gap-2 h-14">
@@ -426,6 +453,18 @@ END:VCARD`
         </div>
       </div>
 
+            {/* Lightbox Dialog */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
+          <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-white/10 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+          <div className="relative w-full max-w-5xl aspect-square md:aspect-video" onClick={(e) => e.stopPropagation()}>
+            <img src={selectedImage} alt="Gallery image fullscreen" className="w-full h-full object-contain" />
+          </div>
+        </div>
+      )}
+      
       {/* Claim Business Dialog */}
       <Dialog open={showClaimDialog} onOpenChange={setShowClaimDialog}>
         <DialogContent className="sm:max-w-md bg-white">

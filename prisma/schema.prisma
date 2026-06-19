@@ -210,6 +210,7 @@ model Listing {
   viewsCount    Int      @default(0)
   operatingHours String?
   qrCodeUrl     String?
+  rating        Float    @default(5)
   // Agent referral tracking
   referredByAgentId String? // If an agent referred this listing
   isClaimed     Boolean  @default(true) // Set to false for bulk uploads

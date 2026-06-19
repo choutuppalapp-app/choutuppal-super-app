@@ -146,6 +146,7 @@ export async function POST(request: Request) {
         isFeatured: false,
         operatingHours: body.operatingHours || null,
         referredByAgentId: body.referredByAgentId || null,
+        rating: body.rating ? parseFloat(body.rating) : 5,
       },
       include: {
         user: {

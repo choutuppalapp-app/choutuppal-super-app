@@ -32,6 +32,7 @@ interface Listing {
   isPremium: boolean
   isFeatured: boolean
   viewsCount: number
+  rating: number
   user: {
     id: string
     fullName: string
@@ -367,35 +368,48 @@ export default function ExploreView() {
                       <h3 className="font-semibold text-gray-900 line-clamp-1">
                         {listing.name}
                       </h3>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge
-                          variant="secondary"
-                          className="bg-[#4169E1]/10 text-[#4169E1] border-[#4169E1]/20 text-xs"
-                        >
-                          {listing.category}
-                        </Badge>
-                        {listing._count?.reviews > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Star className="size-3 text-[#D4AF37] fill-[#D4AF37]" />
-                            {listing._count?.reviews}
-                          </div>
-                        )}
-                      </div>
+                      
+                      <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-[#4169E1]/20 text-[10px] py-0 inline-flex w-max">
+                        {listing.category}
+                      </Badge>
+                      
                       {listing.address && (
-                        <p className="text-xs text-gray-500 line-clamp-1 flex items-center gap-1">
+                        <p className="text-xs text-gray-500 line-clamp-1 flex items-center gap-1 mt-1">
                           <MapPin className="size-3 shrink-0" />
                           {listing.address}
                         </p>
                       )}
+                      
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="size-3.5 text-[#D4AF37] fill-[#D4AF37]" />
+                        <span className="text-xs font-semibold text-gray-700">
+                          {listing.rating || 5.0}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          ({listing._count?.reviews || 0} reviews)
+                        </span>
+                      </div>
+                      
                       <div className="pt-1">
-                        <Button
-                          size="sm"
-                          onClick={(e) => handleGetQuote(e, listing.id)}
-                          className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs h-8 active:scale-95 transition-transform"
-                        >
-                          <Phone className="size-3 mr-1" />
-                          Get Quote
-                        </Button>
+                        {listing.whatsappNumber ? (
+                           <div onClick={(e) => {
+                             e.stopPropagation()
+                             window.open(`https://wa.me/91${listing.whatsappNumber!.replace(/\D/g, '')}?text=Hi, I found your business on Choutuppal App`, '_blank')
+                           }}>
+                             <button className="w-full flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1.5 rounded-md transition-colors">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                               WhatsApp
+                             </button>
+                           </div>
+                        ) : (
+                          <button
+                            onClick={(e) => handleGetQuote(e, listing.id)}
+                            className="w-full flex items-center justify-center gap-1 bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs font-semibold py-1.5 rounded-md transition-colors active:scale-95"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            Get Quote
+                          </button>
+                        )}
                       </div>
                     </div>
                   </GlassCard>

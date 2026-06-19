@@ -21,6 +21,7 @@ interface Listing {
   isPremium: boolean
   isFeatured: boolean
   viewsCount: number
+  rating: number
   user: {
     id: string
     fullName: string
@@ -169,12 +170,7 @@ export function FeaturedListings() {
                         </span>
                       </div>
                     )}
-                    {/* Category badge */}
-                    <div className="absolute top-2 left-2">
-                      <Badge className="bg-white/80 backdrop-blur-sm text-gray-700 text-[10px] border-0 shadow-sm">
-                        {listing.category}
-                      </Badge>
-                    </div>
+
                     {/* Premium badge */}
                     {listing.isPremium && (
                       <div className="absolute top-2 right-2">
@@ -190,31 +186,35 @@ export function FeaturedListings() {
                     <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">
                       {listing.name}
                     </h3>
+                    
+                    <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-[#4169E1]/20 text-[10px] py-0">
+                      {listing.category}
+                    </Badge>
 
                     {listing.address && (
-                      <div className="flex items-center gap-1 text-gray-500">
+                      <div className="flex items-center gap-1 text-gray-500 mt-1">
                         <MapPin className="size-3 flex-shrink-0" />
                         <span className="text-[11px] truncate">{listing.address}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Star className="size-3.5 text-[#D4AF37] fill-[#D4AF37]" />
-                        <span className="text-xs text-gray-600">
-                          {(listing._count?.reviews || 0) > 0 ? `${listing._count?.reviews} reviews` : 'New'}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="size-3.5 text-[#D4AF37] fill-[#D4AF37]" />
+                      <span className="text-xs font-semibold text-gray-700">
+                        {listing.rating || 5.0}
+                      </span>
+                      <span className="text-[10px] text-gray-500">
+                        ({listing._count?.reviews || 0} reviews)
+                      </span>
                     </div>
 
                     {/* WhatsApp Button */}
                     {listing.whatsappNumber && (
                       <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                        <WhatsAppButton
-                          whatsappNumber={listing.whatsappNumber}
-                          businessName={listing.name}
-                          className="!px-3 !py-1.5 !text-[11px] w-full justify-center"
-                        />
+                        <button className="w-full flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1.5 rounded-md transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                          WhatsApp
+                        </button>
                       </div>
                     )}
                   </div>
