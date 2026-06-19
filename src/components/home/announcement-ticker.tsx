@@ -58,9 +58,9 @@ export function AnnouncementTicker() {
       {/* Scrolling ticker text */}
       <div className="flex-1 overflow-hidden py-2">
         <div
-          className="flex whitespace-nowrap"
+          className="flex whitespace-nowrap hover:pause-animation"
           style={{
-            animation: 'ticker-scroll 35s linear infinite',
+            animation: 'ticker-scroll 15s linear infinite',
           }}
         >
           <span className="text-yellow-300 text-sm font-semibold px-6 whitespace-nowrap">

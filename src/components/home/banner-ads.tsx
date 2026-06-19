@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import useSWR from 'swr'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
+import { X } from 'lucide-react'
 
 interface BannerAd {
   id: string
@@ -59,6 +60,11 @@ export function BannerAds() {
   const [ads, setAds] = useState(FALLBACK_ADS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [selectedBannerUrl, setSelectedBannerUrl] = useState<string | null>(null)
+  
+
 
   const { data, isLoading } = useSWR(
     `/api/banners?active=true`,
@@ -82,9 +88,10 @@ export function BannerAds() {
   }, [adsCount])
 
   useEffect(() => {
-    const interval = setInterval(goToNext, 3000)
+    if (isHovered || isPopupOpen) return;
+    const interval = setInterval(goToNext, 4000)
     return () => clearInterval(interval)
-  }, [goToNext])
+  }, [goToNext, isHovered, isPopupOpen])
 
   if (loading) {
     return (
@@ -105,8 +112,15 @@ export function BannerAds() {
       <div className="relative w-full overflow-hidden px-4">
           <div
             key={currentIndex}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             onClick={() => {
-              if (currentAd?.linkUrl) window.open(currentAd.linkUrl, '_blank', 'noopener,noreferrer')
+              if (hasImage) {
+                setSelectedBannerUrl(currentAd.imageUrl!);
+                setIsPopupOpen(true);
+              } else if (currentAd?.linkUrl) {
+                window.open(currentAd.linkUrl, '_blank', 'noopener,noreferrer')
+              }
             }}
             className="w-full aspect-[16/9] overflow-hidden bg-gray-100 rounded-lg relative shadow-sm cursor-pointer transition-opacity duration-300 border-2 border-transparent"
             style={{
@@ -172,6 +186,25 @@ export function BannerAds() {
           />
         ))}
       </div>
+
+      {/* Full-Screen Banner Popup Modal */}
+      {isPopupOpen && selectedBannerUrl && (
+        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+          <div className="relative max-w-full max-h-full">
+            <button
+              onClick={() => setIsPopupOpen(false)}
+              className="absolute -top-4 -right-4 bg-white text-black p-2 rounded-full shadow-lg z-50 hover:bg-gray-200"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={selectedBannerUrl} 
+              className="max-w-full max-h-[90vh] rounded-lg animate-bounce-once object-contain" 
+              alt="Banner Popup" 
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
