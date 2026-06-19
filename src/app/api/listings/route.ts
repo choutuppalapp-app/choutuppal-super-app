@@ -141,7 +141,7 @@ export async function POST(request: Request) {
         latitude: body.latitude || null,
         longitude: body.longitude || null,
         isApproved: false,
-        status: 'PENDING',
+        status: 'APPROVED',
         isPremium: false,
         isFeatured: false,
         operatingHours: body.operatingHours || null,

@@ -78,7 +78,7 @@ export default function AgentDashboard() {
   const [formData, setFormData] = useState({
     name: '', category: '', description: '',
     phoneNumber: '', whatsappNumber: '', cityId: '',
-    address: '', coverImage: '',
+    address: '', coverImage: '', logoUrl: '', galleryUrls: [] as string[],
     price: '', bedroomCount: '', area: '',
     instagramUsername: '', facebookUrl: '', youtubeUrl: ''
   })
@@ -91,7 +91,7 @@ export default function AgentDashboard() {
   const [isUploadingBulk, setIsUploadingBulk] = useState(false)
 
   // --- Functions: Single Listing ---
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logoUrl' | 'gallery') => {
     if (!e.target.files || e.target.files.length === 0) return
     const file = e.target.files[0]
     
@@ -104,7 +104,11 @@ export default function AgentDashboard() {
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(`covers/${fileName}`)
       
-      setFormData(prev => ({ ...prev, coverImage: publicUrl }))
+      if (field === 'gallery') {
+        setFormData(prev => ({ ...prev, galleryUrls: [...prev.galleryUrls, publicUrl] }))
+      } else {
+        setFormData(prev => ({ ...prev, [field]: publicUrl }))
+      }
       toast.success('Image uploaded successfully!')
     } catch (error) {
       console.error(error)
@@ -148,7 +152,7 @@ export default function AgentDashboard() {
         setFormData({
           name: '', category: '', description: '',
           phoneNumber: '', whatsappNumber: '', cityId: choutuppalCityId,
-          address: '', coverImage: '',
+          address: '', coverImage: '', logoUrl: '', galleryUrls: [] as string[],
           price: '', bedroomCount: '', area: '',
           instagramUsername: '', facebookUrl: '', youtubeUrl: ''
         })
@@ -183,7 +187,7 @@ export default function AgentDashboard() {
     setFormData({
       name: l.name, category: l.category, description: l.description || '',
       phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', cityId: l.cityId,
-      address: l.address || '', coverImage: l.coverImage || '',
+      address: l.address || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '', galleryUrls: l.gallery ? JSON.parse(l.gallery) as string[] : [] as string[],
       price: l.price || '', bedroomCount: l.bedroomCount || '', area: l.area || '',
       instagramUsername: l.instagramUsername || '', facebookUrl: l.facebookUrl || '', youtubeUrl: l.youtubeUrl || ''
     })
@@ -319,26 +323,68 @@ export default function AgentDashboard() {
                  </h2>
                  
                  <div className="space-y-6">
-                   {/* Image Upload */}
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Photo</label>
-                     <div 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 cursor-pointer overflow-hidden relative transition-all duration-200"
-                     >
-                       {formData.coverImage ? (
-                         <Image src={formData.coverImage} alt="Cover" fill className="object-cover" />
-                       ) : (
-                         <>
-                           <div className="p-4 bg-white rounded-full shadow-sm mb-3">
-                             <UploadCloud className="size-6 text-[#4169E1]" />
-                           </div>
-                           <span className="text-sm font-medium text-gray-600">Click to upload cover photo</span>
-                         </>
-                       )}
-                       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-                     </div>
-                   </div>
+                    {/* Image Upload Zones */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Logo Upload */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo / Logo (షాప్ లోగో)</label>
+                        <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
+                          {formData.logoUrl ? (
+                            <>
+                              <Image src={formData.logoUrl} alt="Logo" fill className="object-contain p-2" />
+                              <button onClick={() => setFormData(p => ({...p, logoUrl: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
+                            </>
+                          ) : (
+                            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
+                              <div className="p-4 bg-white rounded-full shadow-sm mb-3">
+                                <UploadCloud className="size-6 text-[#4169E1]" />
+                              </div>
+                              <span className="text-sm font-medium text-gray-600">Upload Logo</span>
+                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'logoUrl')} />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                      {/* Cover Image Upload */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Banner Image</label>
+                        <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
+                          {formData.coverImage ? (
+                            <>
+                              <Image src={formData.coverImage} alt="Cover" fill className="object-cover" />
+                              <button onClick={() => setFormData(p => ({...p, coverImage: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
+                            </>
+                          ) : (
+                            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
+                              <div className="p-4 bg-white rounded-full shadow-sm mb-3">
+                                <UploadCloud className="size-6 text-[#4169E1]" />
+                              </div>
+                              <span className="text-sm font-medium text-gray-600">Upload Cover Photo</span>
+                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'coverImage')} />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Gallery Upload */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Gallery Images (up to 5 photos)</label>
+                      <div className="flex gap-4 overflow-x-auto pb-2">
+                        {formData.galleryUrls.map((url, i) => (
+                          <div key={i} className="min-w-[120px] h-[120px] relative border rounded-xl overflow-hidden shadow-sm">
+                            <Image src={url} alt={`Gallery ${i}`} fill className="object-cover" />
+                            <button onClick={() => setFormData(p => ({...p, galleryUrls: p.galleryUrls.filter((_, idx) => idx !== i)}))} className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10"><Trash2 className="size-3" /></button>
+                          </div>
+                        ))}
+                        {formData.galleryUrls.length < 5 && (
+                          <label className="min-w-[120px] h-[120px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 cursor-pointer">
+                            <Plus className="size-6 mb-1" />
+                            <span className="text-xs">Add Photo</span>
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'gallery')} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                      <div>

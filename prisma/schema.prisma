@@ -413,7 +413,9 @@ model BannerAd {
   linkUrl   String?
   cityId    String?
   isActive  Boolean  @default(true)
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status    String   @default("APPROVED") // PENDING, APPROVED, REJECTED
+  pricePerDay Int    @default(99)
+  isFree    Boolean  @default(true)
   createdAt DateTime @default(now())
 
   city City? @relation(fields: [cityId], references: [id])

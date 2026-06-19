@@ -1,9 +1,13 @@
-export const revalidate = 60;
-import { db } from '@/lib/db'
-import { supabase } from '@/lib/supabase'
-import { NextResponse } from 'next/server'
+import re
 
-export async function POST(request: Request) {
+with open('src/app/api/listings/bulk/route.ts', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+import_statement = """import { db } from '@/lib/db'
+import { supabase } from '@/lib/supabase'"""
+content = content.replace("import { db } from '@/lib/db'", import_statement)
+
+upload_helper = """export async function POST(request: Request) {
   const fetchAndUploadImage = async (url: string, pathPrefix: string) => {
     try {
       if (!url || !url.startsWith('http')) return null;
@@ -29,28 +33,29 @@ export async function POST(request: Request) {
       console.error('Fetch image error:', e);
       return null;
     }
-  };
-  try {
-    const body = await request.json()
-    const { userId, cityId, listings } = body
+  };"""
+content = content.replace("export async function POST(request: Request) {", upload_helper)
 
-    if (!userId || !cityId || !Array.isArray(listings) || listings.length === 0) {
-      return NextResponse.json(
-        { error: 'Missing required fields or empty listings array.' },
-        { status: 400 }
-      )
-    }
+data_insertion_match = """      const newListing = await db.listing.create({
+        data: {
+          userId,
+          cityId,
+          slug,
+          name: sanitizedName,
+          category: sanitizedCategory,
+          description: item.description || null,
+          phoneNumber: item.phoneNumber || null,
+          whatsappNumber: item.whatsappNumber || null,
+          address: item.address || null,
+          latitude: item.latitude ? parseFloat(item.latitude) : null,
+          longitude: item.longitude ? parseFloat(item.longitude) : null,
+          
+          isApproved: true,
+          status: 'APPROVED',
+          isPremium: false,
+          isFeatured: false,"""
 
-    const createdListings: any[] = []
-
-    for (const item of listings) {
-      if (!item.name || !item.category) continue
-
-      const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.random().toString(36).substring(2, 7)
-      const sanitizedName = String(item.name).trim().slice(0, 200)
-      const sanitizedCategory = String(item.category).trim().slice(0, 100)
-
-      let logoUrl = null;
+data_insertion_replace = """      let logoUrl = null;
       if (item.imageUrl) {
         logoUrl = await fetchAndUploadImage(item.imageUrl, 'logos') || item.imageUrl;
       }
@@ -58,7 +63,7 @@ export async function POST(request: Request) {
       if (item.coverUrl) {
         coverImage = await fetchAndUploadImage(item.coverUrl, 'covers') || item.coverUrl;
       }
-      let finalGallery: string[] = [];
+      let finalGallery = [];
       if (item.galleryUrls) {
         const urls = item.galleryUrls.split(',').map((u: string) => u.trim()).filter(Boolean);
         for (const u of urls) {
@@ -87,24 +92,10 @@ export async function POST(request: Request) {
           isApproved: true,
           status: 'APPROVED',
           isPremium: false,
-          isFeatured: false,
-          
-          // Optional real estate fields or others passed from CSV
-          // (Commented out because these might not exist in the base schema natively yet)
-          // price: item.price || null,
-          // bedroomCount: item.bedroomCount ? parseInt(item.bedroomCount, 10) : null,
-          // area: item.area || null,
-        }
-      })
-      createdListings.push(newListing)
-    }
+          isFeatured: false,"""
 
-    return NextResponse.json({ success: true, count: createdListings.length }, { status: 201 })
-  } catch (error) {
-    console.error('Error in bulk listing creation:', error)
-    return NextResponse.json(
-      { error: 'Failed to process bulk upload' },
-      { status: 500 }
-    )
-  }
-}
+content = content.replace(data_insertion_match, data_insertion_replace)
+
+with open('src/app/api/listings/bulk/route.ts', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('Patch applied')

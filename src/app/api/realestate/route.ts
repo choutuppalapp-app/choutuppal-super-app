@@ -56,7 +56,7 @@ export async function POST(request: Request) {
         area: area || null,
         cityId,
         userId,
-        status: 'PENDING',
+        status: 'APPROVED',
         isApproved: false,
       },
     })

@@ -386,7 +386,7 @@ export default function AdminView() {
 
   // ─── Tab 3: Listing Moderation ─────────────────────────────────────────────
   const [modSubTab, setModSubTab] = useState('business')
-  const [listingFilter, setListingFilter] = useState('pending')
+  const [listingFilter, setListingFilter] = useState('all')
   const [adminListings, setAdminListings] = useState<AdminListing[]>([])
   const [reListings, setReListings] = useState<RealEstateListing[]>([])
   const [listingsLoading, setListingsLoading] = useState(false)
@@ -2104,7 +2104,7 @@ export default function AdminView() {
               <Building2 className="size-3.5 mr-1" />Cities
             </TabsTrigger>
             <TabsTrigger value="moderation" className="text-xs sm:text-sm">
-              <Shield className="size-3.5 mr-1" />Pending Approvals
+              <Shield className="size-3.5 mr-1" />Content Manager
             </TabsTrigger>
             <TabsTrigger value="claims" className="text-xs sm:text-sm">
               <ClipboardCheck className="size-3.5 mr-1" />Claim Requests
@@ -3651,7 +3651,6 @@ export default function AdminView() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="featured">Featured</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
@@ -5348,6 +5347,9 @@ export default function AdminView() {
               </div>
 
               <div className="p-5 space-y-4">
+                <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm font-semibold border border-green-200">
+                  బ్యానర్ ఖరీదు: ₹99/- రోజుకు (ప్రస్తుతం ఉచితం - FREE)
+                </div>
                 <div>
                   <Label className="text-sm font-semibold">Title *</Label>
                   <Input
