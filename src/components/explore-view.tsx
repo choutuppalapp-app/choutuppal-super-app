@@ -20,6 +20,7 @@ import {
 import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
+import ListingCard from '@/components/listing-card'
 
 interface Listing {
   id: string
@@ -312,99 +313,9 @@ export default function ExploreView() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {listings.map((listing, idx) => {
-              const images = listing.images
-                ? (() => {
-                    try {
-                      const parsed = JSON.parse(listing.images)
-                      return Array.isArray(parsed) ? parsed : []
-                    } catch {
-                      return []
-                    }
-                  })()
-                : []
-              const coverImg = listing.coverImage || listing.logoUrl || images[0] || ''
-              const hasImage = !!coverImg
-              const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
-
-              return (
-                <Link
-                  key={listing.id}
-                  href={`/listing/${listing.slug || listing.id}`}
-                  className="block cursor-pointer transform transition-all duration-200 hover:shadow-lg active:scale-[0.97]"
-                >
-                  <GlassCard
-                    variant={listing.isPremium ? 'gold' : 'default'}
-                    className="!p-0 overflow-hidden"
-                  >
-                    {/* Image or gradient placeholder */}
-                    <div className="relative aspect-video w-full overflow-hidden">
-                      {hasImage ? (
-                        <OptimizedImage
-                          src={coverImg}
-                          alt={listing.name}
-                          fill
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
-                          <span className="text-white text-3xl font-bold opacity-40">
-                            {listing.name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      {listing.isPremium && (
-                        <Badge className="absolute top-2 right-2 bg-[#D4AF37] text-white border-none text-xs">
-                          <BadgeCheck className="size-3 mr-0.5" />
-                          Premium
-                        </Badge>
-                      )}
-                      {listing.isFeatured && !listing.isPremium && (
-                        <Badge className="absolute top-2 right-2 bg-[#4169E1] text-white border-none text-xs">
-                          Featured
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4 space-y-2">
-                      <h3 className="font-semibold text-gray-900 line-clamp-1">
-                        {listing.name}
-                      </h3>
-                      
-                      <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-[#4169E1]/20 text-[10px] py-0 inline-flex w-max">
-                        {listing.category}
-                      </Badge>
-                      
-                      {listing.address && (
-                        <p className="text-xs text-gray-500 line-clamp-1 flex items-center gap-1 mt-1">
-                          <MapPin className="size-3 shrink-0" />
-                          {listing.address}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center gap-1 mt-1">
-                        <Star className="size-3.5 text-[#D4AF37] fill-[#D4AF37]" />
-                        <span className="text-xs font-semibold text-gray-700">
-                          {listing.rating || 5.0}
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                          ({listing._count?.reviews || 0} reviews)
-                        </span>
-                      </div>
-
-                      <div className="mt-2">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${listing.operatingHours ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {listing.operatingHours ? 'Open' : 'Closed'}
-                        </span>
-                      </div>
-                        
-                      </div>
-                  </GlassCard>
-                </Link>
-              )
-            })}
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
           </div>
 
           {/* Load More */}

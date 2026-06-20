@@ -1,32 +1,28 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Store, Building2, Wallet, Settings, 
-  Crown, Coins, Eye, Phone, Plus, Pencil, Edit2, Trash2,
-  Gift, Zap, Star, MessageCircle, ChevronRight,
-  Loader2, X, Image as ImageIcon, MapPin, Search,
-  Heart, CreditCard, HelpCircle, LogOut, FileText,
-  BadgeDollarSign, ArrowUpRight, Globe, CheckSquare, Square,
-  Instagram, Facebook, Youtube, UploadCloud
+  Coins, Eye, Phone, Plus, Edit2, Trash2,
+  Loader2, X, Image as ImageIcon, MapPin,
+  Heart, CreditCard, LogOut, FileText,
+  BadgeDollarSign, Sparkles, UploadCloud,
+  Instagram, Facebook, Youtube, MessageCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EmptyListings } from '@/components/empty-states'
 import useSWR from 'swr'
 import dynamic from 'next/dynamic'
-const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
+import StoryCreator from '@/components/story-creator'
 
+const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -41,6 +37,7 @@ interface UserListing {
   coverImage: string | null
   logoUrl: string | null
   gallery?: string | null
+  services?: string | null
   instagramUrl: string | null
   instagramUsername: string | null
   facebookUrl: string | null
@@ -54,6 +51,9 @@ interface UserListing {
   viewsCount: number
   leadsCount?: number
   createdAt: string
+  rating: number
+  operatingHours: string | null
+  googleMapsUrl: string | null
   city?: { id: string; name: string; slug: string }
 }
 
@@ -65,6 +65,7 @@ interface RealEstateListing {
   ownerPhone: string
   bedroomCount?: number | null
   area?: string | null
+  address?: string | null
   status: string
   isApproved: boolean
   isFeatured: boolean
@@ -95,7 +96,6 @@ interface City {
   id: string
   name: string
   slug: string
-  [key: string]: any // allow dynamic fields for edit
 }
 
 const CATEGORIES = [
@@ -107,7 +107,10 @@ const CATEGORIES = [
 
 const TAB_ITEMS = [
   { key: 'home', label: 'Home', icon: LayoutDashboard },
-  { key: 'business', label: 'Business', icon: Store },
+  { key: 'listings', label: 'My Listings', icon: Store },
+  { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
+  { key: 'banners', label: 'My Banners', icon: ImageIcon },
+  { key: 'stories', label: 'My Stories', icon: Sparkles },
   { key: 'wallet', label: 'Wallet', icon: Wallet },
   { key: 'settings', label: 'Settings', icon: Settings },
 ]
@@ -115,6 +118,7 @@ const TAB_ITEMS = [
 export default function DashboardView() {
   const [activeTab, setActiveTab] = useState('home')
   const { user, logout } = useAuth()
+  
   const currentUser = user ? {
     id: user.id,
     fullName: user.fullName,
@@ -125,7 +129,7 @@ export default function DashboardView() {
     subscriptionTier: user.subscriptionTier,
   } : null
 
-  // State
+  // SWR/State
   const [listings, setListings] = useState<UserListing[]>([])
   const [realEstateListings, setRealEstateListings] = useState<RealEstateListing[]>([])
   const [loadingListings, setLoadingListings] = useState(true)
@@ -134,6 +138,68 @@ export default function DashboardView() {
   const [coinBalance, setCoinBalance] = useState(0)
   const [coinTransactions, setCoinTransactions] = useState<CoinTransaction[]>([])
   const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
+  const [cities, setCities] = useState<City[]>([])
+
+  const [claimedToday, setClaimedToday] = useState(false)
+  const [claimingDaily, setClaimingDaily] = useState(false)
+
+  // Modals & Creation Forms
+  const [isCreatingListing, setIsCreatingListing] = useState(false)
+  const [isCreatingBanner, setIsCreatingBanner] = useState(false)
+  const [isCreatingStory, setIsCreatingStory] = useState(false)
+  const [editingListingId, setEditingListingId] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const [formData, setFormData] = useState({
+    name: '', category: '', description: '',
+    phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
+    address: '',
+    coverImage: '', logoUrl: '', images: [] as string[],
+    instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
+    price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
+    services: [] as { name: string; description: string }[]
+  })
+
+  const [bannerData, setBannerData] = useState({
+    title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
+  })
+
+  const fetcher = (url: string) => fetch(url).then(res => res.json())
+
+  // SWR Hook integrations
+  const { data: listingsData, mutate: fetchListings } = useSWR(
+    currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
+    fetcher,
+    { dedupingInterval: 30000, revalidateOnMount: true }
+  )
+
+  const { data: realEstateData, mutate: fetchRealEstate } = useSWR(
+    currentUser ? `/api/realestate?userId=${currentUser.id}&limit=50` : null,
+    fetcher,
+    { dedupingInterval: 30000, revalidateOnMount: true }
+  )
+
+  const { data: bannersData, mutate: fetchBanners } = useSWR(
+    currentUser ? `/api/banners?userId=${currentUser.id}&all=true` : null,
+    fetcher,
+    { dedupingInterval: 30000, revalidateOnMount: true }
+  )
+
+  const { data: coinsData, mutate: fetchCoins } = useSWR(
+    currentUser ? `/api/coins?userId=${currentUser.id}` : null,
+    fetcher,
+    { dedupingInterval: 30000, revalidateOnMount: true }
+  )
+
+  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000 })
+
+  const { data: storiesData, mutate: fetchStories } = useSWR(
+    currentUser ? `/api/stories?cityId=${cities[0]?.id || 'default'}` : null,
+    fetcher,
+    { dedupingInterval: 30000, revalidateOnMount: true }
+  )
+
+  const userStories = (storiesData || []).filter((s: any) => s.userId === currentUser?.id)
 
   useEffect(() => {
     fetch('/api/admin/categories?active=true')
@@ -141,56 +207,6 @@ export default function DashboardView() {
       .then(data => setDynamicCategories(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [])
-  const [claimedToday, setClaimedToday] = useState(false)
-  const [claimingDaily, setClaimingDaily] = useState(false)
-  const [cities, setCities] = useState<City[]>([])
-
-  // Creation State
-  const [isCreatingListing, setIsCreatingListing] = useState(false)
-  const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
-  const [isCreatingBanner, setIsCreatingBanner] = useState(false)
-  const [editingListingId, setEditingListingId] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '', category: '', description: '',
-    phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
-    address: '',
-    coverImage: '', logoUrl: '', gallery: [] as string[],
-    instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
-    price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
-  })
-  const [bannerData, setBannerData] = useState({
-    title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
-  })
-
-  const fetcher = (url: string) => fetch(url).then(res => res.json())
-
-  // Data Fetching with SWR
-  const { data: listingsData, isLoading: loadingListingsSWR, mutate: fetchListings } = useSWR(
-    currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
-    fetcher,
-    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
-  )
-
-  const { data: realEstateData, mutate: fetchRealEstate } = useSWR(
-    currentUser ? `/api/realestate?userId=${currentUser.id}&limit=50` : null,
-    fetcher,
-    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
-  )
-
-  const { data: bannersData, isLoading: loadingBannersSWR, mutate: fetchBanners } = useSWR(
-    currentUser ? `/api/banners?userId=${currentUser.id}&all=true` : null,
-    fetcher,
-    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
-  )
-
-  const { data: coinsData, mutate: fetchCoins } = useSWR(
-    currentUser ? `/api/coins?userId=${currentUser.id}` : null,
-    fetcher,
-    { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true }
-  )
-
-  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000, revalidateOnMount: true, revalidateIfStale: true })
 
   useEffect(() => {
     if (listingsData) {
@@ -231,7 +247,7 @@ export default function DashboardView() {
     }
   }, [citiesData])
 
-  // Handlers
+  // Daily reward coins claim
   const handleDailyClaim = async () => {
     if (!currentUser) return
     setClaimingDaily(true)
@@ -256,7 +272,8 @@ export default function DashboardView() {
     }
   }
 
-      const compressAndUpload = async (file: File, folder: string) => {
+  // Upload helpers
+  const compressAndUpload = async (file: File, folder: string) => {
     let fileToUpload = file
     if (file.type.startsWith('image/')) {
       try {
@@ -274,7 +291,7 @@ export default function DashboardView() {
 
     if (error) {
       console.error('Upload error:', error);
-      alert('Image upload failed: ' + error.message);
+      toast.error('Image upload failed: ' + error.message);
       throw new Error('Upload failed');
     }
     const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(data.path);
@@ -288,24 +305,25 @@ export default function DashboardView() {
     try {
       const data = await compressAndUpload(files[0], 'choutuppal/listings')
       setFormData(prev => ({ ...prev, coverImage: data.url }))
-      toast.success('Cover uploaded successfully')
+      toast.success('Cover banner uploaded successfully')
     } catch {
       toast.error('Failed to upload cover')
     }
     e.target.value = ''
   }
 
-  const handleExtraUpload = async (file: File, type: 'logo') => {
+  const handleExtraUpload = async (file: File) => {
     toast.info('Compressing image...')
     try {
       const data = await compressAndUpload(file, 'choutuppal/listings')
       setFormData(prev => ({ ...prev, logoUrl: data.url }))
-      toast.success('Uploaded successfully')
+      toast.success('Uploaded logo successfully')
     } catch {
       toast.error('Upload failed')
     }
   }
 
+  // Gallery uploads (MUST use correct images state updater)
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -326,16 +344,14 @@ export default function DashboardView() {
       });
       const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
       
-      // CRITICAL FIX: Use callback to append to previous state safely
-      setFormData(prevData => ({
-        ...prevData,
-        gallery: [...(prevData.gallery || []), ...urls] // Ensure it's always an array
-      }));
+      // Gallery state MUST use:
+      setFormData(prev => ({ ...prev, images: [...(prev.images || []), ...urls] }));
       toast.success('Gallery uploaded successfully');
     } catch (error: any) {
       console.error('Gallery upload error:', error);
       toast.error('Upload failed: ' + (error?.message || 'Unknown error'));
     }
+    e.target.value = ''
   };
 
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -344,22 +360,24 @@ export default function DashboardView() {
     toast.info('Compressing image...')
     try {
       const data = await compressAndUpload(files[0], 'choutuppal/banners')
-      setBannerData({ title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: data.url, cityId: '' })
-      setIsCreatingBanner(true)
+      setBannerData(prev => ({ ...prev, imageUrl: data.url }))
+      toast.success('Uploaded banner successfully')
     } catch {
       toast.error('Failed to upload image')
     }
     e.target.value = ''
   }
 
+  // Publish / update listing
   const submitListing = async () => {
     if (!currentUser || !formData.name || !formData.category) return
-    console.log('Submitting:', formData)
     setUploading(true)
     try {
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
       let url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
       const method = editingListingId ? 'PUT' : 'POST'
+      
+      const rawImages = formData.images
       let body: any = {
         userId: currentUser.id,
         cityId: formData.cityId || cities[0]?.id || 'default',
@@ -372,16 +390,21 @@ export default function DashboardView() {
         address: formData.address || null,
         coverImage: formData.coverImage || null,
         logoUrl: formData.logoUrl || null,
-        gallery: formData.gallery.length > 0 ? formData.gallery : null,
+        images: rawImages.length > 0 ? rawImages : null,
+        gallery: rawImages.length > 0 ? rawImages : null,
+        services: formData.services.length > 0 ? formData.services : null,
         instagramUrl: formData.instagramUrl || null,
         instagramUsername: formData.instagramUsername || null,
         facebookUrl: formData.facebookUrl || null,
         youtubeUrl: formData.youtubeUrl || null,
+        rating: formData.rating,
+        operatingHours: formData.operatingHours || null,
+        googleMapsUrl: formData.googleMapsUrl || null,
       }
 
       if (formData.category === 'Real Estate') {
         url = editingListingId ? `/api/realestate/${editingListingId}` : '/api/realestate'
-        const imagesArr = formData.coverImage ? [formData.coverImage, ...formData.gallery] : formData.gallery
+        const imagesArr = formData.coverImage ? [formData.coverImage, ...rawImages] : rawImages
         body = {
           userId: currentUser.id,
           cityId: formData.cityId || cities[0]?.id || 'default',
@@ -405,22 +428,28 @@ export default function DashboardView() {
         setEditingListingId(null)
         fetchListings()
         fetchRealEstate()
+        
+        // Reset state
         setFormData({
           name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
-          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
+          coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
+          services: []
         })
       } else {
-        const errData = await res.text(); console.error('Submit API error:', errData); toast.error(editingListingId ? 'Failed to update listing' : 'Failed to create listing')
+        const errData = await res.text()
+        console.error('Submit API error:', errData)
+        toast.error(editingListingId ? 'Failed to update listing' : 'Failed to create listing')
       }
     } catch (err) {
-      console.error('Submit error:', err); toast.error('Something went wrong')
+      console.error('Submit error:', err)
+      toast.error('Something went wrong')
     } finally {
       setUploading(false)
     }
   }
 
   const submitBanner = async () => {
-    if (!currentUser || !bannerData.title) return
+    if (!currentUser || !bannerData.title || !bannerData.imageUrl) return
     setUploading(true)
     try {
       const res = await fetch('/api/banners', {
@@ -430,7 +459,7 @@ export default function DashboardView() {
           userId: currentUser.id,
           cityId: bannerData.cityId || cities[0]?.id || 'default',
           title: bannerData.title,
-          shopName: bannerData.shopName,
+          shopName: bannerData.shopName || '',
           offerText: bannerData.offerText || null,
           linkUrl: bannerData.linkUrl || null,
           imageUrl: bannerData.imageUrl || null,
@@ -440,9 +469,12 @@ export default function DashboardView() {
       if (res.ok) {
         toast.success('Banner created successfully!')
         setIsCreatingBanner(false)
+        setBannerData({ title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: '' })
         fetchBanners()
       } else {
-        const errData = await res.text(); console.error('Banner submit API error:', errData); toast.error('Failed to create banner')
+        const errData = await res.text()
+        console.error('Banner submit API error:', errData)
+        toast.error('Failed to create banner')
       }
     } catch {
       toast.error('Something went wrong')
@@ -451,16 +483,19 @@ export default function DashboardView() {
     }
   }
 
+  // DELETE LOGIC: Call endpoint with method DELETE and toast.error on failure
   const deleteListing = async (id: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return
     try {
       const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('Listing deleted')
-        setListings(listings.filter(l => l.id !== id))
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to delete listing')
       }
-    } catch {
-      toast.error('Failed to delete')
+      toast.success('Listing deleted successfully!')
+      setListings(prev => prev.filter(l => l.id !== id))
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete listing')
     }
   }
 
@@ -468,12 +503,14 @@ export default function DashboardView() {
     if (!confirm('Are you sure you want to delete this property?')) return
     try {
       const res = await fetch(`/api/realestate/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('Property deleted')
-        fetchRealEstate()
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to delete property')
       }
-    } catch {
-      toast.error('Failed to delete')
+      toast.success('Property deleted successfully!')
+      fetchRealEstate()
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete property')
     }
   }
 
@@ -481,16 +518,96 @@ export default function DashboardView() {
     if (!confirm('Are you sure you want to delete this banner?')) return
     try {
       const res = await fetch(`/api/banners?id=${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('Banner deleted')
-        fetchBanners()
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to delete banner')
       }
-    } catch {
-      toast.error('Failed to delete banner')
+      toast.success('Banner deleted successfully!')
+      fetchBanners()
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete banner')
     }
   }
 
-  // --- UI Renders ---
+  const openEditListing = (listing: UserListing) => {
+    setEditingListingId(listing.id)
+    setFormData({
+      name: listing.name,
+      category: listing.category,
+      description: listing.description || '',
+      phoneNumber: listing.phoneNumber || '',
+      whatsappNumber: listing.whatsappNumber || '', 
+      cityId: listing.cityId,
+      sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
+      address: listing.address || '',
+      coverImage: listing.coverImage || '',
+      logoUrl: listing.logoUrl || '',
+      images: (() => {
+        const raw = listing.images || listing.gallery
+        if (!raw) return []
+        try {
+          return typeof raw === 'string' ? JSON.parse(raw) : raw
+        } catch {
+          return []
+        }
+      })(),
+      instagramUrl: listing.instagramUrl || '',
+      instagramUsername: listing.instagramUsername || '',
+      facebookUrl: listing.facebookUrl || '',
+      youtubeUrl: listing.youtubeUrl || '',
+      price: '',
+      bedroomCount: '',
+      area: '',
+      rating: listing.rating || 5,
+      operatingHours: listing.operatingHours || '9:00 AM - 9:00 PM',
+      googleMapsUrl: listing.googleMapsUrl || '',
+      services: (() => {
+        if (!listing.services) return []
+        try {
+          return typeof listing.services === 'string' ? JSON.parse(listing.services) : listing.services
+        } catch {
+          return []
+        }
+      })()
+    })
+    setIsCreatingListing(true)
+  }
+
+  const openEditRealEstate = (listing: RealEstateListing) => {
+    setEditingListingId(listing.id)
+    let imagesArr: string[] = []
+    try {
+      if (listing.images) imagesArr = JSON.parse(listing.images)
+    } catch (e) {}
+    
+    setFormData({
+      name: listing.title,
+      category: 'Real Estate',
+      description: '',
+      phoneNumber: listing.ownerPhone,
+      whatsappNumber: '', 
+      cityId: listing.city?.id || '',
+      sameAsPhone: false,
+      address: listing.address || '',
+      coverImage: imagesArr[0] || '',
+      logoUrl: '',
+      images: imagesArr.slice(1),
+      instagramUrl: '',
+      instagramUsername: '',
+      facebookUrl: '',
+      youtubeUrl: '',
+      price: listing.price,
+      bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '',
+      area: listing.area || '',
+      rating: 5,
+      operatingHours: '9:00 AM - 9:00 PM',
+      googleMapsUrl: '',
+      services: []
+    })
+    setIsCreatingListing(true)
+  }
+
+  // --- Views Renders ---
   const renderHome = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       {/* Profile Header */}
@@ -506,18 +623,18 @@ export default function DashboardView() {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{currentUser?.fullName || 'User'}</h2>
-          <p className="text-gray-500 flex items-center text-sm font-medium"><Phone className="w-3 h-3 mr-1"/> {currentUser?.phone}</p>
+          <p className="text-gray-500 flex items-center text-sm font-semibold"><Phone className="w-3.5 h-3.5 mr-1 text-[#4169E1]"/> {currentUser?.phone}</p>
         </div>
       </div>
 
       {/* Wallet Card */}
-      <div className="bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-2xl p-6 relative overflow-hidden shadow-lg">
+      <div className="bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-3xl p-6 relative overflow-hidden shadow-lg border border-white/10">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         <div className="relative z-10 flex justify-between items-center">
           <div>
-            <p className="text-white/80 font-medium mb-1">Total Coins</p>
+            <p className="text-white/80 font-bold mb-1 text-sm">Total Coin Balance</p>
             <div className="flex items-center space-x-2">
-              <Coins className="w-8 h-8 text-yellow-300" />
+              <Coins className="w-8 h-8 text-yellow-300 fill-yellow-300" />
               <span className="text-4xl font-black text-white">
                 {coinBalance}
               </span>
@@ -525,51 +642,55 @@ export default function DashboardView() {
           </div>
           <Button 
             onClick={() => setActiveTab('wallet')}
-            className="bg-white text-[#4169E1] hover:bg-gray-100 font-bold rounded-full shadow-md"
+            className="bg-white text-[#4169E1] hover:bg-gray-100 font-extrabold rounded-2xl shadow-md h-11 px-6 border-none"
           >
-            Earn More
+            Earn Coins
           </Button>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <h3 className="text-lg font-bold text-gray-900">Quick Stats</h3>
-      <div className="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
+      <h3 className="text-lg font-black text-gray-950">Quick Stats</h3>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
           <Store className="w-6 h-6 text-[#4169E1]" />
-          <span className="text-2xl font-bold text-gray-900">{listings.length}</span>
-          <span className="text-xs text-gray-500 font-medium">Listings</span>
+          <span className="text-2xl font-black text-gray-950">{listings.length}</span>
+          <span className="text-xs text-gray-400 font-bold">Listings</span>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
           <Eye className="w-6 h-6 text-[#4169E1]" />
-          <span className="text-2xl font-bold text-gray-900">{listings.reduce((acc, l) => acc + l.viewsCount, 0)}</span>
-          <span className="text-xs text-gray-500 font-medium">Views</span>
+          <span className="text-2xl font-black text-gray-950">{listings.reduce((acc, l) => acc + l.viewsCount, 0)}</span>
+          <span className="text-xs text-gray-400 font-bold">Views</span>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
           <BadgeDollarSign className="w-6 h-6 text-[#4169E1]" />
-          <span className="text-2xl font-bold text-gray-900">{listings.reduce((acc, l) => acc + (l.leadsCount || 0), 0)}</span>
-          <span className="text-xs text-gray-500 font-medium">Leads</span>
+          <span className="text-2xl font-black text-gray-950">{listings.reduce((acc, l) => acc + (l.leadsCount || 0), 0)}</span>
+          <span className="text-xs text-gray-400 font-bold">Leads</span>
         </div>
       </div>
     </div>
   )
 
-  
-  const renderBusiness = () => {
-    const businessListings = listings.filter(l => l.category !== 'Real Estate');
-
+  const renderListings = () => {
+    const businessListings = listings.filter(l => l.category !== 'Real Estate')
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-        
-        {/* Card 1: My Business Listings */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg md:text-xl font-bold text-gray-900 flex items-center">
               <Store className="w-5 h-5 mr-2 text-[#4169E1]" /> 
-              My Listings
+              My Business Listings
             </h3>
-            <Button size="sm" onClick={() => setIsPostMenuOpen(true)} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform">
-              <Plus className="w-4 h-4 mr-1" /> Add Listing
+            <Button 
+              size="sm" 
+              onClick={() => {
+                setFormData(p => ({ ...p, category: '' }))
+                setEditingListingId(null)
+                setIsCreatingListing(true)
+              }} 
+              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add New
             </Button>
           </div>
           <div className="p-4 md:p-6">
@@ -598,38 +719,17 @@ export default function DashboardView() {
                         </div>
                         <div className="flex items-center gap-3 mt-2">
                           {listing.status === 'PENDING' ? (
-                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending Approval</Badge>
+                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 font-semibold border-none text-[10px]">Pending Approval</Badge>
                           ) : (
-                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100 font-semibold border-none text-[10px]" : "bg-red-100 text-red-700 hover:bg-red-100 font-semibold border-none text-[10px]"}>
                               {listing.status === 'APPROVED' ? 'Active' : 'Rejected'}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2 ml-auto">
+                      <div className="flex gap-2 ml-auto items-center">
                         <button 
-                          onClick={() => {
-                            setEditingListingId(listing.id)
-                            setFormData({
-                              name: listing.name, category: listing.category, description: listing.description || '',
-                              phoneNumber: listing.phoneNumber || '', whatsappNumber: listing.whatsappNumber || '', 
-                              cityId: listing.cityId, sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
-                              address: listing.address || '',
-                              coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
-                              gallery: (() => {
-                                const raw = listing.gallery || listing.images
-                                if (!raw) return []
-                                try {
-                                  return typeof raw === 'string' ? JSON.parse(raw) : raw
-                                } catch {
-                                  return []
-                                }
-                              })(),
-                              instagramUrl: listing.instagramUrl || '', instagramUsername: listing.instagramUsername || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || '',
-                              price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
-                            })
-                            setIsCreatingListing(true)
-                          }}
+                          onClick={() => openEditListing(listing)}
                           className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
                         >
                           <Edit2 className="w-5 h-5" />
@@ -648,16 +748,29 @@ export default function DashboardView() {
             )}
           </div>
         </div>
+      </div>
+    )
+  }
 
-        {/* Card 2: My Real Estate */}
+  const renderRealEstate = () => {
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg md:text-xl font-bold text-gray-900 flex items-center">
               <Building2 className="w-5 h-5 mr-2 text-[#D4AF37]" /> 
-              My Real Estate
+              My Real Estate Properties
             </h3>
-            <Button size="sm" onClick={() => setIsPostMenuOpen(true)} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform">
-              <Plus className="w-4 h-4 mr-1" /> Add Property
+            <Button 
+              size="sm" 
+              onClick={() => {
+                setFormData(p => ({ ...p, category: 'Real Estate' }))
+                setEditingListingId(null)
+                setIsCreatingListing(true)
+              }} 
+              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add New
             </Button>
           </div>
           <div className="p-4 md:p-6">
@@ -687,36 +800,17 @@ export default function DashboardView() {
                         </div>
                         <div className="flex items-center gap-3 mt-2">
                           {listing.status === 'PENDING' ? (
-                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending Approval</Badge>
+                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 font-semibold border-none text-[10px]">Pending Approval</Badge>
                           ) : (
-                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100 font-semibold border-none text-[10px]" : "bg-red-100 text-red-700 hover:bg-red-100 font-semibold border-none text-[10px]"}>
                               {listing.status === 'APPROVED' ? 'Active' : 'Rejected'}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2 ml-auto">
+                      <div className="flex gap-2 ml-auto items-center">
                         <button 
-                          onClick={() => {
-                            setEditingListingId(listing.id)
-                            let imagesArr: string[] = []
-                            try {
-                              if (listing.images) imagesArr = JSON.parse(listing.images)
-                            } catch (e) {}
-                            
-                            setFormData({
-                              name: listing.title, category: 'Real Estate', description: '',
-                              phoneNumber: listing.ownerPhone, whatsappNumber: '', 
-                              cityId: listing.city?.id || '', sameAsPhone: false,
-                              address: '',
-                              coverImage: imagesArr[0] || '', logoUrl: '',
-                              gallery: imagesArr.slice(1),
-                              instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
-                              price: listing.price, bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '', area: listing.area || '',
-                              rating: 0, operatingHours: 'true', googleMapsUrl: ''
-                            })
-                            setIsCreatingListing(true)
-                          }}
+                          onClick={() => openEditRealEstate(listing)}
                           className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
                         >
                           <Edit2 className="w-5 h-5" />
@@ -735,16 +829,28 @@ export default function DashboardView() {
             )}
           </div>
         </div>
+      </div>
+    )
+  }
 
-        {/* Card 3: My Banners */}
+  const renderBanners = () => {
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg md:text-xl font-bold text-gray-900 flex items-center">
               <ImageIcon className="w-5 h-5 mr-2 text-purple-600" /> 
-              My Banners
+              My Banner Ads
             </h3>
-            <Button size="sm" onClick={() => setIsPostMenuOpen(true)} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform">
-              <Plus className="w-4 h-4 mr-1" /> Add Banner
+            <Button 
+              size="sm" 
+              onClick={() => {
+                setBannerData({ title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: '' })
+                setIsCreatingBanner(true)
+              }} 
+              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add New
             </Button>
           </div>
           <div className="p-4 md:p-6">
@@ -759,46 +865,30 @@ export default function DashboardView() {
                 <p className="text-gray-500 text-sm">Promote your business on the home page with a banner ad.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {banners.map((banner) => (
-                  <div key={banner.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
-                    <div className="h-32 relative bg-gray-100">
+                  <div key={banner.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
+                    <div className="h-28 relative bg-gray-100">
                       {banner.imageUrl && <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      <div className="absolute bottom-3 left-4 right-4">
-                        <h4 className="font-bold text-white md:text-lg truncate">{banner.title}</h4>
-                        {banner.offerText && <p className="text-[#D4AF37] font-bold text-sm">{banner.offerText}</p>}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                      <div className="absolute bottom-2 left-3">
+                        <h4 className="font-bold text-white text-sm truncate max-w-[200px]">{banner.title}</h4>
                       </div>
                     </div>
                     <div className="p-3 bg-white flex justify-between items-center">
                       {banner.status === 'PENDING' ? (
-                        <Badge className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>
+                        <Badge className="bg-yellow-100 text-yellow-800 border-none text-[10px] font-semibold">Pending</Badge>
                       ) : (
-                        <Badge className={banner.isActive && banner.status === 'APPROVED' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
+                        <Badge className={banner.isActive && banner.status === 'APPROVED' ? "bg-green-100 text-green-700 border-none text-[10px] font-semibold" : "bg-gray-100 text-gray-500 border-none text-[10px] font-semibold"}>
                           {banner.isActive && banner.status === 'APPROVED' ? 'Active' : 'Inactive'}
                         </Badge>
                       )}
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => {
-                            // Re-use banner creating modal
-                            setBannerData({
-                              title: banner.title, shopName: banner.shopName || '', offerText: banner.offerText || '', 
-                              linkUrl: banner.linkUrl || '', imageUrl: banner.imageUrl || '', cityId: banner.cityId || ''
-                            })
-                            setIsCreatingBanner(true)
-                          }}
-                          className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => deleteBanner(banner.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => deleteBanner(banner.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -806,56 +896,118 @@ export default function DashboardView() {
             )}
           </div>
         </div>
-
-        {/* Floating Action Button (FAB) - Hidden on Desktop */}
-        <button 
-          onClick={() => setIsPostMenuOpen(true)}
-          className="fixed bottom-24 right-6 md:hidden w-16 h-16 rounded-full bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white shadow-[0_8px_30px_rgba(65,105,225,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-40"
-        >
-          <Plus className="w-8 h-8 text-white" />
-        </button>
       </div>
     )
   }
 
+  const renderStories = () => {
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="text-lg md:text-xl font-bold text-gray-900 flex items-center">
+              <Sparkles className="w-5 h-5 mr-2 text-[#4169E1]" /> 
+              My stories (24-hour promos)
+            </h3>
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreatingStory(true)} 
+              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add Story
+            </Button>
+          </div>
+          <div className="p-4 md:p-6">
+            {userStories.length === 0 ? (
+              <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <h4 className="text-gray-900 font-bold mb-1">No stories active</h4>
+                <p className="text-gray-500 text-sm">Post a 24-hour visual story to promote your business.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {userStories.map((story: any) => (
+                  <div key={story.id} className="relative rounded-2xl overflow-hidden aspect-[9/16] bg-gray-900 group shadow-sm">
+                    {story.mediaType === 'VIDEO' ? (
+                      <video src={story.mediaUrl} className="w-full h-full object-cover" muted loop playsInline />
+                    ) : (
+                      <img src={story.mediaUrl} alt={story.title} className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/30" />
+                    
+                    <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
+                      <span className="text-[10px] text-white bg-[#4169E1] px-2 py-0.5 rounded-full font-bold">
+                        {story.viewsCount} views
+                      </span>
+                      <button 
+                        onClick={async () => {
+                          if (!confirm('Delete this story?')) return
+                          try {
+                            const res = await fetch(`/api/stories/${story.id}`, { method: 'DELETE' })
+                            if (res.ok) {
+                              toast.success('Story deleted')
+                              fetchStories()
+                            } else {
+                              toast.error('Failed to delete story')
+                            }
+                          } catch {
+                            toast.error('Failed to delete story')
+                          }
+                        }}
+                        className="p-1 bg-white text-red-500 rounded-full hover:bg-red-500 hover:text-white transition shadow-sm"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <p className="text-xs font-bold text-white line-clamp-2">{story.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const renderWallet = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-      {/* Wallet Balance */}
       <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100">
         <div className="w-20 h-20 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-yellow-100">
-          <Coins className="w-10 h-10 text-[#D4AF37]" />
+          <Coins className="w-10 h-10 text-[#D4AF37] fill-[#D4AF37]" />
         </div>
-        <p className="text-gray-500 font-medium mb-2">Available Balance</p>
+        <p className="text-gray-500 font-bold mb-2">Available Balance</p>
         <h2 className="text-5xl font-black text-gray-900 mb-6">{coinBalance} <span className="text-xl text-gray-400">coins</span></h2>
         
         <Button 
           onClick={handleDailyClaim} 
           disabled={claimedToday || claimingDaily}
-          className="w-full h-14 rounded-2xl text-lg font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white shadow-md disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500"
+          className="w-full h-14 rounded-2xl text-lg font-bold bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white shadow-md disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 border-none"
         >
           {claimingDaily ? <Loader2 className="w-6 h-6 animate-spin" /> : claimedToday ? 'Claimed Today' : 'Claim Daily Reward'}
         </Button>
       </div>
 
-      {/* Upgrade Packages */}
       <div className="pt-4">
-        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center"><Zap className="w-5 h-5 mr-2 text-[#4169E1]"/> Upgrade Packages</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center"><Sparkles className="w-5 h-5 mr-2 text-[#4169E1]"/> Coin Packages</h3>
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 border border-gray-200 relative overflow-hidden group hover:border-[#D4AF37] transition shadow-sm hover:shadow-md">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#D4AF37]/10 rounded-full blur-xl group-hover:bg-[#D4AF37]/20 transition-all"></div>
             <div className="relative z-10 flex justify-between items-center">
               <div>
-                <Badge className="bg-[#D4AF37]/20 text-[#B8962E] mb-2 hover:bg-[#D4AF37]/30">Most Popular</Badge>
-                <h4 className="text-xl font-bold text-gray-900">Pro Business</h4>
+                <Badge className="bg-[#D4AF37]/20 text-[#B8962E] mb-2 hover:bg-[#D4AF37]/30 border-none">Most Popular</Badge>
+                <h4 className="text-xl font-bold text-gray-900">Pro Business Plan</h4>
                 <p className="text-gray-500 text-sm mt-1">Get featured at the top</p>
               </div>
               <div className="text-right">
                 <span className="text-2xl font-black text-[#D4AF37]">500</span>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Coins / Month</p>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Coins / Month</p>
               </div>
             </div>
-            <Button className="w-full mt-4 bg-gray-900 hover:bg-black text-white rounded-xl">Upgrade Now</Button>
+            <Button className="w-full mt-4 bg-gray-900 hover:bg-black text-white rounded-xl h-11 border-none">Upgrade Now</Button>
           </div>
         </div>
       </div>
@@ -876,29 +1028,27 @@ export default function DashboardView() {
         </div>
         <h2 className="text-2xl font-bold text-gray-900">{currentUser?.fullName}</h2>
         <p className="text-gray-500 mb-6">{currentUser?.phone}</p>
-        <Button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl h-12 font-bold shadow-none">
+        <Button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl h-12 font-bold shadow-none border-none">
           Edit Profile
         </Button>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <button onClick={() => window.open('https://wa.me/919999999999', '_blank')} className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-green-50 transition text-green-700">
-          <div className="flex items-center font-bold">
-            <MessageCircle className="w-5 h-5 mr-3" />
+        <button onClick={() => window.open('https://wa.me/919999999999', '_blank')} className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-green-50 transition text-green-700 font-bold">
+          <div className="flex items-center">
+            <MessageCircle className="w-5 h-5 mr-3 text-green-600" />
             Chat with Admin
           </div>
-          <ChevronRight className="w-5 h-5 opacity-50" />
         </button>
-        <button className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition text-gray-700">
-          <div className="flex items-center font-bold">
+        <button className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition text-gray-700 font-bold">
+          <div className="flex items-center">
             <FileText className="w-5 h-5 mr-3 text-gray-400" />
             Terms & Conditions
           </div>
-          <ChevronRight className="w-5 h-5 opacity-50" />
         </button>
-        <button onClick={logout} className="w-full flex items-center justify-between p-4 hover:bg-red-50 transition text-red-600">
-          <div className="flex items-center font-bold">
-            <LogOut className="w-5 h-5 mr-3" />
+        <button onClick={logout} className="w-full flex items-center justify-between p-4 hover:bg-red-50 transition text-red-600 font-bold">
+          <div className="flex items-center">
+            <LogOut className="w-5 h-5 mr-3 text-red-500" />
             Logout
           </div>
         </button>
@@ -907,13 +1057,13 @@ export default function DashboardView() {
   )
 
   return (
-    <div className="min-h-screen [&]:bg-gray-50 [&]:text-gray-900 md:flex">
-      {/* Desktop Sidebar */}
+    <div className="min-h-screen bg-gray-50 text-gray-900 md:flex">
+      {/* Desktop Sidebar (Pinned Left) */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:bg-white md:border-r md:border-gray-200 md:shadow-sm md:z-40">
         <div className="p-6 flex flex-col gap-8 h-full">
           <div>
             <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#4169E1] to-[#D4AF37]">Choutuppal</h2>
-            <p className="text-xs text-gray-500 font-medium tracking-wider uppercase mt-1">Super App</p>
+            <p className="text-xs text-gray-400 font-bold tracking-wider uppercase mt-1">Super App Portal</p>
           </div>
           
           <div className="flex flex-col gap-2 flex-1">
@@ -940,420 +1090,401 @@ export default function DashboardView() {
               </div>
               <div className="flex flex-col text-left">
                 <span className="text-sm font-bold text-gray-900 line-clamp-1">{user.fullName}</span>
-                <span className="text-xs text-gray-500">{user.phone}</span>
+                <span className="text-xs text-gray-400 font-bold">{user.phone}</span>
               </div>
             </div>
           )}
         </div>
       </div>
-\n      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-      {/* Top Header */}
-      <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between md:hidden">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
-          <p className="text-sm font-medium text-gray-500">Manage your business</p>
+
+      {/* Main Panel Content */}
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+        {/* Mobile Header */}
+        <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between md:hidden">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
+            <p className="text-xs font-bold text-gray-400">Manage listings & media</p>
+          </div>
         </div>
-      </div>
 
-      <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-5xl mx-auto w-full">
-        {activeTab === 'home' && renderHome()}
-        {activeTab === 'business' && renderBusiness()}
-        {activeTab === 'wallet' && renderWallet()}
-        {activeTab === 'settings' && renderSettings()}
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe-bottom z-40 md:hidden">
-        <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
-          {TAB_ITEMS.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.key
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-[#4169E1]' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <div className={`relative flex items-center justify-center w-12 h-8 rounded-full transition-all ${isActive ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-[#4169E1]' : ''}`} />
-                </div>
-                <span className={`text-[10px] font-bold ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>
-                  {tab.label}
-                </span>
-              </button>
-            )
-          })}
+        <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
+          {activeTab === 'home' && renderHome()}
+          {activeTab === 'listings' && renderListings()}
+          {activeTab === 'real_estate' && renderRealEstate()}
+          {activeTab === 'banners' && renderBanners()}
+          {activeTab === 'stories' && renderStories()}
+          {activeTab === 'wallet' && renderWallet()}
+          {activeTab === 'settings' && renderSettings()}
         </div>
-      </div>
 
-      
-      {/* Post Menu Popup */}
-      <AnimatePresence>
-        {isPostMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] bg-black/60 flex items-end md:items-center justify-center p-4 md:p-0"
-            onClick={() => setIsPostMenuOpen(false)}
-          >
+        {/* Mobile Bottom Navigation Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe-bottom z-40 md:hidden">
+          <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-1">
+            {TAB_ITEMS.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.key
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors ${isActive ? 'text-[#4169E1]' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  <div className={`relative flex items-center justify-center w-10 h-7 rounded-full transition-all ${isActive ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10' : ''}`}>
+                    <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-[#4169E1]' : ''}`} />
+                  </div>
+                  <span className={`text-[8px] font-bold truncate max-w-[50px] ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {tab.label.replace('My ', '')}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Add/Edit Listing Fullscreen Modal */}
+        <AnimatePresence>
+          {isCreatingListing && (
             <motion.div 
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl p-6"
+              className="fixed inset-0 z-[100] bg-white md:bg-black/55 flex flex-col md:items-center md:justify-center md:p-6"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-black text-gray-900">What do you want to post?</h3>
-                <Button variant="ghost" size="icon" onClick={() => setIsPostMenuOpen(false)} className="rounded-full">
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                <button 
-                  onClick={() => { setIsPostMenuOpen(false); setIsCreatingListing(true); setFormData(prev => ({...prev, category: ''})); }}
-                  className="w-full flex items-center p-4 rounded-2xl border border-gray-100 hover:border-[#4169E1] hover:bg-blue-50 transition-all text-left"
-                >
-                  <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
-                    <Store className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-lg">Business Listing</h4>
-                    <p className="text-sm text-gray-500">Add your shop, service, or business</p>
-                  </div>
-                </button>
+              <div className="flex flex-col w-full h-full md:h-auto md:max-h-[92vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+                {/* Header */}
+                <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: []}) }}>
+                    <X className="w-6 h-6" />
+                  </Button>
+                  <span className="text-gray-950 font-black text-lg">{editingListingId ? 'Edit Listing Details' : 'Publish New Listing'}</span>
+                  <div className="w-10"></div>
+                </div>
 
-                <button 
-                  onClick={() => { setIsPostMenuOpen(false); setIsCreatingListing(true); setFormData(prev => ({...prev, category: 'Real Estate'})); }}
-                  className="w-full flex items-center p-4 rounded-2xl border border-gray-100 hover:border-[#D4AF37] hover:bg-yellow-50 transition-all text-left"
-                >
-                  <div className="w-12 h-12 rounded-full bg-yellow-100 text-[#D4AF37] flex items-center justify-center mr-4">
-                    <Building2 className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-lg">Real Estate Property</h4>
-                    <p className="text-sm text-gray-500">Sell or rent your property</p>
-                  </div>
-                </button>
+                {/* Form Content */}
+                <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
+                  <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                    
+                    {/* Photos Section */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Profile Photo */}
+                      <div className="sm:col-span-1 flex flex-col gap-2">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Logo / Photo</span>
+                        <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
+                          {formData.logoUrl ? (
+                            <>
+                              <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                              <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
+                            </>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <UploadCloud className="w-6 h-6 text-[#4169E1]" />
+                              <span className="font-bold text-[10px] text-center px-1 text-gray-500">Upload Logo</span>
+                            </div>
+                          )}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0])} />
+                        </label>
+                      </div>
 
-                <button 
-                  onClick={() => { setIsPostMenuOpen(false); setIsCreatingBanner(true); }}
-                  className="w-full flex items-center p-4 rounded-2xl border border-gray-100 hover:border-purple-500 hover:bg-purple-50 transition-all text-left"
-                >
-                  <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-4">
-                    <ImageIcon className="w-6 h-6" />
+                      {/* Cover Photo */}
+                      <div className="sm:col-span-2 flex flex-col gap-2">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Cover banner *</span>
+                        <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
+                          {formData.coverImage ? (
+                            <>
+                              <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                              <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
+                            </>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <UploadCloud className="w-6 h-6 text-[#4169E1]" />
+                              <span className="font-bold text-xs text-gray-500">Upload Cover Banner</span>
+                            </div>
+                          )}
+                          <input type="file" accept="image/*" className="hidden" onChange={handleListingFileChange} />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Gallery Images (up to 5) */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex justify-between">
+                        <span>Gallery Photos (Max 5)</span>
+                        <span className="text-[#4169E1] font-black">{formData.images.length}/5</span>
+                      </span>
+                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                        {formData.images.map((img, i) => (
+                          <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                            <img src={img} alt="Gallery item" className="w-full h-full object-cover" />
+                            <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
+                          </div>
+                        ))}
+                        {formData.images.length < 5 && (
+                          <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+                            <Plus className="w-6 h-6 text-gray-400" />
+                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Form Fields */}
+                    <div className="space-y-4 pt-2">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Shop / Business Name *</span>
+                        <Input placeholder="Enter shop or business name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-11 focus-visible:ring-[#4169E1]" />
+                      </div>
+                      
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Category *</span>
+                        <select 
+                          value={formData.category} 
+                          onChange={(e) => setFormData({...formData, category: e.target.value})}
+                          className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
+                        >
+                          <option value="" disabled>Select Category</option>
+                          {(dynamicCategories.length > 0 ? dynamicCategories.map(c => c.name) : CATEGORIES).map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {formData.category === 'Real Estate' && (
+                        <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200/60">
+                          <div className="flex flex-col gap-1.5">
+                            <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Price (e.g., ₹45 Lakhs) *</span>
+                            <Input placeholder="Enter price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Bedrooms</span>
+                              <Input placeholder="e.g. 2, 3" type="number" value={formData.bedroomCount} onChange={e => setFormData({...formData, bedroomCount: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Area (sqft / yards)</span>
+                              <Input placeholder="e.g. 1500 sqft" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Rating (1-5) *</span>
+                          <Input type="number" min="1" max="5" step="0.1" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Business Hours *</span>
+                          <Input placeholder="e.g., 9:00 AM - 9:00 PM" value={formData.operatingHours || ''} onChange={e => setFormData({...formData, operatingHours: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Google Maps Link</span>
+                        <Input placeholder="Paste Google Maps URL" value={formData.googleMapsUrl || ''} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Phone Number *</span>
+                        <Input placeholder="10-digit number" type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex items-center justify-between">
+                          <span>WhatsApp Number</span>
+                          <label className="flex items-center gap-1 text-[10px] text-[#4169E1] font-bold cursor-pointer bg-blue-50 px-2 py-0.5 rounded">
+                            <input 
+                              type="checkbox" 
+                              checked={formData.sameAsPhone}
+                              onChange={(e) => setFormData({...formData, sameAsPhone: e.target.checked, whatsappNumber: e.target.checked ? formData.phoneNumber : ''})} 
+                              className="w-3.5 h-3.5"
+                            />
+                            <span>Same as Phone</span>
+                          </label>
+                        </span>
+                        <Input 
+                          placeholder="WhatsApp Number" 
+                          type="tel" 
+                          value={formData.sameAsPhone ? formData.phoneNumber : formData.whatsappNumber} 
+                          onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} 
+                          disabled={formData.sameAsPhone}
+                          className="bg-white border-gray-200 h-11 rounded-xl disabled:bg-gray-100" 
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Physical Address</span>
+                        <Input placeholder="Full Address description" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      {/* Services Array Field (Dynamic UI) */}
+                      <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex justify-between items-center">
+                          <span>Services catalog (సేవలు)</span>
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => setFormData(p => ({ ...p, services: [...(p.services || []), { name: '', description: '' }] }))}
+                            className="text-[#4169E1] border-[#4169E1]/20 hover:bg-[#4169E1]/5 font-bold h-7 px-2.5 rounded-lg text-xs"
+                          >
+                            + Add Service
+                          </Button>
+                        </span>
+                        <div className="space-y-3 mt-1">
+                          {formData.services?.map((svc, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-200/60 relative space-y-2">
+                              <button 
+                                type="button"
+                                onClick={() => setFormData(p => ({ ...p, services: p.services.filter((_, i) => i !== idx) }))}
+                                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                              <div className="grid grid-cols-1 gap-2 pr-6">
+                                <Input 
+                                  placeholder="Service Name (e.g. Catering, AC Repair)" 
+                                  value={svc.name}
+                                  onChange={(e) => {
+                                    const newSvcs = [...formData.services]
+                                    newSvcs[idx].name = e.target.value
+                                    setFormData({ ...formData, services: newSvcs })
+                                  }}
+                                  className="bg-white border-gray-200 h-9 text-xs rounded-lg"
+                                />
+                                <Input 
+                                  placeholder="Short Description" 
+                                  value={svc.description}
+                                  onChange={(e) => {
+                                    const newSvcs = [...formData.services]
+                                    newSvcs[idx].description = e.target.value
+                                    setFormData({ ...formData, services: newSvcs })
+                                  }}
+                                  className="bg-white border-gray-200 h-9 text-xs rounded-lg"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          {(!formData.services || formData.services.length === 0) && (
+                            <p className="text-xs text-gray-400 italic">No services added yet. Click Add Service to showcase catalog.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Description Rich Text */}
+                      <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-100">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">About / Description</span>
+                        <RichTextEditor
+                          content={formData.description}
+                          onChange={val => setFormData({...formData, description: val})}
+                          placeholder="Describe the shop catalog, services and achievements..."
+                        />
+                      </div>
+
+                      {/* Socials */}
+                      <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Social Networks</span>
+                        <div className="relative">
+                          <Instagram className="absolute left-3.5 top-3 w-5 h-5 text-pink-500" />
+                          <Input placeholder="Instagram URL" value={formData.instagramUrl || ''} onChange={e => setFormData({...formData, instagramUrl: e.target.value})} className="bg-white border-gray-200 h-11 pl-11 rounded-xl" />
+                        </div>
+                        <div className="relative">
+                          <Facebook className="absolute left-3.5 top-3 w-5 h-5 text-blue-600" />
+                          <Input placeholder="Facebook Page URL" value={formData.facebookUrl || ''} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} className="bg-white border-gray-200 h-11 pl-11 rounded-xl" />
+                        </div>
+                        <div className="relative">
+                          <Youtube className="absolute left-3.5 top-3 w-5 h-5 text-red-650" />
+                          <Input placeholder="YouTube Channel URL" value={formData.youtubeUrl || ''} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} className="bg-white border-gray-200 h-11 pl-11 rounded-xl" />
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-lg">Banner Ad</h4>
-                    <p className="text-sm text-gray-500">Promote offers on the home page</p>
-                  </div>
-                </button>
+                </div>
+
+                {/* Sticky Footer */}
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
+                  <Button 
+                    onClick={submitListing} 
+                    disabled={uploading || !formData.name || !formData.category}
+                    className="w-full max-w-lg mx-auto h-13 rounded-2xl bg-gradient-to-r from-[#4169E1] to-[#1E3A8A] text-white font-bold text-lg shadow-md transition-transform hover:scale-[1.01] active:scale-95 flex items-center justify-center border-none"
+                  >
+                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingListingId ? 'Update and Save' : 'Publish Listing Now')}
+                  </Button>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
 
-
-      {/* Add Listing Full Screen Modal */}
-      <AnimatePresence>
-        {isCreatingListing && (
-          <motion.div 
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] bg-white md:bg-black/50 flex flex-col md:items-center md:justify-center md:p-6"
-          >
-            <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">\n            {/* Header */}
-            <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''}) }}>
-                <X className="w-6 h-6" />
-              </Button>
-              <span className="text-gray-900 font-black text-lg">{editingListingId ? 'Edit Listing' : 'New Listing'}</span>
-              <div className="w-10"></div>
-            </div>
-
-            {/* Form Content */}
-            <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
-              <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
-                
-                {/* Profile & Cover Images */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-1 flex flex-col gap-2">
-                    <span className="text-gray-800 font-bold text-sm">Profile Photo/Logo</span>
-                    <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
-                      {formData.logoUrl ? (
-                        <>
-                          <img src={formData.logoUrl} alt="Profile" className="w-full h-full object-cover" />
-                          <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1">
-                          <UploadCloud className="w-6 h-6 text-[#4169E1]" />
-                          <span className="font-bold text-xs text-center px-2">Upload Profile</span>
-                        </div>
-                      )}
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'logo')} />
-                    </label>
-                  </div>
-
-                  <div className="sm:col-span-2 flex flex-col gap-2">
-                    <span className="text-gray-800 font-bold text-sm">Cover Photo *</span>
-                    <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
-                      {formData.coverImage ? (
-                        <>
-                          <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                          <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-4" /></button>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1">
-                          <UploadCloud className="w-6 h-6 text-[#4169E1]" />
-                          <span className="font-bold text-sm">Upload Cover</span>
-                        </div>
-                      )}
-                      <input type="file" accept="image/*" className="hidden" onChange={handleListingFileChange} />
-                    </label>
-                  </div>
+        {/* Banner Modal */}
+        <AnimatePresence>
+          {isCreatingBanner && (
+            <motion.div 
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-0 z-[100] bg-white md:bg-black/50 flex flex-col md:items-center md:justify-center md:p-6"
+            >
+              <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-md md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+                <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingBanner(false)}>
+                    <X className="w-6 h-6" />
+                  </Button>
+                  <span className="text-gray-950 font-black text-lg">Create Banner Ad</span>
+                  <div className="w-10"></div>
                 </div>
 
-                {/* Gallery Upload */}
-                <div className="flex flex-col gap-2">
-                  <span className="text-gray-800 font-bold text-sm flex justify-between">
-                    <span>Gallery Photos (Up to 5)</span>
-                    <span className="text-[#4169E1] bg-[#4169E1]/10 px-2 py-0.5 rounded text-xs">{formData.gallery.length}/5</span>
-                  </span>
-                  <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                    {formData.gallery.map((img, i) => (
-                      <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
-                        <img src={img} alt="Gallery" className="w-full h-full object-cover" />
-                        <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, gallery: p.gallery.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
-                      </div>
-                    ))}
-                    {formData.gallery.length < 5 && (
-                      <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
-                        <Plus className="w-6 h-6" />
-                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />
+                <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
+                  <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Banner Image *</span>
+                      <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
+                        {bannerData.imageUrl ? (
+                          <img src={bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1">
+                            <UploadCloud className="w-6 h-6 text-purple-500" />
+                            <span className="font-bold text-xs text-gray-500">Upload Banner Image</span>
+                          </div>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleBannerFileChange} />
                       </label>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500">Square images recommended. Max size: 1MB each.</p>
-                </div>
+                    </div>
 
-                {/* Business Details */}
-                <div className="space-y-4 pt-2">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-gray-800 font-bold text-sm">Business Name *</span>
-                    <Input placeholder="Enter business name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
-                  </div>
-                  
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-gray-800 font-bold text-sm">Category *</span>
-                    <select 
-                      value={formData.category} 
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-12 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
-                    >
-                      <option value="" disabled>Select Category</option>
-                      {(dynamicCategories.length > 0 ? dynamicCategories.map(c => c.name) : CATEGORIES).map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {formData.category === 'Real Estate' && (
-                    <>
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-gray-800 font-bold text-sm">Price (e.g., ₹50 Lakhs) *</span>
-                        <Input placeholder="Enter price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-gray-800 font-bold text-sm">Bedroom Count (e.g., 2, 3)</span>
-                        <Input placeholder="Number of bedrooms" type="number" value={formData.bedroomCount} onChange={e => setFormData({...formData, bedroomCount: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-gray-800 font-bold text-sm">Area (e.g., 1200 sqft)</span>
-                        <Input placeholder="Property area" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-[#4169E1]" />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-gray-800 font-bold text-sm">Rating (1-5) *</span>
-                      <Input type="number" min="1" max="5" step="0.1" placeholder="e.g., 4.5" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12" />
+                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Internal title *</span>
+                      <Input placeholder="E.g., Special Offer Banner" value={bannerData.title} onChange={e => setBannerData({...bannerData, title: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
                     </div>
+
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-gray-800 font-bold text-sm">Business Hours *</span>
-                      <Input placeholder="e.g., 9:00 AM - 9:00 PM" value={formData.operatingHours} onChange={e => setFormData({...formData, operatingHours: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-gray-800 font-bold text-sm">Google Maps URL</span>
-                    <Input placeholder="Paste Google Maps link" value={formData.googleMapsUrl} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12" />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-gray-800 font-bold text-sm">Phone Number *</span>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                      <Input placeholder="e.g., 9876543210" type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#4169E1]" />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-gray-800 font-bold text-sm flex items-center justify-between">
-                      WhatsApp Number
-                      <label className="flex items-center gap-1.5 text-xs text-[#4169E1] font-bold cursor-pointer bg-[#4169E1]/5 px-2 py-1 rounded select-none">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 accent-[#4169E1] rounded border-gray-300"
-                          checked={formData.sameAsPhone}
-                          onChange={(e) => {
-                            const isChecked = e.target.checked;
-                            setFormData({
-                              ...formData, 
-                              sameAsPhone: isChecked, 
-                              whatsappNumber: isChecked ? formData.phoneNumber : formData.whatsappNumber
-                            });
-                          }}
-                        />
-                        <span>Same as Phone</span>
-                      </label>
-                    </span>
-                    <div className="relative">
-                      <MessageCircle className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                      <Input 
-                        placeholder="WhatsApp Number" 
-                        type="tel" 
-                        value={formData.sameAsPhone ? formData.phoneNumber : formData.whatsappNumber} 
-                        onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} 
-                        disabled={formData.sameAsPhone}
-                        className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#25D366] disabled:bg-gray-100 disabled:text-gray-500" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-gray-800 font-bold text-sm">Address / Maps Link</span>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                      <Input placeholder="Full address or Google Maps link" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-[#4169E1]" />
+                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Target Website/Link URL</span>
+                      <Input placeholder="https://..." value={bannerData.linkUrl} onChange={e => setBannerData({...bannerData, linkUrl: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
                     </div>
                   </div>
                 </div>
 
-                {/* Rich Text Description */}
-                <div className="flex flex-col gap-1.5 pt-2">
-                  <span className="text-gray-800 font-bold text-sm">Description</span>
-                    <RichTextEditor
-                      content={formData.description}
-                      onChange={val => setFormData({...formData, description: val})}
-                      placeholder="Write a stylish description using bold, italics, bullets..."
-                    />
-                </div>
-                
-                {/* Social Links */}
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                  <span className="text-gray-800 font-bold text-sm">Social Media (Optional)</span>
-                  <div className="relative">
-                    <Instagram className="absolute left-3 top-3.5 w-5 h-5 text-pink-500" />
-                    <Input placeholder="Instagram Profile URL" value={formData.instagramUrl} onChange={e => setFormData({...formData, instagramUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-pink-500" />
-                  </div>
-                  <div className="relative">
-                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 text-pink-500 size-5" />
-                    <Input placeholder="Instagram Username (e.g. yourbusiness)" value={formData.instagramUsername || ''} onChange={e => setFormData({...formData, instagramUsername: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-pink-500" />
-                  </div>
-                  <div className="relative">
-                    <Facebook className="absolute left-3 top-3.5 w-5 h-5 text-blue-600" />
-                    <Input placeholder="Facebook Page URL" value={formData.facebookUrl} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-blue-600" />
-                  </div>
-                  <div className="relative">
-                    <Youtube className="absolute left-3 top-3.5 w-5 h-5 text-red-600" />
-                    <Input placeholder="YouTube Channel URL" value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 pl-10 focus-visible:ring-red-600" />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Sticky Submit Button */}
-            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-              <Button 
-                onClick={submitListing} 
-                disabled={uploading || !formData.name || !formData.category}
-                className="w-full max-w-lg mx-auto h-14 rounded-2xl bg-gradient-to-r from-[#4169E1] to-[#1E3A8A] text-white font-bold text-lg shadow-md transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center"
-              >
-                {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingListingId ? 'Update Listing' : 'Publish Listing')}
-              </Button>
-            </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Banner Form Modal */}
-      <AnimatePresence>
-        {isCreatingBanner && (
-          <motion.div 
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] bg-white md:bg-black/50 flex flex-col md:items-center md:justify-center md:p-6"
-          >
-            <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-md md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
-            <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingBanner(false)}>
-                <X className="w-6 h-6" />
-              </Button>
-              <span className="text-gray-900 font-black text-lg">New Banner Ad</span>
-              <div className="w-10"></div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
-              <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
-                
-                <div className="flex flex-col gap-2">
-                  <span className="text-gray-800 font-bold text-sm">Banner Image *</span>
-                  <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
-                    {bannerData.imageUrl ? (
-                      <img src={bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <UploadCloud className="w-6 h-6 text-purple-500" />
-                        <span className="font-bold text-sm">Upload Banner</span>
-                      </div>
-                    )}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleBannerFileChange} />
-                  </label>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-gray-800 font-bold text-sm">Target Link / URL</span>
-                  <Input placeholder="https://..." value={bannerData.linkUrl || ''} onChange={e => setBannerData({...bannerData, linkUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-purple-500" />
-                </div>
-                
-                {/* Fallback required field */}
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-gray-800 font-bold text-sm">Internal Title *</span>
-                  <Input placeholder="E.g., Diwali Sale" value={bannerData.title || ''} onChange={e => setBannerData({...bannerData, title: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12 focus-visible:ring-purple-500" />
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
+                  <Button onClick={submitBanner} disabled={uploading || !bannerData.title || !bannerData.imageUrl} className="w-full max-w-lg mx-auto h-13 text-lg font-extrabold rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md border-none">
+                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Banner'}
+                  </Button>
                 </div>
               </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-              <Button onClick={submitBanner} disabled={uploading || !bannerData.title || !bannerData.imageUrl} className="w-full max-w-lg mx-auto h-14 text-lg font-extrabold rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center">
-                {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Banner'}
-              </Button>
-            </div>
-            </div>
-          </motion.div>
+        {/* Story creator triggers */}
+        {currentUser && (
+          <StoryCreator 
+            isOpen={isCreatingStory}
+            onClose={() => setIsCreatingStory(false)}
+            userId={currentUser.id}
+            cityId={formData.cityId || cities[0]?.id || 'default'}
+            onStoryCreated={() => { fetchStories() }}
+          />
         )}
-      </AnimatePresence>
       </div>
     </div>
   )

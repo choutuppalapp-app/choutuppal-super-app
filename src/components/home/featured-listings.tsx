@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Star, MapPin, ArrowRight } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
+import ListingCard from '@/components/listing-card'
 import { WhatsAppButton } from '@/components/whatsapp-button'
 import { OptimizedImage } from '@/components/optimized-image'
 import { Badge } from '@/components/ui/badge'
@@ -142,85 +143,9 @@ export function FeaturedListings() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {listings.map((listing, index) => {
-            const img = listing.coverImage || listing.logoUrl || getFirstImage(listing.images)
-            const hasImage = !!img
-            const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
-
-            return (
-              <div
-                key={listing.id}
-                onClick={() => handleCardClick(listing.slug)}
-                className="transform transition-all duration-200 hover:shadow-lg active:scale-[0.97] cursor-pointer"
-              >
-                <GlassCard
-                  variant={listing.isPremium ? 'gold' : 'default'}
-                  className="!p-0 overflow-hidden group"
-                >
-                  {/* Image or gradient placeholder */}
-                  <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
-                    {hasImage ? (
-                      <OptimizedImage
-                        src={img || placeholderImg}
-                        alt={listing.name}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
-                        <span className="text-white text-3xl font-bold opacity-50">
-                          {listing.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Premium badge */}
-                    {listing.isPremium && (
-                      <div className="absolute top-2 right-2">
-                        <Badge className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-white text-[10px] border-0 shadow-sm">
-                          👑 Premium
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-3 space-y-1.5">
-                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">
-                      {listing.name}
-                    </h3>
-                    
-                    <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-[#4169E1]/20 text-[10px] py-0">
-                      {listing.category}
-                    </Badge>
-
-                    {listing.address && (
-                      <div className="flex items-center gap-1 text-gray-500 mt-1">
-                        <MapPin className="size-3 flex-shrink-0" />
-                        <span className="text-[11px] truncate">{listing.address}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="size-3.5 text-[#D4AF37] fill-[#D4AF37]" />
-                      <span className="text-xs font-semibold text-gray-700">
-                        {listing.rating || 5.0}
-                      </span>
-                      <span className="text-[10px] text-gray-500">
-                        ({listing._count?.reviews || 0} reviews)
-                      </span>
-                    </div>
-
-                    <div className="mt-2">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${listing.operatingHours ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {listing.operatingHours ? 'Open' : 'Closed'}
-                      </span>
-                    </div>
-                  </div>
-                </GlassCard>
-              </div>
-            )
-          })}
+          {listings.map((listing) => (
+            <ListingCard key={listing.id} listing={listing} />
+          ))}
         </div>
       )}
     </section>

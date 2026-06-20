@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft, MapPin, Clock, Star, Share2,
-  Phone, Eye, MessageCircle, Instagram, Facebook, Youtube, Download
+  ArrowLeft, MapPin, Star, Share2,
+  Phone, Eye, MessageCircle, Instagram, Facebook, Youtube, Download,
+  Wrench, Sparkles, BadgeCheck
 } from 'lucide-react'
+import ListingCard from '@/components/listing-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -18,18 +20,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel'
-import { GlassCard } from '@/components/glass-card'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
 import { OptimizedImage } from '@/components/optimized-image'
 import { ListingDetailSkeleton } from '@/components/skeleton-loaders'
 import DOMPurify from 'dompurify'
+import { useParams } from 'next/navigation'
 
 interface ListingData {
   id: string
@@ -57,6 +54,7 @@ interface ListingData {
   viewsCount: number
   rating: number
   operatingHours: string | null
+  cityId: string
   user: {
     id: string
     fullName: string
@@ -72,14 +70,69 @@ export default function ListingView() {
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const { user } = useAuth()
+  const params = useParams()
+  
+  // Resolve listing ID or slug from params or app store
+  const currentIdOrSlug = (params?.id as string) || selectedListingSlug
+
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  // Claim logic
+  // Claim state
   const [showClaimDialog, setShowClaimDialog] = useState(false)
   const [claimPhone, setClaimPhone] = useState('')
   const [claimSubmitting, setClaimSubmitting] = useState(false)
+
+  // Related listings
+  const [relatedListings, setRelatedListings] = useState<any[]>([])
+
+  const fetchListing = useCallback(async () => {
+    if (!currentIdOrSlug) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/listings/${currentIdOrSlug}`)
+      if (res.ok) {
+        const data = await res.json()
+        setListing(data)
+        
+        // Increment views
+        fetch(`/api/listings/${currentIdOrSlug}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'incrementViews' }),
+        }).catch(() => {})
+      } else {
+        toast.error('Listing not found')
+      }
+    } catch {
+      toast.error('Failed to load listing')
+    } finally {
+      setLoading(false)
+    }
+  }, [currentIdOrSlug])
+
+  useEffect(() => {
+    fetchListing()
+  }, [fetchListing])
+
+  // Fetch related listings once base listing is loaded
+  useEffect(() => {
+    async function fetchRelated() {
+      if (!listing?.category || !listing?.cityId) return
+      try {
+        const res = await fetch(`/api/listings?cityId=${listing.cityId}&category=${encodeURIComponent(listing.category)}&limit=4`)
+        if (res.ok) {
+          const data = await res.json()
+          const list = Array.isArray(data?.listings) ? data.listings : []
+          setRelatedListings(list.filter((l: any) => l.id !== listing?.id).slice(0, 3))
+        }
+      } catch (e) {
+        console.error("Failed to fetch related listings:", e)
+      }
+    }
+    fetchRelated()
+  }, [listing])
 
   const handleClaimSubmit = async () => {
     if (!claimPhone) {
@@ -98,7 +151,7 @@ export default function ListingView() {
         body: JSON.stringify({ listingId: listing?.id, phoneNumber: claimPhone, userId: user.id }),
       })
       if (res.ok) {
-        toast.success('Claim request submitted successfully! Admin will review shortly.')
+        toast.success('Claim request submitted! Admin will verify soon.')
         setShowClaimDialog(false)
         setClaimPhone('')
       } else {
@@ -112,37 +165,12 @@ export default function ListingView() {
     }
   }
 
-  const fetchListing = useCallback(async () => {
-    if (!selectedListingSlug) return
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/listings/${selectedListingSlug}`)
-      if (res.ok) {
-        const data = await res.json()
-        setListing(data)
-        fetch(`/api/listings/${selectedListingSlug}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'incrementViews' }),
-        }).catch(() => {})
-      }
-    } catch {
-      toast.error('Failed to load listing')
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedListingSlug])
-
-  useEffect(() => {
-    fetchListing()
-  }, [fetchListing])
-
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/listing/${listing?.slug || ''}`
+    const shareUrl = `${window.location.origin}/listing/${listing?.id || listing?.slug || ''}`
     if (navigator.share) {
       try {
         await navigator.share({
-          title: listing?.name || 'Check out this listing',
+          title: listing?.name || 'Local Business',
           text: `Check out ${listing?.name} on Choutuppal App!`,
           url: shareUrl,
         })
@@ -153,18 +181,6 @@ export default function ListingView() {
     }
   }
 
-  const handleShareStatus = () => {
-    const shareUrl = `${window.location.origin}/listing/${listing?.slug || ''}`
-    const text = `Check out ${listing?.name} on Choutuppal App! ${shareUrl}`
-    window.open(`whatsapp://send?text=${encodeURIComponent(text)}`)
-  }
-
-  const handleShareGroup = () => {
-    const shareUrl = `${window.location.origin}/listing/${listing?.slug || ''}`
-    const text = `Hey group, check out ${listing?.name} on Choutuppal App! ${shareUrl}`
-    window.open(`whatsapp://send?text=${encodeURIComponent(text)}`)
-  }
-
   const generateVCard = () => {
     if (!listing) return
     const phone = listing.phoneNumber || listing.whatsappNumber || listing.user.phone
@@ -172,7 +188,7 @@ export default function ListingView() {
 VERSION:3.0
 FN:${listing.name}
 TEL:${phone}
-URL:${window.location.origin}/listing/${listing.slug}
+URL:${window.location.origin}/listing/${listing.id}
 END:VCARD`
     const blob = new Blob([vcard], { type: 'text/vcard' })
     const url = URL.createObjectURL(blob)
@@ -181,14 +197,15 @@ END:VCARD`
     a.download = `${listing.name.replace(/\s+/g, '_')}.vcf`
     a.click()
     URL.revokeObjectURL(url)
+    toast.success('Contact vCard downloaded')
   }
 
   if (loading) return <ListingDetailSkeleton />
   if (!listing) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
-        <p className="text-gray-500 text-lg">Listing not found</p>
-        <Button onClick={() => navigateTo('explore')} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-lg">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 p-4">
+        <p className="text-gray-500 text-lg font-semibold">Listing not found</p>
+        <Button onClick={() => navigateTo('explore')} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md">
           <ArrowLeft className="size-4 mr-2" /> Back to Explore
         </Button>
       </div>
@@ -196,6 +213,8 @@ END:VCARD`
   }
 
   const cleanDescription = listing.description ? (typeof window !== 'undefined' ? DOMPurify.sanitize(listing.description) : listing.description) : ''
+  
+  // Parse gallery images
   const galleryImages = (() => {
     const raw = listing.gallery || listing.images
     if (!raw) return []
@@ -205,12 +224,13 @@ END:VCARD`
         const parsed = JSON.parse(raw)
         return Array.isArray(parsed) ? parsed : []
       } catch (e) {
-        console.error("Failed to parse listing gallery/images JSON:", e)
+        console.error("Failed to parse gallery:", e)
         return []
       }
     }
     return []
   })()
+
   const phoneToCall = listing.phoneNumber || listing.whatsappNumber || listing.user.phone
   const phoneToWA = listing.whatsappNumber || listing.phoneNumber || listing.user.whatsappNumber || listing.user.phone
 
@@ -220,14 +240,35 @@ END:VCARD`
   const handleWhatsapp = () => {
     if (phoneToWA) window.open(`https://wa.me/${phoneToWA}`)
   }
-  const handleSaveContact = generateVCard
   const handleLocation = () => {
     window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)
   }
 
+  // Parse services JSON
+  const servicesList: { name: string; description: string }[] = (() => {
+    if (!listing.services) return []
+    try {
+      const parsed = JSON.parse(listing.services)
+      if (Array.isArray(parsed)) {
+        return parsed.map((item: any) => {
+          if (typeof item === 'string') {
+            return { name: item, description: '' }
+          }
+          return {
+            name: item.name || '',
+            description: item.description || ''
+          }
+        })
+      }
+    } catch (e) {
+      console.error("Failed to parse services:", e)
+    }
+    return []
+  })()
+
   return (
-    <div className="pb-40 bg-gray-50 min-h-screen text-gray-900">
-      {/* Header: Full-width Cover Photo */}
+    <div className="bg-gray-50 min-h-screen pb-24 md:pb-0 text-gray-900 flex flex-col">
+      {/* ── Top Header: Cover Photo & Overlapping Logo ── */}
       <div className="relative h-64 sm:h-80 w-full bg-gray-200">
         <OptimizedImage
           src={listing.coverImage || PLACEHOLDER_COVER}
@@ -235,17 +276,18 @@ END:VCARD`
           fill
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/50" />
         
-        <motion.div whileTap={{ scale: 0.95 }} className="absolute top-4 left-4 z-10">
-          <Button variant="ghost" size="icon" onClick={() => navigateTo('explore')} className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10 shadow-sm border border-white/30">
+        {/* Back button */}
+        <div className="absolute top-4 left-4 z-10">
+          <Button variant="ghost" size="icon" onClick={() => navigateTo('explore')} className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10 shadow-sm border border-white/20">
             <ArrowLeft className="size-5" />
           </Button>
-        </motion.div>
+        </div>
 
-        {/* Business Logo overlapping */}
+        {/* Business Logo Overlapping */}
         <div className="absolute -bottom-12 left-4 md:left-8 z-20">
-          <div className="size-24 md:size-32 rounded-full border-4 border-white bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden relative">
+          <div className="size-24 md:size-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden relative">
             <OptimizedImage
               src={listing.logoUrl || PLACEHOLDER_LOGO}
               alt={`${listing.name} logo`}
@@ -256,294 +298,264 @@ END:VCARD`
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 mt-16 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 mt-16 relative z-10 w-full flex-grow pb-16">
+        {/* Desktop 2-column grid layout (md+) */}
         <div className="grid grid-cols-1 md:grid-cols-[70%_30%] gap-8">
+          
+          {/* Main Info Column */}
           <div className="space-y-6">
-        {/* Title & Stats */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight flex items-center gap-2">
-              {listing.name}
-              {listing.isPremium && <Badge className="bg-[#D4AF37] text-white border-none shrink-0 text-xs">Verified</Badge>}
-            </h1>
-            <div className="flex items-center gap-3">
-              <Badge className="bg-[#4169E1]/10 text-[#4169E1] hover:bg-[#4169E1]/20">
-                {listing.category}
-              </Badge>
-              {listing.isClaimed === false && (
-                <Badge 
-                  onClick={() => setShowClaimDialog(true)}
-                  className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer animate-pulse"
-                >
-                  🎯 Claim This Business
-                </Badge>
-              )}
-              <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-100 text-yellow-700">
-                <Star className="size-3.5 fill-yellow-500 text-yellow-500" />
-                <span className="text-sm font-bold">{listing.rating || 5.0}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-4 mt-4 md:mt-0">
-            {phoneToCall && (
-              <Button onClick={() => window.location.href = `tel:${phoneToCall}`} className="bg-[#4169E1] hover:bg-[#3151b0] text-white">
-                <Phone className="size-4 mr-2" /> Call
-              </Button>
-            )}
-            {phoneToWA && (
-              <Button onClick={() => window.open(`https://wa.me/${phoneToWA}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`)} className="bg-[#25D366] hover:bg-[#1DA851] text-white">
-                <MessageCircle className="size-4 mr-2" /> WhatsApp
-              </Button>
-            )}
-            <Button variant="outline" onClick={generateVCard} className="border-gray-200 hover:bg-gray-50">
-              <Download className="size-4 mr-2" /> Save
-            </Button>
-                        <Button variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="border-gray-200 hover:bg-gray-50">
-              <MapPin className="size-4 mr-2" /> Location
-            </Button>
-            <Button variant="outline" onClick={handleShare} className="border-gray-200 hover:bg-gray-50">
-              <Share2 className="size-4 mr-2" /> Share
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-4 mt-4 md:mt-0 md:hidden text-sm text-gray-500 bg-white px-3 py-1 rounded-md shadow-sm border border-gray-100">
-            <Eye className="size-4" />
-            {listing.viewsCount} views
-          </div>
-        </div>
-
-        {listing.address && (
-          <div className="flex items-start gap-2 text-gray-600 mt-2 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-            <MapPin className="size-5 text-[#D4AF37] shrink-0 mt-0.5" />
-            <span className="text-sm font-medium leading-relaxed">{listing.address}</span>
-          </div>
-        )}
-
-        {/* Social Bar */}
-        {(listing.instagramUrl || listing.facebookUrl || listing.youtubeUrl) && (
-          <div className="flex items-center gap-3">
-            {listing.instagramUrl && (
-              <a href={listing.instagramUrl} target="_blank" rel="noreferrer" className="size-10 bg-white rounded-full flex items-center justify-center text-pink-600 shadow-sm border border-gray-100 hover:scale-110 transition-transform">
-                <Instagram className="size-5" />
-              </a>
-            )}
-            {listing.facebookUrl && (
-              <a href={listing.facebookUrl} target="_blank" rel="noreferrer" className="size-10 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-sm border border-gray-100 hover:scale-110 transition-transform">
-                <Facebook className="size-5" />
-              </a>
-            )}
-            {listing.youtubeUrl && (
-              <a href={listing.youtubeUrl} target="_blank" rel="noreferrer" className="size-10 bg-white rounded-full flex items-center justify-center text-red-600 shadow-sm border border-gray-100 hover:scale-110 transition-transform">
-                <Youtube className="size-5" />
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Description Section */}
-        {cleanDescription && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
-              About Us
-            </h2>
-            <div 
-              className="prose prose-sm md:prose-base prose-ul:list-disc prose-li:marker:text-[#D4AF37] max-w-none text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: cleanDescription }}
-            />
-          </div>
-        )}
-
-                {/* Services Section */}
-        {listing.services && JSON.parse(listing.services).length > 0 && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
-              Our Services
-            </h2>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {JSON.parse(listing.services).map((service: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2 text-gray-700">
-                  <div className="mt-1 size-1.5 rounded-full bg-[#D4AF37] shrink-0" />
-                  <span className="text-sm font-medium">{service}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Gallery Section */}
-                {/* Services Section */}
-        {listing.services && JSON.parse(listing.services).length > 0 && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
-              Our Services
-            </h2>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {JSON.parse(listing.services).map((service: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2 text-gray-700">
-                  <div className="mt-1 size-1.5 rounded-full bg-[#D4AF37] shrink-0" />
-                  <span className="text-sm font-medium">{service}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Gallery Section */}
-        {galleryImages.length > 0 && (          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6 overflow-hidden">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
-              Gallery
-            </h2>
-            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2">
-              {galleryImages.map((img: string, idx: number) => (
-                <div key={idx} onClick={() => setSelectedImage(img)} className="relative aspect-[4/3] min-w-[200px] sm:min-w-[250px] snap-start rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer group">
-                  <OptimizedImage
-                    src={img}
-                    alt={`${listing.name} gallery ${idx + 1}`}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+            
+            {/* Top Card: Title, Verified Badge, Rating, Views, Address, Open/Closed status */}
+            <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 p-5 md:p-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
+                    {listing.name}
+                  </h1>
+                  {listing.isPremium && (
+                    <Badge className="bg-[#4169E1] text-white border-none flex items-center gap-0.5 text-xs py-0.5">
+                      <BadgeCheck className="size-3.5" /> Verified
+                    </Badge>
+                  )}
+                  {listing.isClaimed === false && (
+                    <Badge 
+                      onClick={() => setShowClaimDialog(true)}
+                      className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer animate-pulse text-[11px] font-bold"
+                    >
+                      🎯 Claim Business
+                    </Badge>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Instagram Integration Section */}
-        {listing.instagramUsername && (
-          <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-pink-100 p-5 md:p-6 overflow-hidden">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-pink-200 pb-3">
-              <Instagram className="size-6 text-pink-500" />
-              Follow Us on Instagram
-            </h2>
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="flex-1 text-center sm:text-left">
-                <p className="text-gray-700 mb-4 font-medium text-sm sm:text-base">Check out our latest updates, offers, and gallery on Instagram!</p>
-                <a 
-                  href={`https://instagram.com/${listing.instagramUsername.replace('@', '')}`}
-                  target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
-                >
-                  <Instagram className="size-5" />
-                  @{listing.instagramUsername.replace('@', '')}
-                </a>
-              </div>
-              <div className="w-full sm:w-1/2 flex justify-center">
-                <div 
-                  className="w-full max-w-[300px] aspect-[4/3] bg-white rounded-xl shadow-lg p-1 relative overflow-hidden cursor-pointer group"
-                  onClick={() => window.open(`https://instagram.com/${listing.instagramUsername?.replace('@', '')}`, '_blank')}
-                >
-                   <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1 p-1">
-                      <div className="rounded-lg w-full h-full bg-gradient-to-br from-pink-200 to-purple-200 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="rounded-lg w-full h-full bg-gradient-to-br from-yellow-200 to-orange-200 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="rounded-lg w-full h-full bg-gradient-to-br from-orange-200 to-pink-200 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="rounded-lg w-full h-full flex items-center justify-center bg-gray-50 border border-pink-100 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <span className="text-pink-500 font-bold text-sm">View More</span>
-                      </div>
-                   </div>
-                   <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px] flex items-center justify-center group-hover:backdrop-blur-none transition-all">
-                      <div className="bg-white/90 px-4 py-2 rounded-full font-bold text-pink-600 shadow-xl flex items-center gap-2">
-                         <Instagram className="size-4" /> Open App
-                      </div>
-                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-            {/* Related Listings (Dummy) */}
-            <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6 mt-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
-                <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
-                ఇంకా ఇవి కూడా చూడండి
-              </h2>
-              <div className="flex gap-4 overflow-x-auto snap-x scrollbar-hide pb-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="min-w-[160px] border border-gray-100 rounded-xl p-3 shadow-sm snap-start">
-                    <div className="w-full aspect-square bg-gray-100 rounded-lg mb-2"></div>
-                    <p className="font-bold text-sm truncate">Related Business {i}</p>
-                    <p className="text-xs text-gray-500">Category</p>
+                <div className="flex items-center gap-3 mt-1.5 flex-wrap text-sm text-gray-500 font-semibold">
+                  <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-none font-bold">
+                    {listing.category}
+                  </Badge>
+                  <div className="flex items-center gap-1 bg-yellow-50 px-2.5 py-0.5 rounded border border-yellow-100 text-yellow-700">
+                    <Star className="size-3.5 fill-yellow-500 text-yellow-500" />
+                    <span>{listing.rating || 5.0}</span>
                   </div>
-                ))}
+                  <div className="flex items-center gap-1">
+                    <Eye className="size-4 text-gray-400" />
+                    <span>{listing.viewsCount} views</span>
+                  </div>
+                  <div>
+                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded ${listing.operatingHours ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {listing.operatingHours ? 'Open Now' : 'Closed'}
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {listing.address && (
+                <div className="flex items-start gap-2 text-gray-600 mt-4 pt-4 border-t border-gray-100">
+                  <MapPin className="size-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium">{listing.address}</span>
+                </div>
+              )}
             </div>
-            <div className="h-4"></div>
+
+            {/* Social Links Bar */}
+            {(listing.instagramUrl || listing.facebookUrl || listing.youtubeUrl) && (
+              <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100">
+                <span className="text-sm font-bold text-gray-500 mr-2">Socials:</span>
+                {listing.instagramUrl && (
+                  <a href={listing.instagramUrl} target="_blank" rel="noreferrer" className="size-10 bg-gray-50 rounded-full flex items-center justify-center text-pink-600 shadow-sm hover:scale-105 transition-transform border border-gray-100">
+                    <Instagram className="size-5" />
+                  </a>
+                )}
+                {listing.facebookUrl && (
+                  <a href={listing.facebookUrl} target="_blank" rel="noreferrer" className="size-10 bg-gray-50 rounded-full flex items-center justify-center text-blue-600 shadow-sm hover:scale-105 transition-transform border border-gray-100">
+                    <Facebook className="size-5" />
+                  </a>
+                )}
+                {listing.youtubeUrl && (
+                  <a href={listing.youtubeUrl} target="_blank" rel="noreferrer" className="size-10 bg-gray-50 rounded-full flex items-center justify-center text-red-600 shadow-sm hover:scale-105 transition-transform border border-gray-100">
+                    <Youtube className="size-5" />
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Middle 1: About Us (Tiptap HTML) */}
+            {cleanDescription && (
+              <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 p-5 md:p-6">
+                <h2 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2 border-b pb-3">
+                  <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+                  About Us
+                </h2>
+                <div 
+                  className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: cleanDescription }}
+                />
+              </div>
+            )}
+
+            {/* Middle 2: Photo Gallery (Horizontal Swipeable) */}
+            {galleryImages.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 p-5 md:p-6 overflow-hidden">
+                <h2 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2 border-b pb-3">
+                  <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+                  Photo Gallery
+                </h2>
+                <div className="flex overflow-x-auto snap-x mandatory gap-3 pb-2 scrollbar-none scroll-smooth">
+                  {galleryImages.map((img: string, idx: number) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => setSelectedImage(img)} 
+                      className="relative w-72 h-48 shrink-0 snap-center rounded-lg overflow-hidden border border-gray-100 cursor-pointer group shadow-sm bg-gray-100"
+                    >
+                      <OptimizedImage
+                        src={img}
+                        alt={`${listing.name} gallery ${idx + 1}`}
+                        fill
+                        className="object-cover group-hover:scale-102 transition-transform duration-300"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Middle 3: Services Section (WhatsApp Business Style) */}
+            {servicesList.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 p-5 md:p-6">
+                <h2 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2 border-b pb-3">
+                  <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+                  Services & Catalog
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {servicesList.map((service, idx) => (
+                    <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100/60 shadow-sm flex items-start gap-3">
+                      <div className="p-2 bg-[#4169E1]/10 rounded-xl text-[#4169E1] shrink-0">
+                        {idx % 2 === 0 ? <Wrench className="size-4.5" /> : <Sparkles className="size-4.5" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-gray-900 text-sm leading-tight">{service.name}</h4>
+                        {service.description && (
+                          <p className="text-xs text-gray-500 mt-1 leading-snug">{service.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bottom: Related Listings */}
+            {relatedListings.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 p-5 md:p-6">
+                <h2 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2 border-b pb-3">
+                  <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+                  Related Businesses
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {relatedListings.map((rel) => (
+                    <ListingCard key={rel.id} listing={rel} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
-          <div className="space-y-6 md:mt-0">
-            {/* Right Sidebar */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hidden md:flex flex-col gap-4 sticky top-20">
-              <h3 className="font-bold text-lg mb-2">Contact Business</h3>
+          {/* Desktop Right Sticky Sidebar */}
+          <div className="hidden md:block">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 sticky top-24">
+              <h3 className="font-bold text-lg text-gray-900 border-b pb-2">Actions</h3>
               <div className="flex flex-col gap-3">
-                {phoneToCall && <Button onClick={() => window.location.href = `tel:${phoneToCall}`} className="w-full bg-[#4169E1] hover:bg-[#3151b0] text-white"><Phone className="size-4 mr-2" /> Call</Button>}
-                {phoneToWA && <Button onClick={() => window.open(`https://wa.me/${phoneToWA}`)} className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white"><MessageCircle className="size-4 mr-2" /> WhatsApp</Button>}
-                <Button variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="w-full"><MapPin className="size-4 mr-2" /> Location</Button>
-                <Button variant="outline" onClick={generateVCard} className="w-full"><Download className="size-4 mr-2" /> Save Contact</Button>
-                <Button variant="outline" onClick={handleShare} className="w-full"><Share2 className="size-4 mr-2" /> Share</Button>
+                {phoneToCall && (
+                  <Button onClick={handleCall} className="w-full bg-[#4169E1] hover:bg-[#3151b0] text-white font-bold h-12 rounded-xl">
+                    <Phone className="size-4.5 mr-2" /> Call Now
+                  </Button>
+                )}
+                {phoneToWA && (
+                  <Button onClick={handleWhatsapp} className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white font-bold h-12 rounded-xl">
+                    <MessageCircle className="size-4.5 mr-2" /> WhatsApp
+                  </Button>
+                )}
+                <Button variant="outline" onClick={handleLocation} className="w-full h-12 rounded-xl font-bold border-gray-200">
+                  <MapPin className="size-4.5 mr-2 text-red-500" /> Google Map Location
+                </Button>
+                <Button variant="outline" onClick={generateVCard} className="w-full h-12 rounded-xl font-bold border-gray-200">
+                  <Download className="size-4.5 mr-2 text-[#D4AF37]" /> Save Contact
+                </Button>
+                <Button variant="outline" onClick={handleShare} className="w-full h-12 rounded-xl font-bold border-gray-200">
+                  <Share2 className="size-4.5 mr-2 text-[#4169E1]" /> Share listing
+                </Button>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      {/* MOBILE STICKY FOOTER */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white shadow-[0_-4px_15px_rgba(0,0,0,0.15)] p-3 flex items-center justify-around border-t border-gray-100">
-        <button onClick={handleCall} className="flex flex-col items-center text-green-600"><Phone size={20} /><span className="text-xs">Call</span></button>
-        <button onClick={handleWhatsapp} className="flex flex-col items-center text-green-700"><MessageCircle size={20} /><span className="text-xs">WhatsApp</span></button>
-        <button onClick={handleShare} className="bg-gradient-to-r from-blue-600 to-yellow-500 text-white p-3 rounded-full shadow-lg active:scale-75 transition-transform -mt-6">
-          <Share2 size={24} />
+      {/* ── MOBILE STICKY FOOTER ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white shadow-[0_-4px_15px_rgba(0,0,0,0.15)] p-3 flex items-center justify-around">
+        <button onClick={handleCall} className="flex flex-col items-center justify-center text-gray-600 font-bold text-[10px] w-12">
+          <Phone size={18} className="text-[#4169E1] mb-1" />
+          <span>Call</span>
         </button>
-        <button onClick={handleSaveContact} className="flex flex-col items-center text-gray-700"><Download size={20} /><span className="text-xs">Save</span></button>
-        <button onClick={handleLocation} className="flex flex-col items-center text-red-500"><MapPin size={20} /><span className="text-xs">Location</span></button>
+        <button onClick={handleWhatsapp} className="flex flex-col items-center justify-center text-gray-600 font-bold text-[10px] w-12">
+          <MessageCircle size={18} className="text-[#25D366] mb-1" />
+          <span>WhatsApp</span>
+        </button>
+        <button 
+          onClick={handleShare} 
+          className="bg-gradient-to-br from-[#4169E1] to-[#D4AF37] text-white p-4 rounded-full shadow-[0_4px_14px_rgba(65,105,225,0.45)] active:scale-90 transition-transform -mt-7 z-50 flex items-center justify-center size-14 border-2 border-white"
+        >
+          <Share2 size={22} className="text-white" />
+        </button>
+        <button onClick={generateVCard} className="flex flex-col items-center justify-center text-gray-600 font-bold text-[10px] w-12">
+          <Download size={18} className="text-[#D4AF37] mb-1" />
+          <span>Save</span>
+        </button>
+        <button onClick={handleLocation} className="flex flex-col items-center justify-center text-gray-600 font-bold text-[10px] w-12">
+          <MapPin size={18} className="text-red-500" />
+          <span>Location</span>
+        </button>
       </div>
 
-            {/* Lightbox Dialog */}
+      {/* Fullscreen Lightbox */}
       {selectedImage && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
-          <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-white/10 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
+          <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 text-white hover:text-gray-300 p-2.5 bg-white/10 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
           <div className="relative w-full max-w-5xl aspect-square md:aspect-video" onClick={(e) => e.stopPropagation()}>
-            <img src={selectedImage} alt="Gallery image fullscreen" className="w-full h-full object-contain" />
+            <img src={selectedImage} alt="Gallery view fullscreen" className="w-full h-full object-contain" />
           </div>
         </div>
       )}
       
-      {/* Claim Business Dialog */}
+      {/* Claim Business Modal */}
       <Dialog open={showClaimDialog} onOpenChange={setShowClaimDialog}>
-        <DialogContent className="sm:max-w-md bg-white">
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900">Claim Your Business</DialogTitle>
+            <DialogTitle className="text-xl font-extrabold text-gray-900">Claim Business Page</DialogTitle>
             <DialogDescription className="text-gray-500 mt-2">
-              Are you the owner of <b>{listing.name}</b>? Please provide your contact number. Our team will verify and transfer ownership to your account.
+              Are you the owner of <b>{listing.name}</b>? Please provide your mobile number. We will contact you to verify ownership.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-3">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-semibold">Your Phone Number</Label>
+              <Label htmlFor="claim-phone" className="text-sm font-bold text-gray-700">Phone Number</Label>
               <Input 
-                id="phone"
-                placeholder="e.g. 9876543210" 
+                id="claim-phone"
+                placeholder="Enter 10-digit number" 
                 value={claimPhone}
                 onChange={(e) => setClaimPhone(e.target.value)}
-                className="bg-gray-50"
+                className="bg-gray-50 border-gray-200 h-11 rounded-xl"
               />
             </div>
           </div>
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={() => setShowClaimDialog(false)}>Cancel</Button>
+          <DialogFooter className="flex sm:justify-between gap-2 mt-4">
+            <Button variant="outline" onClick={() => setShowClaimDialog(false)} className="rounded-xl h-11 flex-1 sm:flex-initial">Cancel</Button>
             <Button 
-              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white" 
+              className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white rounded-xl h-11 flex-1 sm:flex-initial" 
               onClick={handleClaimSubmit}
               disabled={claimSubmitting}
             >
-              {claimSubmitting ? 'Submitting...' : 'Submit Claim Request'}
+              {claimSubmitting ? 'Submitting...' : 'Claim Business'}
             </Button>
           </DialogFooter>
         </DialogContent>

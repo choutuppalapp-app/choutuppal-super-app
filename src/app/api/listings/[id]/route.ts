@@ -62,6 +62,34 @@ export async function GET(
   }
 }
 
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const existingListing = await db.listing.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
+      select: { id: true },
+    })
+
+    if (!existingListing) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
+    }
+
+    const listingId = existingListing.id
+
+    // Delete related records to prevent foreign key constraint violations
+    await db.lead.deleteMany({ where: { listingId } })
+    await db.review.deleteMany({ where: { listingId } })
+    await db.short.deleteMany({ where: { linkedListingId: listingId } })
+    await db.claimRequest.deleteMany({ where: { listingId } })
+
+    await db.listing.delete({ where: { id: listingId } })
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Error deleting listing:', error)
+    return NextResponse.json({ error: error.message || 'Failed to delete listing' }, { status: 500 })
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

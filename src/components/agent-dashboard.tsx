@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Store, Eye, Phone, Plus, Pencil, Trash2, Edit2,
-  X, Image as ImageIcon, MapPin, Loader2, FileText, UploadCloud, Download
+  X, Image as ImageIcon, MapPin, Loader2, FileText, UploadCloud, Download,
+  Wrench, Sparkles, Instagram, Facebook, Youtube
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,8 +19,9 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import useSWR from 'swr'
 import dynamic from 'next/dynamic'
-const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 import Papa from 'papaparse'
+
+const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 
 interface UserListing {
   id: string
@@ -28,23 +30,31 @@ interface UserListing {
   category: string
   description: string | null
   phoneNumber: string | null
+  whatsappNumber: string | null
   address: string | null
   coverImage: string | null
+  logoUrl: string | null
+  images: string | null
+  gallery: string | null
+  services: string | null
   viewsCount: number
   status: string
   createdAt: string
   cityId: string
+  rating: number
+  operatingHours: string | null
+  googleMapsUrl: string | null
+  instagramUsername: string | null
+  facebookUrl: string | null
+  youtubeUrl: string | null
   city?: { id: string; name: string }
 }
 
 const CATEGORIES = [
-  'Real Estate', 'Restaurants & Cafes', 'Hospitals & Clinics', 'Medical Shops',
-  'Schools & Colleges', 'Supermarkets & Groceries', 'Hotels & Lodges',
-  'Function Halls', 'Automobiles & Showrooms', 'Clothing & Boutiques',
-  'Electronics & Mobiles', 'Salons & Spas', 'Gyms & Fitness',
-  'Banks & ATMs', 'Sweet Shops & Bakeries', 'Hardware & Sanitaries',
-  'Jewellery', 'Footwear', 'Home Decor & Furniture', 'Services (Plumber/Electrician)',
-  'Others'
+  'Restaurant', 'Hotel', 'Hospital', 'School', 'Gym', 'Salon',
+  'Electronics', 'Clothing', 'Grocery', 'Pharmacy', 'Auto Repair',
+  'Real Estate', 'Legal', 'Financial', 'IT Services', 'Education',
+  'Healthcare', 'Food & Beverage', 'Retail', 'Other',
 ]
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
@@ -53,7 +63,7 @@ export default function AgentDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<'add_listing' | 'bulk_upload' | 'my_assignments'>('add_listing')
 
-  // --- SWR Hooks ---
+  // --- SWR Hooks ───
   const { data: listingsData, mutate: mutateListings, isLoading } = useSWR(
     user?.id ? `/api/listings?userId=${user.id}&limit=100` : null,
     fetcher
@@ -71,27 +81,28 @@ export default function AgentDashboard() {
       .catch(() => {})
   }, [])
 
-  // --- Single Listing Form State ---
+  // --- Single Listing Form State ───
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
     name: '', category: '', description: '',
-    phoneNumber: '', whatsappNumber: '', cityId: '',
-    address: '', coverImage: '', logoUrl: '', galleryUrls: [] as string[],
-    rating: 5, operatingHours: '', googleMapsUrl: '',
+    phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
+    address: '', coverImage: '', logoUrl: '', images: [] as string[],
+    rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
     price: '', bedroomCount: '', area: '',
-    instagramUsername: '', facebookUrl: '', youtubeUrl: ''
+    instagramUsername: '', facebookUrl: '', youtubeUrl: '',
+    services: [] as { name: string; description: string }[]
   })
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // --- Bulk Upload State ---
+  // --- Bulk Upload State ───
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [parsedData, setParsedData] = useState<any[]>([])
   const [isUploadingBulk, setIsUploadingBulk] = useState(false)
 
-  // --- Functions: Single Listing ---
+  // --- Functions: Single Listing ───
   const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logoUrl') => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -111,42 +122,40 @@ export default function AgentDashboard() {
       console.error("Upload error:", error)
       toast.error('Failed to upload image', { id: 'upload' })
     }
+    e.target.value = ''
   }
 
+  // Gallery Uploads (MUST use images property name and correct updater)
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    toast.loading('Uploading images...', { id: 'upload' })
+    toast.loading('Uploading gallery...', { id: 'upload' })
     try {
       const { default: imageCompression } = await import('browser-image-compression');
       const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 1 })));
       const uploadPromises = compressedFiles.map(async (file) => {
         const fileName = `gallery/${Date.now()}-${file.name}`;
-        console.log('Uploading file...', fileName);
         const { data, error } = await supabase.storage.from('listing-images').upload(fileName, file);
         if (error) {
           console.error('Upload error:', error);
-          toast.error('Upload failed: ' + error.message, { id: 'upload' });
           return null;
         }
         return supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl;
       });
       const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
       
-      // CRITICAL FIX: Use callback to append to previous state safely
-      setFormData(prevData => ({
-        ...prevData,
-        galleryUrls: [...(prevData.galleryUrls || []), ...urls] // Ensure it's always an array
-      }));
+      // Gallery state MUST use:
+      setFormData(prev => ({ ...prev, images: [...(prev.images || []), ...urls] }));
       toast.success('Gallery uploaded successfully!', { id: 'upload' });
     } catch (error: any) {
       console.error('Gallery upload error:', error);
       toast.error('Upload failed: ' + (error?.message || 'Unknown error'), { id: 'upload' });
     }
+    e.target.value = ''
   };
 
   const submitListing = async () => {
-    const finalCityId = formData.cityId || choutuppalCityId
+    const finalCityId = formData.cityId || choutuppalCityId || cities[0]?.id
     if (!formData.name || !formData.category || !finalCityId) {
       toast.error('Please fill required fields (Name, Category, City)')
       return
@@ -156,36 +165,67 @@ export default function AgentDashboard() {
     try {
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.random().toString(36).substring(2, 7)
       
-      const payload = {
-        ...formData,
-        images: formData.galleryUrls,
-        cityId: finalCityId,
+      let url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
+      const method = editingListingId ? 'PUT' : 'POST'
+
+      let body: any = {
         userId: user?.id,
+        cityId: finalCityId,
         slug,
+        name: formData.name,
+        category: formData.category,
+        description: formData.description || null,
+        phoneNumber: formData.phoneNumber || null,
+        whatsappNumber: formData.sameAsPhone ? formData.phoneNumber : (formData.whatsappNumber || null),
+        address: formData.address || null,
+        coverImage: formData.coverImage || null,
+        logoUrl: formData.logoUrl || null,
+        images: formData.images.length > 0 ? formData.images : null,
+        gallery: formData.images.length > 0 ? formData.images : null,
+        services: formData.services.length > 0 ? formData.services : null,
+        rating: formData.rating,
+        operatingHours: formData.operatingHours || null,
+        googleMapsUrl: formData.googleMapsUrl || null,
+        instagramUsername: formData.instagramUsername || null,
+        facebookUrl: formData.facebookUrl || null,
+        youtubeUrl: formData.youtubeUrl || null,
         isApproved: true,
         status: 'APPROVED',
       }
-      
-      const url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
-      const method = editingListingId ? 'PUT' : 'POST'
 
+      if (formData.category === 'Real Estate') {
+        url = editingListingId ? `/api/realestate/${editingListingId}` : '/api/realestate'
+        const imagesArr = formData.coverImage ? [formData.coverImage, ...formData.images] : formData.images
+        body = {
+          userId: user?.id,
+          cityId: finalCityId,
+          title: formData.name,
+          price: formData.price,
+          images: imagesArr.length > 0 ? JSON.stringify(imagesArr) : null,
+          ownerPhone: formData.phoneNumber,
+          bedroomCount: formData.bedroomCount ? parseInt(formData.bedroomCount) : null,
+          area: formData.area || null,
+        }
+      }
+      
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(body)
       })
 
       if (res.ok) {
-        toast.success(editingListingId ? 'Listing updated!' : 'Listing created!')
+        toast.success(editingListingId ? 'Listing updated successfully!' : 'Listing created successfully!')
         mutateListings()
         setEditingListingId(null)
         setFormData({
           name: '', category: '', description: '',
-          phoneNumber: '', whatsappNumber: '', cityId: choutuppalCityId,
-          address: '', coverImage: '', logoUrl: '', galleryUrls: [] as string[],
-          rating: 5, operatingHours: '', googleMapsUrl: '',
+          phoneNumber: '', whatsappNumber: '', cityId: choutuppalCityId, sameAsPhone: false,
+          address: '', coverImage: '', logoUrl: '', images: [] as string[],
+          rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
           price: '', bedroomCount: '', area: '',
-          instagramUsername: '', facebookUrl: '', youtubeUrl: ''
+          instagramUsername: '', facebookUrl: '', youtubeUrl: '',
+          services: []
         })
         setActiveTab('my_assignments')
       } else {
@@ -198,18 +238,19 @@ export default function AgentDashboard() {
     }
   }
 
+  // DELETE LOGIC: Call method DELETE and toast.error on failure
   const deleteListing = async (id: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return
     try {
       const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('Listing deleted')
-        mutateListings()
-      } else {
-        toast.error('Failed to delete')
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to delete listing')
       }
-    } catch (e) {
-      toast.error('Error deleting listing')
+      toast.success('Listing deleted successfully!')
+      mutateListings()
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete listing')
     }
   }
 
@@ -218,9 +259,10 @@ export default function AgentDashboard() {
     setFormData({
       name: l.name, category: l.category, description: l.description || '',
       phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', cityId: l.cityId,
+      sameAsPhone: l.phoneNumber === l.whatsappNumber,
       address: l.address || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '',
-      galleryUrls: (() => {
-        const raw = l.gallery || l.images
+      images: (() => {
+        const raw = l.images || l.gallery
         if (!raw) return []
         try {
           return typeof raw === 'string' ? JSON.parse(raw) : raw
@@ -228,14 +270,22 @@ export default function AgentDashboard() {
           return []
         }
       })(),
-      rating: l.rating || 5, operatingHours: l.operatingHours || '', googleMapsUrl: l.googleMapsUrl || '',
-      price: l.price || '', bedroomCount: l.bedroomCount || '', area: l.area || '',
-      instagramUsername: l.instagramUsername || '', facebookUrl: l.facebookUrl || '', youtubeUrl: l.youtubeUrl || ''
+      rating: l.rating || 5, operatingHours: l.operatingHours || '9:00 AM - 9:00 PM', googleMapsUrl: l.googleMapsUrl || '',
+      price: '', bedroomCount: '', area: '',
+      instagramUsername: l.instagramUsername || '', facebookUrl: l.facebookUrl || '', youtubeUrl: l.youtubeUrl || '',
+      services: (() => {
+        if (!l.services) return []
+        try {
+          return typeof l.services === 'string' ? JSON.parse(l.services) : l.services
+        } catch {
+          return []
+        }
+      })()
     })
     setActiveTab('add_listing')
   }
 
-  // --- Functions: Bulk Upload ---
+  // --- Bulk Upload Functions ───
   const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -251,10 +301,11 @@ export default function AgentDashboard() {
         toast.error('Error parsing CSV: ' + error.message)
       }
     })
+    e.target.value = ''
   }
 
   const downloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,name,category,phoneNumber,whatsappNumber,address,description,price,area,bedroomCount\nSample Business,Restaurants & Cafes,9876543210,,Main Road Choutuppal,A great place to eat,,,,"
+    const csvContent = "data:text/csv;charset=utf-8,name,category,phoneNumber,whatsappNumber,address,description,price,area,bedroomCount\nSample Business,Restaurant,9876543210,,Main Road Choutuppal,A great place to eat,,,,"
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement("a")
     link.setAttribute("href", encodedUri)
@@ -277,7 +328,7 @@ export default function AgentDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
-          cityId: choutuppalCityId,
+          cityId: choutuppalCityId || cities[0]?.id,
           listings: parsedData
         })
       })
@@ -300,7 +351,7 @@ export default function AgentDashboard() {
     }
   }
 
-  // --- Render Helpers ---
+  // Nav buttons UI
   const renderNavButtons = () => (
     <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-200/60 overflow-x-auto snap-x scrollbar-hide mb-8">
       {[
@@ -329,7 +380,7 @@ export default function AgentDashboard() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-12 text-center">
         <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-          <p className="text-gray-500">Please sign in to access your agent dashboard.</p>
+          <p className="text-gray-500 font-bold">Please sign in to access agent dashboard.</p>
         </div>
       </div>
     )
@@ -356,178 +407,243 @@ export default function AgentDashboard() {
 
         <AnimatePresence mode="wait">
           {activeTab === 'add_listing' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 max-w-3xl">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 max-w-3xl mx-auto">
               <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-6 md:p-8">
-                 <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
-                   <div className="w-1 h-6 bg-[#D4AF37] rounded-full"></div>
-                   {editingListingId ? 'Edit Listing' : 'Add New Listing'}
-                 </h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
+                  <div className="w-1 h-6 bg-[#D4AF37] rounded-full"></div>
+                  {editingListingId ? 'Edit Listing Details' : 'Add New Listing'}
+                </h2>
                  
-                 <div className="space-y-6">
-                      {/* Image Upload Zones */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {/* Logo Upload */}
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo / Logo (షాప్ లోగో)</label>
-                          <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
-                            {formData.logoUrl && (
-                              <div className="absolute inset-0 z-0">
-                                <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
-                                <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
-                              </div>
-                            )}
-                            <label className={`w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50/80 transition-colors z-10 ${formData.logoUrl ? 'opacity-0 hover:opacity-100 bg-black/40 text-white' : ''}`}>
-                              <div className={`p-4 rounded-full shadow-sm mb-3 ${formData.logoUrl ? 'bg-white/20' : 'bg-white'}`}>
-                                <UploadCloud className={`size-6 ${formData.logoUrl ? 'text-white' : 'text-[#4169E1]'}`} />
-                              </div>
-                              <span className={`text-sm font-medium ${formData.logoUrl ? 'text-white' : 'text-gray-600'}`}>Upload Logo</span>
-                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSingleUpload(e, 'logoUrl')} />
-                            </label>
+                <div className="space-y-6">
+                  {/* Photo Uploads */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Logo */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Profile Photo / Logo</label>
+                      <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative">
+                        {formData.logoUrl && (
+                          <div className="absolute inset-0 z-0">
+                            <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                            <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10"><Trash2 className="size-4" /></button>
                           </div>
-                        </div>
+                        )}
+                        <label className={`w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50/80 transition-colors z-10 ${formData.logoUrl ? 'opacity-0 hover:opacity-100 bg-black/40 text-white' : ''}`}>
+                          <UploadCloud className="size-8 mb-2 text-[#4169E1]" />
+                          <span className="text-xs font-bold text-gray-600">Upload Logo</span>
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSingleUpload(e, 'logoUrl')} />
+                        </label>
+                      </div>
+                    </div>
 
-                        {/* Cover Image Upload */}
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Banner Image</label>
-                          <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
-                            {formData.coverImage && (
-                              <div className="absolute inset-0 z-0">
-                                <img src={formData.coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
-                                <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
-                              </div>
-                            )}
-                            <label className={`w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50/80 transition-colors z-10 ${formData.coverImage ? 'opacity-0 hover:opacity-100 bg-black/40 text-white' : ''}`}>
-                              <div className={`p-4 rounded-full shadow-sm mb-3 ${formData.coverImage ? 'bg-white/20' : 'bg-white'}`}>
-                                <UploadCloud className={`size-6 ${formData.coverImage ? 'text-white' : 'text-[#4169E1]'}`} />
-                              </div>
-                              <span className={`text-sm font-medium ${formData.coverImage ? 'text-white' : 'text-gray-600'}`}>Upload Cover Photo</span>
-                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSingleUpload(e, 'coverImage')} />
-                            </label>
+                    {/* Cover Photo */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Cover Banner Image</label>
+                      <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative">
+                        {formData.coverImage && (
+                          <div className="absolute inset-0 z-0">
+                            <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10"><Trash2 className="size-4" /></button>
                           </div>
-                        </div>
+                        )}
+                        <label className={`w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50/80 transition-colors z-10 ${formData.coverImage ? 'opacity-0 hover:opacity-100 bg-black/40 text-white' : ''}`}>
+                          <UploadCloud className="size-8 mb-2 text-[#4169E1]" />
+                          <span className="text-xs font-bold text-gray-600">Upload Cover Banner</span>
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSingleUpload(e, 'coverImage')} />
+                        </label>
                       </div>
+                    </div>
+                  </div>
 
-                      {/* Gallery Upload */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Gallery Images (up to 5 photos)</label>
-                        <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-                          {formData.galleryUrls.map((url, i) => (
-                            <div key={i} className="min-w-[120px] h-[120px] relative border rounded-xl overflow-hidden shadow-sm group shrink-0">
-                              <img src={url} alt={`Gallery Preview ${i}`} className="w-full h-full object-cover" />
-                              <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, galleryUrls: p.galleryUrls.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
-                            </div>
-                          ))}
-                          {formData.galleryUrls.length < 5 && (
-                            <label className="min-w-[120px] h-[120px] border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 cursor-pointer hover:bg-blue-50 transition-colors shrink-0">
-                              <Plus className="size-6 mb-2 text-[#4169E1]/60" />
-                              <span className="text-xs font-medium">Add Photo</span>
-                              <input type="file" multiple className="hidden" accept="image/*" onChange={handleGalleryUpload} />
-                            </label>
-                          )}
+                  {/* Gallery */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Gallery Photos (Max 5)</label>
+                    <div className="flex gap-4 overflow-x-auto pb-2">
+                      {formData.images.map((url, i) => (
+                        <div key={i} className="w-24 h-24 relative border rounded-xl overflow-hidden shadow-sm shrink-0 group">
+                          <img src={url} alt="Gallery preview" className="w-full h-full object-cover" />
+                          <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow"><Trash2 className="size-3.5" /></button>
                         </div>
-                      </div>
+                      ))}
+                      {formData.images.length < 5 && (
+                        <label className="w-24 h-24 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-blue-50 shrink-0">
+                          <Plus className="size-6 mb-1 text-[#4169E1]/60" />
+                          <input type="file" multiple className="hidden" accept="image/*" onChange={handleGalleryUpload} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Business Name *</label>
-                       <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Sri Sai Tiffin Center" className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-                       <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val})}>
-                         <SelectTrigger className="h-11 bg-gray-50 border-gray-200"><SelectValue placeholder="Select Category" /></SelectTrigger>
-                         <SelectContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Shop / Business Name *</label>
+                      <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Sri Sai Electronics" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
+                      <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val})}>
+                        <SelectTrigger className="h-11 bg-gray-50 border-gray-200 rounded-xl"><SelectValue placeholder="Select Category" /></SelectTrigger>
+                        <SelectContent>
                           {(dynamicCategories.length > 0 ? dynamicCategories.map(c => c.name) : CATEGORIES).map(c => (
                             <SelectItem key={c} value={c}>{c}</SelectItem>
                           ))}
                         </SelectContent>
-                       </Select>
-                     </div>
-                   </div>
+                      </Select>
+                    </div>
+                  </div>
 
-                   {/* Real Estate Dynamic Fields */}
-                   {formData.category === 'Real Estate' && (
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#D4AF37]/5 p-5 rounded-xl border border-[#D4AF37]/20">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Price (₹)</label>
-                          <Input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="e.g. 5000000" className="bg-white border-gray-200" />
+                  {formData.category === 'Real Estate' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-yellow-50/40 p-4 rounded-xl border border-yellow-100">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1.5">Price (₹)</label>
+                        <Input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="e.g. 50 Lakhs" className="bg-white border-gray-200 rounded-xl h-11" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1.5">Bedrooms</label>
+                        <Input type="number" value={formData.bedroomCount} onChange={e => setFormData({...formData, bedroomCount: e.target.value})} placeholder="e.g. 3" className="bg-white border-gray-200 rounded-xl h-11" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1.5">Area</label>
+                        <Input value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} placeholder="e.g. 200 sq yards" className="bg-white border-gray-200 rounded-xl h-11" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                      <Input value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="10-digit number" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center justify-between">
+                        <span>WhatsApp Number</span>
+                        <label className="flex items-center gap-1 text-[10px] text-[#4169E1] font-bold cursor-pointer bg-blue-50 px-2 py-0.5 rounded">
+                          <input 
+                            type="checkbox" 
+                            checked={formData.sameAsPhone}
+                            onChange={(e) => setFormData({...formData, sameAsPhone: e.target.checked, whatsappNumber: e.target.checked ? formData.phoneNumber : ''})} 
+                            className="w-3.5 h-3.5"
+                          />
+                          <span>Same as Phone</span>
+                        </label>
+                      </label>
+                      <Input 
+                        value={formData.sameAsPhone ? formData.phoneNumber : formData.whatsappNumber} 
+                        onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} 
+                        disabled={formData.sameAsPhone}
+                        placeholder="WhatsApp number" 
+                        className="h-11 bg-gray-50 border-gray-200 rounded-xl" 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Physical Address</label>
+                    <Input value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full address" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Business Hours</label>
+                      <Input value={formData.operatingHours || ''} onChange={e => setFormData({...formData, operatingHours: e.target.value})} placeholder="e.g. 9:00 AM - 9:00 PM" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Google Maps Link</label>
+                      <Input value={formData.googleMapsUrl || ''} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} placeholder="Maps Link" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Rating (1-5)</label>
+                      <Input type="number" min="1" max="5" step="0.1" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5})} placeholder="5.0" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Instagram Username</label>
+                      <Input value={formData.instagramUsername || ''} onChange={e => setFormData({...formData, instagramUsername: e.target.value})} placeholder="Username" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Facebook URL</label>
+                      <Input value={formData.facebookUrl || ''} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} placeholder="https://..." className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">YouTube URL</label>
+                      <Input value={formData.youtubeUrl || ''} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} placeholder="https://..." className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                  </div>
+
+                  {/* Services Array Field */}
+                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                    <span className="text-gray-800 font-bold text-sm flex justify-between items-center">
+                      <span>Services catalog (సేవలు)</span>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setFormData(p => ({ ...p, services: [...(p.services || []), { name: '', description: '' }] }))}
+                        className="text-[#4169E1] border-[#4169E1]/20 hover:bg-[#4169E1]/5 font-bold h-7 px-2.5 rounded-lg text-xs"
+                      >
+                        + Add Service
+                      </Button>
+                    </span>
+                    <div className="space-y-3 mt-1">
+                      {formData.services?.map((svc, idx) => (
+                        <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-200/60 relative space-y-2">
+                          <button 
+                            type="button"
+                            onClick={() => setFormData(p => ({ ...p, services: p.services.filter((_, i) => i !== idx) }))}
+                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                          <div className="grid grid-cols-1 gap-2 pr-6">
+                            <Input 
+                              placeholder="Service Name" 
+                              value={svc.name}
+                              onChange={(e) => {
+                                const newSvcs = [...formData.services]
+                                newSvcs[idx].name = e.target.value
+                                setFormData({ ...formData, services: newSvcs })
+                              }}
+                              className="bg-white border-gray-200 h-9 text-xs rounded-lg"
+                            />
+                            <Input 
+                              placeholder="Description" 
+                              value={svc.description}
+                              onChange={(e) => {
+                                const newSvcs = [...formData.services]
+                                newSvcs[idx].description = e.target.value
+                                setFormData({ ...formData, services: newSvcs })
+                              }}
+                              className="bg-white border-gray-200 h-9 text-xs rounded-lg"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Bedrooms</label>
-                          <Input type="number" value={formData.bedroomCount} onChange={e => setFormData({...formData, bedroomCount: e.target.value})} placeholder="e.g. 3" className="bg-white border-gray-200" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Area</label>
-                          <Input value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} placeholder="e.g. 150 sq yards" className="bg-white border-gray-200" />
-                        </div>
-                     </div>
-                   )}
+                      ))}
+                      {(!formData.services || formData.services.length === 0) && (
+                        <p className="text-xs text-gray-400 italic">No services added yet.</p>
+                      )}
+                    </div>
+                  </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-                       <Input value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="10-digit number" className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
-                       <Input value={formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} placeholder="10-digit number" className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                   </div>
-                   
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
-                     <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full physical address" className="h-11 bg-gray-50 border-gray-200" />
-                   </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden min-h-[200px] shadow-sm">
+                      <RichTextEditor
+                        content={formData.description}
+                        onChange={(html) => setFormData({...formData, description: html})}
+                        placeholder="Describe the business..."
+                      />
+                    </div>
+                  </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Business Hours</label>
-                       <Input value={formData.operatingHours} onChange={e => setFormData({...formData, operatingHours: e.target.value})} placeholder="e.g. 9:00 AM - 9:00 PM" className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Google Maps URL</label>
-                       <Input value={formData.googleMapsUrl} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} placeholder="https://maps.google.com/..." className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (1-5)</label>
-                       <Input type="number" min="1" max="5" step="0.1" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5})} placeholder="5.0" className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Instagram Username</label>
-                       <Input value={formData.instagramUsername} onChange={e => setFormData({...formData, instagramUsername: e.target.value})} placeholder="username" className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">Facebook URL</label>
-                       <Input value={formData.facebookUrl} onChange={e => setFormData({...formData, facebookUrl: e.target.value})} placeholder="facebook.com/..." className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-2">YouTube URL</label>
-                       <Input value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} placeholder="youtube.com/..." className="h-11 bg-gray-50 border-gray-200" />
-                     </div>
-                   </div>
-
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                     <div className="border border-gray-200 rounded-xl overflow-hidden min-h-[200px] shadow-sm">
-                        <RichTextEditor
-                          content={formData.description}
-                          onChange={(html) => setFormData({...formData, description: html})}
-                          placeholder="Describe the business..."
-                        />
-                     </div>
-                   </div>
-
-                   <Button 
-                     onClick={submitListing} 
-                     disabled={isSubmitting}
-                     className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#B8962E] hover:to-[#967A26] text-white py-6 rounded-xl text-lg shadow-lg font-bold border-none"
-                   >
-                     {isSubmitting ? <Loader2 className="animate-spin size-5" /> : (editingListingId ? 'Update Listing' : 'Create Listing')}
-                   </Button>
-                 </div>
+                  <Button 
+                    onClick={submitListing} 
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8962E] hover:from-[#B8962E] hover:to-[#967A26] text-white py-6 rounded-xl text-lg shadow-lg font-bold border-none"
+                  >
+                    {isSubmitting ? <Loader2 className="animate-spin size-5" /> : (editingListingId ? 'Update Listing' : 'Create Listing')}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -539,7 +655,7 @@ export default function AgentDashboard() {
                   <FileText className="size-12 text-[#4169E1]" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-3">Bulk CSV Upload</h2>
-                <p className="text-gray-500 mb-8 max-w-md leading-relaxed">Upload a CSV file to instantly add multiple businesses at once. Download the template below to ensure correct formatting.</p>
+                <p className="text-gray-500 mb-8 max-w-md leading-relaxed">Upload a CSV file to instantly add multiple businesses at once.</p>
                 
                 <div className="flex gap-4 w-full max-w-sm">
                   <Button variant="outline" onClick={downloadTemplate} className="flex-1 flex gap-2 h-12 rounded-xl font-semibold border-gray-300 text-gray-700">
@@ -561,7 +677,7 @@ export default function AgentDashboard() {
                       <div className="w-1 h-5 bg-green-500 rounded-full"></div>
                       Preview ({parsedData.length} records)
                     </h3>
-                    <Button onClick={submitBulkUpload} disabled={isUploadingBulk} className="bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-md px-6">
+                    <Button onClick={submitBulkUpload} disabled={isUploadingBulk} className="bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-md px-6 border-none">
                       {isUploadingBulk ? <Loader2 className="animate-spin size-4 mr-2" /> : <UploadCloud className="size-4 mr-2" />}
                       Upload All
                     </Button>
@@ -647,7 +763,7 @@ export default function AgentDashboard() {
                   </div>
                   <p className="font-medium text-gray-600">No assignments found.</p>
                   <p className="text-sm mt-1">Start adding listings to see them here.</p>
-                  <Button onClick={() => setActiveTab('add_listing')} className="mt-4 bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl shadow-md">Add First Listing</Button>
+                  <Button onClick={() => setActiveTab('add_listing')} className="mt-4 bg-[#D4AF37] hover:bg-[#B8962E] text-white rounded-xl shadow-md border-none">Add First Listing</Button>
                 </div>
               )}
             </motion.div>
