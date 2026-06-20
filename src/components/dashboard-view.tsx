@@ -294,19 +294,31 @@ export default function DashboardView() {
     e.target.value = ''
   }
 
-  const handleExtraUpload = async (file: File, type: 'logo' | 'gallery') => {
+  const handleExtraUpload = async (file: File, type: 'logo') => {
     toast.info('Compressing image...')
     try {
       const data = await compressAndUpload(file, 'choutuppal/listings')
-      if (type === 'logo') {
-        setFormData(prev => ({ ...prev, logoUrl: data.url }))
-      } else {
-        setFormData(prev => ({ ...prev, gallery: [...prev.gallery, data.url] }))
-      }
+      setFormData(prev => ({ ...prev, logoUrl: data.url }))
       toast.success('Uploaded successfully')
     } catch {
       toast.error('Upload failed')
     }
+  }
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const files = Array.from(e.target.files)
+    toast.info('Compressing image(s)...')
+    try {
+      const uploadPromises = files.map(file => compressAndUpload(file, 'choutuppal/listings'))
+      const results = await Promise.all(uploadPromises)
+      const newUrls = results.map(r => r.url)
+      setFormData(prev => ({ ...prev, gallery: [...prev.gallery, ...newUrls] }))
+      toast.success('Uploaded successfully')
+    } catch {
+      toast.error('Upload failed')
+    }
+    e.target.value = ''
   }
 
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1099,7 +1111,7 @@ export default function DashboardView() {
                     {formData.gallery.length < 5 && (
                       <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
                         <Plus className="w-6 h-6" />
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'gallery')} />
+                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />
                       </label>
                     )}
                   </div>

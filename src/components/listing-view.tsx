@@ -452,8 +452,8 @@ END:VCARD`
           
           <div className="space-y-6 md:mt-0">
             {/* Right Sidebar */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hidden md:block sticky top-20">
-              <h3 className="font-bold text-lg mb-4">Contact Business</h3>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hidden md:flex flex-col gap-4 sticky top-20">
+              <h3 className="font-bold text-lg mb-2">Contact Business</h3>
               <div className="flex flex-col gap-3">
                 {phoneToCall && <Button onClick={() => window.location.href = `tel:${phoneToCall}`} className="w-full bg-[#4169E1] hover:bg-[#3151b0] text-white"><Phone className="size-4 mr-2" /> Call</Button>}
                 {phoneToWA && <Button onClick={() => window.open(`https://wa.me/${phoneToWA}`)} className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white"><MessageCircle className="size-4 mr-2" /> WhatsApp</Button>}
@@ -466,31 +466,31 @@ END:VCARD`
         </div>
       </div>
 
-        {/* Mobile Sticky Footer: 5-button pill */}
-        <div className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-3 items-center justify-around">
-          <button onClick={() => phoneToCall && (window.location.href = `tel:${phoneToCall}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#4169E1] transition-colors">
-            <Phone className="size-5 mb-0.5" />
-            <span className="text-[9px] font-semibold">Call</span>
-          </button>
-          <button onClick={() => phoneToWA && window.open(`https://wa.me/${phoneToWA}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#25D366] transition-colors">
-            <MessageCircle className="size-5 mb-0.5" />
-            <span className="text-[9px] font-semibold">WhatsApp</span>
-          </button>
-          
-          {/* Center Gradient Button */}
-          <button onClick={handleShare} className="flex flex-col items-center justify-center p-3 bg-gradient-to-r from-blue-600 to-yellow-500 text-white rounded-full shadow-lg active:scale-75 transition-transform">
-            <Share2 className="size-5" />
-          </button>
-  
-          <button onClick={generateVCard} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-500 transition-colors">
-            <Download className="size-5 mb-0.5" />
-            <span className="text-[9px] font-semibold">Save</span>
-          </button>
-          <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-red-500 transition-colors">
-            <MapPin className="size-5 mb-0.5" />
-            <span className="text-[9px] font-semibold">Location</span>
-          </button>
-        </div>
+      {/* Mobile Sticky Footer: 5-button pill */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-3 flex items-center justify-around">
+        <button onClick={() => phoneToCall && (window.location.href = `tel:${phoneToCall}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#4169E1] transition-colors">
+          <Phone className="size-5 mb-0.5" />
+          <span className="text-[9px] font-semibold">Call</span>
+        </button>
+        <button onClick={() => phoneToWA && window.open(`https://wa.me/${phoneToWA}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#25D366] transition-colors">
+          <MessageCircle className="size-5 mb-0.5" />
+          <span className="text-[9px] font-semibold">WhatsApp</span>
+        </button>
+        
+        {/* Center Gradient Button */}
+        <button onClick={handleShare} className="bg-gradient-to-r from-blue-600 to-yellow-500 text-white p-3 rounded-full shadow-lg active:scale-75 transition-transform">
+          <Share2 className="size-5" />
+        </button>
+
+        <button onClick={generateVCard} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-500 transition-colors">
+          <Download className="size-5 mb-0.5" />
+          <span className="text-[9px] font-semibold">Save</span>
+        </button>
+        <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-red-500 transition-colors">
+          <MapPin className="size-5 mb-0.5" />
+          <span className="text-[9px] font-semibold">Location</span>
+        </button>
+      </div>
 
             {/* Lightbox Dialog */}
       {selectedImage && (

@@ -94,31 +94,32 @@ export default function AgentDashboard() {
   // --- Functions: Single Listing ---
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logoUrl' | 'gallery') => {
     if (!e.target.files || e.target.files.length === 0) return
-    const file = e.target.files[0]
-    console.log("File received:", file.name, file.size)
+    const files = Array.from(e.target.files)
     
     try {
-      toast.loading('Uploading image...', { id: 'upload' })
+      toast.loading('Uploading image(s)...', { id: 'upload' })
       const { default: imageCompression } = await import('browser-image-compression')
-      const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1200 })
-      console.log("File compressed:", compressedFile.name, compressedFile.size)
       
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
-      
-      const { data, error } = await supabase.storage.from('listing-images').upload(`covers/${fileName}`, compressedFile)
-      if (error) throw error
-      const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(`covers/${fileName}`)
-      console.log("Supabase URL retrieved:", publicUrl)
-      
+      const uploadPromises = files.map(async (file) => {
+        const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1200 })
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
+        const { error } = await supabase.storage.from('listing-images').upload(`covers/${fileName}`, compressedFile)
+        if (error) throw error
+        const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(`covers/${fileName}`)
+        return publicUrl
+      })
+
+      const uploadedUrls = await Promise.all(uploadPromises)
+
       if (field === 'gallery') {
-        setFormData(prev => ({ ...prev, galleryUrls: [...prev.galleryUrls, publicUrl] }))
+        setFormData(prev => ({ ...prev, galleryUrls: [...prev.galleryUrls, ...uploadedUrls] }))
       } else {
-        setFormData(prev => ({ ...prev, [field]: publicUrl }))
+        setFormData(prev => ({ ...prev, [field]: uploadedUrls[0] }))
       }
-      toast.success('Image uploaded successfully!', { id: 'upload' })
+      toast.success('Image(s) uploaded successfully!', { id: 'upload' })
     } catch (error) {
       console.error("Upload error:", error)
-      toast.error('Failed to upload image', { id: 'upload' })
+      toast.error('Failed to upload image(s)', { id: 'upload' })
     }
   }
 
@@ -389,7 +390,7 @@ export default function AgentDashboard() {
                             <label className="min-w-[120px] h-[120px] border-2 border-dashed border-[#4169E1]/30 bg-blue-50/30 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:bg-blue-50 cursor-pointer transition-colors">
                               <Plus className="size-6 mb-1 text-[#4169E1]/60" />
                               <span className="text-xs font-medium text-gray-500">Add Photo</span>
-                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'gallery')} />
+                              <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'gallery')} />
                             </label>
                           )}
                         </div>
