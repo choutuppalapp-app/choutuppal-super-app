@@ -37,6 +37,7 @@ interface ListingData {
   name: string
   category: string
   description: string | null
+  services?: string | null
   coverImage: string | null
   logoUrl: string | null
   gallery: string[] | null
@@ -269,11 +270,9 @@ END:VCARD`
             <Button variant="outline" onClick={generateVCard} className="border-gray-200 hover:bg-gray-50">
               <Download className="size-4 mr-2" /> Save
             </Button>
-            {listing.latitude && listing.longitude && (
-              <Button variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude},${listing.longitude}`)} className="border-gray-200 hover:bg-gray-50">
-                <MapPin className="size-4 mr-2" /> Location
-              </Button>
-            )}
+                        <Button variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="border-gray-200 hover:bg-gray-50">
+              <MapPin className="size-4 mr-2" /> Location
+            </Button>
             <Button variant="outline" onClick={handleShare} className="border-gray-200 hover:bg-gray-50">
               <Share2 className="size-4 mr-2" /> Share
             </Button>
@@ -321,13 +320,49 @@ END:VCARD`
               About Us
             </h2>
             <div 
-              className="prose prose-sm md:prose-base max-w-none text-gray-700 leading-relaxed"
+              className="prose prose-sm md:prose-base prose-ul:list-disc prose-li:marker:text-[#D4AF37] max-w-none text-gray-700 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: cleanDescription }}
             />
           </div>
         )}
 
+                {/* Services Section */}
+        {listing.services && JSON.parse(listing.services).length > 0 && (
+          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
+              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+              Our Services
+            </h2>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {JSON.parse(listing.services).map((service: string, idx: number) => (
+                <li key={idx} className="flex items-start gap-2 text-gray-700">
+                  <div className="mt-1 size-1.5 rounded-full bg-[#D4AF37] shrink-0" />
+                  <span className="text-sm font-medium">{service}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Gallery Section */}
+                {/* Services Section */}
+        {listing.services && JSON.parse(listing.services).length > 0 && (
+          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
+              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+              Our Services
+            </h2>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {JSON.parse(listing.services).map((service: string, idx: number) => (
+                <li key={idx} className="flex items-start gap-2 text-gray-700">
+                  <div className="mt-1 size-1.5 rounded-full bg-[#D4AF37] shrink-0" />
+                  <span className="text-sm font-medium">{service}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Gallery Section */}
         {galleryImages.length > 0 && (          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6 overflow-hidden">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">

@@ -16,6 +16,8 @@ interface Listing {
   category: string
   description: string | null
   images: string | null
+  coverImage?: string | null
+  logoUrl?: string | null
   whatsappNumber: string | null
   address: string | null
   isPremium: boolean
@@ -85,7 +87,9 @@ export function FeaturedListings() {
     navigateTo('listing')
   }
 
-  const getFirstImage = (images: string | null): string => {
+  const getFirstImage = (images: string | null
+  coverImage?: string | null
+  logoUrl?: string | null): string => {
     if (!images) return ''
     try {
       const parsed = JSON.parse(images)
@@ -140,7 +144,7 @@ export function FeaturedListings() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {listings.map((listing, index) => {
-            const img = getFirstImage(listing.images)
+            const img = listing.coverImage || listing.logoUrl || getFirstImage(listing.images)
             const hasImage = !!img
             const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
 

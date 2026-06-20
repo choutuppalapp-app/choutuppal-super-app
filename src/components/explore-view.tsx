@@ -27,6 +27,8 @@ interface Listing {
   category: string
   description: string | null
   images: string | null
+  coverImage?: string | null
+  logoUrl?: string | null
   whatsappNumber: string | null
   address: string | null
   isPremium: boolean
@@ -319,7 +321,7 @@ export default function ExploreView() {
                     }
                   })()
                 : []
-              const coverImg = images[0] || ''
+              const coverImg = listing.coverImage || listing.logoUrl || images[0] || ''
               const hasImage = !!coverImg
               const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
 
@@ -390,28 +392,7 @@ export default function ExploreView() {
                         </span>
                       </div>
                       
-                      <div className="pt-1">
-                        {listing.whatsappNumber ? (
-                           <div onClick={(e) => {
-                             e.stopPropagation()
-                             window.open(`https://wa.me/91${listing.whatsappNumber!.replace(/\D/g, '')}?text=Hi, I found your business on Choutuppal App`, '_blank')
-                           }}>
-                             <button className="w-full flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1.5 rounded-md transition-colors">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-                               WhatsApp
-                             </button>
-                           </div>
-                        ) : (
-                          <button
-                            onClick={(e) => handleGetQuote(e, listing.id)}
-                            className="w-full flex items-center justify-center gap-1 bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs font-semibold py-1.5 rounded-md transition-colors active:scale-95"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            Get Quote
-                          </button>
-                        )}
                       </div>
-                    </div>
                   </GlassCard>
                 </div>
               )

@@ -329,11 +329,10 @@ export default function AgentDashboard() {
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo / Logo (షాప్ లోగో)</label>
                         <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
-                          {formData.logoUrl ? (
-                            <>
-                              <Image src={formData.logoUrl} alt="Logo" fill className="object-contain p-2" />
-                              <button onClick={() => setFormData(p => ({...p, logoUrl: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
-                            </>
+                                                        <>
+                                <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
+                                <button onClick={() => setFormData(p => ({...p, logoUrl: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
+                              </>
                           ) : (
                             <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
                               <div className="p-4 bg-white rounded-full shadow-sm mb-3">
@@ -349,11 +348,10 @@ export default function AgentDashboard() {
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Banner Image</label>
                         <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
-                          {formData.coverImage ? (
-                            <>
-                              <Image src={formData.coverImage} alt="Cover" fill className="object-cover" />
-                              <button onClick={() => setFormData(p => ({...p, coverImage: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
-                            </>
+                                                        <>
+                                <img src={formData.coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
+                                <button onClick={() => setFormData(p => ({...p, coverImage: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
+                              </>
                           ) : (
                             <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
                               <div className="p-4 bg-white rounded-full shadow-sm mb-3">
