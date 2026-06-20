@@ -79,6 +79,7 @@ export default function AgentDashboard() {
     name: '', category: '', description: '',
     phoneNumber: '', whatsappNumber: '', cityId: '',
     address: '', coverImage: '', logoUrl: '', galleryUrls: [] as string[],
+    rating: 5, operatingHours: '', googleMapsUrl: '',
     price: '', bedroomCount: '', area: '',
     instagramUsername: '', facebookUrl: '', youtubeUrl: ''
   })
@@ -159,6 +160,7 @@ export default function AgentDashboard() {
           name: '', category: '', description: '',
           phoneNumber: '', whatsappNumber: '', cityId: choutuppalCityId,
           address: '', coverImage: '', logoUrl: '', galleryUrls: [] as string[],
+          rating: 5, operatingHours: '', googleMapsUrl: '',
           price: '', bedroomCount: '', area: '',
           instagramUsername: '', facebookUrl: '', youtubeUrl: ''
         })
@@ -194,6 +196,7 @@ export default function AgentDashboard() {
       name: l.name, category: l.category, description: l.description || '',
       phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', cityId: l.cityId,
       address: l.address || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '', galleryUrls: l.gallery ? JSON.parse(l.gallery) as string[] : [] as string[],
+      rating: l.rating || 5, operatingHours: l.operatingHours || '', googleMapsUrl: l.googleMapsUrl || '',
       price: l.price || '', bedroomCount: l.bedroomCount || '', area: l.area || '',
       instagramUsername: l.instagramUsername || '', facebookUrl: l.facebookUrl || '', youtubeUrl: l.youtubeUrl || ''
     })
@@ -442,6 +445,21 @@ export default function AgentDashboard() {
                    <div>
                      <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
                      <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full physical address" className="h-11 bg-gray-50 border-gray-200" />
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-2">Business Hours</label>
+                       <Input value={formData.operatingHours} onChange={e => setFormData({...formData, operatingHours: e.target.value})} placeholder="e.g. 9:00 AM - 9:00 PM" className="h-11 bg-gray-50 border-gray-200" />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-2">Google Maps URL</label>
+                       <Input value={formData.googleMapsUrl} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} placeholder="https://maps.google.com/..." className="h-11 bg-gray-50 border-gray-200" />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (1-5)</label>
+                       <Input type="number" min="1" max="5" step="0.1" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5})} placeholder="5.0" className="h-11 bg-gray-50 border-gray-200" />
+                     </div>
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

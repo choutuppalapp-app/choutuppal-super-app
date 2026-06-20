@@ -203,6 +203,7 @@ model Listing {
   address       String?
   latitude      Float?
   longitude     Float?
+  googleMapsUrl String?
   isApproved    Boolean  @default(false)
   status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
   isPremium     Boolean  @default(false)

@@ -675,7 +675,8 @@ export default function DashboardView() {
                               coverImage: imagesArr[0] || '', logoUrl: '',
                               gallery: imagesArr.slice(1),
                               instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
-                              price: listing.price, bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '', area: listing.area || ''
+                              price: listing.price, bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '', area: listing.area || '',
+                              rating: 0, operatingHours: 'true', googleMapsUrl: ''
                             })
                             setIsCreatingListing(true)
                           }}

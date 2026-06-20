@@ -230,12 +230,15 @@ END:VCARD`
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 mt-16 relative z-10 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 mt-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-[70%_30%] gap-8">
+          <div className="space-y-6">
         {/* Title & Stats */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight flex items-center gap-2">
               {listing.name}
+              {listing.isPremium && <Badge className="bg-[#D4AF37] text-white border-none shrink-0 text-xs">Verified</Badge>}
             </h1>
             <div className="flex items-center gap-3">
               <Badge className="bg-[#4169E1]/10 text-[#4169E1] hover:bg-[#4169E1]/20">
@@ -369,9 +372,9 @@ END:VCARD`
               <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
               Gallery
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2">
               {galleryImages.map((img: string, idx: number) => (
-                <div key={idx} onClick={() => setSelectedImage(img)} className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer group">
+                <div key={idx} onClick={() => setSelectedImage(img)} className="relative aspect-[4/3] min-w-[200px] sm:min-w-[250px] snap-start rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer group">
                   <OptimizedImage
                     src={img}
                     alt={`${listing.name} gallery ${idx + 1}`}
@@ -428,65 +431,66 @@ END:VCARD`
           </div>
         )}
 
-        <div className="h-4"></div>
-      </div>
-
-      {/* Sticky Action Footer (2 Rows) */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-50 md:hidden">
-        <div className="max-w-4xl mx-auto flex flex-col gap-2">
-          {/* Top Row: Communication */}
-          <div className="flex items-center gap-2 h-14">
-            {phoneToCall && (
-              <a
-                href={`tel:${phoneToCall}`}
-                className="flex-1 h-full flex items-center justify-center gap-2 rounded-xl bg-[#4169E1] hover:bg-[#3151b0] text-white font-bold transition-colors shadow-sm"
-              >
-                <Phone className="size-5" />
-                <span className="text-sm">Call</span>
-              </a>
-            )}
-            {phoneToWA && (
-              <a
-                href={`https://wa.me/${phoneToWA}?text=Hi%2C%20I%20saw%20your%20business%20on%20Choutuppal%20App`}
-                target="_blank" rel="noreferrer"
-                className="flex-1 h-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#1DA851] text-white font-bold transition-colors shadow-sm"
-              >
-                <MessageCircle className="size-5" />
-                <span className="text-sm">WhatsApp</span>
-              </a>
-            )}
-            {listing.latitude && listing.longitude && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${listing.latitude},${listing.longitude}`}
-                target="_blank" rel="noreferrer"
-                className="w-14 h-full flex items-center justify-center rounded-xl bg-[#EA4335] hover:bg-[#C5221F] text-white transition-colors shadow-sm shrink-0"
-              >
-                <MapPin className="size-5" />
-              </a>
-            )}
+            {/* Related Listings (Dummy) */}
+            <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-5 md:p-6 mt-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-3">
+                <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+                ఇంకా ఇవి కూడా చూడండి
+              </h2>
+              <div className="flex gap-4 overflow-x-auto snap-x scrollbar-hide pb-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="min-w-[160px] border border-gray-100 rounded-xl p-3 shadow-sm snap-start">
+                    <div className="w-full aspect-square bg-gray-100 rounded-lg mb-2"></div>
+                    <p className="font-bold text-sm truncate">Related Business {i}</p>
+                    <p className="text-xs text-gray-500">Category</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="h-4"></div>
           </div>
-
-          {/* Bottom Row: Smart Sharing */}
-          <GlassCard className="flex items-center gap-2 h-11 p-1">
-            <button onClick={handleShareStatus} className="flex-1 h-full flex items-center justify-center gap-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold border border-green-200 hover:bg-green-100 transition-colors">
-              <MessageCircle className="size-3.5" />
-              Status
-            </button>
-            <button onClick={handleShareGroup} className="flex-1 h-full flex items-center justify-center gap-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold border border-green-200 hover:bg-green-100 transition-colors">
-              <MessageCircle className="size-3.5" />
-              Group
-            </button>
-            <button onClick={generateVCard} className="flex-1 h-full flex items-center justify-center gap-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-100 transition-colors">
-              <Download className="size-3.5" />
-              Save Contact
-            </button>
-            <button onClick={handleShare} className="flex-1 h-full flex items-center justify-center gap-1.5 rounded-lg bg-gray-50 text-gray-700 text-xs font-bold border border-gray-200 hover:bg-gray-100 transition-colors">
-              <Share2 className="size-3.5" />
-              Share
-            </button>
-          </GlassCard>
+          
+          <div className="space-y-6 md:mt-0">
+            {/* Right Sidebar */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hidden md:block sticky top-20">
+              <h3 className="font-bold text-lg mb-4">Contact Business</h3>
+              <div className="flex flex-col gap-3">
+                {phoneToCall && <Button onClick={() => window.location.href = `tel:${phoneToCall}`} className="w-full bg-[#4169E1] hover:bg-[#3151b0] text-white"><Phone className="size-4 mr-2" /> Call</Button>}
+                {phoneToWA && <Button onClick={() => window.open(`https://wa.me/${phoneToWA}`)} className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white"><MessageCircle className="size-4 mr-2" /> WhatsApp</Button>}
+                <Button variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="w-full"><MapPin className="size-4 mr-2" /> Location</Button>
+                <Button variant="outline" onClick={generateVCard} className="w-full"><Download className="size-4 mr-2" /> Save Contact</Button>
+                <Button variant="outline" onClick={handleShare} className="w-full"><Share2 className="size-4 mr-2" /> Share</Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+        {/* Mobile Sticky Footer: 5-button pill */}
+        <div className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-3 items-center justify-around">
+          <button onClick={() => phoneToCall && (window.location.href = `tel:${phoneToCall}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#4169E1] transition-colors">
+            <Phone className="size-5 mb-0.5" />
+            <span className="text-[9px] font-semibold">Call</span>
+          </button>
+          <button onClick={() => phoneToWA && window.open(`https://wa.me/${phoneToWA}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#25D366] transition-colors">
+            <MessageCircle className="size-5 mb-0.5" />
+            <span className="text-[9px] font-semibold">WhatsApp</span>
+          </button>
+          
+          {/* Center Gradient Button */}
+          <button onClick={handleShare} className="flex flex-col items-center justify-center p-3 bg-gradient-to-r from-blue-600 to-yellow-500 text-white rounded-full shadow-lg active:scale-75 transition-transform">
+            <Share2 className="size-5" />
+          </button>
+  
+          <button onClick={generateVCard} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-500 transition-colors">
+            <Download className="size-5 mb-0.5" />
+            <span className="text-[9px] font-semibold">Save</span>
+          </button>
+          <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-red-500 transition-colors">
+            <MapPin className="size-5 mb-0.5" />
+            <span className="text-[9px] font-semibold">Location</span>
+          </button>
+        </div>
 
             {/* Lightbox Dialog */}
       {selectedImage && (

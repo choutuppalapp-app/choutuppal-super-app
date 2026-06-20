@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, SlidersHorizontal, Star, MapPin, BadgeCheck,
@@ -35,6 +36,7 @@ interface Listing {
   isFeatured: boolean
   viewsCount: number
   rating: number
+  operatingHours: string | null
   user: {
     id: string
     fullName: string
@@ -326,10 +328,10 @@ export default function ExploreView() {
               const gradientClass = categoryColors[listing.category] || 'from-[#4169E1] to-[#D4AF37]'
 
               return (
-                <div
+                <Link
                   key={listing.id}
-                  onClick={() => handleCardClick(listing.slug)}
-                  className="cursor-pointer transform transition-all duration-200 hover:shadow-lg active:scale-[0.97]"
+                  href={`/listing/${listing.slug || listing.id}`}
+                  className="block cursor-pointer transform transition-all duration-200 hover:shadow-lg active:scale-[0.97]"
                 >
                   <GlassCard
                     variant={listing.isPremium ? 'gold' : 'default'}
@@ -391,10 +393,16 @@ export default function ExploreView() {
                           ({listing._count?.reviews || 0} reviews)
                         </span>
                       </div>
-                      
+
+                      <div className="mt-2">
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${listing.operatingHours ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {listing.operatingHours ? 'Open' : 'Closed'}
+                        </span>
+                      </div>
+                        
                       </div>
                   </GlassCard>
-                </div>
+                </Link>
               )
             })}
           </div>

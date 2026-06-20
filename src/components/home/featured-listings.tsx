@@ -24,6 +24,7 @@ interface Listing {
   isFeatured: boolean
   viewsCount: number
   rating: number
+  operatingHours: string | null
   user: {
     id: string
     fullName: string
@@ -210,15 +211,11 @@ export function FeaturedListings() {
                       </span>
                     </div>
 
-                    {/* WhatsApp Button */}
-                    {listing.whatsappNumber && (
-                      <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                        <button className="w-full flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1.5 rounded-md transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-                          WhatsApp
-                        </button>
-                      </div>
-                    )}
+                    <div className="mt-2">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${listing.operatingHours ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {listing.operatingHours ? 'Open' : 'Closed'}
+                      </span>
+                    </div>
                   </div>
                 </GlassCard>
               </div>

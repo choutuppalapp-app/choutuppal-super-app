@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -26,6 +27,8 @@ interface SearchResult {
   isPremium: boolean
   isFeatured: boolean
   viewsCount: number
+  rating: number
+  operatingHours: string | null
   user: {
     id: string
     fullName: string
@@ -265,13 +268,12 @@ export default function SearchView() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05, duration: 0.3 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => handleCardClick(listing.slug)}
-                className="cursor-pointer"
               >
-                <GlassCard
-                  variant={listing.isPremium ? 'gold' : 'default'}
-                  className="!p-0 overflow-hidden hover:shadow-xl transition-shadow"
-                >
+                <Link href={`/listing/${listing.slug || listing.id}`} className="block cursor-pointer">
+                  <GlassCard
+                    variant={listing.isPremium ? 'gold' : 'default'}
+                    className="!p-0 overflow-hidden hover:shadow-xl transition-shadow"
+                  >
                   {/* Image */}
                   <div className="relative h-36 overflow-hidden">
                     <OptimizedImage
@@ -301,12 +303,10 @@ export default function SearchView() {
                       >
                         {listing.category}
                       </Badge>
-                      {listing._count.reviews > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Star className="size-3 text-[#D4AF37] fill-[#D4AF37]" />
-                          {listing._count.reviews}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Star className="size-3 text-[#D4AF37] fill-[#D4AF37]" />
+                        {listing.rating || 5.0} ({listing._count?.reviews || 0})
+                      </div>
                     </div>
                     {listing.address && (
                       <p className="text-xs text-gray-500 line-clamp-1 flex items-center gap-1">
@@ -314,20 +314,14 @@ export default function SearchView() {
                         {listing.address}
                       </p>
                     )}
-                    <div className="pt-1">
-                      <motion.div whileTap={{ scale: 0.95 }}>
-                        <Button
-                          size="sm"
-                          onClick={(e) => handleGetQuote(e, listing.id)}
-                          className="bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white text-xs h-8"
-                        >
-                          <Phone className="size-3 mr-1" />
-                          Get Quote
-                        </Button>
-                      </motion.div>
+                    <div className="mt-2">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${listing.operatingHours ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {listing.operatingHours ? 'Open' : 'Closed'}
+                      </span>
                     </div>
                   </div>
                 </GlassCard>
+                </Link>
               </motion.div>
             )
           })}
