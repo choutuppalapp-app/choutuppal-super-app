@@ -16,8 +16,8 @@ interface Listing {
   category: string
   description: string | null
   images: string | null
-  coverImage?: string | null
-  logoUrl?: string | null
+  coverImage: string | null
+  logoUrl: string | null
   whatsappNumber: string | null
   address: string | null
   isPremium: boolean
@@ -87,9 +87,7 @@ export function FeaturedListings() {
     navigateTo('listing')
   }
 
-  const getFirstImage = (images: string | null
-  coverImage?: string | null
-  logoUrl?: string | null): string => {
+  const getFirstImage = (images: string | null): string => {
     if (!images) return ''
     try {
       const parsed = JSON.parse(images)
