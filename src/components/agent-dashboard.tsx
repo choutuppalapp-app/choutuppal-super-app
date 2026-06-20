@@ -122,8 +122,13 @@ export default function AgentDashboard() {
       const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 1 })));
       const uploadPromises = compressedFiles.map(async (file) => {
         const fileName = `gallery/${Date.now()}-${file.name}`;
+        console.log('Uploading file...', fileName);
         const { data, error } = await supabase.storage.from('listing-images').upload(fileName, file);
-        if (error) { console.error('Upload error:', error); return null; }
+        if (error) {
+          console.error('Upload error:', error);
+          toast.error('Upload failed: ' + error.message, { id: 'upload' });
+          return null;
+        }
         return supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl;
       });
       const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
@@ -134,9 +139,9 @@ export default function AgentDashboard() {
         galleryUrls: [...(prevData.galleryUrls || []), ...urls] // Ensure it's always an array
       }));
       toast.success('Gallery uploaded successfully!', { id: 'upload' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gallery upload error:', error);
-      toast.error('Upload failed', { id: 'upload' });
+      toast.error('Upload failed: ' + (error?.message || 'Unknown error'), { id: 'upload' });
     }
   };
 
@@ -162,7 +167,7 @@ export default function AgentDashboard() {
       }
       
       const url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
-      const method = editingListingId ? 'PATCH' : 'POST'
+      const method = editingListingId ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
         method,
@@ -213,7 +218,16 @@ export default function AgentDashboard() {
     setFormData({
       name: l.name, category: l.category, description: l.description || '',
       phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', cityId: l.cityId,
-      address: l.address || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '', galleryUrls: l.gallery ? JSON.parse(l.gallery) as string[] : [] as string[],
+      address: l.address || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '',
+      galleryUrls: (() => {
+        const raw = l.gallery || l.images
+        if (!raw) return []
+        try {
+          return typeof raw === 'string' ? JSON.parse(raw) : raw
+        } catch {
+          return []
+        }
+      })(),
       rating: l.rating || 5, operatingHours: l.operatingHours || '', googleMapsUrl: l.googleMapsUrl || '',
       price: l.price || '', bedroomCount: l.bedroomCount || '', area: l.area || '',
       instagramUsername: l.instagramUsername || '', facebookUrl: l.facebookUrl || '', youtubeUrl: l.youtubeUrl || ''

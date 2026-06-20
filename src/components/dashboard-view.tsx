@@ -40,6 +40,7 @@ interface UserListing {
   images: string | null
   coverImage: string | null
   logoUrl: string | null
+  gallery?: string | null
   instagramUrl: string | null
   instagramUsername: string | null
   facebookUrl: string | null
@@ -314,8 +315,13 @@ export default function DashboardView() {
       const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 1 })));
       const uploadPromises = compressedFiles.map(async (file) => {
         const fileName = `gallery/${Date.now()}-${file.name}`;
+        console.log('Uploading file...', fileName);
         const { data, error } = await supabase.storage.from('listing-images').upload(fileName, file);
-        if (error) { console.error('Upload error:', error); return null; }
+        if (error) {
+          console.error('Upload error:', error);
+          toast.error('Upload failed: ' + error.message);
+          return null;
+        }
         return supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl;
       });
       const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
@@ -326,9 +332,9 @@ export default function DashboardView() {
         gallery: [...(prevData.gallery || []), ...urls] // Ensure it's always an array
       }));
       toast.success('Gallery uploaded successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gallery upload error:', error);
-      toast.error('Upload failed');
+      toast.error('Upload failed: ' + (error?.message || 'Unknown error'));
     }
   };
 
@@ -610,7 +616,15 @@ export default function DashboardView() {
                               cityId: listing.cityId, sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
                               address: listing.address || '',
                               coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
-                              gallery: listing.images ? JSON.parse(listing.images) : [],
+                              gallery: (() => {
+                                const raw = listing.gallery || listing.images
+                                if (!raw) return []
+                                try {
+                                  return typeof raw === 'string' ? JSON.parse(raw) : raw
+                                } catch {
+                                  return []
+                                }
+                              })(),
                               instagramUrl: listing.instagramUrl || '', instagramUsername: listing.instagramUsername || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || '',
                               price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
                             })

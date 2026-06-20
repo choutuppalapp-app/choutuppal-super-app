@@ -40,7 +40,8 @@ interface ListingData {
   services?: string | null
   coverImage: string | null
   logoUrl: string | null
-  gallery: string[] | null
+  gallery: string[] | string | null
+  images?: string[] | string | null
   instagramUrl: string | null
   instagramUsername: string | null
   facebookUrl: string | null
@@ -195,7 +196,21 @@ END:VCARD`
   }
 
   const cleanDescription = listing.description ? (typeof window !== 'undefined' ? DOMPurify.sanitize(listing.description) : listing.description) : ''
-  const galleryImages = Array.isArray(listing.gallery) && listing.gallery.length > 0 ? listing.gallery : []
+  const galleryImages = (() => {
+    const raw = listing.gallery || listing.images
+    if (!raw) return []
+    if (Array.isArray(raw)) return raw
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : []
+      } catch (e) {
+        console.error("Failed to parse listing gallery/images JSON:", e)
+        return []
+      }
+    }
+    return []
+  })()
   const phoneToCall = listing.phoneNumber || listing.whatsappNumber || listing.user.phone
   const phoneToWA = listing.whatsappNumber || listing.phoneNumber || listing.user.whatsappNumber || listing.user.phone
 

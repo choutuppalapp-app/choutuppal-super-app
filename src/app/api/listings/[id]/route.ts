@@ -82,12 +82,19 @@ export async function PUT(
       if (body[field] !== undefined) {
         if (field === 'services' && typeof body[field] !== 'string') {
           updateData[field] = JSON.stringify(body[field])
-        } else if ((field === 'images' || field === 'gallery') && typeof body[field] !== 'string') {
-          updateData[field] = JSON.stringify(body[field])
+        } else if (field === 'images' || field === 'gallery') {
+          // Handled separately below to sync both database fields
         } else {
           updateData[field] = body[field]
         }
       }
+    }
+
+    const rawGallery = body.gallery !== undefined ? body.gallery : (body.images !== undefined ? body.images : body.galleryUrls);
+    if (rawGallery !== undefined) {
+      const galleryString = rawGallery === null ? null : (typeof rawGallery === 'string' ? rawGallery : JSON.stringify(rawGallery));
+      updateData.images = galleryString;
+      updateData.gallery = galleryString;
     }
 
     // Support both ID and slug lookup

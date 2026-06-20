@@ -118,6 +118,12 @@ export async function POST(request: Request) {
     const sanitizedCategory = String(body.category).trim().slice(0, 100)
     const sanitizedDescription = body.description ? String(body.description).trim().slice(0, 5000) : null
 
+    const rawGallery = body.gallery !== undefined ? body.gallery : (body.images !== undefined ? body.images : body.galleryUrls);
+    let galleryString: string | null = null;
+    if (rawGallery) {
+      galleryString = typeof rawGallery === 'string' ? rawGallery : JSON.stringify(rawGallery);
+    }
+
     const listing = await db.listing.create({
       data: {
         userId: body.userId,
@@ -127,10 +133,10 @@ export async function POST(request: Request) {
         category: sanitizedCategory,
         description: sanitizedDescription,
         services: body.services ? JSON.stringify(body.services) : null,
-        images: body.images ? JSON.stringify(body.images) : null,
+        images: galleryString,
         coverImage: body.coverImage || null,
         logoUrl: body.logoUrl || null,
-        gallery: body.gallery ? JSON.stringify(body.gallery) : null,
+        gallery: galleryString,
         instagramUrl: body.instagramUrl || null,
         instagramUsername: body.instagramUsername || null,
         facebookUrl: body.facebookUrl || null,

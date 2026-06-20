@@ -84,6 +84,7 @@ export async function POST(request: Request) {
           logoUrl,
           coverImage,
           gallery: finalGallery.length > 0 ? JSON.stringify(finalGallery) : null,
+          images: finalGallery.length > 0 ? JSON.stringify(finalGallery) : null,
           isApproved: true,
           status: 'APPROVED',
           isPremium: false,
