@@ -329,68 +329,68 @@ export default function AgentDashboard() {
                  </h2>
                  
                  <div className="space-y-6">
-                    {/* Image Upload Zones */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      {/* Logo Upload */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo / Logo (షాప్ లోగో)</label>
-                        <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
-                                                      {formData.logoUrl ? (
-                              <>
+                      {/* Image Upload Zones */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {/* Logo Upload */}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo / Logo (షాప్ లోగో)</label>
+                          <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
+                            {formData.logoUrl && (
+                              <div className="absolute inset-0 z-0">
                                 <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
-                                <button onClick={() => setFormData(p => ({...p, logoUrl: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
-                              </>
-                            ) : (
-                            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
-                              <div className="p-4 bg-white rounded-full shadow-sm mb-3">
-                                <UploadCloud className="size-6 text-[#4169E1]" />
+                                <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
                               </div>
-                              <span className="text-sm font-medium text-gray-600">Upload Logo</span>
+                            )}
+                            <label className={`w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50/80 transition-colors z-10 ${formData.logoUrl ? 'opacity-0 hover:opacity-100 bg-black/40 text-white' : ''}`}>
+                              <div className={`p-4 rounded-full shadow-sm mb-3 ${formData.logoUrl ? 'bg-white/20' : 'bg-white'}`}>
+                                <UploadCloud className={`size-6 ${formData.logoUrl ? 'text-white' : 'text-[#4169E1]'}`} />
+                              </div>
+                              <span className={`text-sm font-medium ${formData.logoUrl ? 'text-white' : 'text-gray-600'}`}>Upload Logo</span>
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'logoUrl')} />
                             </label>
-                          )}
+                          </div>
+                        </div>
+
+                        {/* Cover Image Upload */}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Banner Image</label>
+                          <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
+                            {formData.coverImage && (
+                              <div className="absolute inset-0 z-0">
+                                <img src={formData.coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
+                                <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
+                              </div>
+                            )}
+                            <label className={`w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50/80 transition-colors z-10 ${formData.coverImage ? 'opacity-0 hover:opacity-100 bg-black/40 text-white' : ''}`}>
+                              <div className={`p-4 rounded-full shadow-sm mb-3 ${formData.coverImage ? 'bg-white/20' : 'bg-white'}`}>
+                                <UploadCloud className={`size-6 ${formData.coverImage ? 'text-white' : 'text-[#4169E1]'}`} />
+                              </div>
+                              <span className={`text-sm font-medium ${formData.coverImage ? 'text-white' : 'text-gray-600'}`}>Upload Cover Photo</span>
+                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'coverImage')} />
+                            </label>
+                          </div>
                         </div>
                       </div>
-                      {/* Cover Image Upload */}
+
+                      {/* Gallery Upload */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Banner Image</label>
-                        <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative transition-all duration-200">
-                                                      {formData.coverImage ? (
-                              <>
-                                <img src={formData.coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
-                                <button onClick={() => setFormData(p => ({...p, coverImage: ''}))} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10 shadow"><Trash2 className="size-4" /></button>
-                              </>
-                            ) : (
-                            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
-                              <div className="p-4 bg-white rounded-full shadow-sm mb-3">
-                                <UploadCloud className="size-6 text-[#4169E1]" />
-                              </div>
-                              <span className="text-sm font-medium text-gray-600">Upload Cover Photo</span>
-                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'coverImage')} />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Gallery Images (up to 5 photos)</label>
+                        <div className="flex gap-4 overflow-x-auto pb-2">
+                          {formData.galleryUrls.map((url, i) => (
+                            <div key={i} className="min-w-[120px] h-[120px] relative border rounded-xl overflow-hidden shadow-sm group">
+                              <img src={url} alt={`Gallery Preview ${i}`} className="w-full h-full object-cover" />
+                              <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, galleryUrls: p.galleryUrls.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
+                            </div>
+                          ))}
+                          {formData.galleryUrls.length < 5 && (
+                            <label className="min-w-[120px] h-[120px] border-2 border-dashed border-[#4169E1]/30 bg-blue-50/30 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <Plus className="size-6 mb-1 text-[#4169E1]/60" />
+                              <span className="text-xs font-medium text-gray-500">Add Photo</span>
+                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'gallery')} />
                             </label>
                           )}
                         </div>
                       </div>
-                    </div>
-                    {/* Gallery Upload */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Gallery Images (up to 5 photos)</label>
-                      <div className="flex gap-4 overflow-x-auto pb-2">
-                        {formData.galleryUrls.map((url, i) => (
-                          <div key={i} className="min-w-[120px] h-[120px] relative border rounded-xl overflow-hidden shadow-sm">
-                            <Image src={url} alt={`Gallery ${i}`} fill className="object-cover" />
-                            <button onClick={() => setFormData(p => ({...p, galleryUrls: p.galleryUrls.filter((_, idx) => idx !== i)}))} className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white z-10"><Trash2 className="size-3" /></button>
-                          </div>
-                        ))}
-                        {formData.galleryUrls.length < 5 && (
-                          <label className="min-w-[120px] h-[120px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 cursor-pointer">
-                            <Plus className="size-6 mb-1" />
-                            <span className="text-xs">Add Photo</span>
-                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'gallery')} />
-                          </label>
-                        )}
-                      </div>
-                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                      <div>
