@@ -199,6 +199,17 @@ END:VCARD`
   const phoneToCall = listing.phoneNumber || listing.whatsappNumber || listing.user.phone
   const phoneToWA = listing.whatsappNumber || listing.phoneNumber || listing.user.whatsappNumber || listing.user.phone
 
+  const handleCall = () => {
+    if (phoneToCall) window.location.href = `tel:${phoneToCall}`
+  }
+  const handleWhatsapp = () => {
+    if (phoneToWA) window.open(`https://wa.me/${phoneToWA}`)
+  }
+  const handleSaveContact = generateVCard
+  const handleLocation = () => {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)
+  }
+
   return (
     <div className="pb-40 bg-gray-50 min-h-screen text-gray-900">
       {/* Header: Full-width Cover Photo */}
@@ -466,30 +477,15 @@ END:VCARD`
         </div>
       </div>
 
-      {/* Mobile Sticky Footer: 5-button pill */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-3 flex items-center justify-around">
-        <button onClick={() => phoneToCall && (window.location.href = `tel:${phoneToCall}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#4169E1] transition-colors">
-          <Phone className="size-5 mb-0.5" />
-          <span className="text-[9px] font-semibold">Call</span>
+      {/* MOBILE STICKY FOOTER */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white shadow-[0_-4px_15px_rgba(0,0,0,0.15)] p-3 flex items-center justify-around border-t border-gray-100">
+        <button onClick={handleCall} className="flex flex-col items-center text-green-600"><Phone size={20} /><span className="text-xs">Call</span></button>
+        <button onClick={handleWhatsapp} className="flex flex-col items-center text-green-700"><MessageCircle size={20} /><span className="text-xs">WhatsApp</span></button>
+        <button onClick={handleShare} className="bg-gradient-to-r from-blue-600 to-yellow-500 text-white p-3 rounded-full shadow-lg active:scale-75 transition-transform -mt-6">
+          <Share2 size={24} />
         </button>
-        <button onClick={() => phoneToWA && window.open(`https://wa.me/${phoneToWA}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#25D366] transition-colors">
-          <MessageCircle className="size-5 mb-0.5" />
-          <span className="text-[9px] font-semibold">WhatsApp</span>
-        </button>
-        
-        {/* Center Gradient Button */}
-        <button onClick={handleShare} className="bg-gradient-to-r from-blue-600 to-yellow-500 text-white p-3 rounded-full shadow-lg active:scale-75 transition-transform">
-          <Share2 className="size-5" />
-        </button>
-
-        <button onClick={generateVCard} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-500 transition-colors">
-          <Download className="size-5 mb-0.5" />
-          <span className="text-[9px] font-semibold">Save</span>
-        </button>
-        <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)} className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-red-500 transition-colors">
-          <MapPin className="size-5 mb-0.5" />
-          <span className="text-[9px] font-semibold">Location</span>
-        </button>
+        <button onClick={handleSaveContact} className="flex flex-col items-center text-gray-700"><Download size={20} /><span className="text-xs">Save</span></button>
+        <button onClick={handleLocation} className="flex flex-col items-center text-red-500"><MapPin size={20} /><span className="text-xs">Location</span></button>
       </div>
 
             {/* Lightbox Dialog */}

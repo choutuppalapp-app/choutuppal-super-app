@@ -306,36 +306,31 @@ export default function DashboardView() {
   }
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) {
-      console.log('No files selected for gallery.');
-      return;
-    }
-    const files = Array.from(e.target.files)
-    console.log(`Selected ${files.length} files for gallery upload.`);
-    toast.info('Compressing image(s)...')
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    toast.info('Uploading images...');
     try {
-      const uploadPromises = files.map(async (file) => {
-        console.log(`Starting compression/upload for ${file.name}`);
-        const result = await compressAndUpload(file, 'choutuppal/listings');
-        console.log(`Successfully uploaded ${file.name}, URL: ${result.url}`);
-        return result;
+      const { default: imageCompression } = await import('browser-image-compression');
+      const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 1 })));
+      const uploadPromises = compressedFiles.map(async (file) => {
+        const fileName = `gallery/${Date.now()}-${file.name}`;
+        const { data, error } = await supabase.storage.from('listing-images').upload(fileName, file);
+        if (error) { console.error('Upload error:', error); return null; }
+        return supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl;
       });
-      const results = await Promise.all(uploadPromises)
-      const newUrls = results.map(r => r.url)
-      console.log(`All uploads completed. New URLs to append:`, newUrls);
+      const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
       
-      setFormData(prev => {
-        const nextState = { ...prev, gallery: [...prev.gallery, ...newUrls] };
-        console.log('New form state after appending:', nextState.gallery);
-        return nextState;
-      });
-      toast.success('Uploaded successfully')
+      // CRITICAL FIX: Use callback to append to previous state safely
+      setFormData(prevData => ({
+        ...prevData,
+        gallery: [...(prevData.gallery || []), ...urls] // Ensure it's always an array
+      }));
+      toast.success('Gallery uploaded successfully');
     } catch (error) {
-      console.error('Gallery upload failed completely:', error);
-      toast.error('Upload failed')
+      console.error('Gallery upload error:', error);
+      toast.error('Upload failed');
     }
-    e.target.value = ''
-  }
+  };
 
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
