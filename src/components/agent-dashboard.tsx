@@ -94,25 +94,30 @@ export default function AgentDashboard() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logoUrl' | 'gallery') => {
     if (!e.target.files || e.target.files.length === 0) return
     const file = e.target.files[0]
+    console.log("File received:", file.name, file.size)
     
     try {
+      toast.loading('Uploading image...', { id: 'upload' })
       const { default: imageCompression } = await import('browser-image-compression')
       const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1200 })
+      console.log("File compressed:", compressedFile.name, compressedFile.size)
+      
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
       
       const { data, error } = await supabase.storage.from('listing-images').upload(`covers/${fileName}`, compressedFile)
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(`covers/${fileName}`)
+      console.log("Supabase URL retrieved:", publicUrl)
       
       if (field === 'gallery') {
         setFormData(prev => ({ ...prev, galleryUrls: [...prev.galleryUrls, publicUrl] }))
       } else {
         setFormData(prev => ({ ...prev, [field]: publicUrl }))
       }
-      toast.success('Image uploaded successfully!')
+      toast.success('Image uploaded successfully!', { id: 'upload' })
     } catch (error) {
-      console.error(error)
-      toast.error('Failed to upload image')
+      console.error("Upload error:", error)
+      toast.error('Failed to upload image', { id: 'upload' })
     }
   }
 
@@ -129,6 +134,7 @@ export default function AgentDashboard() {
       
       const payload = {
         ...formData,
+        images: formData.galleryUrls,
         cityId: finalCityId,
         userId: user?.id,
         slug,
