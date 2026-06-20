@@ -156,7 +156,7 @@ export default function DashboardView() {
     address: '',
     coverImage: '', logoUrl: '', gallery: [] as string[],
     instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
-    price: '', bedroomCount: '', area: ''
+    price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
   })
   const [bannerData, setBannerData] = useState({
     title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
@@ -378,7 +378,7 @@ export default function DashboardView() {
         fetchRealEstate()
         setFormData({
           name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
-          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''
+          coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
         })
       } else {
         const errData = await res.text(); console.error('Submit API error:', errData); toast.error(editingListingId ? 'Failed to update listing' : 'Failed to create listing')
@@ -589,7 +589,7 @@ export default function DashboardView() {
                               coverImage: listing.coverImage || '', logoUrl: listing.logoUrl || '',
                               gallery: listing.images ? JSON.parse(listing.images) : [],
                               instagramUrl: listing.instagramUrl || '', instagramUsername: listing.instagramUsername || '', facebookUrl: listing.facebookUrl || '', youtubeUrl: listing.youtubeUrl || '',
-                              price: '', bedroomCount: '', area: ''
+                              price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''
                             })
                             setIsCreatingListing(true)
                           }}
@@ -1032,7 +1032,7 @@ export default function DashboardView() {
           >
             <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">\n            {/* Header */}
             <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: ''}) }}>
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', gallery: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: ''}) }}>
                 <X className="w-6 h-6" />
               </Button>
               <span className="text-gray-900 font-black text-lg">{editingListingId ? 'Edit Listing' : 'New Listing'}</span>
@@ -1043,21 +1043,43 @@ export default function DashboardView() {
             <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
               <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
                 
-                {/* Single Cover Upload */}
-                <div className="flex flex-col gap-2">
-                  <span className="text-gray-800 font-bold text-sm">Cover Photo *</span>
-                  <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
-                    {formData.coverImage ? (
-                      <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <UploadCloud className="w-6 h-6 text-[#4169E1]" />
-                        <span className="font-bold text-sm">Upload Cover</span>
-                      </div>
-                    )}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleListingFileChange} />
-                  </label>
-                  <p className="text-xs text-gray-500">Recommended size: 800x400px. Max size: 1MB.</p>
+                {/* Profile & Cover Images */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-1 flex flex-col gap-2">
+                    <span className="text-gray-800 font-bold text-sm">Profile Photo/Logo</span>
+                    <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
+                      {formData.logoUrl ? (
+                        <>
+                          <img src={formData.logoUrl} alt="Profile" className="w-full h-full object-cover" />
+                          <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <UploadCloud className="w-6 h-6 text-[#4169E1]" />
+                          <span className="font-bold text-xs text-center px-2">Upload Profile</span>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'logo')} />
+                    </label>
+                  </div>
+
+                  <div className="sm:col-span-2 flex flex-col gap-2">
+                    <span className="text-gray-800 font-bold text-sm">Cover Photo *</span>
+                    <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
+                      {formData.coverImage ? (
+                        <>
+                          <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                          <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-4" /></button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <UploadCloud className="w-6 h-6 text-[#4169E1]" />
+                          <span className="font-bold text-sm">Upload Cover</span>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleListingFileChange} />
+                    </label>
+                  </div>
                 </div>
 
                 {/* Gallery Upload */}
@@ -1068,12 +1090,13 @@ export default function DashboardView() {
                   </span>
                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                     {formData.gallery.map((img, i) => (
-                      <div key={i} className="w-20 h-20 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                      <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
                         <img src={img} alt="Gallery" className="w-full h-full object-cover" />
+                        <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, gallery: p.gallery.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
                       </div>
                     ))}
                     {formData.gallery.length < 5 && (
-                      <label className="w-20 h-20 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+                      <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
                         <Plus className="w-6 h-6" />
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtraUpload(e.target.files[0], 'gallery')} />
                       </label>
@@ -1119,6 +1142,21 @@ export default function DashboardView() {
                       </div>
                     </>
                   )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-gray-800 font-bold text-sm">Rating (1-5) *</span>
+                      <Input type="number" min="1" max="5" step="0.1" placeholder="e.g., 4.5" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-gray-800 font-bold text-sm">Business Hours *</span>
+                      <Input placeholder="e.g., 9:00 AM - 9:00 PM" value={formData.operatingHours} onChange={e => setFormData({...formData, operatingHours: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-gray-800 font-bold text-sm">Google Maps URL</span>
+                    <Input placeholder="Paste Google Maps link" value={formData.googleMapsUrl} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} className="bg-white border-gray-200 text-gray-900 rounded-xl h-12" />
+                  </div>
 
                   <div className="flex flex-col gap-1.5">
                     <span className="text-gray-800 font-bold text-sm">Phone Number *</span>
