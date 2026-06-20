@@ -85,7 +85,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-[100dvh] md:h-auto md:min-h-screen w-full overflow-hidden md:overflow-auto bg-gray-50 flex flex-col overscroll-none md:overscroll-auto`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen w-full bg-gray-50 flex flex-col`}
       >
         <GlobalErrorHandler />
         <ErrorBoundary name="AuthProvider">
@@ -99,7 +99,7 @@ export default function RootLayout({
                 <Header className="flex-none" />
               </ErrorBoundary>
 
-              <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth md:overflow-visible flex flex-col">
+              <main className="flex-1 flex flex-col">
                 <ErrorBoundary name="PageContent">
                   {children}
                 </ErrorBoundary>

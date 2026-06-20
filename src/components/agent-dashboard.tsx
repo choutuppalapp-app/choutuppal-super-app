@@ -93,32 +93,56 @@ export default function AgentDashboard() {
 
   // --- Functions: Single Listing ---
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logoUrl' | 'gallery') => {
-    if (!e.target.files || e.target.files.length === 0) return
+    if (!e.target.files || e.target.files.length === 0) {
+      console.log(`No files selected for ${field}.`);
+      return;
+    }
     const files = Array.from(e.target.files)
+    console.log(`Selected ${files.length} files for ${field}.`);
     
     try {
       toast.loading('Uploading image(s)...', { id: 'upload' })
       const { default: imageCompression } = await import('browser-image-compression')
       
       const uploadPromises = files.map(async (file) => {
+        console.log(`Starting compression for ${file.name} (size: ${file.size})`);
         const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1200 })
+        console.log(`Compressed ${file.name} (new size: ${compressedFile.size})`);
+        
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
-        const { error } = await supabase.storage.from('listing-images').upload(`covers/${fileName}`, compressedFile)
-        if (error) throw error
+        console.log(`Uploading to Supabase: covers/${fileName}`);
+        
+        const { error, data: uploadData } = await supabase.storage.from('listing-images').upload(`covers/${fileName}`, compressedFile)
+        if (error) {
+          console.error(`Supabase upload error for ${file.name}:`, error);
+          throw error;
+        }
+        console.log(`Supabase upload success for ${file.name}:`, uploadData);
+        
         const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(`covers/${fileName}`)
+        console.log(`Retrieved public URL: ${publicUrl}`);
         return publicUrl
       })
 
       const uploadedUrls = await Promise.all(uploadPromises)
+      console.log(`All uploads for ${field} completed. URLs:`, uploadedUrls);
 
       if (field === 'gallery') {
-        setFormData(prev => ({ ...prev, galleryUrls: [...prev.galleryUrls, ...uploadedUrls] }))
+        setFormData(prev => {
+          const nextState = { ...prev, galleryUrls: [...prev.galleryUrls, ...uploadedUrls] };
+          console.log('New form state after appending to gallery:', nextState.galleryUrls);
+          return nextState;
+        })
       } else {
-        setFormData(prev => ({ ...prev, [field]: uploadedUrls[0] }))
+        setFormData(prev => {
+          const nextState = { ...prev, [field]: uploadedUrls[0] };
+          console.log(`New form state for ${field}:`, nextState[field]);
+          return nextState;
+        })
       }
       toast.success('Image(s) uploaded successfully!', { id: 'upload' })
     } catch (error) {
-      console.error("Upload error:", error)
+      console.error("Overall upload process error:", error)
       toast.error('Failed to upload image(s)', { id: 'upload' })
     }
   }

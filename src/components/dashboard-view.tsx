@@ -306,16 +306,32 @@ export default function DashboardView() {
   }
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return
+    if (!e.target.files || e.target.files.length === 0) {
+      console.log('No files selected for gallery.');
+      return;
+    }
     const files = Array.from(e.target.files)
+    console.log(`Selected ${files.length} files for gallery upload.`);
     toast.info('Compressing image(s)...')
     try {
-      const uploadPromises = files.map(file => compressAndUpload(file, 'choutuppal/listings'))
+      const uploadPromises = files.map(async (file) => {
+        console.log(`Starting compression/upload for ${file.name}`);
+        const result = await compressAndUpload(file, 'choutuppal/listings');
+        console.log(`Successfully uploaded ${file.name}, URL: ${result.url}`);
+        return result;
+      });
       const results = await Promise.all(uploadPromises)
       const newUrls = results.map(r => r.url)
-      setFormData(prev => ({ ...prev, gallery: [...prev.gallery, ...newUrls] }))
+      console.log(`All uploads completed. New URLs to append:`, newUrls);
+      
+      setFormData(prev => {
+        const nextState = { ...prev, gallery: [...prev.gallery, ...newUrls] };
+        console.log('New form state after appending:', nextState.gallery);
+        return nextState;
+      });
       toast.success('Uploaded successfully')
-    } catch {
+    } catch (error) {
+      console.error('Gallery upload failed completely:', error);
       toast.error('Upload failed')
     }
     e.target.value = ''
