@@ -419,6 +419,7 @@ END:VCARD`
                         src={img}
                         alt={`${listing.name} gallery ${idx + 1}`}
                         fill
+                        style={{ objectFit: 'cover' }}
                         className="object-cover group-hover:scale-102 transition-transform duration-300"
                       />
                     </div>

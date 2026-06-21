@@ -539,7 +539,11 @@ export default function CityPage() {
 
   return (
     <div className="w-full min-h-full flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-3 md:py-6 pb-20 md:pb-6">
+      <div className={`flex-1 mx-auto w-full py-3 md:py-6 md:pb-6 ${
+        currentView === 'dashboard'
+          ? 'max-w-md px-4 pb-20 md:max-w-7xl md:px-6'
+          : 'max-w-7xl px-3 md:px-6 pb-20'
+      }`}>
         <ErrorBoundary name="MainContent">
           {renderView()}
         </ErrorBoundary>

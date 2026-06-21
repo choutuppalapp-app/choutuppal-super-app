@@ -314,6 +314,9 @@ model Story {
   musicName   String?  // Denormalized for quick display
   isPremium   Boolean  @default(false)
   viewsCount  Int      @default(0)
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  comments    Json     @default("[]")
   expiresAt   DateTime // Auto-delete after 24hrs (filtered in API)
   createdAt   DateTime @default(now())
 

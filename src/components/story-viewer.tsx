@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye } from 'lucide-react'
+import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye, Heart, ChevronUp, Send, MessageSquare } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
@@ -20,6 +20,9 @@ export interface StoryItem {
   musicName: string | null
   isPremium: boolean
   viewsCount: number
+  views?: number
+  likes?: number
+  comments?: any
   createdAt: string
   expiresAt: string
   user: {
@@ -82,7 +85,95 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
 
   const { user: currentUser } = useAuth()
 
+  const [localLikes, setLocalLikes] = useState(0)
+  const [localComments, setLocalComments] = useState<any[]>([])
+  const [liked, setLiked] = useState(false)
+  const [commentInput, setCommentInput] = useState('')
+  const [showCommentsDrawer, setShowCommentsDrawer] = useState(false)
+
   const currentStory = stories[currentIndex] ?? null
+
+  useEffect(() => {
+    if (!currentStory) return
+    setLocalLikes((currentStory as any).likes || 0)
+    
+    let commentsArr: any[] = []
+    const rawComments = (currentStory as any).comments
+    if (Array.isArray(rawComments)) {
+      commentsArr = rawComments
+    } else if (typeof rawComments === 'string') {
+      try {
+        commentsArr = JSON.parse(rawComments)
+      } catch {
+        commentsArr = []
+      }
+    }
+    setLocalComments(commentsArr)
+    setLiked(false)
+  }, [currentStory])
+
+  const handleComment = async () => {
+    if (!commentInput.trim() || !currentUser || !currentStory) return
+    const text = commentInput.trim()
+    setCommentInput('')
+    
+    const newComment = {
+      userId: currentUser.id,
+      fullName: currentUser.fullName || 'Anonymous',
+      text,
+      timestamp: new Date().toISOString()
+    }
+    setLocalComments(prev => [...prev, newComment])
+    toast.success('Reply sent!')
+
+    try {
+      const res = await fetch(`/api/stories/${currentStory.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'comment',
+          userId: currentUser.id,
+          fullName: currentUser.fullName,
+          text
+        })
+      })
+      if (!res.ok) {
+        toast.error('Failed to save comment')
+      } else {
+        const data = await res.json()
+        if (data && data.comments) {
+          setLocalComments(Array.isArray(data.comments) ? data.comments : [])
+        }
+      }
+    } catch (e) {
+      console.error('Comment failed:', e)
+    }
+  }
+
+  const handleLike = async () => {
+    if (liked || !currentStory) return
+    setLiked(true)
+    setLocalLikes(prev => prev + 1)
+    toast.success('Liked story!')
+
+    try {
+      const res = await fetch(`/api/stories/${currentStory.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'like' })
+      })
+      if (!res.ok) {
+        toast.error('Failed to save like')
+      } else {
+        const data = await res.json()
+        if (data && typeof data.likes === 'number') {
+          setLocalLikes(data.likes)
+        }
+      }
+    } catch (e) {
+      console.error('Like failed:', e)
+    }
+  }
   const currentUserStories = currentStory ? userGroups.get(currentStory.user.id) ?? [] : []
   const indexInUserGroup = currentStory
     ? currentUserStories.findIndex((s) => s.id === currentStory.id)
@@ -664,46 +755,68 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               )}
             </button>
           </div>
+ 
+          {/* Viewed / Replies tap up indicator */}
+          <div className="pointer-events-auto flex justify-center mt-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setPaused(true)
+                setShowCommentsDrawer(true)
+              }}
+              className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors group cursor-pointer"
+            >
+              <ChevronUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                {currentUser?.id === currentStory.user.id
+                  ? `👁️ ${currentStory.views || currentStory.viewsCount || 0} Views · ${localLikes} Likes · ${localComments.length} Replies`
+                  : `Replies (${localComments.length}) · ${localLikes} Likes`}
+              </span>
+            </button>
+          </div>
 
-          {/* WhatsApp-Style Reply Input */}
+          {/* WhatsApp-Style Reply Input & Heart Button */}
           <div className="pointer-events-auto flex items-center gap-3">
-            <div className="flex-1">
+            <div className="flex-1 relative flex items-center">
               <input 
                 type="text" 
                 placeholder={`Reply to ${currentStory.user.fullName.split(' ')[0]}...`}
-                className="w-full bg-black/30 hover:bg-black/40 focus:bg-black/60 backdrop-blur-md border border-white/30 text-white placeholder:text-white/80 rounded-full py-3 px-5 outline-none transition-all text-sm font-medium"
-                onFocus={(e) => {
-                  setPaused(true)
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                className="w-full bg-black/40 hover:bg-black/55 focus:bg-black/70 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 rounded-full py-3 pl-5 pr-12 outline-none transition-all text-xs font-semibold"
+                onFocus={() => setPaused(true)}
+                onBlur={() => {
+                  if (!showCommentsDrawer) setPaused(false)
                 }}
-                onBlur={() => setPaused(false)}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    toast.success('Reply sent!')
-                    ;(e.target as HTMLInputElement).value = ''
-                    ;(e.target as HTMLInputElement).blur()
+                    handleComment()
                   }
                 }}
               />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleComment()
+                }}
+                disabled={!commentInput.trim()}
+                className="absolute right-3 p-1.5 rounded-full bg-[#4169E1] text-white hover:bg-opacity-90 transition-opacity disabled:opacity-40"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
             </div>
+            
+            {/* Heart Button */}
             <button 
-              className="flex-shrink-0 flex items-center justify-center text-2xl hover:scale-110 transition-transform"
-              onPointerDown={(e) => {
-                 e.stopPropagation()
-                 toast.success('Reacted with ❤️')
+              onClick={(e) => {
+                e.stopPropagation()
+                handleLike()
               }}
+              className="flex-shrink-0 w-11 h-11 rounded-full bg-black/40 border border-white/20 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
             >
-              ❤️
-            </button>
-            <button 
-              className="flex-shrink-0 flex items-center justify-center text-2xl hover:scale-110 transition-transform"
-              onPointerDown={(e) => {
-                 e.stopPropagation()
-                 toast.success('Reacted with 🔥')
-              }}
-            >
-              🔥
+              <Heart className={`w-5 h-5 transition-colors duration-300 ${liked ? 'text-red-500 fill-red-500 scale-110' : 'text-white'}`} />
             </button>
           </div>
         </div>
@@ -733,6 +846,86 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
             </p>
           </div>
         )}
+
+        {/* ---- Comments/Views Slide-up Drawer ---- */}
+        <AnimatePresence>
+          {showCommentsDrawer && (
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-xl rounded-t-3xl border-t border-white/10 p-5 pb-safe-bottom max-h-[60vh] flex flex-col pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 flex-none">
+                <div>
+                  <h3 className="text-white font-extrabold text-base">
+                    {currentUser?.id === currentStory.user.id ? 'Story Details' : 'Replies & Interactions'}
+                  </h3>
+                  <p className="text-xs text-white/50">
+                    {localLikes} Likes · {localComments.length} Comments
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCommentsDrawer(false)
+                    setPaused(false)
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Scrollable list */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-none">
+                {currentUser?.id === currentStory.user.id && (
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/5 mb-2">
+                    <p className="text-white text-xs font-bold uppercase tracking-wider text-white/40 mb-2">Views Summary</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#4169E1]/20 flex items-center justify-center text-lg">👁️</div>
+                      <div>
+                        <p className="text-white text-sm font-bold">{currentStory.views || currentStory.viewsCount || 0} views</p>
+                        <p className="text-xs text-white/50">This story was viewed by local app users</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-white text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Comments & Replies ({localComments.length})</p>
+                  {localComments.length === 0 ? (
+                    <div className="text-center py-6 text-white/40 text-sm">
+                      No replies yet. Be the first to reply!
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {localComments.map((c, i) => {
+                        const dateStr = c.timestamp ? formatDistanceToNow(new Date(c.timestamp), { addSuffix: true }) : 'just now'
+                        return (
+                          <div key={i} className="bg-white/5 rounded-xl p-3 border border-white/5 flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
+                              {c.fullName?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <span className="text-white text-xs font-bold truncate">{c.fullName || 'Anonymous'}</span>
+                                <span className="text-white/40 text-[10px] flex-shrink-0">{dateStr}</span>
+                              </div>
+                              <p className="text-white/95 text-xs mt-1 leading-relaxed break-words">{c.text}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </AnimatePresence>
   )

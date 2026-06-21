@@ -1057,7 +1057,7 @@ export default function DashboardView() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 md:flex">
+    <div className="min-h-screen bg-gray-50 text-gray-900 w-full max-w-md mx-auto px-4 md:max-w-none md:mx-0 md:px-0 md:flex pb-20 md:pb-0">
       {/* Desktop Sidebar (Pinned Left) */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:bg-white md:border-r md:border-gray-200 md:shadow-sm md:z-40">
         <div className="p-6 flex flex-col gap-8 h-full">
@@ -1436,6 +1436,12 @@ export default function DashboardView() {
 
                 <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
                   <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                    {/* Banner Pricing Info Box */}
+                    <div className="bg-[#4169E1]/5 border border-[#4169E1]/20 text-[#4169E1] px-4 py-3 rounded-xl text-xs font-extrabold leading-relaxed flex items-center gap-2.5">
+                      <span className="text-base">📢</span>
+                      <span>బ్యానర్ ఖరీదు: ₹99/- రోజుకు (ప్రస్తుతం ఉచితం - FREE)</span>
+                    </div>
+
                     <div className="flex flex-col gap-2">
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Banner Image *</span>
                       <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">

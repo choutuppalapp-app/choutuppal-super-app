@@ -2,16 +2,81 @@ export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const story = await db.story.update({
+      where: { id },
+      data: {
+        views: { increment: 1 },
+        viewsCount: { increment: 1 }
+      },
+      include: {
+        user: {
+          select: { id: true, fullName: true, avatarUrl: true, subscriptionTier: true }
+        },
+        music: {
+          select: { id: true, name: true, audioUrl: true, artist: true }
+        }
+      }
+    })
+    return NextResponse.json(story)
+  } catch (error) {
+    console.error('Error fetching story:', error)
+    return NextResponse.json({ error: 'Failed to fetch story' }, { status: 500 })
+  }
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await request.json()
 
+    // Action actions
+    if (body.action === 'like') {
+      const story = await db.story.update({
+        where: { id },
+        data: { likes: { increment: 1 } }
+      })
+      return NextResponse.json(story)
+    }
+
+    if (body.action === 'comment') {
+      const { userId, text, fullName } = body
+      if (!userId || !text) {
+        return NextResponse.json({ error: 'Missing userId or text for comment' }, { status: 400 })
+      }
+      const currentStory = await db.story.findUnique({
+        where: { id },
+        select: { comments: true }
+      })
+      if (!currentStory) {
+        return NextResponse.json({ error: 'Story not found' }, { status: 404 })
+      }
+      const existingComments = Array.isArray(currentStory.comments) ? currentStory.comments : []
+      const newComment = {
+        userId,
+        fullName: fullName || 'Anonymous',
+        text,
+        timestamp: new Date().toISOString()
+      }
+      const story = await db.story.update({
+        where: { id },
+        data: {
+          comments: [...existingComments, newComment]
+        }
+      })
+      return NextResponse.json(story)
+    }
+
     // Increment views — safe, controlled operation
     if (body.incrementViews) {
       const story = await db.story.update({
         where: { id },
-        data: { viewsCount: { increment: 1 } },
+        data: {
+          views: { increment: 1 },
+          viewsCount: { increment: 1 }
+        },
       })
       return NextResponse.json(story)
     }
