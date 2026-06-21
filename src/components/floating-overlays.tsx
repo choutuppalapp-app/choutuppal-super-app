@@ -1,6 +1,5 @@
 'use client'
 
-import { SosButton } from '@/components/sos-button'
 import dynamic from 'next/dynamic'
 
 const SpinWheel = dynamic(() => import('@/components/spin-wheel'), { ssr: false })
@@ -15,7 +14,6 @@ import { VoiceSearchModal } from '@/components/voice-search-modal'
 export function FloatingOverlays() {
   return (
     <>
-      <SosButton />
       <SpinWheel />
       <LeadCaptureForm />
       <VoiceSearchModal />

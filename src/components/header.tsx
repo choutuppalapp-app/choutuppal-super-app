@@ -13,6 +13,7 @@ import { NotificationPanel } from './notification-panel'
 import { useAuth } from '@/lib/auth-context'
 import { usePWAInstall } from './pwa-install-provider'
 import { useAppConfig } from '@/hooks/use-app-config'
+import { usePathname, useRouter } from 'next/navigation'
 
 const NAV_LINKS: Array<{
   view: ViewType
@@ -36,6 +37,8 @@ interface HeaderProps {
 }
 
 export function Header({ className }: HeaderProps) {
+  const pathname = usePathname()
+  const router = useRouter()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   // CRITICAL: Use individual selectors, NOT useAppStore() — prevents re-render
   // on every unrelated store change (spin wheel, search, notifications, etc.)
@@ -66,6 +69,16 @@ export function Header({ className }: HeaderProps) {
     }
     navigateTo(view)
     setIsDrawerOpen(false)
+    if (pathname !== '/') {
+      router.push('/')
+    }
+  }
+
+  const handleLogoClick = () => {
+    navigateTo('home')
+    if (pathname !== '/') {
+      router.push('/')
+    }
   }
 
   const renderLogo = (size: 'sm' | 'md' = 'md') => {
@@ -112,7 +125,7 @@ export function Header({ className }: HeaderProps) {
       <div className="hidden md:flex items-center justify-between h-14 px-6 max-w-7xl mx-auto">
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
-          <button onClick={() => navigateTo('home')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <button onClick={handleLogoClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             {renderLogo('md')}
             {renderBrandText('md')}
           </button>
@@ -182,7 +195,7 @@ export function Header({ className }: HeaderProps) {
       {/* ═══ MOBILE HEADER ═══ */}
       <div className="flex md:hidden items-center justify-between h-12 px-3">
         <div className="flex items-center gap-2">
-          <button onClick={() => navigateTo('home')} className="flex items-center gap-1.5">
+          <button onClick={handleLogoClick} className="flex items-center gap-1.5">
             {renderLogo('sm')}
             {renderBrandText('sm')}
           </button>

@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { useAppConfig } from '@/hooks/use-app-config'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Sheet,
   SheetContent,
@@ -17,6 +17,7 @@ import {
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const currentView = useAppStore((s) => s.currentView)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const searchQuery = useAppStore((s) => s.searchQuery)
@@ -43,6 +44,9 @@ export function MobileBottomNav() {
       setSearchQuery(query)
     }
     navigateTo(view)
+    if (pathname !== '/') {
+      router.push('/')
+    }
   }
 
   const handlePostAction = (type: 'listing' | 'real-estate') => {

@@ -4,11 +4,11 @@ import { useEffect, type ReactNode } from 'react'
 import { useAppStore } from '@/lib/store'
 import { Header } from '@/components/header'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
-import { SosButton } from '@/components/sos-button'
 import dynamic from 'next/dynamic'
 const SpinWheel = dynamic(() => import('@/components/spin-wheel'), { ssr: false })
 import { LeadCaptureForm } from '@/components/lead-capture-form'
 import { VoiceSearchModal } from '@/components/voice-search-modal'
+
 
 /**
  * AppShell — DEPRECATED: This component is NOT used.
@@ -54,7 +54,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {/* ── Floating overlays (position:fixed, not part of flex layout) ── */}
-      <SosButton />
       <SpinWheel />
       <LeadCaptureForm />
       <VoiceSearchModal />
