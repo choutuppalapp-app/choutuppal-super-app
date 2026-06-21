@@ -182,33 +182,33 @@ export default function DashboardView() {
   const { data: listingsData, mutate: fetchListings } = useSWR(
     currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnMount: true }
+    { dedupingInterval: 30000, revalidateOnFocus: false }
   )
 
   const { data: realEstateData, mutate: fetchRealEstate } = useSWR(
     currentUser ? `/api/realestate?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnMount: true }
+    { dedupingInterval: 30000, revalidateOnFocus: false }
   )
 
   const { data: bannersData, mutate: fetchBanners } = useSWR(
     currentUser ? `/api/banners?userId=${currentUser.id}&all=true` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnMount: true }
+    { dedupingInterval: 30000, revalidateOnFocus: false }
   )
 
   const { data: coinsData, mutate: fetchCoins } = useSWR(
     currentUser ? `/api/coins?userId=${currentUser.id}` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnMount: true }
+    { dedupingInterval: 30000, revalidateOnFocus: false }
   )
 
-  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000 })
+  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000, revalidateOnFocus: false })
 
   const { data: storiesData, mutate: fetchStories } = useSWR(
     currentUser ? `/api/stories?userId=${currentUser.id}` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnMount: true }
+    { dedupingInterval: 30000, revalidateOnFocus: false }
   )
 
   const userStories = storiesData || []
@@ -959,10 +959,22 @@ export default function DashboardView() {
                       }}
                       className="relative rounded-2xl overflow-hidden aspect-[9/16] bg-gray-900 group shadow-sm cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
                     >
-                      {story.mediaType === 'VIDEO' ? (
+                      {!story.mediaUrl ? (
+                        <div className="w-full h-full bg-gray-800 flex flex-col items-center justify-center text-white/40 text-xs p-2 text-center">
+                          <span>📷</span>
+                          <span>No Media</span>
+                        </div>
+                      ) : story.mediaType === 'VIDEO' ? (
                         <video src={story.mediaUrl} className="w-full h-full object-cover" muted loop playsInline />
                       ) : (
-                        <img src={story.mediaUrl} alt={story.text || 'Story'} className="w-full h-full object-cover" />
+                        <img 
+                          src={story.mediaUrl} 
+                          alt={story.text || 'Story'} 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=800'
+                          }}
+                        />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/30" />
                       

@@ -105,13 +105,72 @@ export default function StoryCreator({
 
     setPosting(true)
     try {
-      // Convert to base64 data URL for API
-      const mediaUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(mediaFile)
-      })
+      let finalFile = mediaFile
+
+      // Compress if it's an image
+      if (mediaFile.type.startsWith('image/')) {
+        try {
+          const imageCompression = (await import('browser-image-compression')).default
+          const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1200,
+            useWebWorker: true,
+            initialQuality: 0.8
+          }
+          finalFile = await imageCompression(mediaFile, options)
+        } catch (compressErr) {
+          console.warn('Image compression failed, using original file', compressErr)
+        }
+      }
+
+      // Generate a unique file path in storage
+      const fileExt = mediaFile.name.split('.').pop() || 'jpg'
+      const fileName = `story-${Date.now()}.${fileExt}`
+      const filePath = `${userId}/${fileName}`
+
+      // Upload to Supabase Storage
+      const { supabase } = await import('@/lib/supabase')
+      
+      let uploadResult = await supabase.storage
+        .from('stories')
+        .upload(filePath, finalFile, { cacheControl: '3600', upsert: true })
+
+      let bucketName = 'stories'
+
+      // Fallback 1: story-media bucket
+      if (uploadResult.error) {
+        console.warn("Upload to 'stories' bucket failed, attempting 'story-media'...", uploadResult.error.message)
+        uploadResult = await supabase.storage
+          .from('story-media')
+          .upload(filePath, finalFile, { cacheControl: '3600', upsert: true })
+        bucketName = 'story-media'
+      }
+
+      // Fallback 2: listing-images bucket
+      if (uploadResult.error) {
+        console.warn("Upload to 'story-media' bucket failed, attempting 'listing-images'...", uploadResult.error.message)
+        const fallbackPath = `stories/${filePath}`
+        uploadResult = await supabase.storage
+          .from('listing-images')
+          .upload(fallbackPath, finalFile, { cacheControl: '3600', upsert: true })
+        bucketName = 'listing-images'
+      }
+
+      if (uploadResult.error) {
+        throw new Error(`Upload failed for all target buckets: ${uploadResult.error.message}`)
+      }
+
+      // Retrieve the public URL
+      const finalPath = bucketName === 'listing-images' ? `stories/${filePath}` : filePath
+      const { data: urlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(finalPath)
+
+      if (!urlData?.publicUrl) {
+        throw new Error('Failed to get public URL for uploaded story media')
+      }
+
+      const mediaUrl = urlData.publicUrl
 
       const res = await fetch('/api/stories', {
         method: 'POST',
@@ -138,9 +197,9 @@ export default function StoryCreator({
         toast.error(data.error || 'Failed to post story')
         setPosting(false)
       }
-    } catch (err) {
-      console.error(err)
-      toast.error('Something went wrong')
+    } catch (err: any) {
+      console.error('Story post error:', err)
+      toast.error(err.message || 'Something went wrong')
       setPosting(false)
     }
   }, [mediaFile, posting, caption, ctaLink, userId, cityId, mediaType, onStoryCreated, onClose])

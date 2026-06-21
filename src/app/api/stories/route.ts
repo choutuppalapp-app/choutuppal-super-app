@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 export async function GET(request: Request) {
   try {
@@ -21,7 +23,25 @@ export async function GET(request: Request) {
 
     const stories = await db.story.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        cityId: true,
+        title: true,
+        mediaType: true,
+        mediaUrl: true,
+        musicId: true,
+        musicName: true,
+        isPremium: true,
+        viewsCount: true,
+        views: true,
+        likes: true,
+        ctaLink: true,
+        text: true,
+        expiresAt: true,
+        createdAt: true,
+        replies: true,
+        viewers: true,
         user: {
           select: {
             id: true,
@@ -56,8 +76,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized: Missing user ID' }, { status: 401 })
     }
 
+    let resolvedUserId = userId
+
     // Verify user exists in DB
-    const user = await db.user.findUnique({ where: { id: userId } })
+    let user = await db.user.findUnique({ where: { id: resolvedUserId } })
+    
+    // Fallback: If not found by ID directly, look up user using session token (email verification)
+    if (!user) {
+      try {
+        const cookieStore = await cookies()
+        const supabase = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              getAll() {
+                return cookieStore.getAll()
+              },
+              setAll(cookiesToSet) {
+                try {
+                  cookiesToSet.forEach(({ name, value, options }) =>
+                    cookieStore.set(name, value, options)
+                  )
+                } catch {}
+              },
+            },
+          }
+        )
+        const { data: { user: sbUser } } = await supabase.auth.getUser()
+        if (sbUser && sbUser.email) {
+          user = await db.user.findFirst({
+            where: { email: sbUser.email }
+          })
+          if (user) {
+            resolvedUserId = user.id
+          }
+        }
+      } catch (err) {
+        console.error('API routes auth session helper error:', err)
+      }
+    }
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
     }
@@ -74,7 +133,7 @@ export async function POST(request: Request) {
 
     const story = await db.story.create({
       data: {
-        userId,
+        userId: resolvedUserId,
         cityId,
         mediaType: mediaType || 'IMAGE',
         mediaUrl,

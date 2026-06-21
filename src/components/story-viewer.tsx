@@ -595,12 +595,20 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
       >
         {/* ---- Media Layer ---- */}
         <div className="absolute inset-0 flex items-center justify-center">
-          {currentStory.mediaType === 'IMAGE' ? (
+          {!currentStory?.mediaUrl ? (
+            <div className="flex flex-col items-center justify-center text-white/50 p-6 text-center">
+              <span className="text-4xl mb-2">📷</span>
+              <p className="text-sm font-medium">Story media is unavailable</p>
+            </div>
+          ) : currentStory.mediaType === 'IMAGE' ? (
             <img
               src={currentStory.mediaUrl}
-              alt={currentStory.title}
+              alt={currentStory.title || 'Story'}
               className="w-full h-full object-contain"
               draggable={false}
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=800'
+              }}
             />
           ) : (
             <video
