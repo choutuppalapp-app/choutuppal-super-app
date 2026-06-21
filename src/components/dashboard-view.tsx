@@ -1098,13 +1098,35 @@ export default function DashboardView() {
       </div>
 
       {/* Main Panel Content */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen pb-20 md:pb-0">
         {/* Mobile Header */}
         <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between md:hidden">
           <div>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
             <p className="text-xs font-bold text-gray-400">Manage listings & media</p>
           </div>
+        </div>
+
+        {/* Mobile Sub-Navigation Tabs (Horizontal Scrollable) */}
+        <div className="md:hidden flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-100 scrollbar-none">
+          {TAB_ITEMS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.key
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  isActive
+                    ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10 text-[#4169E1] border border-[#4169E1]/20'
+                    : 'bg-gray-50 text-gray-500 border border-gray-200/50 hover:bg-gray-100'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
 
         <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
@@ -1115,30 +1137,6 @@ export default function DashboardView() {
           {activeTab === 'stories' && renderStories()}
           {activeTab === 'wallet' && renderWallet()}
           {activeTab === 'settings' && renderSettings()}
-        </div>
-
-        {/* Mobile Bottom Navigation Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe-bottom z-40 md:hidden">
-          <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-1">
-            {TAB_ITEMS.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.key
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors ${isActive ? 'text-[#4169E1]' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <div className={`relative flex items-center justify-center w-10 h-7 rounded-full transition-all ${isActive ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10' : ''}`}>
-                    <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-[#4169E1]' : ''}`} />
-                  </div>
-                  <span className={`text-[8px] font-bold truncate max-w-[50px] ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
-                    {tab.label.replace('My ', '')}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
         </div>
 
         {/* Add/Edit Listing Fullscreen Modal */}

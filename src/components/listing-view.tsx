@@ -26,7 +26,7 @@ import { toast } from 'sonner'
 import { OptimizedImage } from '@/components/optimized-image'
 import { ListingDetailSkeleton } from '@/components/skeleton-loaders'
 import DOMPurify from 'dompurify'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 interface ListingData {
   id: string
@@ -71,6 +71,7 @@ export default function ListingView() {
   const navigateTo = useAppStore((s) => s.navigateTo)
   const { user } = useAuth()
   const params = useParams()
+  const router = useRouter()
   
   // Resolve listing ID or slug from params or app store
   const currentIdOrSlug = (params?.id as string) || selectedListingSlug
@@ -78,6 +79,15 @@ export default function ListingView() {
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+
+  const handleBack = () => {
+    navigateTo('explore')
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/')
+    }
+  }
 
   // Claim state
   const [showClaimDialog, setShowClaimDialog] = useState(false)
@@ -205,7 +215,7 @@ END:VCARD`
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 p-4">
         <p className="text-gray-500 text-lg font-semibold">Listing not found</p>
-        <Button onClick={() => navigateTo('explore')} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md">
+        <Button onClick={handleBack} className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md">
           <ArrowLeft className="size-4 mr-2" /> Back to Explore
         </Button>
       </div>
@@ -280,7 +290,7 @@ END:VCARD`
         
         {/* Back button */}
         <div className="absolute top-4 left-4 z-10">
-          <Button variant="ghost" size="icon" onClick={() => navigateTo('explore')} className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10 shadow-sm border border-white/20">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="bg-white/20 backdrop-blur-md text-white hover:bg-white/40 rounded-full size-10 shadow-sm border border-white/20">
             <ArrowLeft className="size-5" />
           </Button>
         </div>
@@ -490,7 +500,7 @@ END:VCARD`
       </div>
 
       {/* ── MOBILE STICKY FOOTER ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white shadow-[0_-4px_15px_rgba(0,0,0,0.15)] p-3 flex items-center justify-around">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white shadow-[0_-4px_15px_rgba(0,0,0,0.15)] p-3 flex items-center justify-around">
         <button onClick={handleCall} className="flex flex-col items-center justify-center text-gray-600 font-bold text-[10px] w-12">
           <Phone size={18} className="text-[#4169E1] mb-1" />
           <span>Call</span>

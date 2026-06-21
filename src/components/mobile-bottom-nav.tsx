@@ -6,6 +6,7 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { useAppConfig } from '@/hooks/use-app-config'
+import { usePathname } from 'next/navigation'
 import {
   Sheet,
   SheetContent,
@@ -13,9 +14,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
-import { ListingActionBar } from '@/components/listing-action-bar'
 
 export function MobileBottomNav() {
+  const pathname = usePathname()
   const currentView = useAppStore((s) => s.currentView)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const searchQuery = useAppStore((s) => s.searchQuery)
@@ -27,9 +28,11 @@ export function MobileBottomNav() {
 
   const [postSheetOpen, setPostSheetOpen] = useState(false)
 
-  const isDetailPage = currentView === 'listing' && !!selectedListingSlug
+  const isDetailPage = currentView === 'listing' || pathname?.startsWith('/listing/')
 
-  if (!showBottomNav && !isDetailPage) return null
+  if (isDetailPage) return null
+
+  if (!showBottomNav) return null
 
   const handleNavClick = (view: ViewType, requiresAuth?: boolean, query?: string) => {
     if (requiresAuth && !isAuthenticated) {
@@ -53,10 +56,6 @@ export function MobileBottomNav() {
 
   const isExploreActive = currentView === 'explore'
   const isUpdatesActive = currentView === 'news' || currentView === 'blog'
-
-  if (isDetailPage) {
-    return <ListingActionBar />
-  }
 
   return (
     <>
