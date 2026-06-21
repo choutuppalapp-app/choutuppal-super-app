@@ -5,15 +5,14 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const story = await db.story.update({
+    const story = await db.story.findUnique({
       where: { id },
-      data: {
-        views: { increment: 1 },
-        viewsCount: { increment: 1 }
-      },
       include: {
         user: {
           select: { id: true, fullName: true, avatarUrl: true, subscriptionTier: true }
+        },
+        city: {
+          select: { id: true, name: true, slug: true }
         },
         music: {
           select: { id: true, name: true, audioUrl: true, artist: true }
@@ -27,79 +26,86 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await request.json()
+    const { action, userId, fullName, avatarUrl, text } = body
 
-    // Action actions
-    if (body.action === 'like') {
-      const story = await db.story.update({
-        where: { id },
-        data: { likes: { increment: 1 } }
-      })
-      return NextResponse.json(story)
+    if (!action || !userId) {
+      return NextResponse.json({ error: 'Missing action or userId' }, { status: 400 })
     }
 
-    if (body.action === 'comment') {
-      const { userId, text, fullName } = body
-      if (!userId || !text) {
-        return NextResponse.json({ error: 'Missing userId or text for comment' }, { status: 400 })
+    // Fetch the story first to check owner
+    const story = await db.story.findUnique({
+      where: { id },
+      include: { user: true }
+    })
+
+    if (!story) {
+      return NextResponse.json({ error: 'Story not found' }, { status: 404 })
+    }
+
+    if (action === 'view') {
+      // ONLY increment views if the viewer is NOT the owner
+      if (userId !== story.userId) {
+        // Prepare viewer info
+        const existingViewers = Array.isArray(story.viewers) ? story.viewers : []
+        const alreadyViewed = existingViewers.some((v: any) => v.userId === userId)
+        
+        let updateData: any = {
+          views: { increment: 1 },
+          viewsCount: { increment: 1 }
+        }
+
+        if (!alreadyViewed) {
+          const newViewer = {
+            userId,
+            fullName: fullName || 'Anonymous',
+            avatarUrl: avatarUrl || null,
+            timestamp: new Date().toISOString()
+          }
+          updateData.viewers = [...existingViewers, newViewer]
+        }
+
+        const updated = await db.story.update({
+          where: { id },
+          data: updateData
+        })
+        return NextResponse.json(updated)
+      } else {
+        // Viewer is the owner, return the story without incrementing views
+        return NextResponse.json(story)
       }
-      const currentStory = await db.story.findUnique({
-        where: { id },
-        select: { comments: true }
-      })
-      if (!currentStory) {
-        return NextResponse.json({ error: 'Story not found' }, { status: 404 })
+    }
+
+    if (action === 'reply') {
+      if (!text) {
+        return NextResponse.json({ error: 'Reply text is required' }, { status: 400 })
       }
-      const existingComments = Array.isArray(currentStory.comments) ? currentStory.comments : []
-      const newComment = {
+
+      const existingReplies = Array.isArray(story.replies) ? story.replies : []
+      const newReply = {
         userId,
         fullName: fullName || 'Anonymous',
+        avatarUrl: avatarUrl || null,
         text,
         timestamp: new Date().toISOString()
       }
-      const story = await db.story.update({
+
+      const updated = await db.story.update({
         where: { id },
         data: {
-          comments: [...existingComments, newComment]
+          replies: [...existingReplies, newReply]
         }
       })
-      return NextResponse.json(story)
+      return NextResponse.json(updated)
     }
 
-    // Increment views — safe, controlled operation
-    if (body.incrementViews) {
-      const story = await db.story.update({
-        where: { id },
-        data: {
-          views: { increment: 1 },
-          viewsCount: { increment: 1 }
-        },
-      })
-      return NextResponse.json(story)
-    }
-
-    // General update — whitelist only safe fields to prevent mass assignment
-    const allowedFields: Record<string, unknown> = {}
-    if (typeof body.title === 'string') allowedFields.title = body.title.slice(0, 200)
-    if (typeof body.isPremium === 'boolean') allowedFields.isPremium = body.isPremium
-    if (body.musicId !== undefined) allowedFields.musicId = body.musicId || null
-    if (typeof body.musicName === 'string') allowedFields.musicName = body.musicName.slice(0, 100)
-
-    if (Object.keys(allowedFields).length === 0) {
-      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
-    }
-
-    const story = await db.story.update({
-      where: { id },
-      data: allowedFields,
-    })
-    return NextResponse.json(story)
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
-    console.error('Error updating story:', error)
-    return NextResponse.json({ error: 'Failed to update story' }, { status: 500 })
+    console.error('Error in story action API:', error)
+    return NextResponse.json({ error: 'Failed to process story action' }, { status: 500 })
   }
 }
 

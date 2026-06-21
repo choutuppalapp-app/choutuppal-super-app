@@ -27,12 +27,12 @@ export default function StoryCreator({
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO'>('IMAGE')
   const [caption, setCaption] = useState('')
+  const [ctaLink, setCtaLink] = useState('')
   const [posting, setPosting] = useState(false)
 
   // When the creator opens, immediately trigger the file picker
   useEffect(() => {
     if (isOpen) {
-      // Small delay so the DOM is ready
       const timer = setTimeout(() => {
         fileInputRef.current?.click()
       }, 50)
@@ -47,15 +47,15 @@ export default function StoryCreator({
       setMediaFile(null)
       setMediaType('IMAGE')
       setCaption('')
+      setCtaLink('')
       setPosting(false)
     }
   }, [isOpen])
 
-  // Handle file picked from native gallery/camera
+  // Handle file picked
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) {
-      // User cancelled the picker without selecting → close the creator
       onClose()
       return
     }
@@ -91,13 +91,17 @@ export default function StoryCreator({
       setMediaPreview(url)
     }
 
-    // Clear input value so re-selecting same file works
     e.target.value = ''
   }, [onClose])
 
   // Post the story
   const handlePost = useCallback(async () => {
     if (!mediaFile || posting) return
+    if (!userId) {
+      toast.error('Please login to post a story')
+      window.location.href = '/login'
+      return
+    }
 
     setPosting(true)
     try {
@@ -115,7 +119,8 @@ export default function StoryCreator({
         body: JSON.stringify({
           userId,
           cityId,
-          title: caption.trim() || 'Story',
+          text: caption.trim() || null,
+          ctaLink: ctaLink.trim() || null,
           mediaType,
           mediaUrl,
           musicId: null,
@@ -133,16 +138,15 @@ export default function StoryCreator({
         toast.error(data.error || 'Failed to post story')
         setPosting(false)
       }
-    } catch {
+    } catch (err) {
+      console.error(err)
       toast.error('Something went wrong')
       setPosting(false)
     }
-  }, [mediaFile, posting, caption, userId, cityId, mediaType, onStoryCreated, onClose])
+  }, [mediaFile, posting, caption, ctaLink, userId, cityId, mediaType, onStoryCreated, onClose])
 
-  // If not open, render nothing (but keep the hidden input in DOM)
   return (
     <>
-      {/* Hidden native file input — always in DOM so ref works */}
       <input
         ref={fileInputRef}
         type="file"
@@ -162,7 +166,7 @@ export default function StoryCreator({
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[300] bg-black flex flex-col"
           >
-            {/* ── Top Bar ─────────────────────────────────────── */}
+            {/* Top Bar */}
             <div className="absolute top-0 left-0 right-0 z-20 flex items-center px-4 pt-4 pb-10 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
               <button
                 className="pointer-events-auto p-2 rounded-full hover:bg-white/10 transition-colors"
@@ -173,7 +177,7 @@ export default function StoryCreator({
               </button>
             </div>
 
-            {/* ── Full-Screen Media Preview ───────────────────── */}
+            {/* Media Preview */}
             <div className="absolute inset-0">
               {mediaType === 'VIDEO' ? (
                 <video
@@ -185,7 +189,6 @@ export default function StoryCreator({
                   playsInline
                 />
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={mediaPreview}
                   alt="Story preview"
@@ -194,9 +197,20 @@ export default function StoryCreator({
               )}
             </div>
 
-            {/* ── Bottom Bar ──────────────────────────────────── */}
-            <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8 pt-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-              <div className="flex items-center gap-3">
+            {/* Bottom Input Area */}
+            <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8 pt-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-3">
+              {/* Optional CTA Link input */}
+              <div className="w-full max-w-lg mx-auto">
+                <input
+                  type="url"
+                  value={ctaLink}
+                  onChange={(e) => setCtaLink(e.target.value)}
+                  placeholder="Add Call-to-Action Link (Optional URL)..."
+                  className="w-full bg-black/40 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 rounded-xl py-2 px-4 outline-none text-xs font-semibold focus:border-[#4169E1] focus:ring-1 focus:ring-[#4169E1] transition-all"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 w-full max-w-lg mx-auto">
                 {/* Caption Input */}
                 <input
                   type="text"
@@ -204,7 +218,7 @@ export default function StoryCreator({
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Add a caption..."
                   maxLength={200}
-                  className="flex-1 bg-black/40 backdrop-blur-md border border-white/25 text-white placeholder:text-white/60 rounded-full py-3.5 px-5 outline-none text-sm font-medium focus:border-white/60 transition-colors"
+                  className="flex-1 bg-black/40 backdrop-blur-md border border-white/25 text-white placeholder:text-white/60 rounded-full py-3 px-5 outline-none text-xs font-semibold focus:border-white/60 transition-colors"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
@@ -213,17 +227,17 @@ export default function StoryCreator({
                   }}
                 />
 
-                {/* WhatsApp Green Send Button */}
+                {/* Send Button */}
                 <button
                   onClick={handlePost}
                   disabled={posting}
-                  className="flex-shrink-0 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20c25e] active:bg-[#1dae55] transition-colors flex items-center justify-center shadow-lg shadow-black/40 disabled:opacity-70"
+                  className="flex-shrink-0 w-12 h-12 rounded-full bg-[#25D366] hover:bg-[#20c25e] active:bg-[#1dae55] transition-colors flex items-center justify-center shadow-lg shadow-black/40 disabled:opacity-70"
                   aria-label="Post story"
                 >
                   {posting ? (
-                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
                   ) : (
-                    <Send className="w-6 h-6 text-white translate-x-0.5 -translate-y-0.5" />
+                    <Send className="w-5 h-5 text-white translate-x-0.5 -translate-y-0.5" />
                   )}
                 </button>
               </div>

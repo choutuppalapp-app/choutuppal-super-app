@@ -23,6 +23,10 @@ export interface StoryItem {
   views?: number
   likes?: number
   comments?: any
+  replies?: any
+  viewers?: any
+  ctaLink?: string | null
+  text?: string | null
   createdAt: string
   expiresAt: string
   user: {
@@ -86,10 +90,11 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   const { user: currentUser } = useAuth()
 
   const [localLikes, setLocalLikes] = useState(0)
-  const [localComments, setLocalComments] = useState<any[]>([])
-  const [liked, setLiked] = useState(false)
+  const [localReplies, setLocalReplies] = useState<any[]>([])
+  const [localViewers, setLocalViewers] = useState<any[]>([])
   const [commentInput, setCommentInput] = useState('')
   const [showCommentsDrawer, setShowCommentsDrawer] = useState(false)
+  const [drawerTab, setDrawerTab] = useState<'views' | 'replies'>('views')
 
   const currentStory = stories[currentIndex] ?? null
 
@@ -97,81 +102,70 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
     if (!currentStory) return
     setLocalLikes((currentStory as any).likes || 0)
     
-    let commentsArr: any[] = []
-    const rawComments = (currentStory as any).comments
-    if (Array.isArray(rawComments)) {
-      commentsArr = rawComments
-    } else if (typeof rawComments === 'string') {
+    let repliesArr: any[] = []
+    const rawReplies = (currentStory as any).replies
+    if (Array.isArray(rawReplies)) {
+      repliesArr = rawReplies
+    } else if (typeof rawReplies === 'string') {
       try {
-        commentsArr = JSON.parse(rawComments)
+        repliesArr = JSON.parse(rawReplies)
       } catch {
-        commentsArr = []
+        repliesArr = []
       }
     }
-    setLocalComments(commentsArr)
-    setLiked(false)
+    setLocalReplies(repliesArr)
+
+    let viewersArr: any[] = []
+    const rawViewers = (currentStory as any).viewers
+    if (Array.isArray(rawViewers)) {
+      viewersArr = rawViewers
+    } else if (typeof rawViewers === 'string') {
+      try {
+        viewersArr = JSON.parse(rawViewers)
+      } catch {
+        viewersArr = []
+      }
+    }
+    setLocalViewers(viewersArr)
   }, [currentStory])
 
-  const handleComment = async () => {
+  const handleReplySubmit = async () => {
     if (!commentInput.trim() || !currentUser || !currentStory) return
     const text = commentInput.trim()
     setCommentInput('')
     
-    const newComment = {
+    const newReply = {
       userId: currentUser.id,
       fullName: currentUser.fullName || 'Anonymous',
+      avatarUrl: currentUser.avatarUrl || null,
       text,
       timestamp: new Date().toISOString()
     }
-    setLocalComments(prev => [...prev, newComment])
+    setLocalReplies(prev => [...prev, newReply])
     toast.success('Reply sent!')
 
     try {
       const res = await fetch(`/api/stories/${currentStory.id}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'comment',
+          action: 'reply',
           userId: currentUser.id,
           fullName: currentUser.fullName,
+          avatarUrl: currentUser.avatarUrl || null,
           text
         })
       })
       if (!res.ok) {
-        toast.error('Failed to save comment')
+        toast.error('Failed to send reply')
       } else {
         const data = await res.json()
-        if (data && data.comments) {
-          setLocalComments(Array.isArray(data.comments) ? data.comments : [])
+        if (data && data.replies) {
+          setLocalReplies(Array.isArray(data.replies) ? data.replies : [])
         }
       }
     } catch (e) {
-      console.error('Comment failed:', e)
-    }
-  }
-
-  const handleLike = async () => {
-    if (liked || !currentStory) return
-    setLiked(true)
-    setLocalLikes(prev => prev + 1)
-    toast.success('Liked story!')
-
-    try {
-      const res = await fetch(`/api/stories/${currentStory.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'like' })
-      })
-      if (!res.ok) {
-        toast.error('Failed to save like')
-      } else {
-        const data = await res.json()
-        if (data && typeof data.likes === 'number') {
-          setLocalLikes(data.likes)
-        }
-      }
-    } catch (e) {
-      console.error('Like failed:', e)
+      console.error('Reply failed:', e)
     }
   }
   const currentUserStories = currentStory ? userGroups.get(currentStory.user.id) ?? [] : []
@@ -284,14 +278,21 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
     if (viewedSet.current.has(currentStory.id)) return
     viewedSet.current.add(currentStory.id)
 
-    fetch(`/api/stories/${currentStory.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ incrementViews: true }),
-    }).catch(() => {
-      // silent fail
-    })
-  }, [currentStory])
+    if (currentUser) {
+      fetch(`/api/stories/${currentStory.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'view',
+          userId: currentUser.id,
+          fullName: currentUser.fullName,
+          avatarUrl: currentUser.avatarUrl || null
+        }),
+      }).catch(() => {
+        // silent fail
+      })
+    }
+  }, [currentStory, currentUser])
 
   /* ---------------------------------------------------------------- */
   /*  Progress bar timer                                               */
@@ -701,6 +702,33 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           </div>
         </div>
 
+        {/* ---- Story Text/Caption ---- */}
+        {currentStory.text && (
+          <div className="absolute bottom-32 left-0 right-0 z-[15] px-6 py-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none">
+            <p className="text-white text-sm font-semibold text-center select-none drop-shadow-md break-words max-w-lg mx-auto leading-relaxed">
+              {currentStory.text}
+            </p>
+          </div>
+        )}
+
+        {/* ---- Call to Action Link ---- */}
+        {currentStory.ctaLink && (
+          <div className="absolute bottom-24 left-0 right-0 z-20 flex justify-center pointer-events-auto">
+            <a
+              href={currentStory.ctaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-[#4169E1] hover:bg-[#3156c4] text-white text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-full shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
+            >
+              <span>Visit Link</span>
+              <span className="text-[10px]">🔗</span>
+            </a>
+          </div>
+        )}
+
         {/* ---- Bottom Gradient & Interactions ---- */}
         <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-4 pt-12 gap-3">
           
@@ -756,69 +784,58 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
             </button>
           </div>
  
-          {/* Viewed / Replies tap up indicator */}
-          <div className="pointer-events-auto flex justify-center mt-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setPaused(true)
-                setShowCommentsDrawer(true)
-              }}
-              className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors group cursor-pointer"
-            >
-              <ChevronUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                {currentUser?.id === currentStory.user.id
-                  ? `👁️ ${currentStory.views || currentStory.viewsCount || 0} Views · ${localLikes} Likes · ${localComments.length} Replies`
-                  : `Replies (${localComments.length}) · ${localLikes} Likes`}
-              </span>
-            </button>
-          </div>
-
-          {/* WhatsApp-Style Reply Input & Heart Button */}
-          <div className="pointer-events-auto flex items-center gap-3">
-            <div className="flex-1 relative flex items-center">
-              <input 
-                type="text" 
-                placeholder={`Reply to ${currentStory.user.fullName.split(' ')[0]}...`}
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                className="w-full bg-black/40 hover:bg-black/55 focus:bg-black/70 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 rounded-full py-3 pl-5 pr-12 outline-none transition-all text-xs font-semibold"
-                onFocus={() => setPaused(true)}
-                onBlur={() => {
-                  if (!showCommentsDrawer) setPaused(false)
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleComment()
-                  }
-                }}
-              />
+          {/* Owner Details Swipe Up Indicator */}
+          {currentUser?.id === currentStory.user.id ? (
+            <div className="pointer-events-auto flex justify-center mt-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleComment()
+                  setPaused(true)
+                  setShowCommentsDrawer(true)
                 }}
-                disabled={!commentInput.trim()}
-                className="absolute right-3 p-1.5 rounded-full bg-[#4169E1] text-white hover:bg-opacity-90 transition-opacity disabled:opacity-40"
+                className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors group cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" />
+                <ChevronUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                  👁️ {localViewers.length} Views · 💬 {localReplies.length} Replies
+                </span>
               </button>
             </div>
-            
-            {/* Heart Button */}
-            <button 
-              onClick={(e) => {
-                e.stopPropagation()
-                handleLike()
-              }}
-              className="flex-shrink-0 w-11 h-11 rounded-full bg-black/40 border border-white/20 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-            >
-              <Heart className={`w-5 h-5 transition-colors duration-300 ${liked ? 'text-red-500 fill-red-500 scale-110' : 'text-white'}`} />
-            </button>
-          </div>
+          ) : (
+            /* Viewer Reply Input */
+            <div className="pointer-events-auto flex items-center gap-3 w-full max-w-lg mx-auto">
+              <div className="flex-1 relative flex items-center">
+                <input 
+                  type="text" 
+                  placeholder={`Reply to ${currentStory.user.fullName.split(' ')[0]}...`}
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  className="w-full bg-black/40 hover:bg-black/55 focus:bg-black/70 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 rounded-full py-3 pl-5 pr-12 outline-none transition-all text-xs font-semibold"
+                  onFocus={() => setPaused(true)}
+                  onBlur={() => {
+                    if (!showCommentsDrawer) setPaused(false)
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleReplySubmit()
+                    }
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleReplySubmit()
+                  }}
+                  disabled={!commentInput.trim()}
+                  className="absolute right-3 p-1.5 rounded-full bg-[#4169E1] text-white hover:bg-opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ---- Paused Indicator ---- */}
@@ -838,18 +855,9 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           )}
         </AnimatePresence>
 
-        {/* ---- Story Title (subtle, above bottom gradient) ---- */}
-        {currentStory.title && (
-          <div className="absolute bottom-24 left-0 right-0 z-[15] pointer-events-none px-6">
-            <p className="text-white/70 text-sm text-center truncate">
-              {currentStory.title}
-            </p>
-          </div>
-        )}
-
         {/* ---- Comments/Views Slide-up Drawer ---- */}
         <AnimatePresence>
-          {showCommentsDrawer && (
+          {showCommentsDrawer && currentUser?.id === currentStory.user.id && (
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -858,63 +866,100 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               className="absolute bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-xl rounded-t-3xl border-t border-white/10 p-5 pb-safe-bottom max-h-[60vh] flex flex-col pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 flex-none">
-                <div>
-                  <h3 className="text-white font-extrabold text-base">
-                    {currentUser?.id === currentStory.user.id ? 'Story Details' : 'Replies & Interactions'}
-                  </h3>
-                  <p className="text-xs text-white/50">
-                    {localLikes} Likes · {localComments.length} Comments
-                  </p>
+              {/* Header with Tabs */}
+              <div className="flex flex-col border-b border-white/10 pb-3 mb-4 flex-none gap-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-extrabold text-base">Story Details</h3>
+                  <button
+                    onClick={() => {
+                      setShowCommentsDrawer(false)
+                      setPaused(false)
+                    }}
+                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"
+                  >
+                    <X className="size-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowCommentsDrawer(false)
-                    setPaused(false)
-                  }}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"
-                >
-                  <X className="size-4" />
-                </button>
+                {/* Tabs */}
+                <div className="flex gap-2 bg-white/5 p-1 rounded-xl">
+                  <button
+                    onClick={() => setDrawerTab('views')}
+                    className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all ${
+                      drawerTab === 'views'
+                        ? 'bg-white text-gray-900 shadow'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    👁️ Views ({localViewers.length})
+                  </button>
+                  <button
+                    onClick={() => setDrawerTab('replies')}
+                    className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all ${
+                      drawerTab === 'replies'
+                        ? 'bg-white text-gray-900 shadow'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    💬 Replies ({localReplies.length})
+                  </button>
+                </div>
               </div>
 
               {/* Scrollable list */}
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-none">
-                {currentUser?.id === currentStory.user.id && (
-                  <div className="bg-white/5 rounded-2xl p-4 border border-white/5 mb-2">
-                    <p className="text-white text-xs font-bold uppercase tracking-wider text-white/40 mb-2">Views Summary</p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#4169E1]/20 flex items-center justify-center text-lg">👁️</div>
-                      <div>
-                        <p className="text-white text-sm font-bold">{currentStory.views || currentStory.viewsCount || 0} views</p>
-                        <p className="text-xs text-white/50">This story was viewed by local app users</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-white text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Comments & Replies ({localComments.length})</p>
-                  {localComments.length === 0 ? (
-                    <div className="text-center py-6 text-white/40 text-sm">
-                      No replies yet. Be the first to reply!
+              {drawerTab === 'views' ? (
+                <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-none">
+                  {localViewers.length === 0 ? (
+                    <div className="text-center py-10 text-white/40 text-sm">
+                      No views yet. Share your story link to get views!
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {localComments.map((c, i) => {
-                        const dateStr = c.timestamp ? formatDistanceToNow(new Date(c.timestamp), { addSuffix: true }) : 'just now'
+                    <div className="space-y-2.5">
+                      {localViewers.map((v, i) => {
+                        const timeStr = v.timestamp ? formatDistanceToNow(new Date(v.timestamp), { addSuffix: true }) : 'just now'
+                        return (
+                          <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] text-white font-black flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
+                                {v.avatarUrl ? (
+                                  <img src={v.avatarUrl} alt={v.fullName} className="w-full h-full object-cover" />
+                                ) : (
+                                  v.fullName?.charAt(0).toUpperCase() || 'U'
+                                )}
+                              </div>
+                              <span className="text-white text-xs font-bold truncate max-w-[150px]">{v.fullName}</span>
+                            </div>
+                            <span className="text-white/40 text-[10px]">{timeStr}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-none">
+                  {localReplies.length === 0 ? (
+                    <div className="text-center py-10 text-white/40 text-sm">
+                      No replies received yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {localReplies.map((r, i) => {
+                        const timeStr = r.timestamp ? formatDistanceToNow(new Date(r.timestamp), { addSuffix: true }) : 'just now'
                         return (
                           <div key={i} className="bg-white/5 rounded-xl p-3 border border-white/5 flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
-                              {c.fullName?.charAt(0).toUpperCase() || 'U'}
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] text-white font-bold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
+                              {r.avatarUrl ? (
+                                <img src={r.avatarUrl} alt={r.fullName} className="w-full h-full object-cover" />
+                              ) : (
+                                r.fullName?.charAt(0).toUpperCase() || 'U'
+                              )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
-                                <span className="text-white text-xs font-bold truncate">{c.fullName || 'Anonymous'}</span>
-                                <span className="text-white/40 text-[10px] flex-shrink-0">{dateStr}</span>
+                                <span className="text-white text-xs font-bold truncate">{r.fullName}</span>
+                                <span className="text-white/40 text-[10px] flex-shrink-0">{timeStr}</span>
                               </div>
-                              <p className="text-white/95 text-xs mt-1 leading-relaxed break-words">{c.text}</p>
+                              <p className="text-white/90 text-xs mt-1 leading-relaxed break-words">{r.text}</p>
                             </div>
                           </div>
                         )
@@ -922,7 +967,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                     </div>
                   )}
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

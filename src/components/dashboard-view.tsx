@@ -23,6 +23,7 @@ import dynamic from 'next/dynamic'
 import StoryCreator from '@/components/story-creator'
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
+const StoryViewer = dynamic(() => import('@/components/story-viewer'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -147,8 +148,19 @@ export default function DashboardView() {
   const [isCreatingListing, setIsCreatingListing] = useState(false)
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
   const [isCreatingStory, setIsCreatingStory] = useState(false)
+  const [selectedStoryForViewer, setSelectedStoryForViewer] = useState<any | null>(null)
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+
+  const handleAddStoryClick = () => {
+    if (!currentUser) {
+      toast.error('Please login to post a story')
+      window.location.href = '/login'
+      return
+    }
+    setIsCreatingStory(true)
+  }
 
   const [formData, setFormData] = useState({
     name: '', category: '', description: '',
@@ -194,12 +206,12 @@ export default function DashboardView() {
   const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000 })
 
   const { data: storiesData, mutate: fetchStories } = useSWR(
-    currentUser ? `/api/stories?cityId=${cities[0]?.id || 'default'}` : null,
+    currentUser ? `/api/stories?userId=${currentUser.id}` : null,
     fetcher,
     { dedupingInterval: 30000, revalidateOnMount: true }
   )
 
-  const userStories = (storiesData || []).filter((s: any) => s.userId === currentUser?.id)
+  const userStories = storiesData || []
 
   useEffect(() => {
     fetch('/api/admin/categories?active=true')
@@ -911,7 +923,7 @@ export default function DashboardView() {
             </h3>
             <Button 
               size="sm" 
-              onClick={() => setIsCreatingStory(true)} 
+              onClick={() => handleAddStoryClick()} 
               className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
             >
               <Plus className="w-4 h-4 mr-1" /> Add Story
@@ -926,45 +938,71 @@ export default function DashboardView() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {userStories.map((story: any) => (
-                  <div key={story.id} className="relative rounded-2xl overflow-hidden aspect-[9/16] bg-gray-900 group shadow-sm">
-                    {story.mediaType === 'VIDEO' ? (
-                      <video src={story.mediaUrl} className="w-full h-full object-cover" muted loop playsInline />
-                    ) : (
-                      <img src={story.mediaUrl} alt={story.title} className="w-full h-full object-cover" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/30" />
-                    
-                    <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
-                      <span className="text-[10px] text-white bg-[#4169E1] px-2 py-0.5 rounded-full font-bold">
-                        {story.viewsCount} views
-                      </span>
-                      <button 
-                        onClick={async () => {
-                          if (!confirm('Delete this story?')) return
-                          try {
-                            const res = await fetch(`/api/stories/${story.id}`, { method: 'DELETE' })
-                            if (res.ok) {
-                              toast.success('Story deleted')
-                              fetchStories()
-                            } else {
+                {userStories.map((story: any) => {
+                  const viewsCount = story.views || story.viewsCount || 0
+                  const repliesCount = Array.isArray(story.replies)
+                    ? story.replies.length
+                    : (() => {
+                        try {
+                          return JSON.parse(story.replies || '[]').length
+                        } catch {
+                          return 0
+                        }
+                      })()
+
+                  return (
+                    <div 
+                      key={story.id} 
+                      onClick={() => {
+                        setSelectedStoryForViewer(story)
+                        setStoryViewerOpen(true)
+                      }}
+                      className="relative rounded-2xl overflow-hidden aspect-[9/16] bg-gray-900 group shadow-sm cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+                    >
+                      {story.mediaType === 'VIDEO' ? (
+                        <video src={story.mediaUrl} className="w-full h-full object-cover" muted loop playsInline />
+                      ) : (
+                        <img src={story.mediaUrl} alt={story.text || 'Story'} className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/30" />
+                      
+                      <div className="absolute top-3 left-3 right-3 flex justify-between items-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-1.5">
+                          <span className="text-[9px] text-white bg-black/60 px-2 py-1 rounded-full font-extrabold flex items-center gap-0.5 shadow-sm">
+                            👁️ {viewsCount}
+                          </span>
+                          <span className="text-[9px] text-white bg-black/60 px-2 py-1 rounded-full font-extrabold flex items-center gap-0.5 shadow-sm">
+                            💬 {repliesCount}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (!confirm('Delete this story?')) return
+                            try {
+                              const res = await fetch(`/api/stories/${story.id}`, { method: 'DELETE' })
+                              if (res.ok) {
+                                toast.success('Story deleted')
+                                fetchStories()
+                              } else {
+                                toast.error('Failed to delete story')
+                              }
+                            } catch {
                               toast.error('Failed to delete story')
                             }
-                          } catch {
-                            toast.error('Failed to delete story')
-                          }
-                        }}
-                        className="p-1 bg-white text-red-500 rounded-full hover:bg-red-500 hover:text-white transition shadow-sm"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </div>
+                          }}
+                          className="p-1.5 bg-white text-red-500 rounded-full hover:bg-red-500 hover:text-white transition shadow-sm"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      </div>
 
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <p className="text-xs font-bold text-white line-clamp-2">{story.title}</p>
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <p className="text-xs font-bold text-white line-clamp-2">{story.text || 'Untitled Story'}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -1487,6 +1525,19 @@ export default function DashboardView() {
             userId={currentUser.id}
             cityId={formData.cityId || cities[0]?.id || 'default'}
             onStoryCreated={() => { fetchStories() }}
+          />
+        )}
+
+        {/* Story viewer for owner mode */}
+        {storyViewerOpen && selectedStoryForViewer && (
+          <StoryViewer
+            stories={[selectedStoryForViewer]}
+            initialStoryIndex={0}
+            onClose={() => {
+              setStoryViewerOpen(false)
+              setSelectedStoryForViewer(null)
+              fetchStories()
+            }}
           />
         )}
       </div>

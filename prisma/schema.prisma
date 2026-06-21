@@ -307,7 +307,7 @@ model Story {
   id          String   @id @default(cuid())
   userId      String
   cityId      String
-  title       String
+  title       String?
   mediaType   String   @default("IMAGE") // IMAGE, VIDEO
   mediaUrl    String   // URL to image or video (Cloudinary)
   musicId     String?  // Optional: linked MusicLibrary track
@@ -317,6 +317,10 @@ model Story {
   views       Int      @default(0)
   likes       Int      @default(0)
   comments    Json     @default("[]")
+  replies     Json     @default("[]")
+  viewers     Json     @default("[]")
+  ctaLink     String?
+  text        String?
   expiresAt   DateTime // Auto-delete after 24hrs (filtered in API)
   createdAt   DateTime @default(now())
 
