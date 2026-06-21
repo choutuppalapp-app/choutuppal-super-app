@@ -105,21 +105,9 @@ html {
   -webkit-tap-highlight-color: transparent;   /* Removes blue flash on tap */
 }
 
-/* Mobile: lock viewport, Desktop: normal scrollable page */
-@media (max-width: 767px) {
-  html, body {
-    overscroll-behavior: none;
-    height: 100%;
-    overflow: hidden;
-  }
-}
-
-@media (min-width: 768px) {
-  html, body {
-    overscroll-behavior: auto;
-    height: auto;
-    overflow: auto;
-  }
+html, body {
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 body {
