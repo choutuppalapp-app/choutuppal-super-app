@@ -90,6 +90,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   const { user: currentUser } = useAuth()
 
   const [localLikes, setLocalLikes] = useState(0)
+  const [isLiked, setIsLiked] = useState(false)
   const [localReplies, setLocalReplies] = useState<any[]>([])
   const [localViewers, setLocalViewers] = useState<any[]>([])
   const [commentInput, setCommentInput] = useState('')
@@ -101,6 +102,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   useEffect(() => {
     if (!currentStory) return
     setLocalLikes((currentStory as any).likes || 0)
+    setIsLiked(false)
     
     let repliesArr: any[] = []
     const rawReplies = (currentStory as any).replies
@@ -168,6 +170,56 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
       console.error('Reply failed:', e)
     }
   }
+
+  const handleLikeClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!currentStory || !currentUser) {
+      toast.error('Please login to like stories')
+      return
+    }
+    if (isLiked) return
+    
+    setIsLiked(true)
+    setLocalLikes(prev => prev + 1)
+    toast.success('Story liked!')
+
+    try {
+      // 1. Register a like
+      await fetch(`/api/stories/${currentStory.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'like',
+          userId: currentUser.id
+        })
+      })
+
+      // 2. Predefined reply '❤️'
+      const newReply = {
+        userId: currentUser.id,
+        fullName: currentUser.fullName || 'Anonymous',
+        avatarUrl: currentUser.avatarUrl || null,
+        text: '❤️',
+        timestamp: new Date().toISOString()
+      }
+      setLocalReplies(prev => [...prev, newReply])
+
+      await fetch(`/api/stories/${currentStory.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reply',
+          userId: currentUser.id,
+          fullName: currentUser.fullName,
+          avatarUrl: currentUser.avatarUrl || null,
+          text: '❤️'
+        })
+      })
+    } catch (err) {
+      console.error('Like failed:', err)
+    }
+  }
+
   const currentUserStories = currentStory ? userGroups.get(currentStory.user.id) ?? [] : []
   const indexInUserGroup = currentStory
     ? currentUserStories.findIndex((s) => s.id === currentStory.id)
@@ -842,6 +894,16 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
+              <button
+                onClick={handleLikeClick}
+                className={`p-3 rounded-full backdrop-blur-md border transition-all ${
+                  isLiked 
+                    ? 'bg-red-500/20 border-red-500/50 text-red-500 scale-110' 
+                    : 'bg-black/40 hover:bg-black/55 border-white/20 text-white hover:text-red-400'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+              </button>
             </div>
           )}
         </div>

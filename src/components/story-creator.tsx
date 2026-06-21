@@ -61,35 +61,16 @@ export default function StoryCreator({
     }
 
     const isVideo = file.type.startsWith('video/')
-
-    // Validate video duration
     if (isVideo) {
-      const url = URL.createObjectURL(file)
-      const tempVideo = document.createElement('video')
-      tempVideo.preload = 'metadata'
-      tempVideo.onloadedmetadata = () => {
-        URL.revokeObjectURL(tempVideo.src)
-        if (tempVideo.duration > 30) {
-          toast.error('Video must be 30 seconds or less')
-          onClose()
-          return
-        }
-        setMediaFile(file)
-        setMediaType('VIDEO')
-        setMediaPreview(url)
-      }
-      tempVideo.onerror = () => {
-        URL.revokeObjectURL(url)
-        toast.error('Could not read video file')
-        onClose()
-      }
-      tempVideo.src = url
-    } else {
-      const url = URL.createObjectURL(file)
-      setMediaFile(file)
-      setMediaType('IMAGE')
-      setMediaPreview(url)
+      toast.error('Video uploads are coming soon. Please select an image.')
+      onClose()
+      return
     }
+
+    const url = URL.createObjectURL(file)
+    setMediaFile(file)
+    setMediaType('IMAGE')
+    setMediaPreview(url)
 
     e.target.value = ''
   }, [onClose])
@@ -112,7 +93,7 @@ export default function StoryCreator({
         try {
           const imageCompression = (await import('browser-image-compression')).default
           const options = {
-            maxSizeMB: 1,
+            maxSizeMB: 0.5,
             maxWidthOrHeight: 1200,
             useWebWorker: true,
             initialQuality: 0.8
@@ -209,7 +190,7 @@ export default function StoryCreator({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*,video/*"
+        accept="image/*"
         capture="environment"
         className="hidden"
         onChange={handleFileChange}

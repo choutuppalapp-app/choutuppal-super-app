@@ -79,6 +79,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     }
 
+    if (action === 'like') {
+      const updated = await db.story.update({
+        where: { id },
+        data: {
+          likes: { increment: 1 }
+        }
+      })
+      return NextResponse.json(updated)
+    }
+
     if (action === 'reply') {
       if (!text) {
         return NextResponse.json({ error: 'Reply text is required' }, { status: 400 })
