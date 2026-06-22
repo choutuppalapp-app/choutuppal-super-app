@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import useSWR from 'swr'
-import { OptimizedImage } from '@/components/optimized-image'
-import { useAppStore } from '@/lib/store'
-import { X } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface BannerAd {
   id: string
@@ -16,8 +14,7 @@ interface BannerAd {
   isActive: boolean
 }
 
-// Fallback ads with gradient backgrounds (no weird stock photos)
-const FALLBACK_ADS = [
+const FALLBACK_ADS: BannerAd[] = [
   {
     id: 'fallback-1',
     title: '🎯 List Your Business — Just ₹99/Day!',
@@ -47,7 +44,6 @@ const FALLBACK_ADS = [
   },
 ]
 
-// Gradient backgrounds for fallback ads (when no image)
 const AD_GRADIENTS = [
   'from-[#D4AF37]/30 via-[#4169E1]/10 to-[#D4AF37]/20',
   'from-[#4169E1]/30 via-[#D4AF37]/10 to-[#4169E1]/20',
@@ -55,21 +51,25 @@ const AD_GRADIENTS = [
 ]
 
 export function BannerAds() {
-  // Use individual selectors to prevent re-rendering on unrelated store changes
-  const selectedCity = useAppStore((s) => s.selectedCity)
-  const [ads, setAds] = useState(FALLBACK_ADS)
+  const [ads, setAds] = useState<BannerAd[]>(FALLBACK_ADS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [isHovered, setIsHovered] = useState(false)
-  const [isPopupOpen, setIsPopupOpen] = useState(false)
-  const [selectedBannerUrl, setSelectedBannerUrl] = useState<string | null>(null)
-  
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
+  // Refs for swipe gesture tracking on main carousel
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const touchStartX = useRef(0)
+  const isDragging = useRef(false)
 
-  const { data, isLoading } = useSWR(
+  // Refs for swipe in lightbox
+  const lightboxRef = useRef<HTMLDivElement>(null)
+  const lbTouchStartX = useRef(0)
+
+  const { data } = useSWR(
     `/api/banners?active=true`,
-    (url) => fetch(url).then(res => res.json()),
-    { revalidateOnMount: true, revalidateIfStale: true }
+    (url: string) => fetch(url).then(res => res.json()),
+    { revalidateOnMount: true, revalidateIfStale: true, revalidateOnFocus: false }
   )
 
   useEffect(() => {
@@ -81,17 +81,59 @@ export function BannerAds() {
     setLoading(false)
   }, [data])
 
-  // Auto-scroll logic (3 seconds interval)
   const adsCount = ads.length
+
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % adsCount)
   }, [adsCount])
 
+  const goToPrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + adsCount) % adsCount)
+  }, [adsCount])
+
+  // Auto-scroll (pauses when lightbox open)
   useEffect(() => {
-    if (isHovered || isPopupOpen) return;
+    if (isLightboxOpen) return
     const interval = setInterval(goToNext, 4000)
     return () => clearInterval(interval)
-  }, [goToNext, isHovered, isPopupOpen])
+  }, [goToNext, isLightboxOpen])
+
+  // Main carousel swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    isDragging.current = true
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging.current) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) goToNext(); else goToPrev()
+    }
+    isDragging.current = false
+  }
+
+  // Lightbox navigation
+  const lightboxNext = useCallback(() => {
+    setLightboxIndex((prev) => (prev + 1) % adsCount)
+  }, [adsCount])
+  const lightboxPrev = useCallback(() => {
+    setLightboxIndex((prev) => (prev - 1 + adsCount) % adsCount)
+  }, [adsCount])
+
+  const handleLbTouchStart = (e: React.TouchEvent) => {
+    lbTouchStartX.current = e.touches[0].clientX
+  }
+  const handleLbTouchEnd = (e: React.TouchEvent) => {
+    const diff = lbTouchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) lightboxNext(); else lightboxPrev()
+    }
+  }
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setIsLightboxOpen(true)
+  }
 
   if (loading) {
     return (
@@ -104,108 +146,170 @@ export function BannerAds() {
   }
 
   const currentAd = ads[currentIndex]
-  const hasImage = currentAd?.imageUrl
+  const hasImage = !!currentAd?.imageUrl
 
   return (
-    /* Banner container: z-10 (lower than Stories z-20) */
     <div className="w-full bg-white py-3 relative z-10">
-      <div className="relative w-full overflow-hidden px-4">
-          <div
-            key={currentIndex}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onClick={() => {
-              if (hasImage) {
-                setSelectedBannerUrl(currentAd.imageUrl!);
-                setIsPopupOpen(true);
-              } else if (currentAd?.linkUrl) {
-                window.open(currentAd.linkUrl, '_blank', 'noopener,noreferrer')
-              }
-            }}
-            className="w-full aspect-[16/9] overflow-hidden bg-gray-100 rounded-lg relative shadow-sm cursor-pointer transition-opacity duration-300 border-2 border-transparent"
-            style={{
-              backgroundClip: 'padding-box, border-box',
-              backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, #4169E1, #D4AF37)'
-            }}
-          >
-            {/* Image or gradient background */}
-            {hasImage ? (
-              <img
-                src={currentAd.imageUrl!}
-                alt={currentAd.title || 'Promotion'}
-                className="w-full h-full object-cover rounded-lg"
-                fetchPriority="high"
-              />
-            ) : (
-              <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>
-                {/* Decorative diagonal lines */}
-                <div className="absolute inset-0 opacity-10" style={{
-                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.3) 10px, rgba(212,175,55,0.3) 11px)',
-                }} />
-                <div className="relative z-10 text-center px-6">
-                  {currentAd?.offerText && (
-                    <p className="text-xs sm:text-sm font-bold text-[#D4AF37] mb-1">
-                      {currentAd.offerText}
-                    </p>
-                  )}
-                  <p className="text-sm sm:text-base font-bold text-gray-800 leading-tight">
-                    {currentAd?.title}
-                  </p>
-                </div>
+      {/* ─── Main Swipeable Banner ─── */}
+      <div
+        ref={carouselRef}
+        className="relative w-full overflow-hidden px-4 cursor-pointer"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onClick={() => openLightbox(currentIndex)}
+      >
+        <div
+          className="w-full aspect-[16/9] overflow-hidden bg-gray-100 rounded-lg relative shadow-sm border-2 border-transparent"
+          style={{
+            backgroundClip: 'padding-box, border-box',
+            backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, #4169E1, #D4AF37)',
+          }}
+        >
+          {hasImage ? (
+            <img
+              src={currentAd.imageUrl!}
+              alt={currentAd.title || 'Promotion'}
+              className="w-full h-full object-cover rounded-lg"
+              fetchPriority="high"
+            />
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>
+              <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.3) 10px, rgba(212,175,55,0.3) 11px)',
+              }} />
+              <div className="relative z-10 text-center px-6">
+                {currentAd?.offerText && (
+                  <p className="text-xs sm:text-sm font-bold text-[#D4AF37] mb-1">{currentAd.offerText}</p>
+                )}
+                <p className="text-sm sm:text-base font-bold text-gray-800 leading-tight">{currentAd?.title}</p>
               </div>
-            )}
-
-            {/* Offer badge */}
-            {currentAd?.offerText && (
-              <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md z-10">
-                {currentAd.offerText}
-              </div>
-            )}
-
-            {/* Glassmorphism Bottom Bar for Shop Name */}
-            <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md p-2 z-10">
-              <p className="text-xs font-bold text-gray-900 truncate">
-                {currentAd?.shopName || currentAd?.title || 'Choutuppal Super App'}
-              </p>
-              <p className="text-[10px] text-gray-700 truncate">
-                {currentAd?.shopName ? currentAd.title : 'Promoted listing on Choutuppal'}
-              </p>
             </div>
+          )}
+
+          {/* Offer badge */}
+          {currentAd?.offerText && (
+            <div className="absolute top-2 right-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md z-10">
+              {currentAd.offerText}
+            </div>
+          )}
+
+          {/* Glassmorphism Bottom Bar */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md p-2 z-10">
+            <p className="text-xs font-bold text-gray-900 truncate">
+              {currentAd?.shopName || currentAd?.title || 'Choutuppal Super App'}
+            </p>
+            <p className="text-[10px] text-gray-700 truncate">
+              {currentAd?.shopName ? currentAd.title : 'Promoted listing on Choutuppal'}
+            </p>
           </div>
+        </div>
       </div>
 
-      {/* Subtle Dot Indicators */}
+      {/* Dot Indicators */}
       <div className="flex justify-center items-center gap-1 mt-2">
         {ads.map((_, index) => (
-          <div
+          <button
             key={index}
+            onClick={() => setCurrentIndex(index)}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? 'w-4 bg-[#D4AF37]'
-                : 'w-1.5 bg-gray-300'
+              index === currentIndex ? 'w-4 bg-[#D4AF37]' : 'w-1.5 bg-gray-300'
             }`}
           />
         ))}
       </div>
 
-      {/* Full-Screen Banner Popup Modal */}
-      {isPopupOpen && selectedBannerUrl && (
-        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
-          <div className="relative max-w-full max-h-full">
-            <button
-              onClick={() => setIsPopupOpen(false)}
-              className="absolute -top-4 -right-4 bg-white text-black p-2 rounded-full shadow-lg z-50 hover:bg-gray-200"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <img 
-              src={selectedBannerUrl} 
-              className="max-w-full max-h-[90vh] rounded-lg animate-bounce-once object-contain" 
-              alt="Banner Popup" 
-              loading="lazy"
-              decoding="async"
-            />
+      {/* ─── Full-Screen Lightbox ─── */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsLightboxOpen(false) }}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full z-[110] transition-colors"
+            aria-label="Close lightbox"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Counter */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-sm font-semibold z-[110]">
+            {lightboxIndex + 1} / {adsCount}
           </div>
+
+          {/* Swipeable content area */}
+          <div
+            className="w-full max-w-2xl px-4 flex items-center justify-center"
+            onTouchStart={handleLbTouchStart}
+            onTouchEnd={handleLbTouchEnd}
+          >
+            {/* Prev arrow */}
+            {adsCount > 1 && (
+              <button
+                onClick={lightboxPrev}
+                className="hidden sm:flex shrink-0 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full mr-4 transition-colors"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Active slide */}
+            <div className="flex-1 flex items-center justify-center">
+              {ads[lightboxIndex]?.imageUrl ? (
+                <img
+                  src={ads[lightboxIndex].imageUrl!}
+                  alt={ads[lightboxIndex].title || 'Banner'}
+                  className="max-w-full max-h-[80vh] rounded-xl object-contain shadow-2xl"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div className={`w-full aspect-[16/9] bg-gradient-to-r ${AD_GRADIENTS[lightboxIndex % AD_GRADIENTS.length]} rounded-xl flex items-center justify-center p-8`}>
+                  <div className="text-center">
+                    {ads[lightboxIndex]?.offerText && (
+                      <p className="text-[#D4AF37] font-bold text-lg mb-2">{ads[lightboxIndex].offerText}</p>
+                    )}
+                    <p className="text-gray-800 font-bold text-xl">{ads[lightboxIndex]?.title}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Next arrow */}
+            {adsCount > 1 && (
+              <button
+                onClick={lightboxNext}
+                className="hidden sm:flex shrink-0 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full ml-4 transition-colors"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+
+          {/* Caption */}
+          <div className="mt-4 text-center px-4">
+            <p className="text-white font-semibold text-sm">{ads[lightboxIndex]?.shopName}</p>
+            <p className="text-white/60 text-xs mt-0.5">{ads[lightboxIndex]?.title}</p>
+          </div>
+
+          {/* Dot indicators inside lightbox */}
+          {adsCount > 1 && (
+            <div className="flex justify-center items-center gap-1.5 mt-4">
+              {ads.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setLightboxIndex(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === lightboxIndex ? 'w-5 h-1.5 bg-[#D4AF37]' : 'w-1.5 h-1.5 bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Mobile swipe hint */}
+          <p className="mt-3 text-white/40 text-xs sm:hidden">Swipe to browse</p>
         </div>
       )}
     </div>

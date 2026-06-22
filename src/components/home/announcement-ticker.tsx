@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Volume2 } from 'lucide-react'
+import { Volume2, Pause, Play } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
 interface Announcement {
@@ -15,6 +15,7 @@ export function AnnouncementTicker() {
   const selectedCity = useAppStore((s) => s.selectedCity)
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [ready, setReady] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
     async function fetch_() {
@@ -23,7 +24,6 @@ export function AnnouncementTicker() {
         if (res.ok) {
           const data: Announcement[] = await res.json()
           if (Array.isArray(data)) {
-            // Keep global announcements (no citySlug) and ones matching current city
             const filtered = data.filter(
               (a) => !a.citySlug || a.citySlug === selectedCity
             )
@@ -58,9 +58,10 @@ export function AnnouncementTicker() {
       {/* Scrolling ticker text */}
       <div className="flex-1 overflow-hidden py-2">
         <div
-          className="flex whitespace-nowrap hover:pause-animation"
+          className="flex whitespace-nowrap"
           style={{
             animation: 'ticker-scroll 15s linear infinite',
+            animationPlayState: isPaused ? 'paused' : 'running',
           }}
         >
           <span className="text-yellow-300 text-sm font-semibold px-6 whitespace-nowrap">
@@ -68,6 +69,19 @@ export function AnnouncementTicker() {
           </span>
         </div>
       </div>
+
+      {/* Pause / Play toggle button */}
+      <button
+        onClick={() => setIsPaused((p) => !p)}
+        className="flex-shrink-0 flex items-center justify-center w-9 h-full bg-gray-800 hover:bg-gray-700 transition-colors border-l border-yellow-500/20 self-stretch px-2"
+        aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
+      >
+        {isPaused ? (
+          <Play className="w-3.5 h-3.5 text-yellow-400" />
+        ) : (
+          <Pause className="w-3.5 h-3.5 text-yellow-400" />
+        )}
+      </button>
 
       {/* Inline keyframe style */}
       <style>{`
