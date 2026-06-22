@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Store, Building2, Wallet, Settings, 
@@ -148,6 +148,8 @@ export default function DashboardView() {
   const [isCreatingListing, setIsCreatingListing] = useState(false)
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
   const [isCreatingStory, setIsCreatingStory] = useState(false)
+  const [pendingStoryFile, setPendingStoryFile] = useState<File | null>(null)
+  const storyFileInputRef = useRef<HTMLInputElement>(null)
   const [selectedStoryForViewer, setSelectedStoryForViewer] = useState<any | null>(null)
   const [storyViewerOpen, setStoryViewerOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
@@ -159,7 +161,7 @@ export default function DashboardView() {
       window.location.href = '/login'
       return
     }
-    setIsCreatingStory(true)
+    storyFileInputRef.current?.click()
   }
 
   const [formData, setFormData] = useState({
@@ -1529,14 +1531,38 @@ export default function DashboardView() {
           )}
         </AnimatePresence>
 
+        {/* Hidden input for Story Upload */}
+        <input 
+          type="file" 
+          accept="image/*" 
+          ref={storyFileInputRef} 
+          className="hidden" 
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) {
+              setPendingStoryFile(file)
+              setIsCreatingStory(true)
+            }
+            e.target.value = ''
+          }}
+        />
+
         {/* Story creator triggers */}
         {currentUser && (
           <StoryCreator 
             isOpen={isCreatingStory}
-            onClose={() => setIsCreatingStory(false)}
+            onClose={() => {
+              setIsCreatingStory(false)
+              setPendingStoryFile(null)
+            }}
             userId={currentUser.id}
             cityId={formData.cityId || cities[0]?.id || 'default'}
-            onStoryCreated={() => { fetchStories() }}
+            onStoryCreated={() => {
+              setIsCreatingStory(false)
+              setPendingStoryFile(null)
+              fetchStories()
+            }}
+            preselectedFile={pendingStoryFile}
           />
         )}
 

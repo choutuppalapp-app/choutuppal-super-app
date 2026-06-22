@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Plus, Play, Music } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -57,6 +57,8 @@ export function StoriesSection() {
 
   // Story Creator state
   const [creatorOpen, setCreatorOpen] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Viewed stories tracking (in-memory, per session)
   const [viewedStories, setViewedStories] = useState<Set<string>>(new Set())
@@ -107,7 +109,7 @@ export function StoriesSection() {
   // Handle "Your Story" click
   const handleYourStoryClick = () => {
     if (!isAuthenticated) return
-    setCreatorOpen(true)
+    fileInputRef.current?.click()
   }
 
   // ─── ALWAYS render the Stories row — never return null ───
@@ -250,16 +252,37 @@ export function StoriesSection() {
 
       {/* Story Creator — mounts immediately so it can fire the native file picker.
           cityId/userId are passed but the component handles loading gracefully. */}
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        className="hidden" 
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) {
+            setPendingFile(file)
+            setCreatorOpen(true)
+          }
+          e.target.value = ''
+        }}
+      />
+
+      {/* Story Creator */}
       {creatorOpen && (
         <StoryCreator
           isOpen={creatorOpen}
-          onClose={() => setCreatorOpen(false)}
+          onClose={() => {
+            setCreatorOpen(false)
+            setPendingFile(null)
+          }}
           cityId={cityId ?? ''}
           userId={user?.id ?? ''}
           onStoryCreated={() => {
             setCreatorOpen(false)
+            setPendingFile(null)
             fetchStories()
           }}
+          preselectedFile={pendingFile}
         />
       )}
     </>

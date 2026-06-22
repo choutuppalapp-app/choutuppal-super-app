@@ -12,6 +12,7 @@ interface StoryCreatorProps {
   cityId: string
   userId: string
   onStoryCreated: () => void
+  preselectedFile?: File | null
 }
 
 // ─── Component ────────────────────────────────────────────────────
@@ -21,8 +22,8 @@ export default function StoryCreator({
   cityId,
   userId,
   onStoryCreated,
+  preselectedFile,
 }: StoryCreatorProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [mediaPreview, setMediaPreview] = useState<string | null>(null)
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO'>('IMAGE')
@@ -30,15 +31,19 @@ export default function StoryCreator({
   const [ctaLink, setCtaLink] = useState('')
   const [posting, setPosting] = useState(false)
 
-  // When the creator opens, immediately trigger the file picker
+  // Load the preselected file if available
   useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        fileInputRef.current?.click()
-      }, 50)
-      return () => clearTimeout(timer)
+    if (isOpen && preselectedFile) {
+      const url = URL.createObjectURL(preselectedFile)
+      setMediaFile(preselectedFile)
+      setMediaType('IMAGE')
+      setMediaPreview(url)
+      
+      return () => {
+        URL.revokeObjectURL(url)
+      }
     }
-  }, [isOpen])
+  }, [isOpen, preselectedFile])
 
   // Reset state whenever the modal closes
   useEffect(() => {
@@ -51,29 +56,6 @@ export default function StoryCreator({
       setPosting(false)
     }
   }, [isOpen])
-
-  // Handle file picked
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) {
-      onClose()
-      return
-    }
-
-    const isVideo = file.type.startsWith('video/')
-    if (isVideo) {
-      toast.error('Video uploads are coming soon. Please select an image.')
-      onClose()
-      return
-    }
-
-    const url = URL.createObjectURL(file)
-    setMediaFile(file)
-    setMediaType('IMAGE')
-    setMediaPreview(url)
-
-    e.target.value = ''
-  }, [onClose])
 
   // Post the story
   const handlePost = useCallback(async () => {
@@ -187,14 +169,6 @@ export default function StoryCreator({
 
   return (
     <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileChange}
-      />
 
       <AnimatePresence>
         {isOpen && mediaPreview && (
