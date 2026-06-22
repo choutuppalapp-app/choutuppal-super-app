@@ -8,15 +8,18 @@ import {
   Loader2, X, Image as ImageIcon, MapPin,
   Heart, CreditCard, LogOut, FileText,
   BadgeDollarSign, Sparkles, UploadCloud,
-  Instagram, Facebook, Youtube, MessageCircle
+  Instagram, Facebook, Youtube, MessageCircle,
+  ArrowLeft, User, Home, Circle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/auth-context'
+import { useAppStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import useSWR from 'swr'
 import dynamic from 'next/dynamic'
@@ -117,8 +120,10 @@ const TAB_ITEMS = [
 ]
 
 export default function DashboardView() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('home')
   const { user, logout } = useAuth()
+  const navigateTo = useAppStore((s) => s.navigateTo)
   
   const currentUser = user ? {
     id: user.id,
@@ -1154,10 +1159,19 @@ export default function DashboardView() {
       {/* Main Panel Content */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen pb-20 md:pb-0">
         {/* Mobile Header */}
-        <div className="bg-white px-6 py-4 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center justify-between md:hidden">
+        <div className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm border-b border-gray-100 flex items-center gap-3.5 md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full bg-gray-50 hover:bg-gray-100 flex-shrink-0"
+            onClick={() => navigateTo('home')}
+            aria-label="Back to Home"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-700" />
+          </Button>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
-            <p className="text-xs font-bold text-gray-400">Manage listings & media</p>
+            <h1 className="text-lg font-black text-gray-900 tracking-tight">My Dashboard</h1>
+            <p className="text-[10px] font-semibold text-gray-400">Manage listings & media</p>
           </div>
         </div>
 
@@ -1580,6 +1594,15 @@ export default function DashboardView() {
             }}
           />
         )}
+      </div>
+
+      {/* DEDICATED DASHBOARD MOBILE MENU */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 flex justify-around items-center h-16 shadow-md" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <button onClick={() => router.push('/')} className="flex flex-col items-center text-blue-600"><Home size={20} /><span className="text-xs">Home</span></button>
+        <button onClick={() => setActiveTab('listings')} className="flex flex-col items-center text-gray-600"><Store size={20} /><span className="text-xs">Listings</span></button>
+        <button onClick={() => setActiveTab('banners')} className="flex flex-col items-center text-gray-600"><ImageIcon size={20} /><span className="text-xs">Banners</span></button>
+        <button onClick={() => setActiveTab('stories')} className="flex flex-col items-center text-gray-600"><Circle size={20} /><span className="text-xs">Stories</span></button>
+        <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center text-gray-600"><User size={20} /><span className="text-xs">Profile</span></button>
       </div>
     </div>
   )

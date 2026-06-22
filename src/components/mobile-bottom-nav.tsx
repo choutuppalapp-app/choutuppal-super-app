@@ -29,6 +29,10 @@ export function MobileBottomNav() {
 
   const [postSheetOpen, setPostSheetOpen] = useState(false)
 
+  if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/agent') || currentView === 'dashboard') {
+    return null; // Force hide global menu
+  }
+
   const isDetailPage = currentView === 'listing' || pathname?.startsWith('/listing/')
 
   if (isDetailPage) return null
@@ -113,7 +117,7 @@ export function MobileBottomNav() {
           <NavItem
             icon={UserCircle}
             label="You"
-            isActive={currentView === 'dashboard' || currentView === 'profile'}
+            isActive={(currentView as string) === 'dashboard' || currentView === 'profile'}
             onClick={() => handleNavClick('dashboard', true)}
           />
         </div>
