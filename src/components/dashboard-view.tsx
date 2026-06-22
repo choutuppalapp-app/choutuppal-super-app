@@ -67,9 +67,12 @@ interface RealEstateListing {
   price: string
   images?: string | null
   ownerPhone: string
+  whatsappNumber?: string | null
   bedroomCount?: number | null
   area?: string | null
   address?: string | null
+  description?: string | null
+  listingType?: string | null
   status: string
   isApproved: boolean
   isFeatured: boolean
@@ -152,13 +155,38 @@ export default function DashboardView() {
   // Modals & Creation Forms
   const [isCreatingListing, setIsCreatingListing] = useState(false)
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
+  const [isCreatingRealEstate, setIsCreatingRealEstate] = useState(false)
   const [isCreatingStory, setIsCreatingStory] = useState(false)
   const [pendingStoryFile, setPendingStoryFile] = useState<File | null>(null)
   const storyFileInputRef = useRef<HTMLInputElement>(null)
   const [selectedStoryForViewer, setSelectedStoryForViewer] = useState<any | null>(null)
   const [storyViewerOpen, setStoryViewerOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
+  const [editingRealEstateId, setEditingRealEstateId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+
+  const [reForm, setReForm] = useState({
+    title: '',
+    listingType: 'Sale',
+    price: '',
+    area: '',
+    bedroomCount: '',
+    description: '',
+    address: '',
+    googleMapsUrl: '',
+    phoneNumber: '',
+    whatsappNumber: '',
+    sameAsPhone: false,
+    cityId: '',
+    coverImage: '',
+    gallery: [] as string[],
+  })
+
+  const resetReForm = () => setReForm({
+    title: '', listingType: 'Sale', price: '', area: '', bedroomCount: '',
+    description: '', address: '', googleMapsUrl: '', phoneNumber: '', whatsappNumber: '',
+    sameAsPhone: false, cityId: '', coverImage: '', gallery: [],
+  })
 
   const handleAddStoryClick = () => {
     if (!currentUser) {
@@ -236,7 +264,8 @@ export default function DashboardView() {
 
   useEffect(() => {
     if (realEstateData) {
-      setRealEstateListings(realEstateData.listings || [])
+      // API returns array directly (not {listings:[]})
+      setRealEstateListings(Array.isArray(realEstateData) ? realEstateData : (realEstateData.listings || []))
     }
   }, [realEstateData])
 
@@ -521,7 +550,7 @@ export default function DashboardView() {
   const deleteRealEstate = async (id: string) => {
     if (!confirm('Are you sure you want to delete this property?')) return
     try {
-      const res = await fetch(`/api/realestate/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/realestate?id=${id}`, { method: 'DELETE' })
       if (!res.ok) {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to delete property')
@@ -531,6 +560,85 @@ export default function DashboardView() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete property')
     }
+  }
+
+  // ─── Real Estate form upload helpers ──────────────────────────────
+  const handleReCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    toast.info('Compressing cover image...')
+    try {
+      const { default: imageCompression } = await import('browser-image-compression')
+      const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true })
+      const { data, error } = await supabase.storage.from('listing-images').upload(
+        `choutuppal/realestate/${Date.now()}_${compressed.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, compressed, { cacheControl: '3600', upsert: false }
+      )
+      if (error) throw error
+      const url = supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl
+      setReForm(p => ({ ...p, coverImage: url }))
+      toast.success('Cover photo uploaded!')
+    } catch { toast.error('Upload failed') }
+    e.target.value = ''
+  }
+
+  const handleReGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    if (reForm.gallery.length + files.length > 5) { toast.error('Max 5 gallery photos allowed'); return }
+    toast.info('Uploading gallery...')
+    try {
+      const { default: imageCompression } = await import('browser-image-compression')
+      const urls: string[] = []
+      for (const file of files) {
+        const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true })
+        const { data, error } = await supabase.storage.from('listing-images').upload(
+          `choutuppal/realestate/gallery/${Date.now()}_${compressed.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, compressed, { cacheControl: '3600', upsert: false }
+        )
+        if (!error) urls.push(supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl)
+      }
+      setReForm(p => ({ ...p, gallery: [...p.gallery, ...urls] }))
+      toast.success(`${urls.length} photo(s) uploaded!`)
+    } catch { toast.error('Gallery upload failed') }
+    e.target.value = ''
+  }
+
+  const submitRealEstate = async () => {
+    if (!currentUser || !reForm.title || !reForm.price || !reForm.phoneNumber) {
+      toast.error('Title, Price and Phone are required')
+      return
+    }
+    setUploading(true)
+    try {
+      const allImages = reForm.coverImage ? [reForm.coverImage, ...reForm.gallery] : reForm.gallery
+      const body = {
+        userId: currentUser.id,
+        cityId: reForm.cityId || cities[0]?.id || 'default',
+        title: reForm.title,
+        listingType: reForm.listingType,
+        price: reForm.price,
+        images: allImages,
+        ownerPhone: reForm.phoneNumber,
+        whatsappNumber: reForm.sameAsPhone ? reForm.phoneNumber : (reForm.whatsappNumber || null),
+        bedroomCount: reForm.bedroomCount ? parseInt(reForm.bedroomCount) : null,
+        area: reForm.area || null,
+        address: reForm.address || null,
+        description: reForm.description || null,
+        id: editingRealEstateId || undefined,
+      }
+      const method = editingRealEstateId ? 'PUT' : 'POST'
+      const res = await fetch('/api/realestate', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      if (res.ok) {
+        toast.success(editingRealEstateId ? 'Property updated!' : 'Property submitted for approval!')
+        setIsCreatingRealEstate(false)
+        setEditingRealEstateId(null)
+        resetReForm()
+        fetchRealEstate()
+      } else {
+        const err = await res.json()
+        toast.error(err.error || 'Failed to submit property')
+      }
+    } catch { toast.error('Something went wrong') }
+    finally { setUploading(false) }
   }
 
   const deleteBanner = async (id: string) => {
@@ -593,37 +701,26 @@ export default function DashboardView() {
   }
 
   const openEditRealEstate = (listing: RealEstateListing) => {
-    setEditingListingId(listing.id)
     let imagesArr: string[] = []
-    try {
-      if (listing.images) imagesArr = JSON.parse(listing.images)
-    } catch (e) {}
-    
-    setFormData({
-      name: listing.title,
-      category: 'Real Estate',
-      description: '',
-      phoneNumber: listing.ownerPhone,
-      whatsappNumber: '', 
-      cityId: listing.city?.id || '',
-      sameAsPhone: false,
-      address: listing.address || '',
-      coverImage: imagesArr[0] || '',
-      logoUrl: '',
-      images: imagesArr.slice(1),
-      instagramUrl: '',
-      instagramUsername: '',
-      facebookUrl: '',
-      youtubeUrl: '',
+    try { if (listing.images) imagesArr = JSON.parse(listing.images) } catch {}
+    setEditingRealEstateId(listing.id)
+    setReForm({
+      title: listing.title,
+      listingType: listing.listingType || 'Sale',
       price: listing.price,
-      bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '',
       area: listing.area || '',
-      rating: 5,
-      operatingHours: '9:00 AM - 9:00 PM',
+      bedroomCount: listing.bedroomCount ? String(listing.bedroomCount) : '',
+      description: listing.description || '',
+      address: listing.address || '',
       googleMapsUrl: '',
-      services: []
+      phoneNumber: listing.ownerPhone,
+      whatsappNumber: listing.whatsappNumber || '',
+      sameAsPhone: listing.ownerPhone === listing.whatsappNumber,
+      cityId: listing.city?.id || '',
+      coverImage: imagesArr[0] || '',
+      gallery: imagesArr.slice(1),
     })
-    setIsCreatingListing(true)
+    setIsCreatingRealEstate(true)
   }
 
   // --- Views Renders ---
@@ -777,73 +874,72 @@ export default function DashboardView() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg md:text-xl font-bold text-gray-900 flex items-center">
-              <Building2 className="w-5 h-5 mr-2 text-[#D4AF37]" /> 
-              My Real Estate Properties
+              <Building2 className="w-5 h-5 mr-2 text-[#D4AF37]" />
+              My Real Estate
             </h3>
-            <Button 
-              size="sm" 
-              onClick={() => {
-                setFormData(p => ({ ...p, category: 'Real Estate' }))
-                setEditingListingId(null)
-                setIsCreatingListing(true)
-              }} 
+            <Button
+              size="sm"
+              onClick={() => { resetReForm(); setEditingRealEstateId(null); setIsCreatingRealEstate(true) }}
               className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform"
             >
               <Plus className="w-4 h-4 mr-1" /> Add New
             </Button>
           </div>
           <div className="p-4 md:p-6">
-            {loadingListings ? (
-              <div className="space-y-4">
-                {[1].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
-              </div>
+            {!realEstateListings ? (
+              <div className="space-y-4">{[1].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>
             ) : realEstateListings.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                 <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <h4 className="text-gray-900 font-bold mb-1">No properties listed yet</h4>
-                <p className="text-gray-500 text-sm">Sell or rent your real estate properties easily.</p>
+                <p className="text-gray-500 text-sm">Sell or rent your property and reach thousands of buyers.</p>
+                <Button size="sm" onClick={() => { resetReForm(); setEditingRealEstateId(null); setIsCreatingRealEstate(true) }} className="mt-4 bg-gradient-to-r from-[#4169E1] to-[#D4AF37] text-white font-bold rounded-xl">
+                  <Plus className="w-4 h-4 mr-1" /> Post Your First Property
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
-                {realEstateListings.map((listing) => (
-                  <div key={listing.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
-                    <div className="flex p-4 gap-4">
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-200">
-                        <Image src={listing.images ? JSON.parse(listing.images)[0] : 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'} alt={listing.title} fill className="object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
-                        <div>
-                          <h4 className="font-bold text-gray-900 md:text-lg truncate">{listing.title}</h4>
-                          <p className="text-xs md:text-sm text-gray-500 truncate">{listing.city?.name}</p>
-                          <p className="text-xs font-semibold text-[#D4AF37] mt-1">{listing.price}</p>
-                        </div>
-                        <div className="flex items-center gap-3 mt-2">
-                          {listing.status === 'PENDING' ? (
-                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 font-semibold border-none text-[10px]">Pending Approval</Badge>
+                {realEstateListings.map((listing) => {
+                  let imgsArr: string[] = []
+                  try { if (listing.images) imgsArr = JSON.parse(listing.images) } catch {}
+                  return (
+                    <div key={listing.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
+                      <div className="flex p-4 gap-4">
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-200">
+                          {imgsArr[0] ? (
+                            <img src={imgsArr[0]} alt={listing.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                           ) : (
-                            <Badge className={listing.status === 'APPROVED' ? "bg-green-100 text-green-700 hover:bg-green-100 font-semibold border-none text-[10px]" : "bg-red-100 text-red-700 hover:bg-red-100 font-semibold border-none text-[10px]"}>
-                              {listing.status === 'APPROVED' ? 'Active' : 'Rejected'}
-                            </Badge>
+                            <div className="w-full h-full flex items-center justify-center"><Building2 className="w-8 h-8 text-gray-300" /></div>
                           )}
                         </div>
-                      </div>
-                      <div className="flex gap-2 ml-auto items-center">
-                        <button 
-                          onClick={() => openEditRealEstate(listing)}
-                          className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => deleteRealEstate(listing.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                          <div>
+                            <h4 className="font-bold text-gray-900 md:text-lg truncate">{listing.title}</h4>
+                            <p className="text-xs text-gray-500 truncate">{listing.listingType || 'Sale'} • {listing.city?.name}</p>
+                            <p className="text-sm font-bold text-[#D4AF37] mt-0.5">{listing.price}</p>
+                            <div className="flex gap-2 mt-1 text-[10px] text-gray-400 font-semibold">
+                              {listing.bedroomCount && <span>{listing.bedroomCount} BHK</span>}
+                              {listing.area && <span>• {listing.area}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 mt-2">
+                            {listing.status === 'PENDING' ? (
+                              <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 font-semibold border-none text-[10px]">Pending Approval</Badge>
+                            ) : (
+                              <Badge className={listing.status === 'APPROVED' ? 'bg-green-100 text-green-700 hover:bg-green-100 font-semibold border-none text-[10px]' : 'bg-red-100 text-red-700 hover:bg-red-100 font-semibold border-none text-[10px]'}>
+                                {listing.status === 'APPROVED' ? 'Active' : 'Rejected'}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-auto items-center">
+                          <button onClick={() => openEditRealEstate(listing)} className="p-2 text-gray-500 hover:text-[#4169E1] hover:bg-blue-50 rounded-lg transition"><Edit2 className="w-5 h-5" /></button>
+                          <button onClick={() => deleteRealEstate(listing.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 className="w-5 h-5" /></button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -1476,6 +1572,177 @@ export default function DashboardView() {
                     className="w-full max-w-lg mx-auto h-13 rounded-2xl bg-gradient-to-r from-[#4169E1] to-[#1E3A8A] text-white font-bold text-lg shadow-md transition-transform hover:scale-[1.01] active:scale-95 flex items-center justify-center border-none"
                   >
                     {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingListingId ? 'Update and Save' : 'Publish Listing Now')}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── Dedicated Real Estate Form Modal ─── */}
+        <AnimatePresence>
+          {isCreatingRealEstate && (
+            <motion.div
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-0 z-[100] bg-white md:bg-black/55 flex flex-col md:items-center md:justify-center md:p-6"
+            >
+              <div className="flex flex-col w-full h-full md:h-auto md:max-h-[92vh] md:max-w-2xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+                {/* Header */}
+                <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingRealEstate(false); setEditingRealEstateId(null); resetReForm() }}>
+                    <X className="w-6 h-6" />
+                  </Button>
+                  <span className="text-gray-950 font-black text-lg">{editingRealEstateId ? 'Edit Property' : 'Post New Property'}</span>
+                  <div className="w-10" />
+                </div>
+
+                {/* Form Content */}
+                <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-32">
+                  <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+
+                    {/* Info banner */}
+                    <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#B8962E] px-4 py-3 rounded-xl text-xs font-extrabold flex items-center gap-2">
+                      <span className="text-base">🏠</span>
+                      <span>Approved properties appear in the public Real Estate section.</span>
+                    </div>
+
+                    {/* Cover Photo (16:9 area) */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Cover Photo (16:9) *</span>
+                      <label className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-100 transition overflow-hidden relative" style={{ aspectRatio: '16/9' }}>
+                        {reForm.coverImage ? (
+                          <>
+                            <img src={reForm.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            <button type="button" onClick={(e) => { e.preventDefault(); setReForm(p => ({ ...p, coverImage: '' })) }} className="absolute top-2 right-2 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 py-8">
+                            <UploadCloud className="w-8 h-8 text-[#4169E1]" />
+                            <span className="font-bold text-sm text-gray-500">Upload Cover Photo</span>
+                            <span className="text-[10px] text-gray-400">Recommended: 1920×1080px</span>
+                          </div>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleReCoverUpload} />
+                      </label>
+                    </div>
+
+                    {/* Gallery Photos */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex justify-between">
+                        <span>Gallery Photos (Max 5)</span>
+                        <span className="text-[#4169E1] font-black">{reForm.gallery.length}/5</span>
+                      </span>
+                      <div className="flex gap-3 overflow-x-auto pb-2">
+                        {reForm.gallery.map((img, i) => (
+                          <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                            <img src={img} alt="Gallery" className="w-full h-full object-cover" loading="lazy" />
+                            <button type="button" onClick={() => setReForm(p => ({ ...p, gallery: p.gallery.filter((_, idx) => idx !== i) }))} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
+                              <Trash2 className="size-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {reForm.gallery.length < 5 && (
+                          <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+                            <Plus className="w-6 h-6" />
+                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleReGalleryUpload} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Basic Info */}
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Property Title *</span>
+                        <Input placeholder="e.g., 3BHK Apartment in Choutuppal" value={reForm.title} onChange={e => setReForm(p => ({ ...p, title: e.target.value }))} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Listing Type *</span>
+                          <select value={reForm.listingType} onChange={e => setReForm(p => ({ ...p, listingType: e.target.value }))} className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none">
+                            <option value="Sale">For Sale</option>
+                            <option value="Rent">For Rent</option>
+                            <option value="Lease">For Lease</option>
+                            <option value="PG">PG / Hostel</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Price *</span>
+                          <Input placeholder="₹45 Lakhs / ₹8000/mo" value={reForm.price} onChange={e => setReForm(p => ({ ...p, price: e.target.value }))} className="bg-white border-gray-200 h-11 rounded-xl" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Bedrooms (BHK)</span>
+                          <Input placeholder="e.g. 2, 3" type="number" value={reForm.bedroomCount} onChange={e => setReForm(p => ({ ...p, bedroomCount: e.target.value }))} className="bg-white border-gray-200 h-11 rounded-xl" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Plot Size / Area</span>
+                          <Input placeholder="e.g. 200 sq.yd, 1500 sqft" value={reForm.area} onChange={e => setReForm(p => ({ ...p, area: e.target.value }))} className="bg-white border-gray-200 h-11 rounded-xl" />
+                        </div>
+                      </div>
+
+                      {/* City Selector */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">City *</span>
+                        <select value={reForm.cityId} onChange={e => setReForm(p => ({ ...p, cityId: e.target.value }))} className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none">
+                          <option value="">Select City</option>
+                          {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Description */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Description</span>
+                        <RichTextEditor
+                          content={reForm.description}
+                          onChange={val => setReForm(p => ({ ...p, description: val }))}
+                          placeholder="Describe the property — amenities, nearby landmarks, loan availability..."
+                        />
+                      </div>
+
+                      {/* Address */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Address / Location</span>
+                        <Input placeholder="Full address or landmark" value={reForm.address} onChange={e => setReForm(p => ({ ...p, address: e.target.value }))} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      {/* Phone */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Owner Phone *</span>
+                        <Input placeholder="10-digit number" type="tel" value={reForm.phoneNumber} onChange={e => setReForm(p => ({ ...p, phoneNumber: e.target.value }))} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      {/* WhatsApp */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex items-center justify-between">
+                          <span>WhatsApp Number</span>
+                          <label className="flex items-center gap-1 text-[10px] text-[#4169E1] font-bold cursor-pointer bg-blue-50 px-2 py-0.5 rounded">
+                            <input type="checkbox" checked={reForm.sameAsPhone} onChange={e => setReForm(p => ({ ...p, sameAsPhone: e.target.checked, whatsappNumber: e.target.checked ? p.phoneNumber : '' }))} className="w-3.5 h-3.5" />
+                            <span>Same as Phone</span>
+                          </label>
+                        </span>
+                        <Input placeholder="WhatsApp number" type="tel" value={reForm.sameAsPhone ? reForm.phoneNumber : reForm.whatsappNumber} onChange={e => setReForm(p => ({ ...p, whatsappNumber: e.target.value }))} disabled={reForm.sameAsPhone} className="bg-white border-gray-200 h-11 rounded-xl disabled:bg-gray-100" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sticky Footer */}
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
+                  <Button
+                    onClick={submitRealEstate}
+                    disabled={uploading || !reForm.title || !reForm.price || !reForm.phoneNumber}
+                    className="w-full max-w-lg mx-auto h-13 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#4169E1] text-white font-bold text-lg shadow-md border-none"
+                  >
+                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingRealEstateId ? 'Update Property' : 'Submit for Approval')}
                   </Button>
                 </div>
               </div>

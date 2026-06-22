@@ -40,23 +40,24 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { title, price, images, ownerPhone, bedroomCount, area, cityId, userId } = body
+    const { title, price, images, ownerPhone, bedroomCount, area, cityId, userId, description, address, whatsappNumber, listingType } = body
 
-    if (!title || !price || !ownerPhone || !cityId || !userId || bedroomCount === undefined || bedroomCount === null || !area) {
-      return NextResponse.json({ error: 'Missing required fields: title, price, ownerPhone, cityId, userId, bedroomCount, area' }, { status: 400 })
+    if (!title || !price || !ownerPhone || !cityId || !userId) {
+      return NextResponse.json({ error: 'Missing required fields: title, price, ownerPhone, cityId, userId' }, { status: 400 })
     }
 
     const listing = await db.realEstateListing.create({
       data: {
         title,
         price,
-        images: images ? JSON.stringify(images) : null,
+        images: Array.isArray(images) ? JSON.stringify(images) : (images ?? null),
         ownerPhone,
-        bedroomCount: bedroomCount ? parseInt(bedroomCount) : null,
+        bedroomCount: bedroomCount ? parseInt(String(bedroomCount)) : null,
         area: area || null,
+        address: address || null,
         cityId,
         userId,
-        status: 'APPROVED',
+        status: 'PENDING',
         isApproved: false,
       },
     })
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { id, title, price, images, ownerPhone, bedroomCount, area, cityId, userId } = body
+    const { id, title, price, images, ownerPhone, bedroomCount, area, cityId, address, listingType } = body
 
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
@@ -81,11 +82,12 @@ export async function PUT(request: Request) {
     const updateData: any = {}
     if (title !== undefined) updateData.title = title
     if (price !== undefined) updateData.price = price
-    if (images !== undefined) updateData.images = images ? JSON.stringify(images) : null
+    if (images !== undefined) updateData.images = Array.isArray(images) ? JSON.stringify(images) : (images ?? null)
     if (ownerPhone !== undefined) updateData.ownerPhone = ownerPhone
-    if (bedroomCount !== undefined) updateData.bedroomCount = bedroomCount ? parseInt(bedroomCount) : null
+    if (bedroomCount !== undefined) updateData.bedroomCount = bedroomCount ? parseInt(String(bedroomCount)) : null
     if (area !== undefined) updateData.area = area || null
     if (cityId !== undefined) updateData.cityId = cityId
+    if (address !== undefined) updateData.address = address || null
 
     const listing = await db.realEstateListing.update({
       where: { id },
