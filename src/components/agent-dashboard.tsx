@@ -110,7 +110,7 @@ export default function AgentDashboard() {
     try {
       toast.loading('Uploading image...', { id: 'upload' })
       const { default: imageCompression } = await import('browser-image-compression')
-      const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1200 })
+      const compressedFile = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
       const { error } = await supabase.storage.from('listing-images').upload(`covers/${fileName}`, compressedFile)
       if (error) throw error
@@ -132,7 +132,7 @@ export default function AgentDashboard() {
     toast.loading('Uploading gallery...', { id: 'upload' })
     try {
       const { default: imageCompression } = await import('browser-image-compression');
-      const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 1 })));
+      const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })));
       const uploadPromises = compressedFiles.map(async (file) => {
         const fileName = `gallery/${Date.now()}-${file.name}`;
         const { data, error } = await supabase.storage.from('listing-images').upload(fileName, file);
@@ -423,7 +423,7 @@ export default function AgentDashboard() {
                       <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative">
                         {formData.logoUrl && (
                           <div className="absolute inset-0 z-0">
-                            <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                            <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10"><Trash2 className="size-4" /></button>
                           </div>
                         )}
@@ -441,7 +441,7 @@ export default function AgentDashboard() {
                       <div className="h-48 border-2 border-dashed border-[#4169E1]/30 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative">
                         {formData.coverImage && (
                           <div className="absolute inset-0 z-0">
-                            <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow z-10"><Trash2 className="size-4" /></button>
                           </div>
                         )}
@@ -460,7 +460,7 @@ export default function AgentDashboard() {
                     <div className="flex gap-4 overflow-x-auto pb-2">
                       {formData.images.map((url, i) => (
                         <div key={i} className="w-24 h-24 relative border rounded-xl overflow-hidden shadow-sm shrink-0 group">
-                          <img src={url} alt="Gallery preview" className="w-full h-full object-cover" />
+                          <img src={url} alt="Gallery preview" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                           <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-500 hover:text-white shadow"><Trash2 className="size-3.5" /></button>
                         </div>
                       ))}

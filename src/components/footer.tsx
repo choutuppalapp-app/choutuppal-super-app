@@ -26,7 +26,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               {currentCity?.logoUrl ? (
-                <img src={currentCity.logoUrl} alt={brandName} className="w-8 h-8 rounded-full object-cover" />
+                <img src={currentCity.logoUrl} alt={brandName} className="w-8 h-8 rounded-full object-cover" loading="lazy" decoding="async" />
               ) : (
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"

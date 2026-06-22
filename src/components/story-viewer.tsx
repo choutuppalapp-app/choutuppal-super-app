@@ -658,6 +658,8 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               alt={currentStory.title || 'Story'}
               className="w-full h-full object-contain"
               draggable={false}
+              loading="lazy"
+              decoding="async"
               onError={(e) => {
                 e.currentTarget.src = 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=800'
               }}

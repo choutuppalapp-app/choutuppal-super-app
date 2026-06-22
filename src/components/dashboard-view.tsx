@@ -292,7 +292,7 @@ export default function DashboardView() {
     if (file.type.startsWith('image/')) {
       try {
         const imageCompression = (await import('browser-image-compression')).default
-        const options = { maxSizeMB: 1, maxWidthOrHeight: 800, useWebWorker: true, initialQuality: 0.6 }
+        const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true }
         fileToUpload = await imageCompression(file, options)
       } catch (err) {
         console.error('Image compression error:', err)
@@ -344,7 +344,7 @@ export default function DashboardView() {
     toast.info('Uploading images...');
     try {
       const { default: imageCompression } = await import('browser-image-compression');
-      const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 1 })));
+      const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })));
       const uploadPromises = compressedFiles.map(async (file) => {
         const fileName = `gallery/${Date.now()}-${file.name}`;
         console.log('Uploading file...', fileName);
@@ -883,7 +883,7 @@ export default function DashboardView() {
                 {banners.map((banner) => (
                   <div key={banner.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
                     <div className="h-28 relative bg-gray-100">
-                      {banner.imageUrl && <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />}
+                      {banner.imageUrl && <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                       <div className="absolute bottom-2 left-3">
                         <h4 className="font-bold text-white text-sm truncate max-w-[200px]">{banner.title}</h4>
@@ -973,6 +973,8 @@ export default function DashboardView() {
                           src={story.mediaUrl} 
                           alt={story.text || 'Story'} 
                           className="w-full h-full object-cover" 
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=800'
                           }}
@@ -1223,7 +1225,7 @@ export default function DashboardView() {
                         <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
                           {formData.logoUrl ? (
                             <>
-                              <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                              <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                               <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
                             </>
                           ) : (
@@ -1242,7 +1244,7 @@ export default function DashboardView() {
                         <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
                           {formData.coverImage ? (
                             <>
-                              <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                              <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                               <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
                             </>
                           ) : (
@@ -1265,7 +1267,7 @@ export default function DashboardView() {
                       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
                         {formData.images.map((img, i) => (
                           <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
-                            <img src={img} alt="Gallery item" className="w-full h-full object-cover" />
+                            <img src={img} alt="Gallery item" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
                           </div>
                         ))}
@@ -1498,7 +1500,7 @@ export default function DashboardView() {
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Banner Image *</span>
                       <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
                         {bannerData.imageUrl ? (
-                          <img src={bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" />
+                          <img src={bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                         ) : (
                           <div className="flex flex-col items-center gap-1">
                             <UploadCloud className="w-6 h-6 text-purple-500" />

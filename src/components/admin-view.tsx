@@ -3985,7 +3985,7 @@ export default function AdminView() {
                           <TableRow key={banner.id}>
                             <TableCell>
                               {banner.imageUrl ? (
-                                <img src={banner.imageUrl} alt="" className="w-16 h-10 object-cover rounded" />
+                                <img src={banner.imageUrl} alt="" className="w-16 h-10 object-cover rounded" loading="lazy" decoding="async" />
                               ) : (
                                 <div className="w-16 h-10 bg-gray-100 rounded" />
                               )}
@@ -5332,7 +5332,7 @@ export default function AdminView() {
             <DialogContent className="sm:max-w-md max-h-[95vh] overflow-y-auto p-0 border-0 bg-white shadow-2xl rounded-xl">
               <div className="relative w-full aspect-[21/9] bg-gray-100 flex items-center justify-center overflow-hidden">
                 {bannerForm.imageUrl ? (
-                  <img src={bannerForm.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                  <img src={bannerForm.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 ) : (
                   <Megaphone className="size-16 text-gray-300" />
                 )}
@@ -5454,7 +5454,7 @@ export default function AdminView() {
                         <TableCell>
                           {banner.imageUrl ? (
                             <div className="w-12 h-8 rounded overflow-hidden bg-gray-100">
-                              <img src={banner.imageUrl} alt="" className="w-full h-full object-cover" />
+                              <img src={banner.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             </div>
                           ) : (
                             <div className="w-12 h-8 rounded bg-gradient-to-r from-[#D4AF37]/30 to-[#4169E1]/30 flex items-center justify-center">

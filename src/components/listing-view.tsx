@@ -533,7 +533,7 @@ END:VCARD`
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
           <div className="relative w-full max-w-5xl aspect-square md:aspect-video" onClick={(e) => e.stopPropagation()}>
-            <img src={selectedImage} alt="Gallery view fullscreen" className="w-full h-full object-contain" />
+            <img src={selectedImage} alt="Gallery view fullscreen" className="w-full h-full object-contain" loading="lazy" decoding="async" />
           </div>
         </div>
       )}

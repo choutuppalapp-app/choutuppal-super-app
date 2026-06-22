@@ -389,6 +389,8 @@ export default function LeaderProfilePage({ profileData }: LeaderProfilePageProp
             src={leader.coverImageUrl}
             alt="Cover"
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[#1a237e]/80 via-[#1a237e]/60 to-[#0d1642]" />

@@ -1567,7 +1567,7 @@ export function CityAdminDashboard() {
                           <DialogContent className="sm:max-w-md max-h-[95vh] overflow-y-auto p-0 border-0 bg-white shadow-2xl rounded-xl">
                             <div className="relative w-full aspect-[21/9] bg-gray-100 flex items-center justify-center overflow-hidden">
                               {bannerForm.imageUrl ? (
-                                <img src={bannerForm.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                                <img src={bannerForm.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                               ) : (
                                 <Megaphone className="size-16 text-gray-300" />
                               )}

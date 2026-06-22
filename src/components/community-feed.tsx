@@ -214,6 +214,7 @@ function MediaGrid({ urls }: { urls: string[] }) {
             alt="Post media"
             className="w-full h-full object-cover"
             loading="lazy"
+            decoding="async"
           />
         </div>
       </div>
@@ -225,7 +226,7 @@ function MediaGrid({ urls }: { urls: string[] }) {
       <div className="px-4 pb-3 grid grid-cols-2 gap-1 rounded-xl overflow-hidden">
         {urls.map((url, i) => (
           <div key={i} className="aspect-square overflow-hidden">
-            <img src={url} alt={`Media ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+            <img src={url} alt={`Media ${i + 1}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           </div>
         ))}
       </div>
@@ -242,7 +243,7 @@ function MediaGrid({ urls }: { urls: string[] }) {
             urls.length === 3 && i === 0 ? 'row-span-2' : ''
           } ${i >= 3 ? 'hidden sm:block' : ''}`}
         >
-          <img src={url} alt={`Media ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+          <img src={url} alt={`Media ${i + 1}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           {i === 3 && urls.length > 4 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-lg">
               +{urls.length - 4}
@@ -940,7 +941,7 @@ export default function CommunityFeed() {
                     <div className="flex gap-2 mt-2 flex-wrap">
                       {newPostMediaUrls.map((url, i) => (
                         <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/30">
-                          <img src={url} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                           <button
                             onClick={() => handleRemoveMedia(i)}
                             className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/50 rounded-full flex items-center justify-center"

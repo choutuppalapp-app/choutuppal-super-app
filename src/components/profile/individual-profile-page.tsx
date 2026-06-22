@@ -300,6 +300,8 @@ export default function IndividualProfilePage({ profileData }: IndividualProfile
             src={data.coverImageUrl}
             alt="Cover"
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-[#4169E1] via-[#6B8DD6] to-[#4169E1]" />

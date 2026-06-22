@@ -88,7 +88,7 @@ export function Header({ className }: HeaderProps) {
     if (logoUrl) {
       return (
         <div className={`${dim} rounded-full overflow-hidden shadow-sm flex-shrink-0`}>
-          <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+          <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" fetchPriority="high" />
         </div>
       )
     }

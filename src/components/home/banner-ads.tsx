@@ -134,6 +134,7 @@ export function BannerAds() {
                 src={currentAd.imageUrl!}
                 alt={currentAd.title || 'Promotion'}
                 className="w-full h-full object-cover rounded-lg"
+                fetchPriority="high"
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-r ${AD_GRADIENTS[currentIndex % AD_GRADIENTS.length]} flex items-center justify-center`}>
@@ -201,6 +202,8 @@ export function BannerAds() {
               src={selectedBannerUrl} 
               className="max-w-full max-h-[90vh] rounded-lg animate-bounce-once object-contain" 
               alt="Banner Popup" 
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>
