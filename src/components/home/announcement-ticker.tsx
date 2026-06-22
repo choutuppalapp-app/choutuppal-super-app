@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Volume2, Pause, Play } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { Volume2, VolumeX, Pause, Play } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
 interface Announcement {
@@ -16,6 +16,8 @@ export function AnnouncementTicker() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [ready, setReady] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   useEffect(() => {
     async function fetch_() {
@@ -39,6 +41,39 @@ export function AnnouncementTicker() {
     fetch_()
   }, [selectedCity])
 
+  // Stop speech when component unmounts
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
+  const handleVoiceToggle = () => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+      return
+    }
+
+    const fullText = announcements.map((a) => a.text).join('. ')
+    const utterance = new SpeechSynthesisUtterance(fullText)
+    utterance.lang = 'te-IN'
+    utterance.rate = 0.9
+    utterance.pitch = 1
+    utterance.volume = 1
+
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
+
+    utteranceRef.current = utterance
+    window.speechSynthesis.speak(utterance)
+    setIsSpeaking(true)
+  }
+
   if (!ready || announcements.length === 0) return null
 
   // Join with bullet separators, triple for seamless CSS marquee loop
@@ -60,7 +95,7 @@ export function AnnouncementTicker() {
         <div
           className="flex whitespace-nowrap"
           style={{
-            animation: 'ticker-scroll 15s linear infinite',
+            animation: 'ticker-scroll 10s linear infinite',
             animationPlayState: isPaused ? 'paused' : 'running',
           }}
         >
@@ -70,11 +105,30 @@ export function AnnouncementTicker() {
         </div>
       </div>
 
+      {/* Voice / TTS toggle button */}
+      <button
+        onClick={handleVoiceToggle}
+        className={`flex-shrink-0 flex items-center justify-center w-9 h-full transition-colors border-l border-yellow-500/20 self-stretch px-2 ${
+          isSpeaking
+            ? 'bg-yellow-500 hover:bg-yellow-400'
+            : 'bg-gray-800 hover:bg-gray-700'
+        }`}
+        aria-label={isSpeaking ? 'Stop voice reading' : 'Read announcements aloud in Telugu'}
+        title={isSpeaking ? 'Stop voice' : 'Read in Telugu'}
+      >
+        {isSpeaking ? (
+          <VolumeX className="w-3.5 h-3.5 text-gray-900" />
+        ) : (
+          <Volume2 className="w-3.5 h-3.5 text-yellow-400" />
+        )}
+      </button>
+
       {/* Pause / Play toggle button */}
       <button
         onClick={() => setIsPaused((p) => !p)}
         className="flex-shrink-0 flex items-center justify-center w-9 h-full bg-gray-800 hover:bg-gray-700 transition-colors border-l border-yellow-500/20 self-stretch px-2"
         aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
+        title={isPaused ? 'Resume' : 'Pause'}
       >
         {isPaused ? (
           <Play className="w-3.5 h-3.5 text-yellow-400" />
