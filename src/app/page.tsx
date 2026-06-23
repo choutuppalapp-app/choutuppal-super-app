@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { AlertTriangle } from 'lucide-react'
@@ -219,6 +219,11 @@ function HomeView() {
 function ProtectedDashboard() {
   const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
@@ -226,6 +231,8 @@ function ProtectedDashboard() {
       setShowLoginModal(true)
     }
   }, [isAuthenticated, isLoading, setShowLoginModal])
+
+  if (!isMounted) return null;
 
   if (isLoading) {
     return (
@@ -259,6 +266,11 @@ function ProtectedDashboard() {
 function ProtectedAdmin() {
   const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
@@ -266,6 +278,8 @@ function ProtectedAdmin() {
       setShowLoginModal(true)
     }
   }, [isAuthenticated, isLoading, setShowLoginModal])
+
+  if (!isMounted) return null; // Prevent hydration mismatch
 
   if (isLoading) {
     return (
