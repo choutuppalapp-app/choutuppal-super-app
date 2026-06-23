@@ -89,10 +89,10 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('explore', false, '')}
           />
 
-          {/* 3. Real Estate */}
+          {/* 3. Property */}
           <NavItem
             icon={Building2}
-            label="Real Estate"
+            label="Property"
             isActive={isExploreActive && searchQuery === 'real estate'}
             onClick={() => handleNavClick('explore', false, 'real estate')}
           />
@@ -220,7 +220,7 @@ function NavItem({
         strokeWidth={isActive ? 2.5 : 1.8}
       />
       <span
-        className={`text-[10px] mt-0.5 transition-all duration-200 ${
+        className={`whitespace-nowrap text-[10px] tracking-tight mt-0.5 transition-all duration-200 ${
           isActive ? 'text-[#4169E1] font-bold' : 'text-gray-400 font-medium'
         }`}
       >
