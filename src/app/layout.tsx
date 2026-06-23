@@ -16,6 +16,7 @@ import { GlobalErrorHandler } from "@/components/global-error-handler";
 import { PWAInstallProvider } from "@/components/pwa-install-provider";
 import { PWAInstallPopup } from "@/components/pwa-install-popup";
 import { PWAIOSBanner } from "@/components/pwa-ios-banner";
+import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -125,6 +126,10 @@ export default function RootLayout({
               {/* PWA iOS Banner — manual instructions for iOS Safari */}
               <ErrorBoundary name="PWAIOSBanner">
                 <PWAIOSBanner />
+              </ErrorBoundary>
+
+              <ErrorBoundary name="WhatsAppFloatingButton">
+                <WhatsAppFloatingButton />
               </ErrorBoundary>
 
               <ErrorBoundary name="Toaster">
