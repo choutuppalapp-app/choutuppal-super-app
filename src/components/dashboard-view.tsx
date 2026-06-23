@@ -1422,7 +1422,7 @@ export default function DashboardView() {
           {activeTab === 'home' && renderHome()}
           {activeTab === 'listings' && !isCreatingListing && renderListings()}
           {activeTab === 'real_estate' && !isCreatingRealEstate && renderRealEstate()}
-          {activeTab === 'banners' && renderBanners()}
+          {activeTab === 'banners' && !isCreatingBanner && renderBanners()}
           {activeTab === 'stories' && renderStories()}
           {activeTab === 'my_posts' && renderMyPosts()}
           {activeTab === 'wallet' && renderWallet()}
@@ -1877,18 +1877,9 @@ export default function DashboardView() {
         {/* Banner Modal */}
         <>
           {isCreatingBanner && (
-            <motion.div 
-              initial={{ opacity: 0, y: '100%' }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative mt-4"
-            >
               <div className="flex flex-col w-full h-full relative">
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingBanner(false)}>
-                    <X className="w-6 h-6" />
-                  </Button>
+                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => setIsCreatingBanner(false)}><ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
                   <span className="text-gray-950 font-black text-lg">Create Banner Ad</span>
                   <div className="w-10"></div>
                 </div>
@@ -1934,8 +1925,7 @@ export default function DashboardView() {
                   </Button>
                 </div>
               </div>
-            </motion.div>
-          )}
+            )}
         </>
 
         {/* Hidden input for Story Upload */}

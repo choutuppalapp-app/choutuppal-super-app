@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Users, Store, Image as ImageIcon, Megaphone, Plus, Trash2, CheckCircle, Edit3, X, Save, Newspaper, FileText
+  Users, Store, Image as ImageIcon, Megaphone, Plus, Trash2, CheckCircle, Edit3, X, Save, Newspaper, FileText, LayoutDashboard, ArrowLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { MediaUploader } from '@/components/media-uploader'
@@ -21,7 +20,7 @@ import { Home } from 'lucide-react'
 
 export default function AdminView() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'users' | 'listings' | 'realestate' | 'banners' | 'announcements' | 'news' | 'blogs'>('users')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'realestate' | 'banners' | 'announcements' | 'news' | 'blogs'>('overview')
   
   const [users, setUsers] = useState<any[]>([])
   const [listings, setListings] = useState<any[]>([])
@@ -175,6 +174,7 @@ export default function AdminView() {
       
       {/* Mobile Horizontal Tabs */}
       <div className="md:hidden flex overflow-x-auto hide-scrollbar bg-white p-4 gap-2 border-b border-gray-200 sticky top-0 z-40">
+        <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={LayoutDashboard} label="Overview" />
         <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={Users} label="Users" />
         <TabButton active={activeTab === 'listings'} onClick={() => setActiveTab('listings')} icon={Store} label="Listings" />
         <TabButton active={activeTab === 'realestate'} onClick={() => setActiveTab('realestate')} icon={Home} label="Property" />
@@ -187,6 +187,7 @@ export default function AdminView() {
       {/* Desktop Left Sidebar (20%) */}
       <div className="hidden md:flex flex-col w-[20%] bg-white border-r border-gray-200 p-6 gap-4 sticky top-0 h-screen">
         <h2 className="text-xl font-bold text-gray-800 mb-4">Admin Panel</h2>
+        <SidebarButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={LayoutDashboard} label="Overview" />
         <SidebarButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={Users} label="Users Management" />
         <SidebarButton active={activeTab === 'listings'} onClick={() => setActiveTab('listings')} icon={Store} label="Listings" />
         <SidebarButton active={activeTab === 'realestate'} onClick={() => setActiveTab('realestate')} icon={Home} label="Real Estate" />
@@ -198,6 +199,35 @@ export default function AdminView() {
 
       {/* Main Content (80%) */}
       <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                <Users className="w-8 h-8 text-blue-500 mb-2" />
+                <h3 className="text-3xl font-black text-gray-900">{users.length}</h3>
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-1">Total Users</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                <Store className="w-8 h-8 text-purple-500 mb-2" />
+                <h3 className="text-3xl font-black text-gray-900">{listings.length}</h3>
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-1">Listings</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                <ImageIcon className="w-8 h-8 text-orange-500 mb-2" />
+                <h3 className="text-3xl font-black text-gray-900">{banners.length}</h3>
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-1">Active Banners</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                <Megaphone className="w-8 h-8 text-green-500 mb-2" />
+                <h3 className="text-3xl font-black text-gray-900">{announcements.length}</h3>
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-1">Announcements</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'users' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -373,9 +403,7 @@ export default function AdminView() {
           </div>
         )}
 
-        {activeTab === 'banners' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        {activeTab === 'banners' && isAddingBanner ? <AddBannerForm onOpenChange={setIsAddingBanner} onSuccess={() => { setIsAddingBanner(false); fetchData(); }} /> : activeTab === 'banners' && (<div className="space-y-4"><div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">Banners</h1>
               <Button onClick={() => setIsAddingBanner(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add Banner</Button>
             </div>
@@ -428,9 +456,7 @@ export default function AdminView() {
           </div>
         )}
 
-        {activeTab === 'announcements' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        {activeTab === 'announcements' && isAddingAnnouncement ? <AddAnnouncementForm onOpenChange={setIsAddingAnnouncement} onSuccess={() => { setIsAddingAnnouncement(false); fetchData(); }} /> : activeTab === 'announcements' && (<div className="space-y-4"><div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
               <Button onClick={() => setIsAddingAnnouncement(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> New Ticker</Button>
             </div>
@@ -576,8 +602,8 @@ export default function AdminView() {
       {/* Forms as Modals */}
       
       
-      <AddBannerModal open={isAddingBanner} onOpenChange={setIsAddingBanner} onSuccess={fetchData} />
-      <AddAnnouncementModal open={isAddingAnnouncement} onOpenChange={setIsAddingAnnouncement} onSuccess={fetchData} />
+      
+      
       
       
       <AddUserModal open={isAddingUser} onOpenChange={setIsAddingUser} onSuccess={fetchData} />
@@ -867,7 +893,7 @@ export function AddBlogForm({ onOpenChange, onSuccess }: any) {
   )
 }
 
-function AddBannerModal({ open, onOpenChange, onSuccess }: any) {
+function AddBannerForm({ onOpenChange, onSuccess }: any) {
   const [shopName, setShopName] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [loading, setLoading] = useState(false)
@@ -897,12 +923,11 @@ function AddBannerModal({ open, onOpenChange, onSuccess }: any) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white rounded-3xl h-[90vh] md:h-[500px] flex flex-col md:flex-row">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mt-4 overflow-hidden flex flex-col relative w-full">
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-4 relative">
           <div className="flex justify-between items-center mb-2">
-            <DialogTitle className="text-2xl font-bold">Add Banner Ad</DialogTitle>
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
+            <h2 className="text-2xl font-bold">Add Banner Ad</h2>
+            <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => onOpenChange(false)}><ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
           </div>
           
           <div className="bg-green-50 text-green-800 p-4 rounded-xl border border-green-200 flex items-start gap-3">
@@ -949,12 +974,11 @@ function AddBannerModal({ open, onOpenChange, onSuccess }: any) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }
 
-function AddAnnouncementModal({ open, onOpenChange, onSuccess }: any) {
+function AddAnnouncementForm({ onOpenChange, onSuccess }: any) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -982,11 +1006,10 @@ function AddAnnouncementModal({ open, onOpenChange, onSuccess }: any) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-6 bg-white rounded-3xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">New Ticker Announcement</DialogTitle>
-        </DialogHeader>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-4 flex flex-col relative w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">New Ticker Announcement</h2>
+        <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => onOpenChange(false)}><ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button></div>
         <div className="mt-4 space-y-4">
           <div>
             <Label>Ticker Text (Telugu/English)</Label>
@@ -996,8 +1019,7 @@ function AddAnnouncementModal({ open, onOpenChange, onSuccess }: any) {
             <Save className="w-5 h-5 mr-2" /> Publish Ticker
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }
 function AddRealEstateForm({ onOpenChange, onSuccess }: any) {
@@ -1141,3 +1163,4 @@ function AddUserModal({ open, onOpenChange, onSuccess }: any) {
     </Dialog>
   )
 }
+
