@@ -72,7 +72,7 @@ export function MobileBottomNav() {
         className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="relative flex justify-around items-end h-16 px-1 pb-1 overflow-x-auto hide-scrollbar">
+        <div className="relative flex justify-around items-end h-16 px-1 pb-1 overflow-visible">
           {/* 1. Home */}
           <NavItem
             icon={Home}
@@ -81,12 +81,20 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('home')}
           />
 
-          {/* 2. Real Estate */}
+          {/* 2. Listings */}
+          <NavItem
+            icon={Store}
+            label="Listings"
+            isActive={isExploreActive && searchQuery !== 'real estate'}
+            onClick={() => handleNavClick('explore', false, '')}
+          />
+
+          {/* 3. Real Estate */}
           <NavItem
             icon={Building2}
             label="Real Estate"
-            isActive={isExploreActive}
-            onClick={() => handleNavClick('explore', false, '')}
+            isActive={isExploreActive && searchQuery === 'real estate'}
+            onClick={() => handleNavClick('explore', false, 'real estate')}
           />
 
           {/* 3. Center FAB */}
