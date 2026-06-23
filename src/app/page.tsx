@@ -64,6 +64,11 @@ const DashboardView = dynamic(
   { ssr: false, loading: () => <div className="max-w-5xl mx-auto px-4 py-6 space-y-6"><DashboardHeaderSkeleton /><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{[1,2].map(i => <div key={i} className="h-40 rounded-xl bg-gray-100 animate-pulse" />)}</div></div> }
 )
 
+
+const ProtectedDashboard = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedDashboard), { ssr: false })
+const ProtectedAdmin = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedAdmin), { ssr: false })
+const ProtectedSuperAdmin = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedSuperAdmin), { ssr: false })
+
 const AgentDashboard = dynamic(
   () => import('@/components/agent-dashboard'),
   { ssr: false, loading: () => <div className="max-w-5xl mx-auto px-4 py-6 space-y-6"><DashboardHeaderSkeleton /></div> }
@@ -214,159 +219,6 @@ function HomeView() {
       <ErrorBoundary name="BecomeAdminCta"><BecomeAdminCta /></ErrorBoundary>
     </div>
   )
-}
-
-function ProtectedDashboard() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
-  const autoLoginAttempted = useRef(false)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
-      autoLoginAttempted.current = true
-      setShowLoginModal(true)
-    }
-  }, [isAuthenticated, isLoading, setShowLoginModal])
-
-  if (!isMounted) return null;
-
-  if (isLoading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <DashboardHeaderSkeleton />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[1, 2].map((i) => (<div key={i} className="h-40 rounded-xl bg-gray-100 animate-pulse" />))}
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-gray-500 mb-3">Please sign in to access your dashboard</p>
-          <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In</button>
-        </div>
-      </div>
-    )
-  }
-
-  const role = user?.role?.toLowerCase() || '';
-  // super_admin and city_admin both use the unified AdminView (role-aware tabs inside)
-  if (role === 'super_admin' || role === 'city_admin' || role === 'admin') return <ProtectedAdmin />
-  if (role === 'agent') return <AgentDashboard />
-  return <DashboardView />
-}
-
-function ProtectedAdmin() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
-  const autoLoginAttempted = useRef(false)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
-      autoLoginAttempted.current = true
-      setShowLoginModal(true)
-    }
-  }, [isAuthenticated, isLoading, setShowLoginModal])
-
-  if (!isMounted) return null; // Prevent hydration mismatch
-
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <DashboardHeaderSkeleton />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (<div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />))}
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-gray-500 mb-3">Please sign in as admin to access this page</p>
-          <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In as Admin</button>
-        </div>
-      </div>
-    )
-  }
-
-  const role = user?.role?.toLowerCase() || '';
-  const isAdminRole = role === 'super_admin' || role === 'city_admin' || role === 'admin'
-  if (!isAdminRole) {
-    if (process.env.NODE_ENV === 'development') {
-      return (
-        <div className="max-w-7xl mx-auto">
-          <div className="mx-4 mt-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
-            <AlertTriangle className="size-4 shrink-0" />
-            Dev Mode: Viewing admin panel as non-admin user.
-          </div>
-          <AdminView />
-        </div>
-      )
-    }
-    return <ForbiddenPage />
-  }
-
-  // Unified panel: AdminView is role-aware internally.
-  // super_admin sees all tabs (including global settings & all cities).
-  // city_admin sees only their city's data.
-  return <AdminView />
-}
-
-function ProtectedSuperAdmin() {
-  const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
-  const autoLoginAttempted = useRef(false)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
-      autoLoginAttempted.current = true
-      setShowLoginModal(true)
-    }
-  }, [isAuthenticated, isLoading, setShowLoginModal])
-
-  if (!isMounted) return null;
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
-        <div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" />
-        <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />
-        <div className="h-80 w-full rounded-xl bg-gray-100 animate-pulse" />
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-gray-500 mb-3">Please sign in as Super Admin to access this page</p>
-          <button onClick={() => setShowLoginModal(true)} className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white font-semibold shadow-sm">Sign In as Super Admin</button>
-        </div>
-      </div>
-    )
-  }
-
-  // super-admin view is now unified with admin — redirect to ProtectedAdmin
-  return <ProtectedAdmin />
 }
 
 /**
