@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users } from 'lucide-react'
+import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users, Image as ImageIcon, Sparkles } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -53,13 +53,13 @@ export function MobileBottomNav() {
     }
   }
 
-  const handlePostAction = (type: 'listing' | 'real-estate') => {
+  const handlePostAction = (type: 'listing' | 'real-estate' | 'story' | 'banner') => {
     setPostSheetOpen(false)
     if (!isAuthenticated) {
       setShowLoginModal(true)
       return
     }
-    navigateTo('admin')
+    navigateTo('dashboard')
   }
 
   const isExploreActive = currentView === 'explore'
@@ -72,7 +72,7 @@ export function MobileBottomNav() {
         className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="relative flex justify-around items-end h-16 px-2">
+        <div className="relative flex justify-around items-end h-16 px-1 pb-1 overflow-x-auto hide-scrollbar">
           {/* 1. Home */}
           <NavItem
             icon={Home}
@@ -81,7 +81,31 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('home')}
           />
 
-          {/* 2. News & Blog */}
+          {/* 2. Real Estate */}
+          <NavItem
+            icon={Building2}
+            label="Real Estate"
+            isActive={isExploreActive}
+            onClick={() => handleNavClick('explore', false, '')}
+          />
+
+          {/* 3. Center FAB */}
+          {(config.enableListings || config.enableRealEstate) && (
+            <button
+              onClick={() => setPostSheetOpen(true)}
+              className="relative flex flex-col items-center -mt-8 group shrink-0 px-2"
+              aria-label="Create new post"
+            >
+              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-[0_8px_16px_rgba(65,105,225,0.4)] active:scale-95 transition-all duration-200 border-4 border-white">
+                <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <span className="text-[10px] mt-1 font-bold text-gray-700 group-active:text-[#4169E1] transition-colors">
+                Add
+              </span>
+            </button>
+          )}
+
+          {/* 4. Updates */}
           <NavItem
             icon={Newspaper}
             label="Updates"
@@ -89,34 +113,10 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('news')}
           />
 
-          {/* 3. Center FAB */}
-          {(config.enableListings || config.enableRealEstate) && (
-            <button
-              onClick={() => setPostSheetOpen(true)}
-              className="relative flex flex-col items-center -mt-7 group"
-              aria-label="Create new post"
-            >
-              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-tr from-[#4169E1] to-[#D4AF37] shadow-lg shadow-blue-500/30 active:scale-90 transition-transform duration-200">
-                <PlusCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
-              </div>
-              <span className="text-[10px] mt-1 font-medium text-gray-400 group-active:text-[#4169E1] transition-colors">
-                Add
-              </span>
-            </button>
-          )}
-
-          {/* 4. Explore (Listings & Real Estate) */}
-          <NavItem
-            icon={Building2}
-            label="Explore"
-            isActive={isExploreActive}
-            onClick={() => handleNavClick('explore', false, '')}
-          />
-
-          {/* 5. Community Feed */}
+          {/* 5. Choutuppal */}
           <NavItem
             icon={Users}
-            label="మన ఊరు"
+            label="Choutuppal"
             isActive={currentView === 'community'}
             onClick={() => handleNavClick('community')}
           />
@@ -133,40 +133,52 @@ export function MobileBottomNav() {
 
       {/* Post bottom sheet */}
       <Sheet open={postSheetOpen} onOpenChange={setPostSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader className="pb-2">
-            <SheetTitle className="text-lg">What do you want to post?</SheetTitle>
-            <SheetDescription>Choose a category to get started</SheetDescription>
+        <SheetContent side="bottom" className="rounded-t-3xl backdrop-blur-md bg-white/95 border-t border-gray-100 shadow-2xl pb-safe-bottom">
+          <SheetHeader className="pb-4 pt-2">
+            <SheetTitle className="text-xl font-bold text-center">What do you want to create?</SheetTitle>
+            <SheetDescription className="text-center">Choose an option below</SheetDescription>
           </SheetHeader>
-          <div className="flex flex-col gap-3 p-4 pt-2 pb-8">
+          <div className="grid grid-cols-2 gap-3 p-4 pt-0 pb-8">
             {config.enableListings && (
               <button
                 onClick={() => handlePostAction('listing')}
-                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
+                className="flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm active:scale-[0.98] transition-all duration-200 hover:shadow-md hover:border-blue-100 group"
               >
-                <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#4169E1] to-[#3155C1] shadow-sm">
-                  <Store className="w-6 h-6 text-white" />
+                <div className="flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                  <Store className="w-7 h-7 text-[#4169E1]" />
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-900">Add Listing</p>
-                  <p className="text-sm text-gray-500">List your business, shop, or service</p>
-                </div>
+                <p className="font-semibold text-gray-900 text-sm">Add Business</p>
               </button>
             )}
             {config.enableRealEstate && (
               <button
                 onClick={() => handlePostAction('real-estate')}
-                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/80 active:scale-[0.98] transition-transform duration-150 hover:bg-gray-100/80"
+                className="flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm active:scale-[0.98] transition-all duration-200 hover:shadow-md hover:border-yellow-100 group"
               >
-                <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] shadow-sm">
-                  <Landmark className="w-6 h-6 text-white" />
+                <div className="flex items-center justify-center h-14 w-14 rounded-full bg-yellow-50 group-hover:bg-yellow-100 transition-colors">
+                  <Landmark className="w-7 h-7 text-[#D4AF37]" />
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-900">Add Real Estate</p>
-                  <p className="text-sm text-gray-500">Post a property for sale or rent</p>
-                </div>
+                <p className="font-semibold text-gray-900 text-sm">Add Property</p>
               </button>
             )}
+            <button
+              onClick={() => handlePostAction('story')}
+              className="flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm active:scale-[0.98] transition-all duration-200 hover:shadow-md hover:border-purple-100 group"
+            >
+              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-purple-50 group-hover:bg-purple-100 transition-colors">
+                <Sparkles className="w-7 h-7 text-purple-500" />
+              </div>
+              <p className="font-semibold text-gray-900 text-sm">Add Story</p>
+            </button>
+            <button
+              onClick={() => handlePostAction('banner')}
+              className="flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm active:scale-[0.98] transition-all duration-200 hover:shadow-md hover:border-emerald-100 group"
+            >
+              <div className="flex items-center justify-center h-14 w-14 rounded-full bg-emerald-50 group-hover:bg-emerald-100 transition-colors">
+                <ImageIcon className="w-7 h-7 text-emerald-500" />
+              </div>
+              <p className="font-semibold text-gray-900 text-sm">Add Banner Ad</p>
+            </button>
           </div>
         </SheetContent>
       </Sheet>
