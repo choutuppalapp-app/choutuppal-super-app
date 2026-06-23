@@ -17,13 +17,15 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { GlassCard } from '@/components/glass-card'
 import { RichTextEditor } from '@/components/rich-text-editor'
+import { Home } from 'lucide-react'
 
 export default function AdminView() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'users' | 'listings' | 'banners' | 'announcements' | 'news' | 'blogs'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'listings' | 'realestate' | 'banners' | 'announcements' | 'news' | 'blogs'>('users')
   
   const [users, setUsers] = useState<any[]>([])
   const [listings, setListings] = useState<any[]>([])
+  const [realestate, setRealestate] = useState<any[]>([])
   const [banners, setBanners] = useState<any[]>([])
   const [announcements, setAnnouncements] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
@@ -32,10 +34,12 @@ export default function AdminView() {
 
   // Forms
   const [isAddingListing, setIsAddingListing] = useState(false)
+  const [isAddingRealEstate, setIsAddingRealEstate] = useState(false)
   const [isAddingBanner, setIsAddingBanner] = useState(false)
   const [isAddingAnnouncement, setIsAddingAnnouncement] = useState(false)
   const [isAddingNews, setIsAddingNews] = useState(false)
   const [isAddingBlog, setIsAddingBlog] = useState(false)
+  const [isAddingUser, setIsAddingUser] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -44,16 +48,19 @@ export default function AdminView() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [uRes, lRes, bRes, aRes, nRes, blRes] = await Promise.all([
+      const [uRes, lRes, reRes, bRes, aRes, nRes, blRes] = await Promise.all([
         fetch('/api/admin/users').then(r => r.json()),
         fetch('/api/admin/listings').then(r => r.json()),
+        fetch('/api/admin/realestate').then(r => r.json()),
         fetch('/api/banners?all=true').then(r => r.json()),
         fetch('/api/announcements?activeOnly=false').then(r => r.json()),
         fetch('/api/admin/news?all=true').then(r => r.json()),
         fetch('/api/blogs?all=true').then(r => r.json()),
       ])
-      if (uRes.users) setUsers(uRes.users)
+      if (Array.isArray(uRes)) setUsers(uRes)
+      else if (uRes.users) setUsers(uRes.users)
       if (lRes.listings) setListings(lRes.listings)
+      if (reRes.listings) setRealestate(reRes.listings)
       if (Array.isArray(bRes)) setBanners(bRes)
       if (Array.isArray(aRes)) setAnnouncements(aRes)
       if (Array.isArray(nRes)) setNews(nRes)
@@ -84,6 +91,17 @@ export default function AdminView() {
       toast.success('Listing deleted')
     } catch {
       toast.error('Failed to delete listing')
+    }
+  }
+
+  const handleDeleteRealEstate = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this property?')) return
+    try {
+      await fetch(`/api/admin/realestate?id=${id}`, { method: 'DELETE' })
+      setRealestate(realestate.filter(r => r.id !== id))
+      toast.success('Property deleted')
+    } catch {
+      toast.error('Failed to delete property')
     }
   }
 
@@ -140,6 +158,7 @@ export default function AdminView() {
       <div className="md:hidden flex overflow-x-auto hide-scrollbar bg-white p-4 gap-2 border-b border-gray-200 sticky top-0 z-40">
         <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={Users} label="Users" />
         <TabButton active={activeTab === 'listings'} onClick={() => setActiveTab('listings')} icon={Store} label="Listings" />
+        <TabButton active={activeTab === 'realestate'} onClick={() => setActiveTab('realestate')} icon={Home} label="Property" />
         <TabButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={Newspaper} label="News" />
         <TabButton active={activeTab === 'blogs'} onClick={() => setActiveTab('blogs')} icon={FileText} label="Blogs" />
         <TabButton active={activeTab === 'banners'} onClick={() => setActiveTab('banners')} icon={ImageIcon} label="Banners" />
@@ -151,6 +170,7 @@ export default function AdminView() {
         <h2 className="text-xl font-bold text-gray-800 mb-4">Admin Panel</h2>
         <SidebarButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={Users} label="Users Management" />
         <SidebarButton active={activeTab === 'listings'} onClick={() => setActiveTab('listings')} icon={Store} label="Listings" />
+        <SidebarButton active={activeTab === 'realestate'} onClick={() => setActiveTab('realestate')} icon={Home} label="Real Estate" />
         <SidebarButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={Newspaper} label="News" />
         <SidebarButton active={activeTab === 'blogs'} onClick={() => setActiveTab('blogs')} icon={FileText} label="Blogs" />
         <SidebarButton active={activeTab === 'banners'} onClick={() => setActiveTab('banners')} icon={ImageIcon} label="Banners & Ads" />
@@ -161,7 +181,10 @@ export default function AdminView() {
       <div className="flex-1 p-4 md:p-8 overflow-y-auto">
         {activeTab === 'users' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+              <Button onClick={() => setIsAddingUser(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add User</Button>
+            </div>
             {/* Desktop Table */}
             <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <Table>
@@ -253,6 +276,60 @@ export default function AdminView() {
                     <p className="text-xs text-gray-500">{l.category} • {l.phoneNumber}</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => handleDeleteListing(l.id)} className="text-red-500 bg-red-50 rounded-full h-10 w-10">
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                </GlassCard>
+              ))}
+              </div>
+            </div>
+          )}
+
+        {activeTab === 'realestate' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Real Estate</h1>
+              <Button onClick={() => setIsAddingRealEstate(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add Property</Button>
+            </div>
+            {/* Desktop Table */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {realestate.map(r => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium flex items-center gap-3">
+                        {r.images?.[0] ? <img src={r.images[0]} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center"><Home className="w-5 h-5 text-gray-400" /></div>}
+                        {r.title}
+                      </TableCell>
+                      <TableCell>{r.propertyType}</TableCell>
+                      <TableCell>₹{r.price}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteRealEstate(r.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="md:hidden flex flex-col gap-3">
+              {realestate.map(r => (
+                <GlassCard key={r.id} className="p-4 flex flex-row items-center gap-4">
+                  {r.images?.[0] ? <img src={r.images[0]} className="w-16 h-16 rounded-xl object-cover" /> : <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center"><Home className="w-6 h-6 text-gray-400" /></div>}
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900">{r.title}</h3>
+                    <p className="text-xs text-gray-500">{r.propertyType} • ₹{r.price}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteRealEstate(r.id)} className="text-red-500 bg-red-50 rounded-full h-10 w-10">
                     <Trash2 className="w-5 h-5" />
                   </Button>
                 </GlassCard>
@@ -467,10 +544,12 @@ export default function AdminView() {
 
       {/* Forms as Modals */}
       <AddListingModal open={isAddingListing} onOpenChange={setIsAddingListing} onSuccess={fetchData} />
+      <AddRealEstateModal open={isAddingRealEstate} onOpenChange={setIsAddingRealEstate} onSuccess={fetchData} />
       <AddBannerModal open={isAddingBanner} onOpenChange={setIsAddingBanner} onSuccess={fetchData} />
       <AddAnnouncementModal open={isAddingAnnouncement} onOpenChange={setIsAddingAnnouncement} onSuccess={fetchData} />
       <AddNewsModal open={isAddingNews} onOpenChange={setIsAddingNews} onSuccess={fetchData} />
       <AddBlogModal open={isAddingBlog} onOpenChange={setIsAddingBlog} onSuccess={fetchData} />
+      <AddUserModal open={isAddingUser} onOpenChange={setIsAddingUser} onSuccess={fetchData} />
 
     </div>
   )
@@ -535,7 +614,7 @@ function AddListingModal({ open, onOpenChange, onSuccess }: any) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white rounded-3xl h-[90vh] md:h-[600px] flex flex-col md:flex-row">
+      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-white rounded-3xl h-[90vh] flex flex-col relative">
         {/* Mobile: Sticky save button container at bottom. Desktop: Left panel form, Right panel preview */}
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-4 relative">
           <div className="flex justify-between items-center mb-2">
@@ -628,7 +707,7 @@ export function AddNewsModal({ open, onOpenChange, onSuccess }: any) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-gray-50 rounded-3xl h-[90vh] flex flex-col relative">
+      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-gray-50 rounded-3xl h-[90vh] flex flex-col relative">
         <div className="flex justify-between items-center p-6 bg-white border-b border-gray-100">
           <DialogTitle className="text-2xl font-bold">Compose News</DialogTitle>
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
@@ -714,7 +793,7 @@ export function AddBlogModal({ open, onOpenChange, onSuccess }: any) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-gray-50 rounded-3xl h-[90vh] flex flex-col relative">
+      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-gray-50 rounded-3xl h-[90vh] flex flex-col relative">
         <div className="flex justify-between items-center p-6 bg-white border-b border-gray-100">
           <DialogTitle className="text-2xl font-bold">Write a Blog Post</DialogTitle>
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
@@ -892,6 +971,149 @@ function AddAnnouncementModal({ open, onOpenChange, onSuccess }: any) {
             <Save className="w-5 h-5 mr-2" /> Publish Ticker
           </Button>
         </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+function AddRealEstateModal({ open, onOpenChange, onSuccess }: any) {
+  const [title, setTitle] = useState('')
+  const [propertyType, setPropertyType] = useState('Land')
+  const [price, setPrice] = useState('')
+  const [bhk, setBhk] = useState('')
+  const [area, setArea] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    try {
+      const payload = {
+        title,
+        propertyType,
+        price: Number(price) || 0,
+        bhk: Number(bhk) || 0,
+        area,
+        images: imageUrl ? [imageUrl] : [],
+        cityId: 'temp',
+        status: 'APPROVED'
+      }
+      await fetch('/api/admin/realestate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      toast.success('Property added')
+      if (onSuccess) onSuccess()
+      onOpenChange(false)
+      setTitle(''); setPrice(''); setImageUrl('')
+    } catch {
+      toast.error('Failed to add property')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl p-6 overflow-y-auto bg-gray-50 rounded-3xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">Add Real Estate</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <Label>Property Title</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. 2 BHK House for sale" />
+          </div>
+          <div>
+            <Label>Type</Label>
+            <select value={propertyType} onChange={e => setPropertyType(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950">
+              <option value="Land">Land</option>
+              <option value="House">House</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Commercial">Commercial</option>
+            </select>
+          </div>
+          <div>
+            <Label>Price (?)</Label>
+            <Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 5000000" />
+          </div>
+          <div>
+            <Label>BHK (If applicable)</Label>
+            <Input type="number" value={bhk} onChange={e => setBhk(e.target.value)} placeholder="e.g. 2" />
+          </div>
+          <div>
+            <Label>Area</Label>
+            <Input value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. 1500 sqft" />
+          </div>
+          <div className="md:col-span-2">
+             <Label>Image</Label>
+             <div className="mt-2">
+               {imageUrl && <img src={imageUrl} className="w-32 h-32 object-cover rounded-xl mb-4" />}
+               <MediaUploader onChange={(url) => setImageUrl(url)} folder="realestate" label="Upload Image" />
+             </div>
+          </div>
+        </div>
+        <Button onClick={handleSubmit} disabled={loading || !title.trim()} className="w-full bg-[#4169E1] hover:bg-blue-700 h-12 mt-6">
+          <Save className="w-5 h-5 mr-2" /> Save Property
+        </Button>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AddUserModal({ open, onOpenChange, onSuccess }: any) {
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [role, setRole] = useState('user')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    try {
+      await fetch('/api/admin/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, phone, role })
+      })
+      toast.success('User added')
+      if (onSuccess) onSuccess()
+      onOpenChange(false)
+      setFullName(''); setPhone('')
+    } catch {
+      toast.error('Failed to add user (endpoint might not exist)')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md p-6 bg-white rounded-3xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">Add User</DialogTitle>
+        </DialogHeader>
+        <div className="mt-4 space-y-4">
+          <div>
+            <Label>Full Name</Label>
+            <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. John Doe" />
+          </div>
+          <div>
+            <Label>Phone</Label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="e.g. 9876543210" />
+          </div>
+          <div>
+            <Label>Role</Label>
+            <select value={role} onChange={e => setRole(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950">
+              <option value="user">User</option>
+              <option value="agent">Agent</option>
+              <option value="city_admin">City Admin</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <Button onClick={handleSubmit} disabled={loading || !fullName.trim() || !phone.trim()} className="w-full bg-[#4169E1] hover:bg-blue-700 h-12 mt-6">
+          <Save className="w-5 h-5 mr-2" /> Save User
+        </Button>
       </DialogContent>
     </Dialog>
   )
