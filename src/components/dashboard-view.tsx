@@ -1420,8 +1420,8 @@ export default function DashboardView() {
 
         <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
           {activeTab === 'home' && renderHome()}
-          {activeTab === 'listings' && renderListings()}
-          {activeTab === 'real_estate' && renderRealEstate()}
+          {activeTab === 'listings' && !isCreatingListing && renderListings()}
+          {activeTab === 'real_estate' && !isCreatingRealEstate && renderRealEstate()}
           {activeTab === 'banners' && renderBanners()}
           {activeTab === 'stories' && renderStories()}
           {activeTab === 'my_posts' && renderMyPosts()}
@@ -1430,21 +1430,20 @@ export default function DashboardView() {
         </div>
 
         {/* Add/Edit Listing Fullscreen Modal */}
-        <AnimatePresence>
+        <>
           {isCreatingListing && (
             <motion.div 
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-0 z-[100] bg-white md:bg-black/55 flex flex-col md:items-center md:justify-center md:p-6"
+              className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative mt-4"
             >
-              <div className="flex flex-col w-full h-full md:h-auto md:max-h-[92vh] md:max-w-3xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+              <div className="flex flex-col w-full h-full relative">
                 {/* Header */}
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: []}) }}>
-                    <X className="w-6 h-6" />
-                  </Button>
+                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: []}) }}>
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
                   <span className="text-gray-950 font-black text-lg">{editingListingId ? 'Edit Listing Details' : 'Publish New Listing'}</span>
                   <div className="w-10"></div>
                 </div>
@@ -1703,24 +1702,23 @@ export default function DashboardView() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* ─── Dedicated Real Estate Form Modal ─── */}
-        <AnimatePresence>
+        <>
           {isCreatingRealEstate && (
             <motion.div
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-0 z-[100] bg-white md:bg-black/55 flex flex-col md:items-center md:justify-center md:p-6"
+              className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative mt-4"
             >
-              <div className="flex flex-col w-full h-full md:h-auto md:max-h-[92vh] md:max-w-2xl md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+              <div className="flex flex-col w-full h-full relative">
                 {/* Header */}
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => { setIsCreatingRealEstate(false); setEditingRealEstateId(null); resetReForm() }}>
-                    <X className="w-6 h-6" />
-                  </Button>
+                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingRealEstate(false); setEditingRealEstateId(null); resetReForm() }}>
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
                   <span className="text-gray-950 font-black text-lg">{editingRealEstateId ? 'Edit Property' : 'Post New Property'}</span>
                   <div className="w-10" />
                 </div>
@@ -1874,19 +1872,19 @@ export default function DashboardView() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Banner Modal */}
-        <AnimatePresence>
+        <>
           {isCreatingBanner && (
             <motion.div 
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-0 z-[100] bg-white md:bg-black/50 flex flex-col md:items-center md:justify-center md:p-6"
+              className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative mt-4"
             >
-              <div className="flex flex-col w-full h-full md:h-auto md:max-h-[90vh] md:max-w-md md:bg-white md:rounded-2xl md:shadow-2xl md:overflow-hidden relative">
+              <div className="flex flex-col w-full h-full relative">
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
                   <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsCreatingBanner(false)}>
                     <X className="w-6 h-6" />
@@ -1938,7 +1936,7 @@ export default function DashboardView() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Hidden input for Story Upload */}
         <input 

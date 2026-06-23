@@ -83,6 +83,25 @@ export default function AdminView() {
     }
   }
 
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      // Optimistic update
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
+      
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      })
+      if (!res.ok) throw new Error('Update failed')
+      toast.success('Role updated successfully')
+    } catch {
+      toast.error('Failed to update role')
+      // Revert could be handled here by re-fetching
+      fetchData()
+    }
+  }
+
   const handleDeleteListing = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return
     try {
@@ -201,7 +220,18 @@ export default function AdminView() {
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.fullName}</TableCell>
                       <TableCell>{u.phone}</TableCell>
-                      <TableCell><span className="capitalize px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-semibold">{u.role}</span></TableCell>
+                      <TableCell>
+                        <select 
+                          value={u.role || 'user'} 
+                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          className="bg-blue-50 text-blue-600 rounded-md px-2 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-300"
+                        >
+                          <option value="user">User</option>
+                          <option value="agent">Agent</option>
+                          <option value="city_admin">City Admin</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
                           <Trash2 className="w-4 h-4" />
@@ -219,7 +249,16 @@ export default function AdminView() {
                   <div>
                     <h3 className="font-bold text-gray-900">{u.fullName}</h3>
                     <p className="text-sm text-gray-500">{u.phone}</p>
-                    <p className="text-xs text-blue-600 font-semibold mt-1 capitalize">{u.role}</p>
+                    <select 
+                        value={u.role || 'user'} 
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        className="mt-2 bg-blue-50 text-blue-600 rounded-md px-2 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-300"
+                    >
+                      <option value="user">User</option>
+                      <option value="agent">Agent</option>
+                      <option value="city_admin">City Admin</option>
+                      <option value="admin">Admin</option>
+                    </select>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(u.id)} className="text-red-500 bg-red-50 rounded-full h-10 w-10">
                     <Trash2 className="w-5 h-5" />
@@ -230,9 +269,7 @@ export default function AdminView() {
           </div>
         )}
 
-        {activeTab === 'listings' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        {activeTab === 'listings' && isAddingListing ? <AddListingForm onOpenChange={setIsAddingListing} onSuccess={() => { setIsAddingListing(false); fetchData(); }} /> : activeTab === 'listings' && (<div className="space-y-4"><div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">Listings</h1>
               <Button onClick={() => setIsAddingListing(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add Listing</Button>
             </div>
@@ -284,9 +321,7 @@ export default function AdminView() {
             </div>
           )}
 
-        {activeTab === 'realestate' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        {activeTab === 'realestate' && isAddingRealEstate ? <AddRealEstateForm onOpenChange={setIsAddingRealEstate} onSuccess={() => { setIsAddingRealEstate(false); fetchData(); }} /> : activeTab === 'realestate' && (<div className="space-y-4"><div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">Real Estate</h1>
               <Button onClick={() => setIsAddingRealEstate(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add Property</Button>
             </div>
@@ -438,9 +473,7 @@ export default function AdminView() {
           </div>
         )}
 
-        {activeTab === 'news' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        {activeTab === 'news' && isAddingNews ? <AddNewsForm onOpenChange={setIsAddingNews} onSuccess={() => { setIsAddingNews(false); fetchData(); }} /> : activeTab === 'news' && (<div className="space-y-4"><div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">News Articles</h1>
               <Button onClick={() => setIsAddingNews(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add News</Button>
             </div>
@@ -488,9 +521,7 @@ export default function AdminView() {
           </div>
         )}
 
-        {activeTab === 'blogs' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        {activeTab === 'blogs' && isAddingBlog ? <AddBlogForm onOpenChange={setIsAddingBlog} onSuccess={() => { setIsAddingBlog(false); fetchData(); }} /> : activeTab === 'blogs' && (<div className="space-y-4"><div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">Blogs</h1>
               <Button onClick={() => setIsAddingBlog(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add Blog</Button>
             </div>
@@ -543,12 +574,12 @@ export default function AdminView() {
       </div>
 
       {/* Forms as Modals */}
-      <AddListingModal open={isAddingListing} onOpenChange={setIsAddingListing} onSuccess={fetchData} />
-      <AddRealEstateModal open={isAddingRealEstate} onOpenChange={setIsAddingRealEstate} onSuccess={fetchData} />
+      
+      
       <AddBannerModal open={isAddingBanner} onOpenChange={setIsAddingBanner} onSuccess={fetchData} />
       <AddAnnouncementModal open={isAddingAnnouncement} onOpenChange={setIsAddingAnnouncement} onSuccess={fetchData} />
-      <AddNewsModal open={isAddingNews} onOpenChange={setIsAddingNews} onSuccess={fetchData} />
-      <AddBlogModal open={isAddingBlog} onOpenChange={setIsAddingBlog} onSuccess={fetchData} />
+      
+      
       <AddUserModal open={isAddingUser} onOpenChange={setIsAddingUser} onSuccess={fetchData} />
 
     </div>
@@ -577,7 +608,7 @@ function SidebarButton({ active, onClick, icon: Icon, label }: { active: boolean
 
 // ─── Simplified Modals ─────────────────────────────────────────────────────────
 
-function AddListingModal({ open, onOpenChange, onSuccess }: any) {
+function AddListingForm({ onOpenChange, onSuccess }: any) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [category, setCategory] = useState('')
@@ -613,13 +644,12 @@ function AddListingModal({ open, onOpenChange, onSuccess }: any) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-white rounded-3xl h-[90vh] flex flex-col relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mt-4 overflow-hidden flex flex-col relative w-full">
         {/* Mobile: Sticky save button container at bottom. Desktop: Left panel form, Right panel preview */}
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-4 relative">
           <div className="flex justify-between items-center mb-2">
-            <DialogTitle className="text-2xl font-bold">Add Listing</DialogTitle>
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
+            <h2 className="text-2xl font-bold">Add Listing</h2>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           </div>
           
           <div className="space-y-4 pb-24 md:pb-0">
@@ -668,12 +698,11 @@ function AddListingModal({ open, onOpenChange, onSuccess }: any) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }
 
-export function AddNewsModal({ open, onOpenChange, onSuccess }: any) {
+export function AddNewsForm({ onOpenChange, onSuccess }: any) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [imageUrl, setImageUrl] = useState('')
@@ -706,15 +735,14 @@ export function AddNewsModal({ open, onOpenChange, onSuccess }: any) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-gray-50 rounded-3xl h-[90vh] flex flex-col relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mt-4 overflow-hidden flex flex-col relative w-full">
         <div className="flex justify-between items-center p-6 bg-white border-b border-gray-100">
-          <DialogTitle className="text-2xl font-bold">Compose News</DialogTitle>
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
+          <h2 className="text-2xl font-bold">Compose News</h2>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
         </div>
         
         <div className="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6 relative">
-          <Button variant="ghost" size="icon" className="hidden md:flex absolute top-4 right-4" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
+          
           {/* Main content form */}
           <div className="flex-1 space-y-4">
             <div>
@@ -753,12 +781,11 @@ export function AddNewsModal({ open, onOpenChange, onSuccess }: any) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }
 
-export function AddBlogModal({ open, onOpenChange, onSuccess }: any) {
+export function AddBlogForm({ onOpenChange, onSuccess }: any) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [coverImageUrl, setCoverImageUrl] = useState('')
@@ -792,15 +819,14 @@ export function AddBlogModal({ open, onOpenChange, onSuccess }: any) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-gray-50 rounded-3xl h-[90vh] flex flex-col relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mt-4 overflow-hidden flex flex-col relative w-full">
         <div className="flex justify-between items-center p-6 bg-white border-b border-gray-100">
-          <DialogTitle className="text-2xl font-bold">Write a Blog Post</DialogTitle>
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
+          <h2 className="text-2xl font-bold">Write a Blog Post</h2>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
         </div>
         
         <div className="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6 relative">
-          <Button variant="ghost" size="icon" className="hidden md:flex absolute top-4 right-4" onClick={() => onOpenChange(false)}><X className="w-5 h-5"/></Button>
+          
           <div className="flex-1 space-y-4">
             <div>
               <Label>Blog Title</Label>
@@ -837,8 +863,7 @@ export function AddBlogModal({ open, onOpenChange, onSuccess }: any) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }
 
@@ -975,7 +1000,7 @@ function AddAnnouncementModal({ open, onOpenChange, onSuccess }: any) {
     </Dialog>
   )
 }
-function AddRealEstateModal({ open, onOpenChange, onSuccess }: any) {
+function AddRealEstateForm({ onOpenChange, onSuccess }: any) {
   const [title, setTitle] = useState('')
   const [propertyType, setPropertyType] = useState('Land')
   const [price, setPrice] = useState('')
@@ -1014,11 +1039,10 @@ function AddRealEstateModal({ open, onOpenChange, onSuccess }: any) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-6 overflow-y-auto bg-gray-50 rounded-3xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Add Real Estate</DialogTitle>
-        </DialogHeader>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-4 flex flex-col relative w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Add Real Estate</h2>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button></div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <Label>Property Title</Label>
@@ -1056,8 +1080,7 @@ function AddRealEstateModal({ open, onOpenChange, onSuccess }: any) {
         <Button onClick={handleSubmit} disabled={loading || !title.trim()} className="w-full bg-[#4169E1] hover:bg-blue-700 h-12 mt-6">
           <Save className="w-5 h-5 mr-2" /> Save Property
         </Button>
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }
 
