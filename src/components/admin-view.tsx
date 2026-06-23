@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
-  Users, Store, Image as ImageIcon, Megaphone, Plus, Trash2, CheckCircle, Edit3, X, Save, Newspaper, FileText, LayoutDashboard, ArrowLeft
+  Users, Store, Image as ImageIcon, Megaphone, Plus, Trash2, CheckCircle, Edit3, X, Save, Newspaper, FileText, LayoutDashboard, ArrowLeft, Settings
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
+import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { MediaUploader } from '@/components/media-uploader'
 import { useAuth } from '@/lib/auth-context'
@@ -20,7 +19,7 @@ import { Home } from 'lucide-react'
 
 export default function AdminView() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'realestate' | 'banners' | 'announcements' | 'news' | 'blogs'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'realestate' | 'banners' | 'announcements' | 'news' | 'blogs' | 'branding'>('overview')
   
   const [users, setUsers] = useState<any[]>([])
   const [listings, setListings] = useState<any[]>([])
@@ -169,12 +168,89 @@ export default function AdminView() {
 
   if (loading) return <div className="p-8 text-center">Loading Admin Panel...</div>
 
+  
+  const [branding, setBranding] = useState<any>({})
+  const [isSavingBranding, setIsSavingBranding] = useState(false)
+
+  useEffect(() => {
+    if (activeTab === 'branding') {
+      fetch('/api/admin/branding')
+        .then(res => res.json())
+        .then(data => setBranding(data))
+    }
+  }, [activeTab])
+
+  const handleSaveBranding = async () => {
+    setIsSavingBranding(true)
+    try {
+      const res = await fetch('/api/admin/branding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(branding)
+      })
+      if (res.ok) {
+        toast.success('Branding updated successfully!')
+      } else {
+        toast.error('Failed to update branding')
+      }
+    } catch (e) {
+      toast.error('Failed to update branding')
+    } finally {
+      setIsSavingBranding(false)
+    }
+  }
+
+  const renderBranding = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">App Branding & Settings</h2>
+        <Button onClick={handleSaveBranding} disabled={isSavingBranding} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-md">
+          {isSavingBranding ? 'Saving...' : 'Save Settings'}
+        </Button>
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>App Name</Label>
+            <Input value={branding.appName || ''} onChange={e => setBranding({...branding, appName: e.target.value})} placeholder="Super App" />
+          </div>
+          <div className="space-y-2">
+            <Label>Tagline</Label>
+            <Input value={branding.tagline || ''} onChange={e => setBranding({...branding, tagline: e.target.value})} placeholder="Your Tagline" />
+          </div>
+          <div className="space-y-2">
+            <Label>Logo URL</Label>
+            <Input value={branding.logoUrl || ''} onChange={e => setBranding({...branding, logoUrl: e.target.value})} placeholder="https://..." />
+          </div>
+          <div className="space-y-2">
+            <Label>Primary Color Hex</Label>
+            <Input type="color" className="h-10 px-1 py-1" value={branding.primaryColorHex || '#4169E1'} onChange={e => setBranding({...branding, primaryColorHex: e.target.value})} />
+          </div>
+          <div className="space-y-2">
+            <Label>WhatsApp Number</Label>
+            <Input value={branding.whatsappNumber || ''} onChange={e => setBranding({...branding, whatsappNumber: e.target.value})} placeholder="+91..." />
+          </div>
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input value={branding.email || ''} onChange={e => setBranding({...branding, email: e.target.value})} placeholder="contact@..." />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Address</Label>
+            <Input value={branding.address || ''} onChange={e => setBranding({...branding, address: e.target.value})} placeholder="123 Main St..." />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+  
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 pb-20 md:pb-0">
       
       {/* Mobile Horizontal Tabs */}
       <div className="md:hidden flex overflow-x-auto hide-scrollbar bg-white p-4 gap-2 border-b border-gray-200 sticky top-0 z-40">
         <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={LayoutDashboard} label="Overview" />
+        <TabButton active={activeTab === 'branding'} onClick={() => setActiveTab('branding')} icon={Settings} label="Branding" />
         <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={Users} label="Users" />
         <TabButton active={activeTab === 'listings'} onClick={() => setActiveTab('listings')} icon={Store} label="Listings" />
         <TabButton active={activeTab === 'realestate'} onClick={() => setActiveTab('realestate')} icon={Home} label="Property" />
@@ -188,6 +264,7 @@ export default function AdminView() {
       <div className="hidden md:flex flex-col w-[20%] bg-white border-r border-gray-200 p-6 gap-4 sticky top-0 h-screen">
         <h2 className="text-xl font-bold text-gray-800 mb-4">Admin Panel</h2>
         <SidebarButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={LayoutDashboard} label="Overview" />
+        <SidebarButton active={activeTab === 'branding'} onClick={() => setActiveTab('branding')} icon={Settings} label="Branding" />
         <SidebarButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={Users} label="Users Management" />
         <SidebarButton active={activeTab === 'listings'} onClick={() => setActiveTab('listings')} icon={Store} label="Listings" />
         <SidebarButton active={activeTab === 'realestate'} onClick={() => setActiveTab('realestate')} icon={Home} label="Real Estate" />
@@ -228,6 +305,7 @@ export default function AdminView() {
           </div>
         )}
 
+        {activeTab === 'branding' && renderBranding()}
         {activeTab === 'users' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">

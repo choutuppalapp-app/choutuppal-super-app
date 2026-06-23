@@ -10,7 +10,7 @@ import {
   BadgeDollarSign, Sparkles, UploadCloud,
   Instagram, Facebook, Youtube, MessageCircle,
   ArrowLeft, User, Home, Circle
-} from 'lucide-react'
+, LineChart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -114,6 +114,7 @@ const CATEGORIES = [
 
 const TAB_ITEMS = [
   { key: 'home', label: 'Home', icon: LayoutDashboard },
+  { key: 'analytics', label: 'Analytics', icon: LineChart },
   { key: 'listings', label: 'My Listings', icon: Store },
   { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
   { key: 'banners', label: 'My Banners', icon: ImageIcon },
@@ -1336,6 +1337,7 @@ export default function DashboardView() {
     </div>
   )
 
+  const renderAnalytics = () => <div />
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 w-full max-w-md mx-auto px-4 md:max-w-none md:mx-0 md:px-0 md:flex pb-20 md:pb-0">
       {/* Desktop Sidebar (Pinned Left) */}
@@ -1420,6 +1422,7 @@ export default function DashboardView() {
 
         <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
           {activeTab === 'home' && renderHome()}
+          {activeTab === 'analytics' && renderAnalytics()}
           {activeTab === 'listings' && !isCreatingListing && renderListings()}
           {activeTab === 'real_estate' && !isCreatingRealEstate && renderRealEstate()}
           {activeTab === 'banners' && !isCreatingBanner && renderBanners()}

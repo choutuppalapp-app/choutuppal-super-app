@@ -6,7 +6,7 @@ import {
   ArrowLeft, MapPin, Star, Share2,
   Phone, Eye, MessageCircle, Instagram, Facebook, Youtube, Download,
   Wrench, Sparkles, BadgeCheck
-} from 'lucide-react'
+, ShoppingBag, Minus, Plus } from 'lucide-react'
 import ListingCard from '@/components/listing-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +29,7 @@ import DOMPurify from 'dompurify'
 import { useParams, useRouter } from 'next/navigation'
 
 interface ListingData {
+  catalogItems?: string;
   id: string
   slug: string
   name: string
@@ -67,6 +68,7 @@ const PLACEHOLDER_COVER = 'https://placehold.co/800x400/D4AF37/ffffff?text=No+Co
 const PLACEHOLDER_LOGO = 'https://placehold.co/200x200/D4AF37/ffffff?text=Logo'
 
 export default function ListingView() {
+  const [cart, setCart] = useState<Record<string, number>>({})
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const { user } = useAuth()
@@ -175,6 +177,71 @@ export default function ListingView() {
     }
   }
 
+  
+  const catalogItems = listing?.catalogItems ? JSON.parse(listing?.catalogItems) : []
+  // fallback items if none found
+  const displayItems = catalogItems.length > 0 ? catalogItems : [
+    { id: '1', name: 'Sample Item 1', price: 99 },
+    { id: '2', name: 'Sample Item 2', price: 149 }
+  ]
+
+  const totalCartItems = Object.values(cart).reduce((a: any, b: any) => a + b, 0)
+  const totalCartPrice = displayItems.reduce((acc, item) => {
+    return acc + (item.price * (cart[item.id] || 0))
+  }, 0)
+
+  const handleWhatsAppOrder = () => {
+    let orderText = `Hello ${listing?.name}! I would like to order:\n\n`
+    displayItems.forEach(item => {
+      if (cart[item.id]) {
+        orderText += `- ${item.name} x${cart[item.id]} (₹${item.price * cart[item.id]})\n`
+      }
+    })
+    orderText += `\n*Total: ₹${totalCartPrice}*\n\nPlease confirm my order.`
+    
+    // Also track click
+    fetch(`/api/listings/${listing?.id}/click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'whatsapp' })
+    }).catch(console.error)
+
+    window.open(`https://wa.me/${listing?.whatsappNumber}?text=${encodeURIComponent(orderText)}`, '_blank')
+  }
+
+  const renderCatalog = () => (
+    <div className="mt-8">
+      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <ShoppingBag className="w-5 h-5 text-[#4169E1]" /> Products / Menu
+      </h3>
+      <div className="grid gap-4">
+        {displayItems.map((item: any) => (
+          <div key={item.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <h4 className="font-bold text-gray-900">{item.name}</h4>
+              <p className="text-[#D4AF37] font-bold">₹{item.price}</p>
+            </div>
+            <div className="flex items-center gap-3 bg-gray-50 rounded-full p-1">
+              <button 
+                onClick={() => setCart(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] || 0) - 1) }))}
+                className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-600 hover:text-red-500"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="font-bold w-4 text-center">{cart[item.id] || 0}</span>
+              <button 
+                onClick={() => setCart(prev => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }))}
+                className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-600 hover:text-green-500"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/listing/${listing?.id || listing?.slug || ''}`
     if (navigator.share) {
@@ -193,18 +260,18 @@ export default function ListingView() {
 
   const generateVCard = () => {
     if (!listing) return
-    const phone = listing.phoneNumber || listing.whatsappNumber || listing.user.phone
+    const phone = listing.phoneNumber || listing?.whatsappNumber || listing.user.phone
     const vcard = `BEGIN:VCARD
 VERSION:3.0
-FN:${listing.name}
+FN:${listing?.name}
 TEL:${phone}
-URL:${window.location.origin}/listing/${listing.id}
+URL:${window.location.origin}/listing/${listing?.id}
 END:VCARD`
     const blob = new Blob([vcard], { type: 'text/vcard' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${listing.name.replace(/\s+/g, '_')}.vcf`
+    a.download = `${listing?.name.replace(/\s+/g, '_')}.vcf`
     a.click()
     URL.revokeObjectURL(url)
     toast.success('Contact vCard downloaded')
@@ -241,8 +308,8 @@ END:VCARD`
     return []
   })()
 
-  const phoneToCall = listing.phoneNumber || listing.whatsappNumber || listing.user.phone
-  const phoneToWA = listing.whatsappNumber || listing.phoneNumber || listing.user.whatsappNumber || listing.user.phone
+  const phoneToCall = listing.phoneNumber || listing?.whatsappNumber || listing.user.phone
+  const phoneToWA = listing?.whatsappNumber || listing.phoneNumber || listing.user.whatsappNumber || listing.user.phone
 
   const handleCall = () => {
     if (phoneToCall) window.location.href = `tel:${phoneToCall}`
@@ -251,7 +318,7 @@ END:VCARD`
     if (phoneToWA) window.open(`https://wa.me/${phoneToWA}`)
   }
   const handleLocation = () => {
-    window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing.name)}`)
+    window.open(`https://www.google.com/maps/search/?api=1&query=${listing.latitude ? listing.latitude + ',' + listing.longitude : encodeURIComponent(listing.address || listing?.name)}`)
   }
 
   // Parse services JSON
@@ -282,7 +349,7 @@ END:VCARD`
       <div className="relative h-64 sm:h-80 w-full bg-gray-200">
         <OptimizedImage
           src={listing.coverImage || PLACEHOLDER_COVER}
-          alt={`${listing.name} cover`}
+          alt={`${listing?.name} cover`}
           fill
           className="object-cover"
         />
@@ -300,7 +367,7 @@ END:VCARD`
           <div className="size-24 md:size-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden relative">
             <OptimizedImage
               src={listing.logoUrl || PLACEHOLDER_LOGO}
-              alt={`${listing.name} logo`}
+              alt={`${listing?.name} logo`}
               fill
               className="object-cover"
             />
@@ -320,7 +387,7 @@ END:VCARD`
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
-                    {listing.name}
+                    {listing?.name}
                   </h1>
                   {listing.isPremium && (
                     <Badge className="bg-[#4169E1] text-white border-none flex items-center gap-0.5 text-xs py-0.5">
@@ -417,7 +484,7 @@ END:VCARD`
                     >
                       <OptimizedImage
                         src={img}
-                        alt={`${listing.name} gallery ${idx + 1}`}
+                        alt={`${listing?.name} gallery ${idx + 1}`}
                         fill
                         style={{ objectFit: 'cover' }}
                         className="object-cover group-hover:scale-102 transition-transform duration-300"
@@ -544,7 +611,7 @@ END:VCARD`
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold text-gray-900">Claim Business Page</DialogTitle>
             <DialogDescription className="text-gray-500 mt-2">
-              Are you the owner of <b>{listing.name}</b>? Please provide your mobile number. We will contact you to verify ownership.
+              Are you the owner of <b>{listing?.name}</b>? Please provide your mobile number. We will contact you to verify ownership.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-3">
