@@ -329,6 +329,11 @@ function ProtectedAdmin() {
 function ProtectedSuperAdmin() {
   const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !autoLoginAttempted.current) {
@@ -336,6 +341,8 @@ function ProtectedSuperAdmin() {
       setShowLoginModal(true)
     }
   }, [isAuthenticated, isLoading, setShowLoginModal])
+
+  if (!isMounted) return null;
 
   if (isLoading) {
     return (
