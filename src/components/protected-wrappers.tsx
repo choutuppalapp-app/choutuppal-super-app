@@ -52,12 +52,12 @@ export function ProtectedDashboard() {
   }
 
   const role = user?.role?.toLowerCase() || '';
-  if (role === 'super_admin' || role === 'city_admin' || role === 'admin') return <ProtectedAdmin />
+  if (role === 'super_admin' || role === 'city_admin' || role === 'admin') return <ProtectedAdmin><AdminView /></ProtectedAdmin>
   if (role === 'agent') return <AgentDashboard />
   return <DashboardView />
 }
 
-export function ProtectedAdmin() {
+export const ProtectedAdmin = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, user, setShowLoginModal, isLoading } = useAuth()
   const autoLoginAttempted = useRef(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -107,14 +107,14 @@ export function ProtectedAdmin() {
             <AlertTriangle className="size-4 shrink-0" />
             Dev Mode: Viewing admin panel as non-admin user.
           </div>
-          <AdminView />
+          <>{children}</>
         </div>
       )
     }
     return <ForbiddenPage />
   }
 
-  return <AdminView />
+  return <>{children}</>;
 }
 
 export function ProtectedSuperAdmin() {
@@ -154,5 +154,5 @@ export function ProtectedSuperAdmin() {
     )
   }
 
-  return <ProtectedAdmin />
+  return <ProtectedAdmin><AdminView /></ProtectedAdmin>
 }

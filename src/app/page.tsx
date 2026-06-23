@@ -346,10 +346,10 @@ export default function CityPage() {
       case 'dashboard':
         return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
       case 'admin':
-        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
+        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin><AdminView /></ProtectedAdmin></ErrorBoundary>
       case 'super-admin':
         // Alias: unified admin panel (super_admin role sees all tabs inside AdminView)
-        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin /></ErrorBoundary>
+        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin><AdminView /></ProtectedAdmin></ErrorBoundary>
       case 'search':
         return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog':
