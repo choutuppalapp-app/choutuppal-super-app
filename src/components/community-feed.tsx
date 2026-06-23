@@ -14,9 +14,11 @@ import {
   Send,
   Loader2,
   X,
+  ImagePlus,
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 
 // ─── Types ─────────────────────────────────────────────────────
 interface Profile {
@@ -649,8 +651,9 @@ export default function CommunityFeed() {
   const [hasMorePosts, setHasMorePosts] = useState(true)
   const [newPostContent, setNewPostContent] = useState('')
   const [newPostMediaUrls, setNewPostMediaUrls] = useState<string[]>([])
-  const [newPostMediaInput, setNewPostMediaInput] = useState('')
   const [posting, setPosting] = useState(false)
+  const [uploadingMedia, setUploadingMedia] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Comments state (per post)
   const [expandedCommentsPostId, setExpandedCommentsPostId] = useState<string | null>(null)
@@ -704,6 +707,48 @@ export default function CommunityFeed() {
     }
   }, [communityTab, fetchPosts, fetchLeaders])
 
+  // Upload image files to Supabase community-images bucket
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length || !user) return
+    // Limit to 4 images per post
+    const remaining = 4 - newPostMediaUrls.length
+    const toUpload = files.slice(0, remaining)
+    if (!toUpload.length) return
+
+    setUploadingMedia(true)
+    try {
+      const { default: imageCompression } = await import('browser-image-compression')
+      const uploadedUrls: string[] = []
+
+      for (const file of toUpload) {
+        // Compress client-side
+        const compressed = await imageCompression(file, {
+          maxSizeMB: 0.8,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        })
+        const ext = file.name.split('.').pop() || 'jpg'
+        const fileName = `community/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { data, error } = await supabase.storage
+          .from('community-images')
+          .upload(fileName, compressed, { upsert: false })
+        if (!error && data) {
+          const { data: urlData } = supabase.storage.from('community-images').getPublicUrl(data.path)
+          if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl)
+        }
+      }
+
+      setNewPostMediaUrls((prev) => [...prev, ...uploadedUrls])
+    } catch {
+      // Silent fail — don't block post creation
+    } finally {
+      setUploadingMedia(false)
+      // Reset so same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   // Create post
   const handleCreatePost = async () => {
     if (!newPostContent.trim() || !user) return
@@ -724,7 +769,6 @@ export default function CommunityFeed() {
         setPosts((prev) => [data.post, ...prev])
         setNewPostContent('')
         setNewPostMediaUrls([])
-        setNewPostMediaInput('')
       }
     } catch {
       // Silent fail
@@ -832,15 +876,6 @@ export default function CommunityFeed() {
       navigator.clipboard.writeText(`${window.location.origin}/?post=${postId}`).catch(() => {})
       setShareToast(postId)
       setTimeout(() => setShareToast(null), 2500)
-    }
-  }
-
-  // Add media URL
-  const handleAddMedia = () => {
-    const trimmed = newPostMediaInput.trim()
-    if (trimmed && (trimmed.startsWith('http://') || trimmed.startsWith('https://'))) {
-      setNewPostMediaUrls((prev) => [...prev, trimmed])
-      setNewPostMediaInput('')
     }
   }
 
@@ -953,35 +988,30 @@ export default function CommunityFeed() {
                     </div>
                   )}
 
-                  {/* Media URL input */}
-                  {newPostMediaInput !== '' || newPostMediaUrls.length > 0 ? (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input
-                        type="url"
-                        value={newPostMediaInput}
-                        onChange={(e) => setNewPostMediaInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddMedia()}
-                        placeholder="Paste image URL..."
-                        className="flex-1 bg-white/50 rounded-lg border border-white/30 px-3 py-1.5 text-xs text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/30"
-                      />
-                      <button
-                        onClick={handleAddMedia}
-                        disabled={!newPostMediaInput.trim()}
-                        className="px-3 py-1.5 rounded-lg bg-[#4169E1]/10 text-[#4169E1] text-xs font-medium disabled:opacity-40"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  ) : null}
+                  {/* Media URL input (removed — now file-based) */}
 
                   {/* Action row */}
                   <div className="flex items-center justify-between mt-3">
+                    {/* Hidden native file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
                     <button
-                      onClick={() => setNewPostMediaInput(' ')}
-                      className="flex items-center gap-1.5 text-gray-400 hover:text-[#4169E1] transition-colors text-xs px-2 py-1.5 rounded-lg hover:bg-blue-50/30"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingMedia || newPostMediaUrls.length >= 4}
+                      className="flex items-center gap-1.5 text-gray-400 hover:text-[#4169E1] transition-colors text-xs px-2 py-1.5 rounded-lg hover:bg-blue-50/30 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <Camera className="w-4 h-4" />
-                      <span>Photo</span>
+                      {uploadingMedia ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="w-4 h-4" />
+                      )}
+                      <span>{uploadingMedia ? 'Uploading...' : `Photo${newPostMediaUrls.length > 0 ? ` (${newPostMediaUrls.length}/4)` : ''}`}</span>
                     </button>
                     <button
                       onClick={handleCreatePost}

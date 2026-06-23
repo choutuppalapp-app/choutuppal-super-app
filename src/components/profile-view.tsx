@@ -118,19 +118,14 @@ export default function ProfileView() {
                 bio: profile.bio || '',
                 followersCount: profile.followersCount,
                 followingCount: profile.followingCount,
-                vision: [
-                  'Quality education for every child',
-                  'Modern healthcare facilities in all villages',
-                  'Employment opportunities through development',
-                  'Complete road connectivity to all areas',
-                ],
+                vision: [],
                 achievements: [],
                 events: [],
                 office: {
-                  address: 'Choutuppal, Yadadri Bhuvanagiri',
-                  paContact: '+91 00000 00000',
-                  officeHours: 'Mon-Sat: 10:00 AM - 5:00 PM',
-                  email: 'contact@example.com',
+                  address: '',
+                  paContact: '',
+                  officeHours: '',
+                  email: '',
                 },
               }
             : undefined
@@ -142,6 +137,7 @@ export default function ProfileView() {
   // ─── Render Individual Profile ───────────────────────────
   return (
     <IndividualProfilePage
+      currentUserId={user?.id ?? null}
       profileData={
         profile
           ? {
