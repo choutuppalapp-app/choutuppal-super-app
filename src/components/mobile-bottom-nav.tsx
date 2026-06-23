@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle } from 'lucide-react'
+import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -113,7 +113,15 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('explore', false, '')}
           />
 
-          {/* 5. You */}
+          {/* 5. Community Feed */}
+          <NavItem
+            icon={Users}
+            label="మన ఊరు"
+            isActive={currentView === 'community'}
+            onClick={() => handleNavClick('community')}
+          />
+
+          {/* 6. You */}
           <NavItem
             icon={UserCircle}
             label="You"

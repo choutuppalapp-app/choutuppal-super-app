@@ -118,6 +118,7 @@ const TAB_ITEMS = [
   { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
   { key: 'banners', label: 'My Banners', icon: ImageIcon },
   { key: 'stories', label: 'My Stories', icon: Sparkles },
+  { key: 'my_posts', label: 'My Posts', icon: FileText },
   { key: 'wallet', label: 'Wallet', icon: Wallet },
   { key: 'settings', label: 'Settings', icon: Settings },
 ]
@@ -247,6 +248,14 @@ export default function DashboardView() {
   )
 
   const userStories = storiesData || []
+
+  const { data: myPostsData, mutate: mutateMyPosts } = useSWR(
+    currentUser ? `/api/social/posts?userId=${currentUser.id}&limit=50` : null,
+    fetcher,
+    { dedupingInterval: 30000, revalidateOnFocus: false }
+  )
+
+  const myPosts: any[] = myPostsData?.posts ?? []
 
   useEffect(() => {
     fetch('/api/admin/categories?active=true')
@@ -1128,6 +1137,122 @@ export default function DashboardView() {
     )
   }
 
+  // ─── My Posts Tab ──────────────────────────────────────────────────────────
+  const handleDeletePost = async (postId: string) => {
+    if (!currentUser) return
+    if (!confirm('Delete this post permanently?')) return
+    // Optimistic remove
+    mutateMyPosts(
+      (prev: any) => prev
+        ? { ...prev, posts: prev.posts.filter((p: any) => p.id !== postId) }
+        : prev,
+      false
+    )
+    try {
+      const res = await fetch(`/api/social/posts/${postId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id }),
+      })
+      if (!res.ok) {
+        toast.error('Failed to delete post')
+        mutateMyPosts() // revalidate to restore
+      } else {
+        toast.success('Post deleted')
+      }
+    } catch {
+      toast.error('Network error')
+      mutateMyPosts()
+    }
+  }
+
+  const renderMyPosts = () => (
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-bold text-gray-900">నా పోస్ట్లు <span className="text-sm font-normal text-gray-400">(My Posts)</span></h2>
+        <span className="text-xs text-gray-400">{myPosts.length} post{myPosts.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {!myPostsData && (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-2xl p-4 border border-gray-100 animate-pulse">
+              <div className="h-4 bg-gray-100 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-gray-100 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {myPostsData && myPosts.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <FileText size={42} className="mb-3 opacity-30" />
+          <p className="text-sm font-semibold">No posts yet</p>
+          <p className="text-xs mt-1">Posts you create in the Community Feed will appear here.</p>
+        </div>
+      )}
+
+      {myPosts.map((post) => {
+        const images: string[] = (() => {
+          try { return JSON.parse(post.mediaUrls || '[]') } catch { return [] }
+        })()
+        const createdAt = new Date(post.createdAt)
+        const timeAgo = (() => {
+          const diff = (Date.now() - createdAt.getTime()) / 1000
+          if (diff < 60) return 'just now'
+          if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+          if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+          return `${Math.floor(diff / 86400)}d ago`
+        })()
+
+        return (
+          <div key={post.id} className="bg-white rounded-2xl border border-gray-100 hover:shadow-md transition-all duration-200">
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  {/* Post content preview */}
+                  <p className="text-sm text-gray-800 leading-relaxed line-clamp-3">
+                    {post.content || post.textContent || '(No text content)'}
+                  </p>
+                  {/* Meta row */}
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                    <span>{timeAgo}</span>
+                    <span className="flex items-center gap-1">
+                      <Heart size={11} className="text-rose-400" />
+                      {post._count?.likes ?? 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageCircle size={11} />
+                      {post._count?.comments ?? 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Thumbnail if image exists */}
+                {images[0] && (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                    <img src={images[0]} alt="post" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className="flex items-center justify-end px-4 pb-3 pt-0 border-t border-gray-50">
+              <button
+                onClick={() => handleDeletePost(post.id)}
+                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-2.5 py-1.5 transition-all duration-200 active:scale-95"
+              >
+                <Trash2 size={13} />
+                Delete
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+
   const renderWallet = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100">
@@ -1299,6 +1424,7 @@ export default function DashboardView() {
           {activeTab === 'real_estate' && renderRealEstate()}
           {activeTab === 'banners' && renderBanners()}
           {activeTab === 'stories' && renderStories()}
+          {activeTab === 'my_posts' && renderMyPosts()}
           {activeTab === 'wallet' && renderWallet()}
           {activeTab === 'settings' && renderSettings()}
         </div>
@@ -1907,6 +2033,14 @@ export default function DashboardView() {
           >
             <Circle size={20} />
             <span className="text-[10px] mt-0.5 font-semibold">Stories</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('my_posts')}
+            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'my_posts' ? 'text-[#4169E1]' : 'text-gray-500'}`}
+          >
+            <FileText size={20} />
+            <span className="text-[10px] mt-0.5 font-semibold">Posts</span>
           </button>
 
           <button
