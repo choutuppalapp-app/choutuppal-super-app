@@ -2,7 +2,7 @@
   "name": "Choutuppal App - Your Super App",
   "short_name": "Choutuppal",
   "description": "Discover businesses, news, and services in Choutuppal.",
-  "start_url": "/",
+  "start_url": "/?v=fresh",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4169E1",

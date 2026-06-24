@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://choutuppal.in'),
   title: "చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App",
   description: "ఇకపై మన ఊరి షాపులు, హాస్పిటల్స్, రియల్ ఎస్టేట్ వివరాలు అన్నీ ఒకే క్లిక్ లో! చౌటుప్పల్ సొంత సూపర్ యాప్ ని ఇప్పుడే ఓపెన్ చేయండి.",
-  manifest: '/manifest.json',
+  manifest: '/manifest.json?v=fresh',
   icons: {
     icon: [
       { url: '/icons/icon-192x192.png?v=new', sizes: '192x192', type: 'image/png' },
