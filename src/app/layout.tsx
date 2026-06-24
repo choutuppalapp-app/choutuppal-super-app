@@ -46,14 +46,20 @@ export const metadata: Metadata = {
   description: "ఇకపై మన ఊరి షాపులు, హాస్పిటల్స్, రియల్ ఎస్టేట్ వివరాలు అన్నీ ఒకే క్లిక్ లో! చౌటుప్పల్ సొంత సూపర్ యాప్ ని ఇప్పుడే ఓపెన్ చేయండి.",
   manifest: '/manifest.json',
   icons: {
-    icon: '/brand-logo.png',
-    apple: '/brand-logo.png',
+    icon: [
+      { url: '/icons/icon-192x192.png?v=new', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png?v=new', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-152x152.png?v=new', sizes: '152x152', type: 'image/png' },
+      { url: '/icons/icon-192x192.png?v=new', sizes: '192x192', type: 'image/png' },
+    ],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Choutuppal',
-    startupImage: ['/brand-logo.png'],
+    startupImage: ['/icons/icon-192x192.png?v=new'],
   },
   openGraph: {
     title: 'చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App',
