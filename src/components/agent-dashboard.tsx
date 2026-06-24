@@ -20,6 +20,8 @@ import Image from 'next/image'
 import useSWR from 'swr'
 import dynamic from 'next/dynamic'
 import Papa from 'papaparse'
+import { AgentNewsForm } from '@/components/agent-news-form'
+import { AgentBlogForm } from '@/components/agent-blog-form'
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 
@@ -61,7 +63,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 export default function AgentDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'add_listing' | 'bulk_upload' | 'portfolio' | 'earnings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'add_listing' | 'bulk_upload' | 'portfolio' | 'earnings' | 'add_news' | 'add_blog'>('overview')
 
   // --- SWR Hooks ───
   const { data: listingsData, mutate: mutateListings, isLoading } = useSWR(
@@ -69,7 +71,12 @@ export default function AgentDashboard() {
     fetcher
   )
 
-  const { data: citiesData } = useSWR('/api/cities', fetcher)
+  const { data: newsData } = useSWR('/api/admin/news', fetcher)
+    const { data: blogsData } = useSWR('/api/blogs?all=true', fetcher)
+    const myNews = Array.isArray(newsData) ? newsData.filter(n => n.authorId === user?.id) : []
+    const myBlogs = Array.isArray(blogsData) ? blogsData.filter(b => b.authorId === user?.id) : []
+    
+    const { data: citiesData } = useSWR('/api/cities', fetcher)
   const cities = citiesData?.cities || []
   const choutuppalCityId = cities.find((c: any) => c.slug === 'choutuppal')?.id || ''
 
@@ -356,6 +363,8 @@ export default function AgentDashboard() {
   const NAV_ITEMS = [
     { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
     { id: 'add_listing', icon: Plus, label: editingListingId ? 'Edit Listing' : 'Add Listing' },
+      { id: 'add_news', icon: FileText, label: 'Add News' },
+      { id: 'add_blog', icon: Edit2, label: 'Add Blog' },
     { id: 'bulk_upload', icon: UploadCloud, label: 'Bulk Upload' },
     { id: 'portfolio', icon: Store, label: 'My Portfolio' },
     { id: 'earnings', icon: Wallet, label: 'Earnings' },
@@ -718,7 +727,25 @@ export default function AgentDashboard() {
           )}
 
           
-{activeTab === 'bulk_upload' && (
+{activeTab === 'add_news' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 max-w-3xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-6 md:p-8">
+                  <h2 className="text-2xl font-black text-gray-900 mb-6 pb-4 border-b border-gray-100">Add Local News</h2>
+                  <AgentNewsForm onSuccess={() => setActiveTab('portfolio')} />
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'add_blog' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 max-w-3xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-6 md:p-8">
+                  <h2 className="text-2xl font-black text-gray-900 mb-6 pb-4 border-b border-gray-100">Add Blog Post</h2>
+                  <AgentBlogForm onSuccess={() => setActiveTab('portfolio')} />
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'bulk_upload' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-8 flex flex-col items-center justify-center text-center">
                 <div className="p-5 bg-blue-50 rounded-full mb-5">

@@ -99,11 +99,42 @@ export async function GET(request: NextRequest) {
   }
 }
 
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
 // POST /api/blogs — Create a new blog
 export async function POST(request: Request) {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: profile } = await supabase
+      .from('User')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin' && profile.role !== 'city_admin' && profile.role !== 'agent')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await request.json()
-    const { title, slug, coverImageUrl, content, authorId, cityId, isPublished } = body
+    const { title, slug, coverImageUrl, content, cityId } = body
 
     if (!title || !slug) {
       return NextResponse.json(
@@ -119,17 +150,6 @@ export async function POST(request: Request) {
         { error: 'A blog with this slug already exists' },
         { status: 409 }
       )
-    }
-
-    // Verify author exists
-    if (authorId) {
-      const author = await db.user.findUnique({ where: { id: authorId } })
-      if (!author) {
-        return NextResponse.json(
-          { error: 'Author not found' },
-          { status: 404 }
-        )
-      }
     }
 
     // Verify city exists if provided
@@ -149,9 +169,9 @@ export async function POST(request: Request) {
         slug,
         coverImageUrl: coverImageUrl || null,
         content: content || null,
-        authorId: authorId || null,
+        authorId: user.id, // Always use authenticated user's ID
         cityId: cityId || null,
-        isPublished: isPublished ?? false,
+        isPublished: true, // Agent submissions are automatically APPROVED
       },
       include: {
         author: {

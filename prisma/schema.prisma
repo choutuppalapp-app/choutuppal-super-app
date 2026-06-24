@@ -95,6 +95,7 @@ model User {
   subscriptions     Subscription[]
   stories           Story[]
   blogs             Blog[]
+  news              News[]
   bannerAds         BannerAd[]
   adminRequests     AdminRequest[]
   // Financial relations
@@ -359,8 +360,10 @@ model News {
   source      String?
   isPublished Boolean  @default(true)
   createdAt   DateTime @default(now())
+  authorId    String?
 
   city City @relation(fields: [cityId], references: [id])
+  author User? @relation(fields: [authorId], references: [id])
 }
 
 // ─── Site Setting (Global) ──────────────────────────────────
