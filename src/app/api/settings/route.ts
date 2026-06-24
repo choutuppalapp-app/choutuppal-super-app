@@ -10,7 +10,7 @@ export async function GET() {
       // Create default settings if none exist
       const defaultSettings = await db.siteSetting.create({
         data: {
-          logoUrl: '/logo.png?v=new',
+          logoUrl: '/brand-logo.png',
           affiliateBaseUrl: 'https://choutuppal.com',
           heroHeadline: 'Discover Choutuppal — Your Town, One App',
           heroDescription:

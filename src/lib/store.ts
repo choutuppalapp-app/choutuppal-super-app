@@ -71,7 +71,7 @@ export interface CityData {
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   id: '',
-  logoUrl: '/logo.png?v=new',
+  logoUrl: '/brand-logo.png',
   affiliateBaseUrl: 'https://choutuppal.com',
   heroHeadline: 'Discover Choutuppal — Your Town, One App',
   heroDescription: 'Find the best local businesses, services, real estate, news, and more — all in one super app built for Choutuppal.',
