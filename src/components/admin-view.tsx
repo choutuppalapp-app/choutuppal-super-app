@@ -41,6 +41,17 @@ export default function AdminView() {
   const [isAddingBlog, setIsAddingBlog] = useState(false)
   const [isAddingUser, setIsAddingUser] = useState(false)
 
+  const [branding, setBranding] = useState<any>({})
+  const [isSavingBranding, setIsSavingBranding] = useState(false)
+
+  useEffect(() => {
+    if (activeTab === 'branding') {
+      fetch('/api/admin/branding')
+        .then(res => res.json())
+        .then(data => setBranding(data))
+    }
+  }, [activeTab])
+
   useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -69,7 +80,7 @@ export default function AdminView() {
     return <ForbiddenPage />
   }
 
-  const fetchData = async () => {
+  async function fetchData() {
     setLoading(true)
     try {
       const [uRes, lRes, reRes, bRes, aRes, nRes, blRes] = await Promise.all([
@@ -193,18 +204,6 @@ export default function AdminView() {
   }
 
   if (loading) return <div className="p-8 text-center">Loading Admin Panel...</div>
-
-  
-  const [branding, setBranding] = useState<any>({})
-  const [isSavingBranding, setIsSavingBranding] = useState(false)
-
-  useEffect(() => {
-    if (activeTab === 'branding') {
-      fetch('/api/admin/branding')
-        .then(res => res.json())
-        .then(data => setBranding(data))
-    }
-  }, [activeTab])
 
   const handleSaveBranding = async () => {
     setIsSavingBranding(true)
