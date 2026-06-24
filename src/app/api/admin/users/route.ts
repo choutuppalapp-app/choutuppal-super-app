@@ -84,24 +84,22 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ success: true, message: 'Admin role removed' })
       }
       case 'changeRole': {
-        const { newRole, cityId } = body
+        const { newRole } = body
         if (!newRole) {
+          console.error('[BACKEND] newRole is missing in changeRole body:', body);
           return NextResponse.json({ error: 'newRole is required for changeRole' }, { status: 400 })
         }
         
-        const updateData: any = { role: newRole }
-        
-        // Removed legacy city assignments for agent/city_admin to fix Prisma failure
-        if (newRole === 'agent') {
-          updateData.isAgentApproved = true
-        } else {
-          updateData.isAgentApproved = false
+        try {
+          await db.user.update({
+            where: { id: userId },
+            data: { role: newRole },
+          })
+          console.log(`[BACKEND] Successfully updated user ${userId} to role ${newRole}`);
+        } catch (dbErr) {
+          console.error(`[BACKEND] Prisma error updating user ${userId} to ${newRole}:`, dbErr);
+          return NextResponse.json({ error: 'Database update failed' }, { status: 500 })
         }
-        
-        await db.user.update({
-          where: { id: userId },
-          data: updateData,
-        })
         
         return NextResponse.json({ success: true, message: `Role updated to ${newRole}` })
       }

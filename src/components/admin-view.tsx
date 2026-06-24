@@ -151,14 +151,20 @@ export default function AdminView() {
     try {
       // Optimistic update
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
-            const res = await fetch(`/api/admin/users`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, action: 'changeRole', newRole })
-        })
-      if (!res.ok) throw new Error('Update failed')
+      console.log(`[FRONTEND] Sending PATCH to /api/admin/users for user ${userId} with new role ${newRole}`);
+      const res = await fetch(`/api/admin/users`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'changeRole', newRole })
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        console.error(`[FRONTEND] API Error:`, errData || res.statusText);
+        throw new Error('Update failed')
+      }
       toast.success('Role updated successfully')
-    } catch {
+    } catch (err: any) {
+      console.error(`[FRONTEND] Exception in handleRoleChange:`, err);
       toast.error('Failed to update role')
       // Revert could be handled here by re-fetching
       fetchData()
