@@ -24,24 +24,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              {currentCity?.logoUrl ? (
-                <img src={currentCity.logoUrl} alt={brandName} className="w-8 h-8 rounded-full object-cover" loading="lazy" decoding="async" />
-              ) : (
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
-                  style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
-                >
-                  <span className="text-white font-bold text-sm">{brandName.charAt(0)}</span>
-                </div>
-              )}
-              <span
-                className="text-lg font-bold bg-clip-text text-transparent"
-                style={{ backgroundImage: `linear-gradient(to right, ${primary}, ${secondary})` }}
-              >
-                {brandName}
-              </span>
-            </div>
+              <div className="flex items-center mb-3">
+                <img src="/logo.png" alt="Choutuppal App" className="h-12 w-auto object-contain" />
+              </div>
             <p className="text-sm text-gray-500 leading-relaxed">
               Your super app for {selectedCityName}. Discover businesses, news, services, and
               everything local — all in one place.

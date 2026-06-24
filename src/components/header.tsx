@@ -81,42 +81,7 @@ export function Header({ className }: HeaderProps) {
     }
   }
 
-  const renderLogo = (size: 'sm' | 'md' = 'md') => {
-    const dim = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8'
-    const textSize = size === 'sm' ? 'text-xs' : 'text-sm'
-
-    if (logoUrl) {
-      return (
-        <div className={`${dim} rounded-full overflow-hidden shadow-sm flex-shrink-0`}>
-          <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" fetchPriority="high" />
-        </div>
-      )
-    }
-
-    return (
-      <div
-        className={`${dim} rounded-full flex items-center justify-center shadow-sm flex-shrink-0`}
-        style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
-      >
-        <span className="text-white font-bold leading-none" style={{ fontSize: size === 'sm' ? '12px' : '14px' }}>
-          {brandName.charAt(0).toUpperCase()}
-        </span>
-      </div>
-    )
-  }
-
-  const renderBrandText = (size: 'sm' | 'md' = 'md') => {
-    const textClass = size === 'sm' ? 'text-base' : 'text-lg'
-    return (
-      <span
-        className={`${textClass} font-bold bg-clip-text text-transparent`}
-        style={{ backgroundImage: `linear-gradient(to right, ${secondary}, ${primary})` }}
-      >
-        {brandName}
-      </span>
-    )
-  }
-
+  // Logo rendering removed in favor of static image
   return (
     <header
       className={`sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm ${className || ''}`}
@@ -126,8 +91,7 @@ export function Header({ className }: HeaderProps) {
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
           <button onClick={handleLogoClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            {renderLogo('md')}
-            {renderBrandText('md')}
+            <img src="/logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
           </button>
         </div>
 
@@ -196,8 +160,7 @@ export function Header({ className }: HeaderProps) {
       <div className="flex md:hidden items-center justify-between h-12 px-3">
         <div className="flex items-center gap-2">
           <button onClick={handleLogoClick} className="flex items-center gap-1.5">
-            {renderLogo('sm')}
-            {renderBrandText('sm')}
+            <img src="/logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
           </button>
         </div>
 
@@ -228,8 +191,7 @@ export function Header({ className }: HeaderProps) {
               {/* Drawer header */}
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  {renderLogo('md')}
-                  {renderBrandText('md')}
+                  <img src="/logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
                 </div>
                 <button
                   onClick={() => setIsDrawerOpen(false)}
