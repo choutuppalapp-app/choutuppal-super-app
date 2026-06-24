@@ -91,7 +91,7 @@ export function Header({ className }: HeaderProps) {
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
           <button onClick={handleLogoClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
+            <img src="/logo.png?v=new" alt="Choutuppal App" className="h-10 w-auto object-contain" />
           </button>
         </div>
 
@@ -160,7 +160,7 @@ export function Header({ className }: HeaderProps) {
       <div className="flex md:hidden items-center justify-between h-12 px-3">
         <div className="flex items-center gap-2">
           <button onClick={handleLogoClick} className="flex items-center gap-1.5">
-            <img src="/logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
+            <img src="/logo.png?v=new" alt="Choutuppal App" className="h-10 w-auto object-contain" />
           </button>
         </div>
 
@@ -191,7 +191,7 @@ export function Header({ className }: HeaderProps) {
               {/* Drawer header */}
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <img src="/logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
+                  <img src="/logo.png?v=new" alt="Choutuppal App" className="h-10 w-auto object-contain" />
                 </div>
                 <button
                   onClick={() => setIsDrawerOpen(false)}
