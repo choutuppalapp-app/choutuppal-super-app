@@ -15,10 +15,12 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { GlassCard } from '@/components/glass-card'
 import { RichTextEditor } from '@/components/rich-text-editor'
-import { Home } from 'lucide-react'
+import { Home, AlertTriangle } from 'lucide-react'
+import { ForbiddenPage } from '@/components/auth/forbidden-page'
 
 export default function AdminView() {
   const { user } = useAuth()
+  const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'realestate' | 'banners' | 'announcements' | 'news' | 'blogs' | 'branding'>('overview')
   
   const [users, setUsers] = useState<any[]>([])
@@ -40,8 +42,32 @@ export default function AdminView() {
   const [isAddingUser, setIsAddingUser] = useState(false)
 
   useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
     fetchData()
   }, [])
+
+  if (!isMounted) {
+    return <div className="flex h-screen items-center justify-center font-bold text-gray-500">Loading Admin Panel...</div>;
+  }
+
+  const role = user?.role?.toLowerCase() || '';
+  if (role !== 'super_admin' && role !== 'city_admin' && role !== 'admin') {
+    if (process.env.NODE_ENV === 'development') {
+      return (
+        <div className="max-w-7xl mx-auto">
+          <div className="mx-4 mt-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
+            <AlertTriangle className="size-4 shrink-0" />
+            Dev Mode: Viewing admin panel as non-admin user.
+          </div>
+          <ForbiddenPage />
+        </div>
+      )
+    }
+    return <ForbiddenPage />
+  }
 
   const fetchData = async () => {
     setLoading(true)

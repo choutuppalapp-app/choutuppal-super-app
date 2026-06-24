@@ -8,7 +8,6 @@ import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { useAppConfig } from '@/hooks/use-app-config'
 import { ErrorBoundary } from '@/components/error-boundary'
-import { ProtectedAdmin } from '@/components/protected-wrappers'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
 import { StoriesSection } from '@/components/home/stories-section'
@@ -346,10 +345,10 @@ export default function CityPage() {
       case 'dashboard':
         return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
       case 'admin':
-        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin><AdminView /></ProtectedAdmin></ErrorBoundary>
+        return <ErrorBoundary name="AdminView"><AdminView /></ErrorBoundary>
       case 'super-admin':
         // Alias: unified admin panel (super_admin role sees all tabs inside AdminView)
-        return <ErrorBoundary name="ProtectedAdmin"><ProtectedAdmin><AdminView /></ProtectedAdmin></ErrorBoundary>
+        return <ErrorBoundary name="AdminView"><AdminView /></ErrorBoundary>
       case 'search':
         return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog':
