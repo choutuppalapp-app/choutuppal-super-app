@@ -70,44 +70,44 @@ export default function AdminView() {
       const promises: Promise<void>[] = []
       
       if (activeTab === 'users' || activeTab === 'overview') {
-        promises.push(fetch('/api/admin/users').then(r => r.json()).then(uRes => {
+        promises.push(fetch(`/api/admin/users?t=${Date.now()}`).then(r => r.json()).then(uRes => {
           if (Array.isArray(uRes)) setUsers(uRes)
           else if (uRes.users) setUsers(uRes.users)
         }))
       }
       
       if (activeTab === 'listings' || activeTab === 'overview') {
-        promises.push(fetch('/api/admin/listings').then(r => r.json()).then(lRes => {
+        promises.push(fetch(`/api/admin/listings?t=${Date.now()}`).then(r => r.json()).then(lRes => {
           if (lRes.listings) setListings(lRes.listings)
         }))
       }
       
       if (activeTab === 'realestate' || activeTab === 'overview') {
-        promises.push(fetch('/api/admin/realestate').then(r => r.json()).then(reRes => {
+        promises.push(fetch(`/api/admin/realestate?t=${Date.now()}`).then(r => r.json()).then(reRes => {
           if (reRes.listings) setRealestate(reRes.listings)
         }))
       }
       
       if (activeTab === 'banners' || activeTab === 'overview') {
-        promises.push(fetch('/api/banners?all=true').then(r => r.json()).then(bRes => {
+        promises.push(fetch(`/api/banners?all=true&t=${Date.now()}`).then(r => r.json()).then(bRes => {
           if (Array.isArray(bRes)) setBanners(bRes)
         }))
       }
       
-      if (activeTab === 'announcements') {
-        promises.push(fetch('/api/announcements?activeOnly=false').then(r => r.json()).then(aRes => {
+      if (activeTab === 'announcements' || activeTab === 'overview') {
+        promises.push(fetch(`/api/announcements?activeOnly=false&t=${Date.now()}`).then(r => r.json()).then(aRes => {
           if (Array.isArray(aRes)) setAnnouncements(aRes)
         }))
       }
       
       if (activeTab === 'news') {
-        promises.push(fetch('/api/admin/news?all=true').then(r => r.json()).then(nRes => {
+        promises.push(fetch(`/api/admin/news?all=true&t=${Date.now()}`).then(r => r.json()).then(nRes => {
           if (Array.isArray(nRes)) setNews(nRes)
         }))
       }
       
       if (activeTab === 'blogs') {
-        promises.push(fetch('/api/blogs?all=true').then(r => r.json()).then(blRes => {
+        promises.push(fetch(`/api/blogs?all=true&t=${Date.now()}`).then(r => r.json()).then(blRes => {
           if (Array.isArray(blRes)) setBlogs(blRes)
         }))
       }
