@@ -276,3 +276,19 @@ main {
 .animate-bounce-once {
   animation: bounce-once 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+/* Anti-Copy and Anti-Screenshot Protections */
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  pointer-events: none;
+}

@@ -17,6 +17,7 @@ import { PWAInstallProvider } from "@/components/pwa-install-provider";
 import { PWAInstallPopup } from "@/components/pwa-install-popup";
 import { PWAIOSBanner } from "@/components/pwa-ios-banner";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
+import { AntiCopyWrapper } from "@/components/anti-copy-wrapper";
 
 export const dynamic = 'force-dynamic';
 
@@ -101,10 +102,10 @@ export default function RootLayout({
                 <Header className="flex-none" />
               </ErrorBoundary>
 
-              <main className="flex-1 flex flex-col">
-                <ErrorBoundary name="PageContent">
+              <main className="flex-1 w-full max-w-7xl mx-auto flex flex-col pt-0 pb-16 md:pb-0 safe-bottom">
+                <AntiCopyWrapper>
                   {children}
-                </ErrorBoundary>
+                </AntiCopyWrapper>
               </main>
 
               <ErrorBoundary name="MobileBottomNav">

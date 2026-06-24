@@ -93,15 +93,11 @@ export default function ExploreView() {
   const [totalPages, setTotalPages] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
   const [selectedCityId, setSelectedCityId] = useState('')
-  const syncAttempted = useRef(false)
 
-  // Sync store's searchQuery to local state on mount
+  // Sync store's searchQuery to local state
   // When user clicks "Real Estate" in bottom nav, it sets store.searchQuery
-  // We need to pick that up here and apply it as a category filter
+  // We pick that up here and apply it as a category filter
   useEffect(() => {
-    if (syncAttempted.current) return
-    syncAttempted.current = true
-
     if (storeSearchQuery) {
       // Check if the searchQuery matches a category name
       const matchedCategory = CATEGORIES.find(
@@ -109,9 +105,14 @@ export default function ExploreView() {
       )
       if (matchedCategory) {
         setCategory(matchedCategory)
+        setSearch('')
       } else {
         setSearch(storeSearchQuery)
+        setCategory('All')
       }
+    } else {
+      setSearch('')
+      setCategory('All')
     }
   }, [storeSearchQuery])
 

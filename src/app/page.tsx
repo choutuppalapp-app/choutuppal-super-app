@@ -65,8 +65,7 @@ const DashboardView = dynamic(
 )
 
 
-const ProtectedDashboard = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedDashboard), { ssr: false })
-const ProtectedSuperAdmin = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedSuperAdmin), { ssr: false })
+// Removed wrappers
 
 const AgentDashboard = dynamic(
   () => import('@/components/agent-dashboard'),
@@ -343,7 +342,7 @@ export default function CityPage() {
         if (!config.enableListings) return <HomeView />
         return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
       case 'dashboard':
-        return <ErrorBoundary name="ProtectedDashboard"><ProtectedDashboard /></ErrorBoundary>
+        return <ErrorBoundary name="DashboardView"><DashboardView /></ErrorBoundary>
       case 'admin':
         return <ErrorBoundary name="AdminView"><AdminView /></ErrorBoundary>
       case 'super-admin':
