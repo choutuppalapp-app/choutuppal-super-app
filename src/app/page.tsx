@@ -8,6 +8,7 @@ import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { useAppConfig } from '@/hooks/use-app-config'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { ProtectedAdmin } from '@/components/protected-wrappers'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
 import { StoriesSection } from '@/components/home/stories-section'
@@ -66,7 +67,6 @@ const DashboardView = dynamic(
 
 
 const ProtectedDashboard = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedDashboard), { ssr: false })
-const ProtectedAdmin = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedAdmin), { ssr: false })
 const ProtectedSuperAdmin = dynamic(() => import('@/components/protected-wrappers').then(mod => mod.ProtectedSuperAdmin), { ssr: false })
 
 const AgentDashboard = dynamic(
