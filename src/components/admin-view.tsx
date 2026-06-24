@@ -58,7 +58,7 @@ export default function AdminView() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [activeTab])
 
   if (!isMounted) {
     return <div className="flex h-screen items-center justify-center font-bold text-gray-500">Loading Admin Panel...</div>;
@@ -83,23 +83,52 @@ export default function AdminView() {
   async function fetchData() {
     setLoading(true)
     try {
-      const [uRes, lRes, reRes, bRes, aRes, nRes, blRes] = await Promise.all([
-        fetch('/api/admin/users').then(r => r.json()),
-        fetch('/api/admin/listings').then(r => r.json()),
-        fetch('/api/admin/realestate').then(r => r.json()),
-        fetch('/api/banners?all=true').then(r => r.json()),
-        fetch('/api/announcements?activeOnly=false').then(r => r.json()),
-        fetch('/api/admin/news?all=true').then(r => r.json()),
-        fetch('/api/blogs?all=true').then(r => r.json()),
-      ])
-      if (Array.isArray(uRes)) setUsers(uRes)
-      else if (uRes.users) setUsers(uRes.users)
-      if (lRes.listings) setListings(lRes.listings)
-      if (reRes.listings) setRealestate(reRes.listings)
-      if (Array.isArray(bRes)) setBanners(bRes)
-      if (Array.isArray(aRes)) setAnnouncements(aRes)
-      if (Array.isArray(nRes)) setNews(nRes)
-      if (Array.isArray(blRes)) setBlogs(blRes)
+      const promises: Promise<void>[] = []
+      
+      if (activeTab === 'users' || activeTab === 'overview') {
+        promises.push(fetch('/api/admin/users').then(r => r.json()).then(uRes => {
+          if (Array.isArray(uRes)) setUsers(uRes)
+          else if (uRes.users) setUsers(uRes.users)
+        }))
+      }
+      
+      if (activeTab === 'listings' || activeTab === 'overview') {
+        promises.push(fetch('/api/admin/listings').then(r => r.json()).then(lRes => {
+          if (lRes.listings) setListings(lRes.listings)
+        }))
+      }
+      
+      if (activeTab === 'realestate' || activeTab === 'overview') {
+        promises.push(fetch('/api/admin/realestate').then(r => r.json()).then(reRes => {
+          if (reRes.listings) setRealestate(reRes.listings)
+        }))
+      }
+      
+      if (activeTab === 'banners' || activeTab === 'overview') {
+        promises.push(fetch('/api/banners?all=true').then(r => r.json()).then(bRes => {
+          if (Array.isArray(bRes)) setBanners(bRes)
+        }))
+      }
+      
+      if (activeTab === 'announcements') {
+        promises.push(fetch('/api/announcements?activeOnly=false').then(r => r.json()).then(aRes => {
+          if (Array.isArray(aRes)) setAnnouncements(aRes)
+        }))
+      }
+      
+      if (activeTab === 'news') {
+        promises.push(fetch('/api/admin/news?all=true').then(r => r.json()).then(nRes => {
+          if (Array.isArray(nRes)) setNews(nRes)
+        }))
+      }
+      
+      if (activeTab === 'blogs') {
+        promises.push(fetch('/api/blogs?all=true').then(r => r.json()).then(blRes => {
+          if (Array.isArray(blRes)) setBlogs(blRes)
+        }))
+      }
+
+      await Promise.all(promises)
     } catch (err) {
       toast.error('Failed to load data')
     } finally {
@@ -122,12 +151,11 @@ export default function AdminView() {
     try {
       // Optimistic update
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
-      
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole })
-      })
+            const res = await fetch(`/api/admin/users`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'changeRole', newRole })
+        })
       if (!res.ok) throw new Error('Update failed')
       toast.success('Role updated successfully')
     } catch {

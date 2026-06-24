@@ -91,17 +91,10 @@ export async function PATCH(request: NextRequest) {
         
         const updateData: any = { role: newRole }
         
-        // Reset role-specific fields
+        // Removed legacy city assignments for agent/city_admin to fix Prisma failure
         if (newRole === 'agent') {
           updateData.isAgentApproved = true
-          if (cityId) updateData.agentCityId = cityId
-        } else if (newRole === 'city_admin' || newRole === 'city_manager') {
-          updateData.role = 'city_admin' // normalize to city_admin
-          if (cityId) updateData.managedCityId = cityId
         } else {
-          // If changing to normal user or super_admin, clear city assignments
-          updateData.agentCityId = null
-          updateData.managedCityId = null
           updateData.isAgentApproved = false
         }
         
