@@ -60,25 +60,7 @@ export default function AdminView() {
     fetchData()
   }, [activeTab])
 
-  if (!isMounted) {
-    return <div className="flex h-screen items-center justify-center font-bold text-gray-500">Loading Admin Panel...</div>;
-  }
-
   const role = user?.role?.toLowerCase() || '';
-  if (role !== 'super_admin' && role !== 'city_admin' && role !== 'admin') {
-    if (process.env.NODE_ENV === 'development') {
-      return (
-        <div className="max-w-7xl mx-auto">
-          <div className="mx-4 mt-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
-            <AlertTriangle className="size-4 shrink-0" />
-            Dev Mode: Viewing admin panel as non-admin user.
-          </div>
-          <ForbiddenPage />
-        </div>
-      )
-    }
-    return <ForbiddenPage />
-  }
 
   async function fetchData() {
     setLoading(true)
@@ -237,7 +219,7 @@ export default function AdminView() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center">Loading Admin Panel...</div>
+  // loading moved to content area
 
   const handleSaveBranding = async () => {
     setIsSavingBranding(true)
@@ -335,8 +317,25 @@ export default function AdminView() {
 
       {/* Main Content (80%) */}
       <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+        {(!isMounted || loading) ? (
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-8 h-8 border-4 border-[#4169E1] border-t-transparent rounded-full animate-spin" />
+              <p className="text-gray-500 font-medium animate-pulse">Loading data...</p>
+            </div>
+          </div>
+        ) : (role !== 'super_admin' && role !== 'city_admin' && role !== 'admin' && process.env.NODE_ENV !== 'development') ? (
+          <ForbiddenPage />
+        ) : (
+          <>
+            {(role !== 'super_admin' && role !== 'city_admin' && role !== 'admin' && process.env.NODE_ENV === 'development') && (
+              <div className="mx-4 mb-4 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-700">
+                <AlertTriangle className="size-4 shrink-0" />
+                Dev Mode: Viewing admin panel as non-admin user.
+              </div>
+            )}
 
-        {activeTab === 'overview' && (
+            {activeTab === 'overview' && (
           <div className="space-y-6">
             <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -734,6 +733,8 @@ export default function AdminView() {
           </div>
         )}
 
+          </>
+        )}
       </div>
 
       {/* Forms as Modals */}
