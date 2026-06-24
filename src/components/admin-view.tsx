@@ -11,6 +11,8 @@ import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { MediaUploader } from '@/components/media-uploader'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
+import imageCompression from 'browser-image-compression'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { GlassCard } from '@/components/glass-card'
@@ -260,9 +262,35 @@ export default function AdminView() {
             <Label>Tagline</Label>
             <Input value={branding.tagline || ''} onChange={e => setBranding({...branding, tagline: e.target.value})} placeholder="Your Tagline" />
           </div>
-          <div className="space-y-2">
-            <Label>Logo URL</Label>
-            <Input value={branding.logoUrl || ''} onChange={e => setBranding({...branding, logoUrl: e.target.value})} placeholder="https://..." />
+          <div className="space-y-4 md:col-span-2">
+            <Label>App Logo</Label>
+            <MediaUploader
+              value={branding.appLogoUrl}
+              onChange={url => setBranding({...branding, appLogoUrl: url, logoUrl: url})}
+              guideline="logo"
+              folder="branding"
+              label="Upload App Logo (Desktop/Header)"
+            />
+          </div>
+          <div className="space-y-4 md:col-span-2">
+            <Label>Favicon</Label>
+            <MediaUploader
+              value={branding.faviconUrl}
+              onChange={url => setBranding({...branding, faviconUrl: url})}
+              guideline="logo"
+              folder="branding"
+              label="Upload Favicon (192x192 recommended)"
+            />
+          </div>
+          <div className="space-y-4 md:col-span-2">
+            <Label>Mobile App Icon (PWA)</Label>
+            <MediaUploader
+              value={branding.pwaIconUrl}
+              onChange={url => setBranding({...branding, pwaIconUrl: url})}
+              guideline="logo"
+              folder="branding"
+              label="Upload PWA Icon (512x512 recommended)"
+            />
           </div>
           <div className="space-y-2">
             <Label>Primary Color Hex</Label>

@@ -48,12 +48,14 @@ export function Header({ className }: HeaderProps) {
   const locationLoading = useAppStore((s) => s.locationLoading)
   const themePrimary = useAppStore((s) => s.themePrimary)
   const themeSecondary = useAppStore((s) => s.themeSecondary)
+  const siteSettings = useAppStore((s) => s.siteSettings)
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
   const { isInstallable, isInstalled, isIOS, triggerInstall } = usePWAInstall()
   const { config } = useAppConfig()
   const showInstallMenuItem = (isInstallable || isIOS) && !isInstalled
 
   const brandName = currentCity.brandName || 'Choutuppal'
+  const appLogoUrl = siteSettings?.appLogoUrl || siteSettings?.logoUrl || '/brand-logo.png'
   const logoUrl = currentCity.logoUrl || null
   const primary = themePrimary || '#D4AF37'
   const secondary = themeSecondary || '#4169E1'
@@ -91,7 +93,7 @@ export function Header({ className }: HeaderProps) {
         {/* Left: Logo + City */}
         <div className="flex items-center gap-4">
           <button onClick={handleLogoClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src="/brand-logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
+            <img src={appLogoUrl} alt="Choutuppal App" className="h-10 w-auto object-contain" />
           </button>
         </div>
 
@@ -160,7 +162,7 @@ export function Header({ className }: HeaderProps) {
       <div className="flex md:hidden items-center justify-between h-12 px-3">
         <div className="flex items-center gap-2">
           <button onClick={handleLogoClick} className="flex items-center gap-1.5">
-            <img src="/brand-logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
+            <img src={appLogoUrl} alt="Choutuppal App" className="h-10 w-auto object-contain" />
           </button>
         </div>
 
@@ -191,7 +193,7 @@ export function Header({ className }: HeaderProps) {
               {/* Drawer header */}
               <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <img src="/brand-logo.png" alt="Choutuppal App" className="h-10 w-auto object-contain" />
+                  <img src={appLogoUrl} alt="Choutuppal App" className="h-10 w-auto object-contain" />
                 </div>
                 <button
                   onClick={() => setIsDrawerOpen(false)}

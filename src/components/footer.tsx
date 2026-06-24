@@ -12,8 +12,10 @@ export default function Footer() {
   const themePrimary = useAppStore((s) => s.themePrimary)
   const themeSecondary = useAppStore((s) => s.themeSecondary)
   const navigateTo = useAppStore((s) => s.navigateTo)
+  const siteSettings = useAppStore((s) => s.siteSettings)
 
   const brandName = currentCity?.brandName || 'Choutuppal App'
+  const appLogoUrl = siteSettings?.appLogoUrl || siteSettings?.logoUrl || '/brand-logo.png'
   const primary = themePrimary || '#4169E1'
   const secondary = themeSecondary || '#D4AF37'
   const currentSubdomain = currentCity?.subdomain || 'choutuppal'
@@ -25,7 +27,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
               <div className="flex items-center mb-3">
-                <img src="/brand-logo.png" alt="Choutuppal App" className="h-12 w-auto object-contain" />
+                <img src={appLogoUrl} alt="Choutuppal App" className="h-12 w-auto object-contain" />
               </div>
             <p className="text-sm text-gray-500 leading-relaxed">
               Your super app for {selectedCityName}. Discover businesses, news, services, and

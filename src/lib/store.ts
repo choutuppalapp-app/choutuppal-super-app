@@ -31,6 +31,9 @@ interface CurrentUser {
 export interface SiteSettings {
   id: string
   logoUrl: string | null
+  appLogoUrl: string | null
+  faviconUrl: string | null
+  pwaIconUrl: string | null
   affiliateBaseUrl: string | null
   heroHeadline: string | null
   heroDescription: string | null
@@ -72,6 +75,9 @@ export interface CityData {
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   id: '',
   logoUrl: '/brand-logo.png',
+  appLogoUrl: '/brand-logo.png',
+  faviconUrl: '/icons/icon-192x192.png?v=new',
+  pwaIconUrl: '/icons/icon-512x512.png?v=new',
   affiliateBaseUrl: 'https://choutuppal.com',
   heroHeadline: 'Discover Choutuppal — Your Town, One App',
   heroDescription: 'Find the best local businesses, services, real estate, news, and more — all in one super app built for Choutuppal.',

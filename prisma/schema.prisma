@@ -370,6 +370,9 @@ model News {
 model SiteSetting {
   id              String   @id @default(cuid())
   logoUrl         String?
+  faviconUrl      String?
+  pwaIconUrl      String?
+  appLogoUrl      String?
   affiliateBaseUrl String?
   heroHeadline    String?
   heroDescription String?

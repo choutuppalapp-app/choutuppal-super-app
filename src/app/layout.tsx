@@ -40,44 +40,59 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://choutuppal.in'),
-  title: "చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App",
-  description: "ఇకపై మన ఊరి షాపులు, హాస్పిటల్స్, రియల్ ఎస్టేట్ వివరాలు అన్నీ ఒకే క్లిక్ లో! చౌటుప్పల్ సొంత సూపర్ యాప్ ని ఇప్పుడే ఓపెన్ చేయండి.",
-  manifest: '/manifest.json?v=fresh',
-  icons: {
-    icon: [
-      { url: '/icons/icon-192x192.png?v=new', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512x512.png?v=new', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icons/icon-152x152.png?v=new', sizes: '152x152', type: 'image/png' },
-      { url: '/icons/icon-192x192.png?v=new', sizes: '192x192', type: 'image/png' },
-    ],
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Choutuppal',
-    startupImage: ['/icons/icon-192x192.png?v=new'],
-  },
-  openGraph: {
-    title: 'చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App',
-    description: 'మన ఊరి సర్వీస్ మీ చేతిలో! బిజినెస్ లిస్టింగ్స్, న్యూస్, రియల్ ఎస్టేట్ మరియు రోజువారీ ఆఫర్స్ కోసం ఇన్స్టాల్ చేయండి.',
-    url: 'https://choutuppal.in',
-    siteName: 'Choutuppal App',
-    images: [{ url: '/brand-logo.png', width: 1200, height: 630, alt: 'Choutuppal App' }],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App',
-    description: 'మన ఊరి సర్వీస్ మీ చేతిలో! బిజినెస్ లిస్టింగ్స్, న్యూస్, రియల్ ఎస్టేట్ మరియు రోజువారీ ఆఫర్స్ కోసం ఇన్స్టాల్ చేయండి.',
-    images: ['/brand-logo.png'],
-  },
-  keywords: ["Choutuppal", "local business", "real estate", "Telangana", "hyper-local", "super app"],
-  authors: [{ name: "Choutuppal App Team" }],
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { db } = await import('@/lib/db');
+  let settings: any = null;
+  try {
+    settings = await db.siteSetting.findFirst();
+  } catch (e) {
+    console.error('Failed to fetch settings for metadata:', e);
+  }
+
+  const faviconUrl = settings?.faviconUrl || '/icons/icon-192x192.png?v=new';
+  const ogImageUrl = settings?.ogImageUrl || settings?.appLogoUrl || settings?.logoUrl || '/brand-logo.png';
+  const metaTitle = settings?.metaTitle || "చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App";
+  const metaDescription = settings?.metaDescription || "ఇకపై మన ఊరి షాపులు, హాస్పిటల్స్, రియల్ ఎస్టేట్ వివరాలు అన్నీ ఒకే క్లిక్ లో! చౌటుప్పల్ సొంత సూపర్ యాప్ ని ఇప్పుడే ఓపెన్ చేయండి.";
+
+  return {
+    metadataBase: new URL('https://choutuppal.in'),
+    title: metaTitle,
+    description: metaDescription,
+    manifest: '/manifest.webmanifest?v=fresh',
+    icons: {
+      icon: [
+        { url: faviconUrl, sizes: '192x192', type: 'image/png' },
+        { url: faviconUrl, sizes: '512x512', type: 'image/png' },
+      ],
+      apple: [
+        { url: faviconUrl, sizes: '152x152', type: 'image/png' },
+        { url: faviconUrl, sizes: '192x192', type: 'image/png' },
+      ],
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'Choutuppal',
+      startupImage: [faviconUrl],
+    },
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: 'https://choutuppal.in',
+      siteName: 'Choutuppal App',
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: 'Choutuppal App' }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDescription,
+      images: [ogImageUrl],
+    },
+    keywords: ["Choutuppal", "local business", "real estate", "Telangana", "hyper-local", "super app"],
+    authors: [{ name: "Choutuppal App Team" }],
+  };
+}
 
 export default function RootLayout({
   children,
