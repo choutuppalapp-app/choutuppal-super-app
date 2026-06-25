@@ -19,6 +19,8 @@ import { PWAIOSBanner } from "@/components/pwa-ios-banner";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
