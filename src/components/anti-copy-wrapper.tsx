@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export function AntiCopyWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // Disable security scripts for Admin routes to prevent interfering with session cookies/fetch
+    if (pathname && (pathname.startsWith('/admin') || pathname.startsWith('/dashboard'))) {
+      return;
+    }
+
     // Block Right-Click
     const handleContextMenu = (e: MouseEvent) => {
       if (process.env.NODE_ENV !== 'development') {
@@ -66,7 +74,7 @@ export function AntiCopyWrapper({ children }: { children: React.ReactNode }) {
       document.removeEventListener('keyup', handleKeyUp);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [pathname]);
 
   return <>{children}</>;
 }
