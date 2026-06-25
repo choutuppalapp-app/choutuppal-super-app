@@ -39,7 +39,7 @@ export async function GET() {
     }
 
     return NextResponse.json(settings, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching settings:', error)
     return NextResponse.json({}, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   }
@@ -100,7 +100,7 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json(updatedSettings, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating settings:', error)
     return NextResponse.json({}, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   }

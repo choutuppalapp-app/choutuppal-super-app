@@ -51,9 +51,9 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json(users, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching users:', error)
-    return NextResponse.json([], { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
+    return NextResponse.json({ success: false, error: error.message, details: error.stack }, { status: 500, headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   }
 }
 
@@ -226,7 +226,7 @@ export async function PATCH(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating user:', error)
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }

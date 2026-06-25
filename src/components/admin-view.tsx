@@ -34,6 +34,9 @@ export default function AdminView() {
   const [blogs, setBlogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [usersError, setUsersError] = useState<any>(null)
+  const [brandingError, setBrandingError] = useState<any>(null)
+
   // Forms
   const [isAddingListing, setIsAddingListing] = useState(false)
   const [isAddingRealEstate, setIsAddingRealEstate] = useState(false)
@@ -48,10 +51,19 @@ export default function AdminView() {
 
   useEffect(() => {
     if (activeTab === 'branding') {
-      fetch(`/api/admin/branding?t=${Date.now()}`)
-        .then(res => res.json())
-        .then(data => setBranding(data))
-        .catch(err => console.error('Failed to fetch branding', err))
+      setLoading(true)
+      fetch(`/api/settings?t=${Date.now()}`)
+        .then(async res => {
+          const data = await res.json()
+          if (!res.ok || data.error || data.success === false) {
+            setBrandingError(data);
+            return;
+          }
+          setBrandingError(null);
+          setBranding(data)
+        })
+        .catch(e => setBrandingError({ error: e.message, stack: e.stack }))
+        .finally(() => setLoading(false))
     }
   }, [activeTab])
 
@@ -71,9 +83,17 @@ export default function AdminView() {
       const promises: Promise<void>[] = []
       
       if (activeTab === 'users' || activeTab === 'overview') {
-        promises.push(fetch(`/api/admin/users?t=${Date.now()}`).then(r => r.json()).then(uRes => {
+        promises.push(fetch(`/api/admin/users?t=${Date.now()}`).then(async r => {
+          const uRes = await r.json();
+          if (!r.ok || uRes.error || uRes.success === false) {
+            setUsersError(uRes);
+            return;
+          }
+          setUsersError(null);
           if (Array.isArray(uRes)) setUsers(uRes)
           else if (uRes.users) setUsers(uRes.users)
+        }).catch(e => {
+          setUsersError({ error: e.message, stack: e.stack });
         }))
       }
       
@@ -246,6 +266,12 @@ export default function AdminView() {
 
   const renderBranding = () => (
     <div className="space-y-6">
+      {brandingError && (
+        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded break-words">
+          <h3 className="font-bold mb-2">API Error Fetching Branding:</h3>
+          <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(brandingError, null, 2)}</pre>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">App Branding & Settings</h2>
         <Button onClick={handleSaveBranding} disabled={isSavingBranding} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-md">
@@ -399,6 +425,12 @@ export default function AdminView() {
               <h1 className="text-2xl font-bold text-gray-900">Users</h1>
               <Button onClick={() => setIsAddingUser(true)} className="bg-[#4169E1] hover:bg-blue-700 text-white rounded-full"><Plus className="w-4 h-4 mr-2" /> Add User</Button>
             </div>
+            {usersError && (
+              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded break-words">
+                <h3 className="font-bold mb-2">API Error Fetching Users:</h3>
+                <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(usersError, null, 2)}</pre>
+              </div>
+            )}
             {/* Desktop Table */}
             <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <Table>
