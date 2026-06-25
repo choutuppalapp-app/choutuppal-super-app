@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
@@ -71,12 +72,12 @@ export async function GET(request: Request) {
           total,
           totalPages: Math.ceil(total / limit),
         },
-      }, { headers: { 'Cache-Control': 'no-store' } })
+      }, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   } catch (error) {
     console.error('Error fetching admin listings:', error)
     return NextResponse.json({
       listings: [],
-      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, }, { headers: { 'Cache-Control': 'no-store' } })
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, }, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   }
 }
 
@@ -136,7 +137,7 @@ export async function PATCH(request: Request) {
       },
     })
 
-    return NextResponse.json(listing)
+    return NextResponse.json(listing, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   } catch (error) {
     console.error('Error updating listing status:', error)
     return NextResponse.json(

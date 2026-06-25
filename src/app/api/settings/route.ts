@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
@@ -34,10 +35,10 @@ export async function GET() {
           contactPhone: '8790083706',
         },
       })
-      return NextResponse.json(defaultSettings, { headers: { 'Cache-Control': 'no-store' } })
+      return NextResponse.json(defaultSettings, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
     }
 
-    return NextResponse.json(settings, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json(settings, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   } catch (error) {
     console.error('Error fetching settings:', error)
     return NextResponse.json(
@@ -101,7 +102,7 @@ export async function PUT(request: Request) {
       })
     }
 
-    return NextResponse.json(updatedSettings)
+    return NextResponse.json(updatedSettings, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   } catch (error) {
     console.error('Error updating settings:', error)
     return NextResponse.json(
