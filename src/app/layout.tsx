@@ -164,6 +164,18 @@ export default function RootLayout({
         </ErrorBoundary>
         <Analytics />
         <SpeedInsights />
+        {/* Service Worker Killer */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                  registrations.forEach(r => r.unregister());
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
