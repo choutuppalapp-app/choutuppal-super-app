@@ -213,7 +213,7 @@ export default function DashboardView() {
     title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
   })
 
-  const fetcher = (url: string) => fetch(url).then(res => res.json())
+  const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then(res => res.json())
 
   // SWR Hook integrations
   const { data: listingsData, mutate: fetchListings } = useSWR(
@@ -259,7 +259,7 @@ export default function DashboardView() {
   const myPosts: any[] = myPostsData?.posts ?? []
 
   useEffect(() => {
-    fetch('/api/admin/categories?active=true')
+    fetch('/api/admin/categories?active=true', { credentials: 'include' })
       .then(r => r.json())
       .then(data => setDynamicCategories(Array.isArray(data) ? data : []))
       .catch(() => {})
@@ -312,6 +312,7 @@ export default function DashboardView() {
     try {
       const res = await fetch('/api/coins', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id, action: 'dailyClaim' }),
       })
@@ -477,6 +478,7 @@ export default function DashboardView() {
 
       const res = await fetch(url, {
         method,
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
@@ -512,6 +514,7 @@ export default function DashboardView() {
     try {
       const res = await fetch('/api/banners', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUser.id,
@@ -545,7 +548,7 @@ export default function DashboardView() {
   const deleteListing = async (id: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return
     try {
-      const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/listings/${id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to delete listing')
@@ -560,7 +563,7 @@ export default function DashboardView() {
   const deleteRealEstate = async (id: string) => {
     if (!confirm('Are you sure you want to delete this property?')) return
     try {
-      const res = await fetch(`/api/realestate?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/realestate?id=${id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to delete property')
@@ -636,7 +639,7 @@ export default function DashboardView() {
         id: editingRealEstateId || undefined,
       }
       const method = editingRealEstateId ? 'PUT' : 'POST'
-      const res = await fetch('/api/realestate', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const res = await fetch('/api/realestate', { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
         toast.success(editingRealEstateId ? 'Property updated!' : 'Property submitted for approval!')
         setIsCreatingRealEstate(false)
@@ -654,7 +657,7 @@ export default function DashboardView() {
   const deleteBanner = async (id: string) => {
     if (!confirm('Are you sure you want to delete this banner?')) return
     try {
-      const res = await fetch(`/api/banners?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/banners?id=${id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to delete banner')
@@ -1107,7 +1110,7 @@ export default function DashboardView() {
                             e.stopPropagation()
                             if (!confirm('Delete this story?')) return
                             try {
-                              const res = await fetch(`/api/stories/${story.id}`, { method: 'DELETE' })
+                              const res = await fetch(`/api/stories/${story.id}`, { method: 'DELETE', credentials: 'include' })
                               if (res.ok) {
                                 toast.success('Story deleted')
                                 fetchStories()
@@ -1152,6 +1155,7 @@ export default function DashboardView() {
     try {
       const res = await fetch(`/api/social/posts/${postId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id }),
       })
