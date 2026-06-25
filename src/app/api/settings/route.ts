@@ -3,9 +3,26 @@ export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 export async function GET() {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+        },
+      }
+    )
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      console.error('Session failed to parse in API: /api/settings')
+    }
+
     let settings = await db.siteSetting.findFirst();
 
     if (!settings) {
@@ -30,6 +47,21 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+        },
+      }
+    )
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      console.error('Session failed to parse in API: /api/settings')
+    }
+
     const body = await request.json();
     const existing = await db.siteSetting.findFirst();
 

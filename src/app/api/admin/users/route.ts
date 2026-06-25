@@ -2,10 +2,27 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+        },
+      }
+    )
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      console.error('Session failed to parse in API: ' + request.url)
+    }
+
     const users = await db.user.findMany({
       select: {
         id: true,
@@ -27,6 +44,21 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value },
+        },
+      }
+    )
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      console.error('Session failed to parse in API: ' + request.url)
+    }
+
     const body = await request.json()
     const { userId, action, newRole } = body
 
