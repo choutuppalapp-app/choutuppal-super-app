@@ -53,13 +53,6 @@ export async function PUT(request: Request) {
 
     const currentSettings = await db.siteSetting.findFirst()
 
-    if (!currentSettings) {
-      return NextResponse.json(
-        { error: 'No settings found. GET the settings endpoint first to initialize.' },
-        { status: 404 }
-      )
-    }
-
     const allowedFields = [
       'logoUrl',
       'appLogoUrl',
@@ -96,10 +89,17 @@ export async function PUT(request: Request) {
       }
     }
 
-    const updatedSettings = await db.siteSetting.update({
-      where: { id: currentSettings.id },
-      data: updateData,
-    })
+    let updatedSettings
+    if (currentSettings) {
+      updatedSettings = await db.siteSetting.update({
+        where: { id: currentSettings.id },
+        data: updateData,
+      })
+    } else {
+      updatedSettings = await db.siteSetting.create({
+        data: updateData as any,
+      })
+    }
 
     return NextResponse.json(updatedSettings)
   } catch (error) {
