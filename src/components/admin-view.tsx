@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { GlassCard } from '@/components/glass-card'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminView() {
   const [activeTab, setActiveTab] = useState<'users' | 'listings' | 'banners' | 'branding'>('users')
@@ -37,7 +38,13 @@ export default function AdminView() {
       ]
 
       const results = await Promise.allSettled(
-        endpoints.map(ep => fetch(`${ep.url}?t=${Date.now()}`, { credentials: 'include' }).then(async r => {
+        endpoints.map(ep => (async () => {
+          const { data: { session } } = await supabase.auth.getSession()
+          return fetch(`${ep.url}?t=${Date.now()}`, { 
+            credentials: 'include',
+            headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
+          })
+        })().then(async r => {
           const data = await r.json()
           if (!r.ok || data.error || data.success === false) throw new Error(data.error || 'Failed to fetch')
           return { key: ep.key, data }
@@ -69,7 +76,14 @@ export default function AdminView() {
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return
     try {
-      await fetch('/api/admin/users/' + id, { method: 'DELETE', credentials: 'include' })
+      await (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        return fetch('/api/admin/users/' + id, { 
+          method: 'DELETE', 
+          credentials: 'include',
+          headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
+        })
+      })()
       setUsers(users.filter(u => u.id !== id))
       toast.success('User deleted')
     } catch (err) {
@@ -80,7 +94,14 @@ export default function AdminView() {
   const handleDeleteListing = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return
     try {
-      await fetch('/api/admin/listings?id=' + id, { method: 'DELETE', credentials: 'include' })
+      await (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        return fetch('/api/admin/listings?id=' + id, { 
+          method: 'DELETE', 
+          credentials: 'include',
+          headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
+        })
+      })()
       setListings(listings.filter(l => l.id !== id))
       toast.success('Listing deleted')
     } catch (err) {
@@ -91,7 +112,14 @@ export default function AdminView() {
   const handleDeleteBanner = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this banner?')) return
     try {
-      await fetch('/api/banners?id=' + id, { method: 'DELETE', credentials: 'include' })
+      await (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        return fetch('/api/banners?id=' + id, { 
+          method: 'DELETE', 
+          credentials: 'include',
+          headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
+        })
+      })()
       setBanners(banners.filter(b => b.id !== id))
       toast.success('Banner deleted')
     } catch (err) {
@@ -104,7 +132,7 @@ export default function AdminView() {
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await supabase.auth.getSession()).data.session?.access_token ? { 'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session?.access_token } : {} },
         credentials: 'include',
         body: JSON.stringify(branding)
       })

@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+﻿export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 import { db } from '@/lib/db'
@@ -6,9 +6,10 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 
-// GET /api/banners — Fetch banner ads (public: active only; admin: all)
+// GET /api/banners â€” Fetch banner ads (public: active only; admin: all)
 export async function GET(request: Request) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,10 +20,29 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Session failed to parse in API: ' + request.url)
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
     }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
+    if (!session) {
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    }
+
 
     const { searchParams } = new URL(request.url)
     const cityId = searchParams.get('cityId')
@@ -52,9 +72,10 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/banners — Create a new banner ad
+// POST /api/banners â€” Create a new banner ad
 export async function POST(request: Request) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,10 +86,29 @@ export async function POST(request: Request) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Session failed to parse in API: ' + request.url)
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
     }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
+    if (!session) {
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    }
+
 
     const body = await request.json()
     const { title, imageUrl, shopName, offerText, linkUrl, cityId, isActive, userId } = body
@@ -98,9 +138,10 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT /api/banners — Update a banner ad
+// PUT /api/banners â€” Update a banner ad
 export async function PUT(request: Request) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -111,10 +152,29 @@ export async function PUT(request: Request) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Session failed to parse in API: ' + request.url)
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
     }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
+    if (!session) {
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    }
+
 
     const body = await request.json()
     const { id, title, imageUrl, shopName, offerText, linkUrl, cityId, isActive } = body
@@ -149,9 +209,10 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE /api/banners — Delete a banner ad
+// DELETE /api/banners â€” Delete a banner ad
 export async function DELETE(request: Request) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -162,10 +223,29 @@ export async function DELETE(request: Request) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Session failed to parse in API: ' + request.url)
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
     }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
+    if (!session) {
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    }
+
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

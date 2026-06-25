@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+﻿export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server'
@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,10 +19,29 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Session failed to parse in API: ' + request.url)
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
     }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
+    if (!session) {
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    }
+
 
     const users = await db.user.findMany({
       select: {
@@ -44,6 +64,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,10 +75,29 @@ export async function PATCH(request: NextRequest) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Session failed to parse in API: ' + request.url)
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
     }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
+    if (!session) {
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    }
+
 
     const body = await request.json()
     const { userId, action, newRole } = body
