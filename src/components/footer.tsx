@@ -23,7 +23,7 @@ export default function Footer() {
   return (
     <footer className="hidden md:block border-t border-gray-100 bg-white mt-auto shrink-0">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
               <div className="flex items-center mb-3">
@@ -69,49 +69,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Cities — Dynamic, subdomain-aware */}
-          <div>
-            <h3 className="font-semibold text-sm text-gray-800 mb-3">Available Cities</h3>
-            <p className="text-sm text-gray-500 mb-2">
-              We&apos;re expanding! Currently available in:
-            </p>
-            <ul className="space-y-1.5 text-sm text-gray-500">
-              {availableCities.map((city) => (
-                <li key={city.id} className="flex items-center gap-1.5">
-                  <Globe
-                    className="size-3"
-                    style={{ color: city.subdomain === currentSubdomain ? primary : '#d1d5db' }}
-                  />
-                  {city.subdomain === currentSubdomain ? (
-                    <span className="font-medium" style={{ color: primary }}>{city.name}</span>
-                  ) : (
-                    <a
-                      href={getCityUrl(city.subdomain)}
-                      className="hover:text-gray-800 transition-colors flex items-center gap-0.5"
-                      title={`Visit ${city.name}`}
-                    >
-                      {city.name}
-                      <ExternalLink className="size-2.5 opacity-40" />
-                    </a>
-                  )}
-                </li>
-              ))}
-              {availableCities.length === 0 && (
-                <>
-                  <li className="flex items-center gap-1.5">
-                    <Globe className="size-3" style={{ color: primary }} />
-                    <span className="font-medium" style={{ color: primary }}>Choutuppal</span>
-                  </li>
-                </>
-              )}
-              <li className="text-xs text-gray-400 mt-2 italic">
-                + More cities coming soon...
-              </li>
-            </ul>
-          </div>
-
           {/* Contact */}
-          <div>
+          <div className="md:col-span-2">
             <h3 className="font-semibold text-sm text-gray-800 mb-3">Contact</h3>
             <ul className="space-y-2 text-sm text-gray-500">
               <li className="flex items-start gap-2">
