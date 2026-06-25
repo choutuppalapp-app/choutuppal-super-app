@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'choutuppal-v6'
+const CACHE_NAME = 'choutuppal-v7-nuclear'
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

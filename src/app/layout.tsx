@@ -169,6 +169,9 @@ export default function RootLayout({
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                   registrations.forEach(r => r.unregister());
                 });
+                caches.keys().then(function(names) {
+                  for (let name of names) caches.delete(name);
+                });
               }
             `,
           }}
