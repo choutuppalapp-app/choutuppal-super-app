@@ -8,6 +8,7 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function GET(request: Request) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,10 +19,29 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
+    }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
     if (!session) {
       console.error('Session failed to parse in API: /api/settings')
     }
+
 
     let settings = await db.siteSetting.findFirst();
 
@@ -47,6 +67,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,10 +78,29 @@ export async function PUT(request: Request) {
         },
       }
     )
-    const { data: { session } } = await supabase.auth.getSession()
+    
+    let session: any = null;
+    let authUser: any = null;
+    const authHeader = request?.headers?.get('authorization') || request?.headers?.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        authUser = user;
+        session = { user };
+      }
+    }
+    
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData?.session;
+    }
+
     if (!session) {
       console.error('Session failed to parse in API: /api/settings')
     }
+
 
     const body = await request.json();
     const existing = await db.siteSetting.findFirst();
