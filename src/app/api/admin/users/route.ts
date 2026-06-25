@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!session) {
-      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings')); return NextResponse.json({ error: 'Unauthorized: No active session' }, { status: 401 });
     }
 
 
@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (!session) {
-      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings')); return NextResponse.json({ error: 'Unauthorized: No active session' }, { status: 401 });
     }
 
 

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
@@ -35,7 +35,18 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+    let user: any = null;
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data: userData } = await supabase.auth.getUser(token);
+    user = userData?.user;
+  }
+  
+  if (!user) {
+    const { data: fallbackData } = await supabase.auth.getUser();
+    user = fallbackData?.user;
+  }
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized: No active session' }, { status: 401 })
