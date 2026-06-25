@@ -72,6 +72,6 @@ export async function POST(request: Request) {
     return NextResponse.json(branding)
   } catch (error) {
     console.error('Error updating branding:', error)
-    return NextResponse.json({ error: 'Failed to update branding' }, { status: 500 })
+    return NextResponse.json({}, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } })
   }
 }
