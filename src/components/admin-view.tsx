@@ -30,40 +30,24 @@ export default function AdminView() {
     setErrorLogs([])
     
     try {
-      const endpoints = [
-        { key: 'users', url: '/api/admin/users' },
-        { key: 'listings', url: '/api/admin/listings' },
-        { key: 'banners', url: '/api/banners?all=true' },
-        { key: 'branding', url: '/api/settings' }
-      ]
+      const [{ data: usersData, error: usersErr }, { data: listingsData, error: listingsErr }, { data: bannersData, error: bannersErr }, { data: brandingData, error: brandingErr }] = await Promise.all([
+        supabase.from('User').select('id, fullName, phone, email, role, createdAt').order('createdAt', { ascending: false }),
+        supabase.from('Listing').select('*').order('createdAt', { ascending: false }),
+        supabase.from('BannerAd').select('*').order('createdAt', { ascending: false }),
+        supabase.from('SiteSetting').select('*').limit(1).maybeSingle()
+      ]);
 
-      const results = await Promise.allSettled(
-        endpoints.map(ep => (async () => {
-          const { data: { session } } = await supabase.auth.getSession()
-          return fetch(`${ep.url}?t=${Date.now()}`, { 
-            credentials: 'include',
-            headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
-          })
-        })().then(async r => {
-          const data = await r.json()
-          if (!r.ok || data.error || data.success === false) throw new Error(data.error || 'Failed to fetch')
-          return { key: ep.key, data }
-        }))
-      )
+      if (usersErr) throw usersErr;
+      if (listingsErr) throw listingsErr;
+      if (bannersErr) throw bannersErr;
+      if (brandingErr) throw brandingErr;
 
-      results.forEach(result => {
-        if (result.status === 'fulfilled') {
-          const { key, data } = result.value
-          if (key === 'users') setUsers(Array.isArray(data) ? data : (data.users || []))
-          if (key === 'listings') setListings(Array.isArray(data) ? data : (data.listings || []))
-          if (key === 'banners') setBanners(Array.isArray(data) ? data : [])
-          if (key === 'branding') setBranding(data)
-        } else {
-          setErrorLogs(prev => [...prev, String(result.reason)])
-        }
-      })
+      setUsers(usersData || []);
+      setListings(listingsData || []);
+      setBanners(bannersData || []);
+      setBranding(brandingData || { appLogoUrl: '/brand-logo.png', heroHeadline: 'Discover Choutuppal - Your Town, One App' });
     } catch (e: any) {
-      setErrorLogs(prev => [...prev, e.message])
+      setErrorLogs(prev => [...prev, e.message || 'Unknown error'])
     } finally {
       setLoading(false)
     }
@@ -76,14 +60,8 @@ export default function AdminView() {
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return
     try {
-      await (async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        return fetch('/api/admin/users/' + id, { 
-          method: 'DELETE', 
-          credentials: 'include',
-          headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
-        })
-      })()
+      const { error } = await supabase.from('User').delete().eq('id', id);
+      if (error) throw error;
       setUsers(users.filter(u => u.id !== id))
       toast.success('User deleted')
     } catch (err) {
@@ -94,14 +72,8 @@ export default function AdminView() {
   const handleDeleteListing = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return
     try {
-      await (async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        return fetch('/api/admin/listings?id=' + id, { 
-          method: 'DELETE', 
-          credentials: 'include',
-          headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
-        })
-      })()
+      const { error } = await supabase.from('Listing').delete().eq('id', id);
+      if (error) throw error;
       setListings(listings.filter(l => l.id !== id))
       toast.success('Listing deleted')
     } catch (err) {
@@ -112,14 +84,8 @@ export default function AdminView() {
   const handleDeleteBanner = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this banner?')) return
     try {
-      await (async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        return fetch('/api/banners?id=' + id, { 
-          method: 'DELETE', 
-          credentials: 'include',
-          headers: session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {}
-        })
-      })()
+      const { error } = await supabase.from('BannerAd').delete().eq('id', id);
+      if (error) throw error;
       setBanners(banners.filter(b => b.id !== id))
       toast.success('Banner deleted')
     } catch (err) {
@@ -130,13 +96,15 @@ export default function AdminView() {
   const handleSaveBranding = async () => {
     setIsSavingBranding(true)
     try {
-      const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...(await supabase.auth.getSession()).data.session?.access_token ? { 'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session?.access_token } : {} },
-        credentials: 'include',
-        body: JSON.stringify(branding)
-      })
-      if (!res.ok) throw new Error('Failed to save')
+      let error;
+      if (branding.id) {
+        const { error: updateErr } = await supabase.from('SiteSetting').update(branding).eq('id', branding.id);
+        error = updateErr;
+      } else {
+        const { error: insertErr } = await supabase.from('SiteSetting').insert([branding]);
+        error = insertErr;
+      }
+      if (error) throw error;
       toast.success('Branding saved successfully')
     } catch (err) {
       toast.error('Failed to save branding')
