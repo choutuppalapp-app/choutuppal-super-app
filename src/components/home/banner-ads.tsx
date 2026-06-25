@@ -68,7 +68,7 @@ export function BannerAds() {
 
   const { data } = useSWR(
     `/api/banners?active=true`,
-    (url: string) => fetch(url).then(res => res.json()),
+    (url: string) => fetch(url, { cache: 'no-store' }).then(res => res.json()),
     { revalidateOnMount: true, revalidateIfStale: true, revalidateOnFocus: false }
   )
 
