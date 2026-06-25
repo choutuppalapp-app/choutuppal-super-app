@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
@@ -91,7 +93,7 @@ export async function GET(request: Request) {
       },
     }, {
       headers: {
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=30'
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
       }
     })
   } catch (error) {
