@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       take: 100,
     })
 
-    return NextResponse.json(users)
+    return NextResponse.json(users, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('Error fetching users:', error)
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })

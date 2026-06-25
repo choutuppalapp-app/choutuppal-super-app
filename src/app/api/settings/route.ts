@@ -34,10 +34,10 @@ export async function GET() {
           contactPhone: '8790083706',
         },
       })
-      return NextResponse.json(defaultSettings)
+      return NextResponse.json(defaultSettings, { headers: { 'Cache-Control': 'no-store' } })
     }
 
-    return NextResponse.json(settings)
+    return NextResponse.json(settings, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('Error fetching settings:', error)
     return NextResponse.json(

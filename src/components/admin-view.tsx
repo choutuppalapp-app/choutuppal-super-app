@@ -48,9 +48,10 @@ export default function AdminView() {
 
   useEffect(() => {
     if (activeTab === 'branding') {
-      fetch('/api/admin/branding')
+      fetch(`/api/admin/branding?t=${Date.now()}`)
         .then(res => res.json())
         .then(data => setBranding(data))
+        .catch(err => console.error('Failed to fetch branding', err))
     }
   }, [activeTab])
 
@@ -112,7 +113,7 @@ export default function AdminView() {
         }))
       }
 
-      await Promise.all(promises)
+      await Promise.allSettled(promises)
     } catch (err) {
       toast.error('Failed to load data')
     } finally {

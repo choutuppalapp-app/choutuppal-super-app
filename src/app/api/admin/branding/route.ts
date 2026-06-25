@@ -6,10 +6,14 @@ import { db as prisma } from '@/lib/db'
 export async function GET() {
   try {
     const branding = await prisma.appBranding.findFirst()
-    return NextResponse.json(branding || {})
+    return NextResponse.json(branding || { appLogoUrl: null, faviconUrl: null, pwaIconUrl: null }, {
+      headers: { 'Cache-Control': 'no-store' }
+    })
   } catch (error) {
     console.error('Error fetching branding:', error)
-    return NextResponse.json({ error: 'Failed to fetch branding' }, { status: 500 })
+    return NextResponse.json({ appLogoUrl: null, faviconUrl: null, pwaIconUrl: null }, {
+      headers: { 'Cache-Control': 'no-store' }
+    })
   }
 }
 
