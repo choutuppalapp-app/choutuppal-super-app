@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Users, Store, Building, Image as ImageIcon, ShieldAlert, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
+import { getAdminStats } from '@/app/actions/admin-actions'
 
 export default function AdminOverview() {
   const { user, isAuthenticated, isLoading } = useAuth()
@@ -28,23 +29,12 @@ export default function AdminOverview() {
 
     async function fetchCounts() {
       try {
-        const [
-          { count: usersCount },
-          { count: listingsCount },
-          { count: realEstateCount },
-          { count: bannersCount }
-        ] = await Promise.all([
-          supabase.from('User').select('*', { count: 'exact', head: true }),
-          supabase.from('Listing').select('*', { count: 'exact', head: true }),
-          supabase.from('RealEstateListing').select('*', { count: 'exact', head: true }),
-          supabase.from('BannerAd').select('*', { count: 'exact', head: true })
-        ])
-
+        const stats = await getAdminStats()
         setCounts({
-          users: usersCount || 0,
-          listings: listingsCount || 0,
-          realEstate: realEstateCount || 0,
-          banners: bannersCount || 0,
+          users: stats.users || 0,
+          listings: stats.listings || 0,
+          realEstate: stats.realEstate || 0,
+          banners: stats.banners || 0,
         })
       } catch (error) {
         console.error('Error fetching admin counts:', error)

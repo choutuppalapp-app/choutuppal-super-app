@@ -29,7 +29,7 @@ export function MobileBottomNav() {
 
   const [postSheetOpen, setPostSheetOpen] = useState(false)
 
-  if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/agent') || currentView === 'dashboard') {
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard') || pathname?.startsWith('/agent') || currentView === 'dashboard') {
     return null; // Force hide global menu
   }
 
