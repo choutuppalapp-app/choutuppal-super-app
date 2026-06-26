@@ -1,6 +1,6 @@
 {
   "name": "choutuppal-2.0",
-  "version": "1.46.0",
+  "version": "1.47.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -75,7 +75,7 @@
     "react-hook-form": "^7.60.0",
     "react-is": "^19.2.7",
     "react-resizable-panels": "^3.0.3",
-    "recharts": "^3.8.1",
+    "recharts": "^3.9.0",
     "sharp": "^0.34.3",
     "sonner": "^2.0.6",
     "swr": "^2.4.1",

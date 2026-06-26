@@ -51,7 +51,7 @@ export default function AdminContainer() {
       {/* Main Content Area */}
       <main className="flex-1 w-full overflow-hidden">
         <div className="h-full overflow-y-auto">
-          {activeTab === 'overview' && <AdminOverview />}
+          {activeTab === 'overview' && <AdminOverview onNavigate={(tab) => setActiveTab(tab as TabType)} />}
           
           {(activeTab !== 'overview') && (
             <div className="p-6 md:p-8">
