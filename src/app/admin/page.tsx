@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import AdminOverview from '@/components/admin-overview'
+import AdminContainer from '@/components/admin-container'
 
 export const metadata: Metadata = {
   title: 'Admin Panel | Choutuppal',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function AdminPage() {
-  return <AdminOverview />
+  return <AdminContainer />
 }
