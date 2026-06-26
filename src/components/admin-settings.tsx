@@ -6,6 +6,7 @@ import { ShieldAlert, Loader2, Save, CheckCircle, Upload, Image as ImageIcon } f
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import imageCompression from 'browser-image-compression'
+import { useToast } from '@/hooks/use-toast'
 
 interface SiteSettingsForm {
   id?: string
@@ -26,6 +27,7 @@ interface SiteSettingsForm {
 export default function AdminSettings() {
   const { user, isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   
   const [settings, setSettings] = useState<SiteSettingsForm>({
     appName: '',
@@ -137,9 +139,13 @@ export default function AdminSettings() {
         [type === 'logo' ? 'appLogoUrl' : 'faviconUrl']: publicUrl
       }))
 
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert('Failed to upload image')
+    } catch (error: any) {
+      console.error('Supabase Upload Error Detailed:', error)
+      toast({
+        title: 'Upload failed',
+        description: error?.message || 'An unknown error occurred during upload',
+        variant: 'destructive',
+      })
     } finally {
       if (type === 'logo') setUploadingLogo(false)
       else setUploadingFavicon(false)
