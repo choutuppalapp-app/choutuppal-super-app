@@ -70,7 +70,7 @@ export default function Footer() {
           </div>
 
           {/* Contact */}
-          <div className="md:col-span-2">
+          <div>
             <h3 className="font-semibold text-sm text-gray-800 mb-3">Contact</h3>
             <ul className="space-y-2 text-sm text-gray-500">
               <li className="flex items-start gap-2">
