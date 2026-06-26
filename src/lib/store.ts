@@ -52,6 +52,10 @@ export interface SiteSettings {
   instagramUrl: string
   facebookUrl: string
   youtubeUrl: string
+  xUrl: string
+  appName: string
+  tagline: string | null
+  supportEmail: string | null
   contactName: string
   contactAddress: string
   contactPhone: string
@@ -99,6 +103,10 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   contactName: 'Citizen CSC',
   contactAddress: 'Choutuppal, Yadadri, Telangana-508252',
   contactPhone: '8790083706',
+  xUrl: '',
+  appName: 'Choutuppal App',
+  tagline: '',
+  supportEmail: '',
 }
 
 const DEFAULT_CITY: CityData = {

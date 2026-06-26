@@ -393,6 +393,10 @@ model SiteSetting {
   instagramUrl           String   @default("")
   facebookUrl            String   @default("")
   youtubeUrl             String   @default("")
+  xUrl                   String   @default("")
+  appName                String   @default("Choutuppal App")
+  tagline                String?
+  supportEmail           String?
 
   contactName            String   @default("Citizen CSC")
   contactAddress         String   @default("Choutuppal, Yadadri, Telangana-508252")
