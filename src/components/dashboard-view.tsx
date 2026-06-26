@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import useSWR from 'swr'
 import dynamic from 'next/dynamic'
 import StoryCreator from '@/components/story-creator'
+import ProfileSettings from '@/components/profile-settings'
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 const StoryViewer = dynamic(() => import('@/components/story-viewer'), { ssr: false })
@@ -1303,44 +1304,8 @@ export default function DashboardView() {
   )
 
   const renderSettings = () => (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center">
-        <div className="w-24 h-24 rounded-full bg-gray-100 mb-4 overflow-hidden relative border-4 border-white shadow-md">
-          {currentUser?.avatarUrl ? (
-            <Image src={currentUser.avatarUrl} alt="Avatar" fill className="object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400">
-              {currentUser?.fullName?.[0] || 'U'}
-            </div>
-          )}
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900">{currentUser?.fullName}</h2>
-        <p className="text-gray-500 mb-6">{currentUser?.phone}</p>
-        <Button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl h-12 font-bold shadow-none border-none">
-          Edit Profile
-        </Button>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <button onClick={() => window.open('https://wa.me/919999999999', '_blank')} className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-green-50 transition text-green-700 font-bold">
-          <div className="flex items-center">
-            <MessageCircle className="w-5 h-5 mr-3 text-green-600" />
-            Chat with Admin
-          </div>
-        </button>
-        <button className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition text-gray-700 font-bold">
-          <div className="flex items-center">
-            <FileText className="w-5 h-5 mr-3 text-gray-400" />
-            Terms & Conditions
-          </div>
-        </button>
-        <button onClick={logout} className="w-full flex items-center justify-between p-4 hover:bg-red-50 transition text-red-600 font-bold">
-          <div className="flex items-center">
-            <LogOut className="w-5 h-5 mr-3 text-red-500" />
-            Logout
-          </div>
-        </button>
-      </div>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 pt-4">
+      <ProfileSettings />
     </div>
   )
 
