@@ -21,7 +21,7 @@ import { NewsSection } from '@/components/home/news-section'
 import { DailySpinSection } from '@/components/home/daily-spin-section'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
 import { AnnouncementTicker } from '@/components/home/announcement-ticker'
-import { BecomeAdminCta } from '@/components/home/become-admin-cta'
+
 import { FeaturedProfiles } from '@/components/home/featured-profiles'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
 import { DashboardHeaderSkeleton } from '@/components/skeleton-loaders'
@@ -97,15 +97,7 @@ const VideoPlayerView = dynamic(
   { ssr: false, loading: () => <div className="aspect-video w-full bg-gray-100 animate-pulse rounded-xl" /> }
 )
 
-const AdminView = dynamic(
-  () => import('@/components/admin-view'),
-  { ssr: false, loading: () => <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto"><div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" /><div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" /></div> }
-)
 
-const SuperAdminSettings = dynamic(
-  () => import('@/components/super-admin-settings'),
-  { ssr: false, loading: () => <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto"><div className="h-16 w-full rounded-xl bg-gray-100 animate-pulse" /><div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" /></div> }
-)
 
 const CommunityFeed = dynamic(
   () => import('@/components/community-feed'),
@@ -214,7 +206,7 @@ function HomeView() {
       )}
       <ErrorBoundary name="TestimonialsSection"><TestimonialsSection /></ErrorBoundary>
       <ErrorBoundary name="PricingSection"><PricingSection /></ErrorBoundary>
-      <ErrorBoundary name="BecomeAdminCta"><BecomeAdminCta /></ErrorBoundary>
+
     </div>
   )
 }
@@ -297,8 +289,7 @@ export default function CityPage() {
         news: 'Local News',
         listing: 'Business Listing',
         dashboard: 'My Dashboard',
-        admin: 'Admin Panel',
-        'super-admin': 'Super Admin Settings',
+
         search: 'Search',
         blog: 'Blog',
         'blog-detail': 'Blog Article',
@@ -343,11 +334,7 @@ export default function CityPage() {
         return <ErrorBoundary name="ListingView"><ListingView /></ErrorBoundary>
       case 'dashboard':
         return <ErrorBoundary name="DashboardView"><DashboardView /></ErrorBoundary>
-      case 'admin':
-        return <ErrorBoundary name="AdminView"><AdminView /></ErrorBoundary>
-      case 'super-admin':
-        // Alias: unified admin panel (super_admin role sees all tabs inside AdminView)
-        return <ErrorBoundary name="AdminView"><AdminView /></ErrorBoundary>
+
       case 'search':
         return <ErrorBoundary name="SearchView"><SearchView /></ErrorBoundary>
       case 'blog':
@@ -377,16 +364,9 @@ export default function CityPage() {
     }
   }
 
-  // ── Maintenance Mode: Show MaintenancePage to non-Super-Admin users ───
-  // Super Admins always bypass maintenance mode.
-  // Also bypass if we're on admin/super-admin views (so admin can still manage).
-  const isSuperAdmin = user?.role === 'super_admin'
-  const isAdminView = currentView === 'admin' || currentView === 'super-admin'
   if (
     configLoaded &&
-    config.maintenanceMode &&
-    !isSuperAdmin &&
-    !isAdminView
+    config.maintenanceMode
   ) {
     return (
       <ErrorBoundary name="MaintenancePage">

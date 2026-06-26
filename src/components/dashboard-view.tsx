@@ -269,13 +269,6 @@ export default function DashboardView() {
   const myPosts: any[] = myPostsData?.posts ?? []
 
   useEffect(() => {
-    authFetch('/api/admin/categories?active=true', { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => setDynamicCategories(Array.isArray(data) ? data : []))
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
     if (listingsData) {
       setListings(listingsData.listings || [])
       setLoadingListings(false)

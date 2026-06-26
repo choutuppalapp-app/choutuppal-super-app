@@ -29,7 +29,7 @@ const NAV_LINKS: Array<{
   { view: 'community', label: 'Community', icon: Users },
   { view: 'blog', label: 'Blog', icon: FileText },
   { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
-  { view: 'admin', label: 'Admin Panel', icon: Shield, adminOnly: true, requiresAuth: true },
+
 ]
 
 interface HeaderProps {
@@ -60,8 +60,7 @@ export function Header({ className }: HeaderProps) {
   const primary = themePrimary || '#D4AF37'
   const secondary = themeSecondary || '#4169E1'
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'city_admin'
-  const isSuperAdmin = user?.role === 'super_admin'
+
 
   const handleNavClick = (view: ViewType, requiresAuth?: boolean) => {
     if (requiresAuth && !isAuthenticated) {
@@ -100,8 +99,7 @@ export function Header({ className }: HeaderProps) {
         {/* Center: Nav Links */}
         <nav className="flex items-center gap-1">
           {NAV_LINKS.map((item) => {
-            if (item.adminOnly && !isAdmin) return null
-            if (item.view === 'dashboard' && isAdmin) return null
+
             // Feature toggle filtering for desktop nav
             if (item.view === 'blog' && !config.enableBlog) return null
             if (item.view === 'news' && !config.enableBlog) return null
@@ -216,7 +214,7 @@ export function Header({ className }: HeaderProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{user?.fullName || 'User'}</p>
-                      <p className="text-xs text-gray-500">{isAdmin ? 'Admin Account' : 'Member'}</p>
+                      <p className="text-xs text-gray-500">Member</p>
                     </div>
                     <button
                       onClick={() => { logout(); setIsDrawerOpen(false) }}
@@ -241,8 +239,7 @@ export function Header({ className }: HeaderProps) {
               {/* Navigation links */}
               <nav className="flex-1 py-2 overflow-y-auto">
                 {NAV_LINKS.map((item) => {
-                  if (item.adminOnly && !isAdmin) return null
-                  if (item.view === 'dashboard' && isAdmin) return null
+
                   // Feature toggle filtering for drawer nav
                   if (item.view === 'blog' && !config.enableBlog) return null
                   if (item.view === 'news' && !config.enableBlog) return null
