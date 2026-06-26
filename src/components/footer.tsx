@@ -23,7 +23,7 @@ export default function Footer() {
   return (
     <footer className="hidden md:block border-t border-gray-100 bg-white mt-auto shrink-0">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
               <div className="flex items-center mb-3">
@@ -93,10 +93,11 @@ export default function Footer() {
                 Managed by Citizen CSC
               </li>
             </ul>
+          </div>
 
-            {/* Social Links */}
-            <div className="mt-6 flex flex-col gap-3">
-              <h4 className="font-semibold text-xs text-gray-800 uppercase tracking-wider">Follow Us</h4>
+          {/* Social Links */}
+          <div className="flex flex-col gap-3">
+            <h4 className="font-semibold text-xs text-gray-800 uppercase tracking-wider">Follow Us</h4>
               <div className="flex items-center gap-4">
                 {useAppStore.getState().siteSettings.instagramUrl && (
                   <a href={useAppStore.getState().siteSettings.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#E1306C] transition-colors">
@@ -126,11 +127,10 @@ export default function Footer() {
                 </a>
               )}
             </div>
-          </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col md:flex-row md:justify-between items-center gap-4">
           <p className="text-xs text-gray-400">
             &copy; {new Date().getFullYear()} Citizen CSC. All Rights Reserved.
           </p>
