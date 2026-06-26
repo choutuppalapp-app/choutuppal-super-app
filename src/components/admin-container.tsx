@@ -3,10 +3,25 @@
 import { useState } from 'react'
 import AdminOverview from './admin-overview'
 import AdminSettings from './admin-settings'
-import { LayoutDashboard, Settings } from 'lucide-react'
+import AdminListings from './admin-listings'
+import AdminBanners from './admin-banners'
+import AdminStories from './admin-stories'
+import AdminNews from './admin-news'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper } from 'lucide-react'
+
+type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news'
 
 export default function AdminContainer() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'branding'>('overview')
+  const [activeTab, setActiveTab] = useState<TabType>('overview')
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'listings', label: 'Listings', icon: Store },
+    { id: 'banners', label: 'Banners', icon: ImageIcon },
+    { id: 'stories', label: 'Stories', icon: PlaySquare },
+    { id: 'news', label: 'News & Announcements', icon: Newspaper },
+    { id: 'branding', label: 'App Branding', icon: Settings },
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
@@ -16,29 +31,20 @@ export default function AdminContainer() {
           <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
         </div>
         <nav className="flex md:flex-col gap-2 px-4 pb-4 md:pb-0 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition whitespace-nowrap ${
-              activeTab === 'overview' 
-                ? 'bg-blue-50 text-blue-700 font-semibold' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            Overview
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('branding')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition whitespace-nowrap ${
-              activeTab === 'branding' 
-                ? 'bg-blue-50 text-blue-700 font-semibold' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Settings className="w-5 h-5" />
-            App Branding
-          </button>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as TabType)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? 'bg-blue-50 text-blue-700 font-semibold' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <tab.icon className="w-5 h-5" />
+              {tab.label}
+            </button>
+          ))}
         </nav>
       </aside>
 
@@ -46,9 +52,14 @@ export default function AdminContainer() {
       <main className="flex-1 w-full overflow-hidden">
         <div className="h-full overflow-y-auto">
           {activeTab === 'overview' && <AdminOverview />}
-          {activeTab === 'branding' && (
+          
+          {(activeTab !== 'overview') && (
             <div className="p-6 md:p-8">
-              <AdminSettings />
+              {activeTab === 'branding' && <AdminSettings />}
+              {activeTab === 'listings' && <AdminListings />}
+              {activeTab === 'banners' && <AdminBanners />}
+              {activeTab === 'stories' && <AdminStories />}
+              {activeTab === 'news' && <AdminNews />}
             </div>
           )}
         </div>

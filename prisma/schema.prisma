@@ -397,6 +397,7 @@ model SiteSetting {
   appName                String   @default("Choutuppal App")
   tagline                String?
   supportEmail           String?
+  announcementTicker     String?
 
   contactName            String   @default("Citizen CSC")
   contactAddress         String   @default("Choutuppal, Yadadri, Telangana-508252")
@@ -439,6 +440,7 @@ model BannerAd {
   status    String   @default("APPROVED") // PENDING, APPROVED, REJECTED
   pricePerDay Int    @default(99)
   isFree    Boolean  @default(true)
+  expiresAt DateTime?
   createdAt DateTime @default(now())
 
   city City? @relation(fields: [cityId], references: [id])
