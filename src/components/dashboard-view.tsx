@@ -114,15 +114,11 @@ const CATEGORIES = [
 ]
 
 const TAB_ITEMS = [
-  { key: 'home', label: 'Home', icon: LayoutDashboard },
-  { key: 'analytics', label: 'Analytics', icon: LineChart },
   { key: 'listings', label: 'My Listings', icon: Store },
   { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
   { key: 'banners', label: 'My Banners', icon: ImageIcon },
   { key: 'stories', label: 'My Stories', icon: Sparkles },
-  { key: 'my_posts', label: 'My Posts', icon: FileText },
-  { key: 'wallet', label: 'Wallet', icon: Wallet },
-  { key: 'settings', label: 'Settings', icon: Settings },
+  { key: 'settings', label: 'Profile', icon: User },
 ]
 
 export default function DashboardView() {
@@ -137,7 +133,7 @@ export default function DashboardView() {
   };
 
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState('home')
+  const [activeTab, setActiveTab] = useState('listings')
   const { user, logout } = useAuth()
   const navigateTo = useAppStore((s) => s.navigateTo)
   
@@ -230,33 +226,33 @@ export default function DashboardView() {
   const { data: listingsData, mutate: fetchListings } = useSWR(
     currentUser ? `/api/listings?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnFocus: false }
+    { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const { data: realEstateData, mutate: fetchRealEstate } = useSWR(
     currentUser ? `/api/realestate?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnFocus: false }
+    { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const { data: bannersData, mutate: fetchBanners } = useSWR(
     currentUser ? `/api/banners?userId=${currentUser.id}&all=true` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnFocus: false }
+    { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const { data: coinsData, mutate: fetchCoins } = useSWR(
     currentUser ? `/api/coins?userId=${currentUser.id}` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnFocus: false }
+    { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
 
-  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000, revalidateOnFocus: false })
+  const { data: citiesData } = useSWR('/api/cities', fetcher, { dedupingInterval: 60000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true })
 
   const { data: storiesData, mutate: fetchStories } = useSWR(
     currentUser ? `/api/stories?userId=${currentUser.id}` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnFocus: false }
+    { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const userStories = storiesData || []
@@ -264,7 +260,7 @@ export default function DashboardView() {
   const { data: myPostsData, mutate: mutateMyPosts } = useSWR(
     currentUser ? `/api/social/posts?userId=${currentUser.id}&limit=50` : null,
     fetcher,
-    { dedupingInterval: 30000, revalidateOnFocus: false }
+    { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
 
   const myPosts: any[] = myPostsData?.posts ?? []
@@ -1393,14 +1389,10 @@ export default function DashboardView() {
         </div>
 
         <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
-          {activeTab === 'home' && renderHome()}
-          {activeTab === 'analytics' && renderAnalytics()}
           {activeTab === 'listings' && !isCreatingListing && renderListings()}
           {activeTab === 'real_estate' && !isCreatingRealEstate && renderRealEstate()}
           {activeTab === 'banners' && !isCreatingBanner && renderBanners()}
           {activeTab === 'stories' && renderStories()}
-          {activeTab === 'my_posts' && renderMyPosts()}
-          {activeTab === 'wallet' && renderWallet()}
           {activeTab === 'settings' && renderSettings()}
         </div>
 
