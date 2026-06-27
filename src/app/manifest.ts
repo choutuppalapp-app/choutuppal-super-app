@@ -13,9 +13,12 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const appName = settings?.appName || 'Choutuppal App'
   const description = settings?.metaDescription || 'Discover businesses, news, and services in Choutuppal.'
 
+  const safeAppName = appName || 'Choutuppal App'
+  const safeShortName = safeAppName.length > 12 ? safeAppName.substring(0, 12) : safeAppName
+
   return {
-    name: appName,
-    short_name: appName.length > 12 ? appName.substring(0, 12) : appName,
+    name: safeAppName,
+    short_name: safeShortName,
     description: description,
     start_url: '/',
     display: 'standalone',
@@ -26,17 +29,31 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     categories: ['business', 'lifestyle', 'social'],
     icons: [
       {
-        src: pwaIconUrl,
+        src: '/logo.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: pwaIconUrl,
+        src: '/logo.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
       },
+      ...(pwaIconUrl !== '/logo.png' ? [
+        {
+          src: pwaIconUrl,
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any' as const,
+        },
+        {
+          src: pwaIconUrl,
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable' as const,
+        }
+      ] : [])
     ],
     shortcuts: [
       {
