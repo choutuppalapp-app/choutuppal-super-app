@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
 import { Newspaper, Calendar, MapPin, Share2, ArrowLeft } from 'lucide-react'
@@ -19,6 +20,25 @@ async function getNews(id: string) {
   }
 }
 
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const news = await getNews(params.id)
+  if (!news) return { title: 'News Not Found' }
+
+  const title = `${news.title} in Choutuppal | Choutuppal App`
+  const description = news.content?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Read ${news.title} on Choutuppal App`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: news.imageUrl ? [news.imageUrl] : [],
+      type: 'article',
+    }
+  }
+}
+
 export default async function NewsDetailPage({ params }: { params: { id: string } }) {
   const news = await getNews(params.id)
 
@@ -27,7 +47,25 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "NewsArticle",
+            "headline": news.title,
+            "image": news.imageUrl ? [news.imageUrl] : [],
+            "datePublished": news.createdAt.toISOString(),
+            "dateModified": news.createdAt.toISOString(),
+            "author": [{
+              "@type": "Organization",
+              "name": "Choutuppal App"
+            }]
+          })
+        }}
+      />
+      <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header Bar */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-4">
@@ -107,5 +145,6 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
         </article>
       </main>
     </div>
+    </>
   )
 }

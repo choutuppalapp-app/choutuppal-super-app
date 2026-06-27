@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
 import { Calendar, FileText, ArrowLeft, User } from 'lucide-react'
@@ -19,6 +20,25 @@ async function getBlog(slug: string) {
   }
 }
 
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const blog = await getBlog(params.slug)
+  if (!blog || !blog.isPublished) return { title: 'Blog Not Found' }
+
+  const title = `${blog.title} in Choutuppal | Choutuppal App`
+  const description = blog.content?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Read ${blog.title} on Choutuppal App`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: blog.coverImageUrl ? [blog.coverImageUrl] : [],
+      type: 'article',
+    }
+  }
+}
+
 export default async function BlogDetailPage({ params }: { params: { slug: string } }) {
   const blog = await getBlog(params.slug)
 
@@ -27,7 +47,25 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": blog.title,
+            "image": blog.coverImageUrl ? [blog.coverImageUrl] : [],
+            "datePublished": blog.createdAt.toISOString(),
+            "dateModified": blog.updatedAt.toISOString(),
+            "author": [{
+              "@type": "Person",
+              "name": blog.author?.fullName || "Choutuppal App"
+            }]
+          })
+        }}
+      />
+      <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header Bar */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-4">
@@ -105,5 +143,6 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
         </article>
       </main>
     </div>
+    </>
   )
 }

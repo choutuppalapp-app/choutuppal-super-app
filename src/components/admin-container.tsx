@@ -7,10 +7,12 @@ import AdminListings from './admin-listings'
 import AdminBanners from './admin-banners'
 import AdminStories from './admin-stories'
 import AdminNews from './admin-news'
+import AdminBlogs from './admin-blogs'
+import AdminAnnouncements from './admin-announcements'
 import AdminUsers from './admin-users'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, Users } from 'lucide-react'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users } from 'lucide-react'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'users'
+type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -21,7 +23,9 @@ export default function AdminContainer() {
     { id: 'listings', label: 'Listings', icon: Store },
     { id: 'banners', label: 'Banners', icon: ImageIcon },
     { id: 'stories', label: 'Stories', icon: PlaySquare },
-    { id: 'news', label: 'News & Announcements', icon: Newspaper },
+    { id: 'news', label: 'News', icon: Newspaper },
+    { id: 'blogs', label: 'Blogs', icon: FileText },
+    { id: 'announcements', label: 'Announcements', icon: Megaphone },
     { id: 'branding', label: 'App Branding', icon: Settings },
   ]
 
@@ -61,8 +65,10 @@ export default function AdminContainer() {
               {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'listings' && <AdminListings />}
               {activeTab === 'banners' && <AdminBanners />}
-              {activeTab === 'stories' && <AdminStories />}
-              {activeTab === 'news' && <AdminNews />}
+              { activeTab === 'stories' && <AdminStories /> }
+              { activeTab === 'news' && <AdminNews /> }
+              { activeTab === 'blogs' && <AdminBlogs /> }
+              { activeTab === 'announcements' && <AdminAnnouncements /> }
             </div>
           )}
         </div>

@@ -143,10 +143,27 @@ export async function deleteAdminUser(id: string) {
   return await db.user.delete({ where: { id } });
 }
 
-// ─── News & Ticker ──────────────────────────────────────────────────
+// ─── News & Blogs & Ticker ──────────────────────────────────────────
 
 export async function updateAdminNews(id: string, data: any) {
   return await db.news.update({ where: { id }, data });
+}
+
+export async function getAdminBlogs() {
+  return await db.blog.findMany({ orderBy: { createdAt: 'desc' }, include: { author: { select: { fullName: true } } } });
+}
+
+export async function createAdminBlog(data: any) {
+  const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+  return await db.blog.create({ data: { ...data, slug } });
+}
+
+export async function updateAdminBlog(id: string, data: any) {
+  return await db.blog.update({ where: { id }, data });
+}
+
+export async function deleteAdminBlog(id: string) {
+  return await db.blog.delete({ where: { id } });
 }
 
 export async function getAnnouncementTicker() {

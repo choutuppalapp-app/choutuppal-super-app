@@ -1,35 +1,33 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminNews, deleteAdminNews, createAdminNews, updateAdminNews } from '@/app/actions/admin-actions'
-import { Loader2, Trash2, Edit, Save, Plus, X } from 'lucide-react'
+import { getAdminBlogs, deleteAdminBlog, createAdminBlog, updateAdminBlog } from '@/app/actions/admin-actions'
+import { Loader2, Trash2, Edit, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 
-export default function AdminNews() {
+export default function AdminBlogs() {
   const { user } = useAuth()
-  const [news, setNews] = useState<any[]>([])
+  const [blogs, setBlogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   
   const [isEditing, setIsEditing] = useState<any>(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [savingNews, setSavingNews] = useState(false)
+  const [savingBlog, setSavingBlog] = useState(false)
 
-  // News Form State
+  // Blog Form State
   const [title, setTitle] = useState('')
-  const [source, setSource] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
+  const [coverImageUrl, setCoverImageUrl] = useState('')
   
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: 'Write your news content here...' })
+      Placeholder.configure({ placeholder: 'Write your blog content here...' })
     ],
     content: '',
     editorProps: {
@@ -46,8 +44,8 @@ export default function AdminNews() {
   async function fetchData() {
     setLoading(true)
     try {
-      const newsData = await getAdminNews()
-      setNews(newsData)
+      const blogData = await getAdminBlogs()
+      setBlogs(blogData)
     } catch (error) {
       console.error(error)
     } finally {
@@ -56,20 +54,19 @@ export default function AdminNews() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this news article?')) return
+    if (!confirm('Are you sure you want to delete this blog post?')) return
     try {
-      await deleteAdminNews(id)
+      await deleteAdminBlog(id)
       fetchData()
     } catch (error) {
-      alert('Error deleting news')
+      alert('Error deleting blog')
     }
   }
 
   const handleEditClick = (item: any) => {
     setIsEditing(item)
     setTitle(item.title || '')
-    setSource(item.source || '')
-    setImageUrl(item.imageUrl || '')
+    setCoverImageUrl(item.coverImageUrl || '')
     editor?.commands.setContent(item.content || '')
   }
 
@@ -77,8 +74,7 @@ export default function AdminNews() {
     setIsCreating(false)
     setIsEditing(null)
     setTitle('')
-    setSource('')
-    setImageUrl('')
+    setCoverImageUrl('')
     editor?.commands.setContent('')
   }
 
@@ -86,52 +82,51 @@ export default function AdminNews() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setSavingNews(true)
+    setSavingBlog(true)
     try {
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
-      const { error } = await supabase.storage.from('news').upload(fileName, file)
+      const { error } = await supabase.storage.from('news').upload(fileName, file) // Using news bucket for blogs too
       if (error) throw error
 
       const { data: { publicUrl } } = supabase.storage.from('news').getPublicUrl(fileName)
-      setImageUrl(publicUrl)
+      setCoverImageUrl(publicUrl)
     } catch (error) {
       console.error(error)
       alert('Image upload failed')
     } finally {
-      setSavingNews(false)
+      setSavingBlog(false)
     }
   }
 
-  const handleSaveNews = async (e: React.FormEvent) => {
+  const handleSaveBlog = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSavingNews(true)
+    setSavingBlog(true)
     try {
       const content = editor?.getHTML() || ''
-      const cityId = news[0]?.cityId || user?.id // fallback
+      const cityId = blogs[0]?.cityId || user?.id // fallback
 
       const payload = {
         title,
         content,
-        source,
-        imageUrl,
+        coverImageUrl,
         cityId: isEditing ? isEditing.cityId : cityId,
         authorId: user?.id,
         isPublished: true,
       }
 
       if (isEditing) {
-        await updateAdminNews(isEditing.id, payload)
+        await updateAdminBlog(isEditing.id, payload)
       } else {
-        await createAdminNews(payload)
+        await createAdminBlog(payload)
       }
 
       resetForm()
       fetchData()
     } catch (error) {
       console.error(error)
-      alert('Failed to save news article')
+      alert('Failed to save blog post')
     } finally {
-      setSavingNews(false)
+      setSavingBlog(false)
     }
   }
 
@@ -145,45 +140,39 @@ export default function AdminNews() {
 
   return (
     <div className="space-y-6">
-      {/* News Management */}
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800">Local News Articles</h2>
+        <h2 className="text-xl font-bold text-gray-800">Local Blog Posts</h2>
         <Button onClick={() => setIsCreating(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
-          <Plus className="w-4 h-4 mr-2" /> Add News
+          <Plus className="w-4 h-4 mr-2" /> Add Blog
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {news.map(article => (
-          <div key={article.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col md:flex-row">
-            {article.imageUrl && (
+        {blogs.map(post => (
+          <div key={post.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col md:flex-row">
+            {post.coverImageUrl && (
               <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-gray-100">
-                <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+                <img src={post.coverImageUrl} alt={post.title} className="w-full h-full object-cover" />
               </div>
             )}
             <div className="p-4 flex-1 flex flex-col justify-between">
               <div>
-                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2">{article.title}</h3>
-                {article.source && (
-                  <Badge variant="outline" className="text-xs text-blue-600 bg-blue-50 border-blue-100 mb-2">
-                    {article.source}
-                  </Badge>
-                )}
+                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2">{post.title}</h3>
                 <div 
                   className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: article.content || '' }}
+                  dangerouslySetInnerHTML={{ __html: post.content || '' }}
                 />
               </div>
               <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
                 <span className="text-xs text-gray-400">
-                  {new Date(article.createdAt).toLocaleDateString()}
+                  {new Date(post.createdAt).toLocaleDateString()}
                 </span>
                 <div className="flex gap-2">
                   <Button 
                     variant="ghost" 
                     size="sm"
                     className="text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg"
-                    onClick={() => handleEditClick(article)}
+                    onClick={() => handleEditClick(post)}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -191,7 +180,7 @@ export default function AdminNews() {
                     variant="ghost" 
                     size="sm"
                     className="text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg"
-                    onClick={() => handleDelete(article.id)}
+                    onClick={() => handleDelete(post.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -207,43 +196,34 @@ export default function AdminNews() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
             <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex justify-between items-center z-10">
-              <h2 className="text-xl font-bold">{isEditing ? 'Edit News Article' : 'Write News Article'}</h2>
+              <h2 className="text-xl font-bold">{isEditing ? 'Edit Blog Post' : 'Write Blog Post'}</h2>
               <button onClick={resetForm} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
                 <X className="w-5 h-5 text-gray-700" />
               </button>
             </div>
             
-            <form onSubmit={handleSaveNews} className="p-6 space-y-6 flex-1 flex flex-col">
+            <form onSubmit={handleSaveBlog} className="p-6 space-y-6 flex-1 flex flex-col">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Article Title</label>
+                <label className="text-sm font-semibold text-gray-700">Blog Title</label>
                 <Input 
                   required 
                   value={title} 
                   onChange={e => setTitle(e.target.value)} 
                   className="rounded-xl bg-gray-50 border-gray-200"
-                  placeholder="e.g. New Highway Project Announced"
+                  placeholder="e.g. Best Places to Visit in Choutuppal"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Source / Author (Optional)</label>
-                  <Input 
-                    value={source} 
-                    onChange={e => setSource(e.target.value)} 
-                    className="rounded-xl bg-gray-50 border-gray-200"
-                    placeholder="e.g. Local News Daily"
-                  />
-                </div>
-                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Cover Image</label>
                   <div className="flex items-center gap-4">
-                    {imageUrl && <img src={imageUrl} alt="Cover" className="w-16 h-12 rounded-lg object-cover border border-gray-200" />}
+                    {coverImageUrl && <img src={coverImageUrl} alt="Cover" className="w-16 h-12 rounded-lg object-cover border border-gray-200" />}
                     <Input 
                       type="file" 
                       accept="image/*" 
                       onChange={handleImageUpload} 
-                      disabled={savingNews}
+                      disabled={savingBlog}
                       className="rounded-xl"
                     />
                   </div>
@@ -267,8 +247,8 @@ export default function AdminNews() {
 
               <div className="pt-4 border-t border-gray-100 flex gap-3">
                 <Button type="button" variant="outline" onClick={resetForm} className="flex-1 rounded-xl h-12">Cancel</Button>
-                <Button type="submit" disabled={savingNews} className="flex-1 rounded-xl h-12 bg-blue-600 hover:bg-blue-700 text-white">
-                  {savingNews ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : (isEditing ? 'Update Article' : 'Publish Article')}
+                <Button type="submit" disabled={savingBlog} className="flex-1 rounded-xl h-12 bg-blue-600 hover:bg-blue-700 text-white">
+                  {savingBlog ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : (isEditing ? 'Update Post' : 'Publish Post')}
                 </Button>
               </div>
             </form>
