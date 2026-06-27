@@ -243,12 +243,12 @@ export default function ListingView() {
   )
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/listing/${listing?.id || listing?.slug || ''}`
+    const shareUrl = window.location.href
     if (navigator.share) {
       try {
         await navigator.share({
           title: listing?.name || 'Local Business',
-          text: `Check out ${listing?.name} on Choutuppal App!`,
+          text: 'Check this out on Choutuppal App!',
           url: shareUrl,
         })
       } catch {}

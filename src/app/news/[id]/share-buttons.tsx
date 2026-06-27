@@ -17,8 +17,8 @@ export function ShareButtons({ title, text, showLabels = false }: { title: strin
       try {
         await navigator.share({
           title,
-          text,
-          url,
+          text: 'Check this out on Choutuppal App!',
+          url: window.location.href,
         })
       } catch (err) {
         console.error('Share failed:', err)

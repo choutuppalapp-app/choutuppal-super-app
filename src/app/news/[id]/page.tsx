@@ -33,8 +33,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title,
       description,
-      images: news.imageUrl ? [news.imageUrl] : [],
+      images: news.imageUrl ? [{ url: news.imageUrl, width: 1200, height: 630, alt: title }] : [],
       type: 'article',
+      url: `https://choutuppal.in/news/${news.id}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: news.imageUrl ? [news.imageUrl] : [],
     }
   }
 }
