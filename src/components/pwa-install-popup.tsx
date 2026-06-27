@@ -13,49 +13,36 @@ export function PWAInstallPopup() {
     <AnimatePresence>
       {showInstallPopup && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
+          exit={{ y: -100, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[80] p-4 safe-area-bottom"
+          className="fixed top-0 left-0 right-0 z-[9999]"
         >
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden max-w-lg mx-auto">
-            {/* Gradient accent bar */}
-            <div className="h-1" style={{ background: 'linear-gradient(to right, #4169E1, #D4AF37)' }} />
-            <div className="p-4 flex items-start gap-4">
-              {/* App icon */}
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
-                style={{ background: 'linear-gradient(135deg, #4169E1, #D4AF37)' }}
-              >
-                <Smartphone className="w-6 h-6 text-white" />
+          <div className="bg-blue-600 text-white shadow-2xl overflow-hidden px-4 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 shadow-inner">
+                <Smartphone className="w-5 h-5 text-white" />
               </div>
-              {/* Content */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-gray-900">Install Choutuppal App</h3>
-                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                  Add to your home screen for quick access and a better experience — works offline too!
+                <h3 className="text-sm font-bold truncate">Install App for Best Experience</h3>
+                <p className="text-xs text-blue-100 truncate">
+                  Fast access, offline mode & notifications
                 </p>
-                <div className="flex items-center gap-2 mt-3">
-                  <button
-                    onClick={triggerInstall}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform"
-                    style={{ background: 'linear-gradient(to right, #4169E1, #D4AF37)' }}
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Install
-                  </button>
-                  <button
-                    onClick={dismissInstall}
-                    className="px-3 py-2 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    Not now
-                  </button>
-                </div>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={triggerInstall}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-blue-700 text-xs font-bold shadow hover:bg-gray-50 active:scale-95 transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Install
+              </button>
               <button
                 onClick={dismissInstall}
-                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                className="p-1.5 rounded-full hover:bg-blue-700 text-blue-200 hover:text-white transition-colors"
                 aria-label="Dismiss"
               >
                 <X className="w-4 h-4" />

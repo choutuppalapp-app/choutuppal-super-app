@@ -107,6 +107,7 @@ export function PWAInstallProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (typeof window === 'undefined') return
     const handler = (e: Event) => {
+      console.log('🔥 [PWA Debug] beforeinstallprompt event fired!', e)
       e.preventDefault()
       setInstallPrompt(e as BeforeInstallPromptEvent)
     }
