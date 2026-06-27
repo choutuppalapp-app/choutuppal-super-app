@@ -10,12 +10,18 @@ import AdminNews from './admin-news'
 import AdminBlogs from './admin-blogs'
 import AdminAnnouncements from './admin-announcements'
 import AdminUsers from './admin-users'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users } from 'lucide-react'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2 } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
+import { useRouter } from 'next/navigation'
 
 type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
+  const { user, isAuthenticated, isLoading, setShowLoginModal, logout } = useAuth()
+  const router = useRouter()
+  
+  const isAuthorized = user?.role === 'admin' || user?.role === 'super_admin'
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -29,10 +35,59 @@ export default function AdminContainer() {
     { id: 'branding', label: 'App Branding', icon: Settings },
   ]
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-sm w-full border border-gray-100">
+          <ShieldAlert className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Admin Login Required</h1>
+          <p className="text-sm text-gray-500 mb-6">Please sign in to access the administrator panel.</p>
+          <button 
+            onClick={() => setShowLoginModal(true)}
+            className="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
+        <ShieldAlert className="w-16 h-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+        <p className="text-gray-500 text-center max-w-md mb-6">
+          You do not have the required permissions to access the Admin Panel. 
+        </p>
+        <button 
+          onClick={() => router.push('/')}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Return to Home
+        </button>
+      </div>
+    )
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-white border-r border-gray-200 shrink-0">
+      <aside className="w-full md:w-64 bg-white border-r border-gray-200 shrink-0 flex flex-col md:h-screen sticky top-0">
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
         </div>
@@ -52,6 +107,16 @@ export default function AdminContainer() {
             </button>
           ))}
         </nav>
+        
+        <div className="p-4 mt-auto hidden md:block border-t border-gray-100">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition font-medium"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}
