@@ -18,8 +18,8 @@ export async function getAdminStats() {
 }
 
 export async function getAdminListings() {
-  const listings = await db.listing.findMany({ orderBy: { createdAt: 'desc' } });
-  const realEstate = await db.realEstateListing.findMany({ orderBy: { createdAt: 'desc' } });
+  const listings = await db.listing.findMany({ orderBy: { createdAt: 'desc' }, include: { user: true, city: true } });
+  const realEstate = await db.realEstateListing.findMany({ orderBy: { createdAt: 'desc' }, include: { user: true, city: true } });
   return { listings, realEstate };
 }
 
@@ -60,6 +60,22 @@ export async function createAdminListing(data: any, type: 'business' | 'real_est
     return await db.realEstateListing.create({ data });
   } else {
     return await db.listing.create({ data });
+  }
+}
+
+export async function updateAdminListing(id: string, data: any, type: 'business' | 'real_estate') {
+  if (type === 'real_estate') {
+    return await db.realEstateListing.update({ where: { id }, data });
+  } else {
+    return await db.listing.update({ where: { id }, data });
+  }
+}
+
+export async function bulkCreateAdminListings(listings: any[], type: 'business' | 'real_estate') {
+  if (type === 'real_estate') {
+    return await db.realEstateListing.createMany({ data: listings, skipDuplicates: true });
+  } else {
+    return await db.listing.createMany({ data: listings, skipDuplicates: true });
   }
 }
 
