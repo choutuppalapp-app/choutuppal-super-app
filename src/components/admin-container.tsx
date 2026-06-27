@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import AdminOverview from './admin-overview'
-import AdminSettings from './admin-settings'
+import AdminBranding from './admin-branding'
 import AdminListings from './admin-listings'
 import AdminBanners from './admin-banners'
 import AdminStories from './admin-stories'
@@ -61,7 +61,7 @@ export default function AdminContainer() {
           
           {(activeTab !== 'overview') && (
             <div className="p-6 md:p-8">
-              {activeTab === 'branding' && <AdminSettings />}
+              {activeTab === 'branding' && <AdminBranding />}
               {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'listings' && <AdminListings />}
               {activeTab === 'banners' && <AdminBanners />}

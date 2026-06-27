@@ -75,20 +75,22 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-gray-500">
               <li className="flex items-start gap-2">
                 <MapPin className="size-3.5 mt-0.5 shrink-0" style={{ color: secondary }} />
-                <span>{currentCity?.name || 'Choutuppal'}, {currentCity?.state || 'Telangana'}</span>
+                <span>{siteSettings?.contactAddress || `${currentCity?.name || 'Choutuppal'}, ${currentCity?.state || 'Telangana'}`}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="size-3.5 shrink-0" style={{ color: secondary }} />
-                <a href="tel:8790083706" className="hover:text-gray-800 transition-colors">
-                  +91 8790083706
+                <a href={`tel:${siteSettings?.contactPhone || '8790083706'}`} className="hover:text-gray-800 transition-colors">
+                  +91 {siteSettings?.contactPhone || '8790083706'}
                 </a>
               </li>
-              <li className="flex items-center gap-2">
-                <Mail className="size-3.5 shrink-0" style={{ color: secondary }} />
-                <a href="mailto:contact@choutuppal.in" className="hover:text-gray-800 transition-colors">
-                  contact@choutuppal.in
-                </a>
-              </li>
+              {siteSettings?.supportEmail && (
+                <li className="flex items-center gap-2">
+                  <Mail className="size-3.5 shrink-0" style={{ color: secondary }} />
+                  <a href={`mailto:${siteSettings.supportEmail}`} className="hover:text-gray-800 transition-colors">
+                    {siteSettings.supportEmail}
+                  </a>
+                </li>
+              )}
               <li className="text-xs text-gray-400 mt-1">
                 Managed by Citizen CSC
               </li>

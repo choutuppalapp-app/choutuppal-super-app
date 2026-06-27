@@ -9,12 +9,14 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     console.error('Failed to fetch settings for manifest:', e)
   }
 
-  const pwaIconUrl = settings?.pwaIconUrl || '/icons/icon-512x512.png?v=new'
+  const pwaIconUrl = settings?.pwaIconUrl || settings?.faviconUrl || '/icons/icon-512x512.png?v=new'
+  const appName = settings?.appName || 'Choutuppal App'
+  const description = settings?.metaDescription || 'Discover businesses, news, and services in Choutuppal.'
 
   return {
-    name: 'Choutuppal App - Your Super App',
-    short_name: 'Choutuppal',
-    description: 'Discover businesses, news, and services in Choutuppal.',
+    name: appName,
+    short_name: appName.length > 12 ? appName.substring(0, 12) : appName,
+    description: description,
     start_url: '/?v=fresh',
     display: 'standalone',
     background_color: '#ffffff',

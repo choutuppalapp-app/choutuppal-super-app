@@ -50,10 +50,11 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error('Failed to fetch settings for metadata:', e);
   }
 
-  const faviconUrl = settings?.faviconUrl || '/icons/icon-192x192.png?v=new';
+  const faviconUrl = settings?.pwaIconUrl || settings?.faviconUrl || '/icons/icon-192x192.png?v=new';
   const ogImageUrl = settings?.ogImageUrl || settings?.appLogoUrl || settings?.logoUrl || '/brand-logo.png';
   const metaTitle = settings?.metaTitle || "చౌటుప్పల్ సూపర్ యాప్ | Choutuppal App";
   const metaDescription = settings?.metaDescription || "ఇకపై మన ఊరి షాపులు, హాస్పిటల్స్, రియల్ ఎస్టేట్ వివరాలు అన్నీ ఒకే క్లిక్ లో! చౌటుప్పల్ సొంత సూపర్ యాప్ ని ఇప్పుడే ఓపెన్ చేయండి.";
+  const appName = settings?.appName || "Choutuppal App";
 
   return {
     metadataBase: new URL('https://choutuppal.in'),
@@ -73,15 +74,15 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
-      title: 'Choutuppal',
+      title: appName,
       startupImage: [faviconUrl],
     },
     openGraph: {
       title: metaTitle,
       description: metaDescription,
       url: 'https://choutuppal.in',
-      siteName: 'Choutuppal App',
-      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: 'Choutuppal App' }],
+      siteName: appName,
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: appName }],
       type: 'website',
     },
     twitter: {
