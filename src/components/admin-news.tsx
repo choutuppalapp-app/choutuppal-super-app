@@ -1,54 +1,59 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminNews, deleteAdminNews, createAdminNews } from '@/app/actions/admin-actions'
-import { Loader2, Trash2, Megaphone, Newspaper, Plus, X, Upload } from 'lucide-react'
+import { getAdminNews, deleteAdminNews, createAdminNews, updateAdminNews, getAnnouncementTicker, updateAnnouncementTicker } from '@/app/actions/admin-actions'
+import { Loader2, Trash2, Edit, Save, Plus, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { supabase } from '@/lib/supabase'
-import imageCompression from 'browser-image-compression'
+import Placeholder from '@tiptap/extension-placeholder'
 import { useAuth } from '@/lib/auth-context'
-import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminNews() {
   const { user } = useAuth()
-  const { toast } = useToast()
-  
-  const [loading, setLoading] = useState(true)
   const [news, setNews] = useState<any[]>([])
+  const [ticker, setTicker] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [savingTicker, setSavingTicker] = useState(false)
+  
+  const [isEditing, setIsEditing] = useState<any>(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [savingNews, setSavingNews] = useState(false)
 
   // News Form State
   const [title, setTitle] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
   const [source, setSource] = useState('')
-
-  // Ticker State
-  const [ticker, setTicker] = useState('')
-  const [settingsId, setSettingsId] = useState<string | null>(null)
-  const [savingTicker, setSavingTicker] = useState(false)
-
+  const [imageUrl, setImageUrl] = useState('')
+  
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'Write your news content here...' })
+    ],
     content: '',
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[150px] p-4 border rounded-xl bg-white'
-      }
-    }
+        class: 'prose max-w-none focus:outline-none min-h-[150px] p-4 bg-gray-50 rounded-b-xl border-x border-b border-gray-200',
+      },
+    },
   })
 
   useEffect(() => {
     fetchData()
-    fetchSettings()
   }, [])
 
   async function fetchData() {
     setLoading(true)
     try {
-      const res = await getAdminNews()
-      setNews(res)
+      const [newsData, tickerData] = await Promise.all([
+        getAdminNews(),
+        getAnnouncementTicker()
+      ])
+      setNews(newsData)
+      setTicker(tickerData)
     } catch (error) {
       console.error(error)
     } finally {
@@ -56,27 +61,13 @@ export default function AdminNews() {
     }
   }
 
-  async function fetchSettings() {
-    try {
-      const { data, error } = await supabase.from('SiteSetting').select('id, announcementTicker').limit(1).maybeSingle()
-      if (data) {
-        setSettingsId(data.id)
-        setTicker(data.announcementTicker || '')
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  const handleUpdateTicker = async () => {
-    if (!settingsId) return
+  const handleSaveTicker = async () => {
     setSavingTicker(true)
     try {
-      const { error } = await supabase.from('SiteSetting').update({ announcementTicker: ticker }).eq('id', settingsId)
-      if (error) throw error
-      toast({ title: 'Success', description: 'Ticker updated successfully' })
-    } catch (e) {
-      toast({ title: 'Error', description: 'Failed to update ticker', variant: 'destructive' })
+      await updateAnnouncementTicker(ticker)
+      alert('Ticker updated successfully!')
+    } catch (error) {
+      alert('Error updating ticker')
     } finally {
       setSavingTicker(false)
     }
@@ -87,150 +78,242 @@ export default function AdminNews() {
     try {
       await deleteAdminNews(id)
       fetchData()
-    } catch (e) {
+    } catch (error) {
       alert('Error deleting news')
     }
+  }
+
+  const handleEditClick = (item: any) => {
+    setIsEditing(item)
+    setTitle(item.title || '')
+    setSource(item.source || '')
+    setImageUrl(item.imageUrl || '')
+    editor?.commands.setContent(item.content || '')
+  }
+
+  const resetForm = () => {
+    setIsCreating(false)
+    setIsEditing(null)
+    setTitle('')
+    setSource('')
+    setImageUrl('')
+    editor?.commands.setContent('')
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setUploading(true)
+    setSavingNews(true)
     try {
-      const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: true }
-      const compressedFile = await imageCompression(file, options)
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
-      
-      const { error } = await supabase.storage.from('news').upload(fileName, compressedFile)
+      const { error } = await supabase.storage.from('news').upload(fileName, file)
       if (error) throw error
 
       const { data: { publicUrl } } = supabase.storage.from('news').getPublicUrl(fileName)
       setImageUrl(publicUrl)
     } catch (error) {
       console.error(error)
-      alert('Upload failed')
+      alert('Image upload failed')
     } finally {
-      setUploading(false)
+      setSavingNews(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault()
-    setUploading(true)
+    setSavingNews(true)
     try {
-      await createAdminNews({
+      const content = editor?.getHTML() || ''
+      const cityId = news[0]?.cityId || user?.id // fallback
+
+      const payload = {
         title,
-        content: editor?.getHTML() || '',
-        imageUrl,
+        content,
         source,
-        cityId: 'default-city-id',
-        authorId: user?.id || null,
-        isPublished: true
-      })
-      setIsCreating(false)
+        imageUrl,
+        cityId: isEditing ? isEditing.cityId : cityId,
+        authorId: user?.id,
+        isPublished: true,
+      }
+
+      if (isEditing) {
+        await updateAdminNews(isEditing.id, payload)
+      } else {
+        await createAdminNews(payload)
+      }
+
+      resetForm()
       fetchData()
-      setTitle(''); setImageUrl(''); setSource(''); editor?.commands.setContent('')
     } catch (error) {
       console.error(error)
-      alert('Failed to publish news')
+      alert('Failed to save news article')
     } finally {
-      setUploading(false)
+      setSavingNews(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Ticker Management */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-blue-100 flex flex-col md:flex-row gap-6 items-center justify-between">
-        <div className="flex items-center gap-4 w-full">
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-            <Megaphone className="w-6 h-6" />
-          </div>
-          <div className="w-full">
-            <label className="block text-sm font-semibold text-gray-900 mb-1">Global Announcement Ticker</label>
-            <div className="flex gap-3">
-              <input 
-                type="text" 
-                value={ticker} 
-                onChange={e => setTicker(e.target.value)} 
-                placeholder="e.g. Breaking: Mega Job Mela this Sunday at SV Degree College!" 
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-              <button 
-                onClick={handleUpdateTicker} 
-                disabled={savingTicker}
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
-              >
-                {savingTicker ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update'}
-              </button>
-            </div>
-          </div>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Global Announcement Ticker</h2>
+        <div className="flex gap-3">
+          <Input 
+            value={ticker} 
+            onChange={(e) => setTicker(e.target.value)} 
+            placeholder="Enter announcement text to scroll at the top of the app..." 
+            className="flex-1 rounded-xl bg-gray-50 border-gray-200"
+          />
+          <Button 
+            onClick={handleSaveTicker} 
+            disabled={savingTicker}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6"
+          >
+            {savingTicker ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            Update Ticker
+          </Button>
         </div>
-      </section>
+      </div>
 
       {/* News Management */}
-      <section>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold flex items-center gap-2"><Newspaper className="w-5 h-5 text-gray-700"/> Local News Articles</h2>
-          <button onClick={() => setIsCreating(!isCreating)} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-gray-800">
-            {isCreating ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {isCreating ? 'Cancel' : 'Publish News'}
-          </button>
-        </div>
+      <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800">Local News Articles</h2>
+        <Button onClick={() => setIsCreating(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
+          <Plus className="w-4 h-4 mr-2" /> Add News
+        </Button>
+      </div>
 
-        {isCreating && (
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div><label className="block text-sm font-medium text-gray-700 mb-1">Headline / Title</label><input required value={title} onChange={e => setTitle(e.target.value)} className="w-full border rounded-lg px-3 py-2" /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-1">Source (e.g. Eenadu, Namasthe Telangana)</label><input value={source} onChange={e => setSource(e.target.value)} className="w-full border rounded-lg px-3 py-2" /></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {news.map(article => (
+          <div key={article.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col md:flex-row">
+            {article.imageUrl && (
+              <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-gray-100">
+                <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
               </div>
+            )}
+            <div className="p-4 flex-1 flex flex-col justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
-                <label className="w-full aspect-video border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden relative">
-                  {imageUrl ? <img src={imageUrl} className="w-full h-full object-cover" /> : <div className="text-center"><Upload className="w-6 h-6 text-gray-400 mx-auto mb-1"/><span className="text-xs text-gray-500">Upload Image</span></div>}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                </label>
+                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2">{article.title}</h3>
+                {article.source && (
+                  <Badge variant="outline" className="text-xs text-blue-600 bg-blue-50 border-blue-100 mb-2">
+                    {article.source}
+                  </Badge>
+                )}
+                <div 
+                  className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: article.content || '' }}
+                />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Article Content (Rich Text)</label>
-              {/* Tiptap Menu Bar (Basic) */}
-              <div className="flex gap-2 mb-2 p-2 bg-gray-50 rounded-lg border">
-                <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()} className={`px-2 py-1 text-sm rounded ${editor?.isActive('bold') ? 'bg-gray-200' : 'hover:bg-gray-200'}`}>Bold</button>
-                <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()} className={`px-2 py-1 text-sm rounded ${editor?.isActive('italic') ? 'bg-gray-200' : 'hover:bg-gray-200'}`}>Italic</button>
-                <button type="button" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} className={`px-2 py-1 text-sm rounded ${editor?.isActive('heading', { level: 2 }) ? 'bg-gray-200' : 'hover:bg-gray-200'}`}>H2</button>
-                <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()} className={`px-2 py-1 text-sm rounded ${editor?.isActive('bulletList') ? 'bg-gray-200' : 'hover:bg-gray-200'}`}>List</button>
-              </div>
-              <EditorContent editor={editor} />
-            </div>
-
-            <button disabled={uploading} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-medium hover:bg-black disabled:opacity-50 flex justify-center items-center gap-2">
-              {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Article'}
-            </button>
-          </form>
-        )}
-
-        {loading ? (
-          <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((n: any) => (
-              <div key={n.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                {n.imageUrl && <div className="aspect-video bg-gray-100"><img src={n.imageUrl} className="w-full h-full object-cover" /></div>}
-                <div className="p-4 flex flex-col flex-grow">
-                  <h4 className="font-bold text-gray-900 line-clamp-2">{n.title}</h4>
-                  <p className="text-xs text-gray-500 mt-1 mb-4 flex-grow">{new Date(n.createdAt).toLocaleDateString()} • {n.source}</p>
-                  <button onClick={() => handleDelete(n.id)} className="w-full flex items-center justify-center gap-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded-lg transition">
-                    <Trash2 className="w-4 h-4" /> Delete Article
-                  </button>
+              <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
+                <span className="text-xs text-gray-400">
+                  {new Date(article.createdAt).toLocaleDateString()}
+                </span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg"
+                    onClick={() => handleEditClick(article)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                    onClick={() => handleDelete(article.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
-      </section>
+        ))}
+      </div>
+
+      {/* Editor Modal */}
+      {(isCreating || isEditing) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex justify-between items-center z-10">
+              <h2 className="text-xl font-bold">{isEditing ? 'Edit News Article' : 'Write News Article'}</h2>
+              <button onClick={resetForm} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveNews} className="p-6 space-y-6 flex-1 flex flex-col">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Article Title</label>
+                <Input 
+                  required 
+                  value={title} 
+                  onChange={e => setTitle(e.target.value)} 
+                  className="rounded-xl bg-gray-50 border-gray-200"
+                  placeholder="e.g. New Highway Project Announced"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Source / Author (Optional)</label>
+                  <Input 
+                    value={source} 
+                    onChange={e => setSource(e.target.value)} 
+                    className="rounded-xl bg-gray-50 border-gray-200"
+                    placeholder="e.g. Local News Daily"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Cover Image</label>
+                  <div className="flex items-center gap-4">
+                    {imageUrl && <img src={imageUrl} alt="Cover" className="w-16 h-12 rounded-lg object-cover border border-gray-200" />}
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageUpload} 
+                      disabled={savingNews}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 flex-1 flex flex-col min-h-[300px]">
+                <label className="text-sm font-semibold text-gray-700">Content</label>
+                
+                {/* Simple Editor Toolbar */}
+                <div className="flex flex-wrap gap-1 p-2 bg-gray-100 rounded-t-xl border-x border-t border-gray-200">
+                  <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()} className={`px-2 py-1 rounded text-sm ${editor?.isActive('bold') ? 'bg-white shadow' : 'hover:bg-gray-200'}`}><b>B</b></button>
+                  <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()} className={`px-2 py-1 rounded text-sm ${editor?.isActive('italic') ? 'bg-white shadow' : 'hover:bg-gray-200'}`}><i>I</i></button>
+                  <button type="button" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} className={`px-2 py-1 rounded text-sm ${editor?.isActive('heading', { level: 2 }) ? 'bg-white shadow' : 'hover:bg-gray-200'}`}>H2</button>
+                  <button type="button" onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()} className={`px-2 py-1 rounded text-sm ${editor?.isActive('heading', { level: 3 }) ? 'bg-white shadow' : 'hover:bg-gray-200'}`}>H3</button>
+                  <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()} className={`px-2 py-1 rounded text-sm ${editor?.isActive('bulletList') ? 'bg-white shadow' : 'hover:bg-gray-200'}`}>List</button>
+                </div>
+                
+                <EditorContent editor={editor} className="flex-1 overflow-auto" />
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 flex gap-3">
+                <Button type="button" variant="outline" onClick={resetForm} className="flex-1 rounded-xl h-12">Cancel</Button>
+                <Button type="submit" disabled={savingNews} className="flex-1 rounded-xl h-12 bg-blue-600 hover:bg-blue-700 text-white">
+                  {savingNews ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : (isEditing ? 'Update Article' : 'Publish Article')}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

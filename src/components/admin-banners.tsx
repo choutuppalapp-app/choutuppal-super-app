@@ -1,35 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminBanners, deleteAdminBanner, createAdminBanner } from '@/app/actions/admin-actions'
-import { Loader2, Trash2, Upload, Plus, X, Clock } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import imageCompression from 'browser-image-compression'
-import { useAuth } from '@/lib/auth-context'
+import { getAdminBanners, deleteAdminBanner } from '@/app/actions/admin-actions'
+import { Loader2, Trash2, Calendar, Link as LinkIcon, Building2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export default function AdminBanners() {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
   const [banners, setBanners] = useState<any[]>([])
-  const [isCreating, setIsCreating] = useState(false)
-  const [uploading, setUploading] = useState(false)
-
-  // Form State
-  const [title, setTitle] = useState('')
-  const [shopName, setShopName] = useState('')
-  const [offerText, setOfferText] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-  const [duration, setDuration] = useState('24') // hours
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchData()
+    fetchBanners()
   }, [])
 
-  async function fetchData() {
+  async function fetchBanners() {
     setLoading(true)
     try {
-      const res = await getAdminBanners()
-      setBanners(res)
+      const data = await getAdminBanners()
+      setBanners(data)
     } catch (error) {
       console.error(error)
     } finally {
@@ -38,164 +27,98 @@ export default function AdminBanners() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return
+    if (!confirm('Are you sure you want to delete this banner? This action cannot be undone.')) return
     try {
       await deleteAdminBanner(id)
-      fetchData()
-    } catch (e) {
+      fetchBanners()
+    } catch (error) {
       alert('Error deleting banner')
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-    try {
-      const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true }
-      const compressedFile = await imageCompression(file, options)
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
-      
-      const { error } = await supabase.storage.from('banners').upload(fileName, compressedFile)
-      if (error) throw error
-
-      const { data: { publicUrl } } = supabase.storage.from('banners').getPublicUrl(fileName)
-      setImageUrl(publicUrl)
-    } catch (error) {
-      console.error(error)
-      alert('Upload failed')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!imageUrl) return alert('Please upload an image')
-    
-    setUploading(true)
-    try {
-      const expiresAt = new Date()
-      expiresAt.setHours(expiresAt.getHours() + parseInt(duration))
-
-      await createAdminBanner({
-        title,
-        shopName,
-        offerText,
-        imageUrl,
-        userId: user?.id || 'admin',
-        cityId: 'default-city-id',
-        status: 'APPROVED',
-        isActive: true,
-        isFree: true,
-        pricePerDay: 0,
-        expiresAt
-      })
-      setIsCreating(false)
-      fetchData()
-      // Reset
-      setTitle(''); setShopName(''); setOfferText(''); setImageUrl(''); setDuration('24')
-    } catch (error) {
-      console.error(error)
-      alert('Failed to create banner')
-    } finally {
-      setUploading(false)
-    }
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-blue-50 border border-blue-100 p-4 rounded-xl">
-        <div>
-          <h2 className="text-xl font-bold text-blue-900">Banner Management</h2>
-          <p className="text-sm text-blue-700 mt-1 font-medium">బ్యానర్ ఖరీదు: ₹99/- రోజుకు <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs ml-2 uppercase animate-pulse">(ప్రస్తుతం ఉచితం - FREE)</span></p>
-        </div>
-        <button onClick={() => setIsCreating(!isCreating)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-blue-700">
-          {isCreating ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {isCreating ? 'Cancel' : 'New Banner'}
-        </button>
+      <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800">Banner Management</h2>
+        <Badge variant="secondary" className="px-3 py-1 text-sm">{banners.length} Total</Badge>
       </div>
 
-      {isCreating && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Title</label><input required value={title} onChange={e => setTitle(e.target.value)} className="w-full border rounded-lg px-3 py-2" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Shop/Business Name</label><input required value={shopName} onChange={e => setShopName(e.target.value)} className="w-full border rounded-lg px-3 py-2" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Offer Text</label><input value={offerText} onChange={e => setOfferText(e.target.value)} className="w-full border rounded-lg px-3 py-2" /></div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Auto Expiry)</label>
-                <select value={duration} onChange={e => setDuration(e.target.value)} className="w-full border rounded-lg px-3 py-2">
-                  <option value="24">24 Hours</option>
-                  <option value="48">48 Hours</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Banner Image (16:9 Aspect Ratio)</label>
-              <label className="w-full aspect-video border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden relative group">
-                {imageUrl ? (
-                  <>
-                    <img src={imageUrl} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                      <span className="text-white font-medium flex items-center gap-2"><Upload className="w-4 h-4"/> Change Image</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center p-6">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Click to upload 16:9 image</p>
-                  </div>
-                )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-              </label>
-            </div>
-          </div>
-
-          <button disabled={uploading} className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2">
-            {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Upload & Publish Banner'}
-          </button>
-        </form>
-      )}
-
-      {loading ? (
-        <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+      {banners.length === 0 ? (
+        <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center text-gray-500">
+          No banners found.
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {banners.map((b: any) => {
-            const isExpired = b.expiresAt && new Date(b.expiresAt) < new Date()
-            return (
-              <div key={b.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
-                <div className="aspect-video bg-gray-100 relative">
-                  <img src={b.imageUrl} className="w-full h-full object-cover" />
-                  {isExpired && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold uppercase">Expired</span>
+          {banners.map(banner => (
+            <div key={banner.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+              <div className="aspect-[21/9] bg-gray-100 relative">
+                {banner.imageUrl ? (
+                  <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium">
+                    No Image
+                  </div>
+                )}
+                <div className="absolute top-2 right-2">
+                  <Badge variant={banner.isActive ? 'default' : 'secondary'} className={banner.isActive ? 'bg-green-500 hover:bg-green-600' : ''}>
+                    {banner.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                {banner.isFree && (
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="outline" className="bg-white/90 backdrop-blur text-blue-600 border-blue-200">
+                      Free Ad
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              <div className="p-4 flex-1 flex flex-col">
+                <h3 className="font-bold text-gray-900 line-clamp-1 text-lg mb-1">{banner.title}</h3>
+                
+                <div className="space-y-2 mt-2 flex-1">
+                  {banner.shopName && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Building2 className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="line-clamp-1">{banner.shopName}</span>
+                    </div>
+                  )}
+                  {banner.linkUrl && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <LinkIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline line-clamp-1">
+                        {banner.linkUrl}
+                      </a>
+                    </div>
+                  )}
+                  {banner.expiresAt && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                      Expires: {new Date(banner.expiresAt).toLocaleDateString()}
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <h4 className="font-bold text-gray-900">{b.title}</h4>
-                  <p className="text-sm text-gray-500 mb-3">{b.shopName}</p>
-                  
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
-                    <div className="flex items-center text-xs text-gray-500 gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      {b.expiresAt ? (
-                        <span>Expires: {new Date(b.expiresAt).toLocaleDateString()}</span>
-                      ) : (
-                        <span>No Expiry</span>
-                      )}
-                    </div>
-                    <button onClick={() => handleDelete(b.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleDelete(banner.id)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                  </Button>
                 </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -142,3 +142,28 @@ export async function deleteAdminUser(id: string) {
   // but if not we might need to manually delete dependencies or just let prisma cascade)
   return await db.user.delete({ where: { id } });
 }
+
+// ─── News & Ticker ──────────────────────────────────────────────────
+
+export async function updateAdminNews(id: string, data: any) {
+  return await db.news.update({ where: { id }, data });
+}
+
+export async function getAnnouncementTicker() {
+  const settings = await db.siteSetting.findFirst();
+  return settings?.announcementTicker || '';
+}
+
+export async function updateAnnouncementTicker(ticker: string) {
+  const settings = await db.siteSetting.findFirst();
+  if (settings) {
+    return await db.siteSetting.update({
+      where: { id: settings.id },
+      data: { announcementTicker: ticker }
+    });
+  } else {
+    return await db.siteSetting.create({
+      data: { announcementTicker: ticker }
+    });
+  }
+}
