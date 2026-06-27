@@ -37,7 +37,11 @@ export default function AdminBranding() {
       const res = await fetch('/api/admin/settings')
       if (res.ok) {
         const data = await res.json()
-        setSettings({ ...settings, ...data })
+        setSettings({ 
+          ...settings, 
+          ...data,
+          primaryLogoUrl: data.logoUrl || ''
+        })
       }
     } catch (error) {
       console.error(error)
@@ -60,10 +64,13 @@ export default function AdminBranding() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       })
-      if (!res.ok) throw new Error('Failed to save settings')
+      const resData = await res.json()
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to save settings')
+      }
       toast.success('Settings updated successfully!')
     } catch (error: any) {
-      toast.error('Error updating settings: ' + error.message)
+      toast.error('Save Failed: ' + error.message)
     } finally {
       setSaving(false)
     }

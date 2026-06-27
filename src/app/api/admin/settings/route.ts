@@ -17,23 +17,31 @@ export async function PUT(request: Request) {
     const data = await request.json()
     const settings = await db.siteSetting.findFirst()
 
+    // Destructure to prevent updating readonly or mismatched fields
+    const { id, createdAt, updatedAt, primaryLogoUrl, ...rest } = data
+    
+    const dbData = {
+      ...rest,
+      ...(primaryLogoUrl !== undefined ? { logoUrl: primaryLogoUrl } : {})
+    }
+
     let updatedSettings
     if (settings) {
       updatedSettings = await db.siteSetting.update({
         where: { id: settings.id },
-        data
+        data: dbData
       })
     } else {
       updatedSettings = await db.siteSetting.create({
-        data
+        data: dbData
       })
     }
 
     revalidatePath('/', 'layout')
     
     return NextResponse.json(updatedSettings)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to update settings', error)
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Failed to update settings' }, { status: 500 })
   }
 }
