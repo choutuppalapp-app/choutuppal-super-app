@@ -5,9 +5,9 @@ import { Download, X, Smartphone } from 'lucide-react'
 import { usePWAInstall } from './pwa-install-provider'
 
 export function PWAInstallPopup() {
-  const { showInstallPopup, isInstallable, triggerInstall, dismissInstall } = usePWAInstall()
+  const { showInstallPopup, isInstallable, triggerInstall, dismissInstall, isIOS } = usePWAInstall()
 
-  if (!showInstallPopup || !isInstallable) return null
+  if (!showInstallPopup) return null
 
   return (
     <AnimatePresence>
@@ -33,13 +33,19 @@ export function PWAInstallPopup() {
             </div>
             
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={triggerInstall}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-blue-700 text-xs font-bold shadow hover:bg-gray-50 active:scale-95 transition-all"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Install
-              </button>
+              {isIOS ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 text-white text-[10px] font-bold">
+                  Tap Share <span className="text-xl">⎋</span> and Add to Home Screen
+                </div>
+              ) : (
+                <button
+                  onClick={triggerInstall}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-blue-700 text-xs font-bold shadow hover:bg-gray-50 active:scale-95 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Install
+                </button>
+              )}
               <button
                 onClick={dismissInstall}
                 className="p-1.5 rounded-full hover:bg-blue-700 text-blue-200 hover:text-white transition-colors"

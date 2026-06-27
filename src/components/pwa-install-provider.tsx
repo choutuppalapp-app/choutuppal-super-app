@@ -35,19 +35,7 @@ export function usePWAInstall() {
   return useContext(PWAInstallContext)
 }
 
-const DISMISS_KEY = 'pwa-install-dismissed'
-const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
-
 function checkWasDismissed(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const dismissedAt = localStorage.getItem(DISMISS_KEY)
-    if (dismissedAt) {
-      const elapsed = Date.now() - parseInt(dismissedAt, 10)
-      if (elapsed < DISMISS_DURATION) return true
-      localStorage.removeItem(DISMISS_KEY)
-    }
-  } catch { /* ignore */ }
   return false
 }
 
@@ -142,11 +130,10 @@ export function PWAInstallProvider({ children }: { children: React.ReactNode }) 
 
   const dismissInstall = useCallback(() => {
     setWasDismissed(true)
-    try { localStorage.setItem(DISMISS_KEY, Date.now().toString()) } catch { /* ignore */ }
   }, [])
 
   const isInstallable = !!installPrompt && !isInstalled
-  const showInstallPopup = isInstallable && !wasDismissed && isMobile
+  const showInstallPopup = (isInstallable || (isIOS && isMobile)) && !isInstalled && !wasDismissed
 
   return (
     <PWAInstallContext.Provider value={{

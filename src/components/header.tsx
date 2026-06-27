@@ -130,6 +130,15 @@ export function Header({ className }: HeaderProps) {
 
         {/* Right: Notifications + Auth */}
         <div className="flex items-center gap-2">
+          {showInstallMenuItem && (
+            <button
+              onClick={triggerInstall}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-xs font-bold transition-colors"
+            >
+              <Download className="size-4 animate-bounce" />
+              Install App ⬇️
+            </button>
+          )}
           <NotificationPanel />
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
@@ -167,6 +176,15 @@ export function Header({ className }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-0">
+          {showInstallMenuItem && (
+            <button
+              onClick={triggerInstall}
+              className="flex items-center gap-1 px-2.5 py-1.5 mr-1 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-[10px] font-bold"
+            >
+              <Download className="size-3.5 animate-bounce" />
+              Install ⬇️
+            </button>
+          )}
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
             <NotificationPanel />
           </div>
