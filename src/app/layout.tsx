@@ -60,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL('https://choutuppal.in'),
     title: metaTitle,
     description: metaDescription,
-    manifest: '/manifest.webmanifest?v=fresh',
+    manifest: '/manifest.json',
     icons: {
       icon: [
         { url: faviconUrl, sizes: '192x192', type: 'image/png' },
