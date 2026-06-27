@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
 import imageCompression from 'browser-image-compression'
+import { toast } from 'sonner'
 
 export default function AdminBranding() {
   const [loading, setLoading] = useState(true)
@@ -60,9 +61,9 @@ export default function AdminBranding() {
         body: JSON.stringify(settings)
       })
       if (!res.ok) throw new Error('Failed to save settings')
-      alert('Settings updated successfully!')
-    } catch (error) {
-      alert('Error updating settings')
+      toast.success('Settings updated successfully!')
+    } catch (error: any) {
+      toast.error('Error updating settings: ' + error.message)
     } finally {
       setSaving(false)
     }
@@ -81,15 +82,16 @@ export default function AdminBranding() {
       })
       
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
-      const { error } = await supabase.storage.from('branding').upload(fileName, compressedFile)
+      const { error } = await supabase.storage.from('listing-images').upload(fileName, compressedFile)
       if (error) throw error
 
-      const { data: { publicUrl } } = supabase.storage.from('branding').getPublicUrl(fileName)
+      const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(fileName)
       
       setSettings((prev: any) => ({ ...prev, [field]: publicUrl }))
-    } catch (error) {
+      toast.success('Image uploaded successfully!')
+    } catch (error: any) {
       console.error(error)
-      alert('Image upload failed')
+      toast.error('Upload Failed: ' + error.message)
     } finally {
       setSaving(false)
     }
