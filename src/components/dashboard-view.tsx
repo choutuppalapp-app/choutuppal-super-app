@@ -28,6 +28,7 @@ import ProfileSettings from '@/components/profile-settings'
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 const StoryViewer = dynamic(() => import('@/components/story-viewer'), { ssr: false })
+const UserAnalytics = dynamic(() => import('@/components/user-analytics'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────
 interface UserListing {
@@ -114,6 +115,7 @@ const CATEGORIES = [
 ]
 
 const TAB_ITEMS = [
+  { key: 'analytics', label: 'Analytics', icon: LineChart },
   { key: 'listings', label: 'My Listings', icon: Store },
   { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
   { key: 'banners', label: 'My Banners', icon: ImageIcon },
@@ -1389,6 +1391,7 @@ export default function DashboardView() {
         </div>
 
         <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
+          {activeTab === 'analytics' && <UserAnalytics />}
           {activeTab === 'listings' && !isCreatingListing && renderListings()}
           {activeTab === 'real_estate' && !isCreatingRealEstate && renderRealEstate()}
           {activeTab === 'banners' && !isCreatingBanner && renderBanners()}
