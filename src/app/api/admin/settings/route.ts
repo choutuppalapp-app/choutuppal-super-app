@@ -18,11 +18,21 @@ export async function PUT(request: Request) {
     const settings = await db.siteSetting.findFirst()
 
     // Destructure to prevent updating readonly or mismatched fields
-    const { id, createdAt, updatedAt, primaryLogoUrl, ...rest } = data
+    const { 
+      id, 
+      createdAt, 
+      updatedAt, 
+      primaryLogoUrl, 
+      supportPhone,
+      officeAddress,
+      ...rest 
+    } = data
     
     const dbData = {
       ...rest,
-      ...(primaryLogoUrl !== undefined ? { logoUrl: primaryLogoUrl } : {})
+      ...(primaryLogoUrl !== undefined ? { logoUrl: primaryLogoUrl } : {}),
+      ...(supportPhone !== undefined && !rest.contactPhone ? { contactPhone: supportPhone } : {}),
+      ...(officeAddress !== undefined && !rest.contactAddress ? { contactAddress: officeAddress } : {})
     }
 
     let updatedSettings
