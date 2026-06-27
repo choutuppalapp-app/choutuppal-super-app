@@ -10,7 +10,7 @@ import {
   BadgeDollarSign, Sparkles, UploadCloud,
   Instagram, Facebook, Youtube, MessageCircle,
   ArrowLeft, User, Home, Circle
-, LineChart } from 'lucide-react'
+, LineChart, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,7 @@ import useSWR from 'swr'
 import dynamic from 'next/dynamic'
 import StoryCreator from '@/components/story-creator'
 import ProfileSettings from '@/components/profile-settings'
+import { usePWAInstall } from '@/components/pwa-install-provider'
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 const StoryViewer = dynamic(() => import('@/components/story-viewer'), { ssr: false })
@@ -138,6 +139,7 @@ export default function DashboardView() {
   const [activeTab, setActiveTab] = useState('listings')
   const { user, logout } = useAuth()
   const navigateTo = useAppStore((s) => s.navigateTo)
+  const { isInstallable, triggerInstall } = usePWAInstall()
   
   const currentUser = user ? {
     id: user.id,
@@ -170,6 +172,7 @@ export default function DashboardView() {
   const [isCreatingStory, setIsCreatingStory] = useState(false)
   const [pendingStoryFile, setPendingStoryFile] = useState<File | null>(null)
   const storyFileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedStoryForViewer, setSelectedStoryForViewer] = useState<any | null>(null)
   const [storyViewerOpen, setStoryViewerOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
@@ -2008,6 +2011,16 @@ export default function DashboardView() {
             <User size={20} />
             <span className="text-[10px] mt-0.5 font-semibold">Profile</span>
           </button>
+          
+          {isInstallable && (
+            <button
+              onClick={triggerInstall}
+              className="flex flex-col items-center justify-center min-w-[64px] px-2 text-[#D4AF37] active:scale-90 transition-transform font-bold"
+            >
+              <Download size={20} className="animate-bounce" />
+              <span className="text-[10px] mt-0.5 font-bold">Install</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
