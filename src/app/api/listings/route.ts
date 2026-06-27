@@ -11,6 +11,9 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')
     const isFeatured = searchParams.get('isFeatured')
     const isPremium = searchParams.get('isPremium')
+    const minRating = searchParams.get('minRating')
+    const sort = searchParams.get('sort') // 'newest' | 'popular' | null
+    const openNow = searchParams.get('openNow')
     const userId = searchParams.get('userId')
     const referredByAgentId = searchParams.get('referredByAgentId')
     const page = parseInt(searchParams.get('page') || '1')
@@ -52,6 +55,27 @@ export async function GET(request: Request) {
         { category: { contains: search } },
       ]
     }
+    
+    if (minRating) {
+      where.rating = { gte: parseFloat(minRating) }
+    }
+    
+    if (openNow === 'true') {
+      where.operatingHours = { not: null }
+    }
+
+    let orderBy: any[] = []
+    if (sort === 'newest') {
+      orderBy = [{ createdAt: 'desc' }]
+    } else if (sort === 'popular') {
+      orderBy = [{ viewsCount: 'desc' }]
+    } else {
+      orderBy = [
+        { isFeatured: 'desc' },
+        { isPremium: 'desc' },
+        { viewsCount: 'desc' },
+      ]
+    }
 
     const [listings, total] = await Promise.all([
       db.listing.findMany({
@@ -72,11 +96,7 @@ export async function GET(request: Request) {
             select: { reviews: true, leads: true },
           },
         },
-        orderBy: [
-          { isFeatured: 'desc' },
-          { isPremium: 'desc' },
-          { viewsCount: 'desc' },
-        ],
+        orderBy,
         skip,
         take: limit,
       }),

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, SlidersHorizontal, Star, MapPin, BadgeCheck,
-  Phone, ChevronDown, Store,
+  Phone, ChevronDown, Store, Filter
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +21,7 @@ import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 import ListingCard from '@/components/listing-card'
+import FilterDrawer from '@/components/filter-drawer'
 
 interface Listing {
   id: string
@@ -93,6 +94,8 @@ export default function ExploreView() {
   const [totalPages, setTotalPages] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
   const [selectedCityId, setSelectedCityId] = useState('')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [filters, setFilters] = useState<Record<string, any>>({})
 
   // Sync store's searchQuery to local state
   // When user clicks "Real Estate" in bottom nav, it sets store.searchQuery
@@ -145,6 +148,13 @@ export default function ExploreView() {
         if (selectedCityId) params.set('cityId', selectedCityId)
         if (category && category !== 'All') params.set('category', category)
         if (search) params.set('search', search)
+        
+        // Append advanced filters
+        Object.keys(filters).forEach(key => {
+          if (filters[key] !== undefined && filters[key] !== null) {
+            params.set(key, String(filters[key]))
+          }
+        })
 
         const res = await fetch(`/api/listings?${params}`)
         if (res.ok) {
@@ -168,7 +178,7 @@ export default function ExploreView() {
         setLoadingMore(false)
       }
     },
-    [selectedCityId, category, search]
+    [selectedCityId, category, search, filters]
   )
 
   useEffect(() => {
@@ -239,6 +249,20 @@ export default function ExploreView() {
             />
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/50 border-white/40 hover:bg-white shrink-0 relative"
+              onClick={() => setIsFilterOpen(true)}
+            >
+              <Filter className="size-4 text-gray-700" />
+              {Object.keys(filters).length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4169E1] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#4169E1]"></span>
+                </span>
+              )}
+            </Button>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-[150px] bg-white/50 border-white/40">
                 <SlidersHorizontal className="size-4 mr-1 text-gray-400" />
@@ -339,6 +363,17 @@ export default function ExploreView() {
           )}
         </>
       )}
+      
+      <FilterDrawer
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        type={category === 'Real Estate' ? 'real_estate' : 'business'}
+        currentFilters={filters}
+        onApplyFilters={(newFilters) => {
+          setFilters(newFilters)
+          setPage(1)
+        }}
+      />
     </div>
   )
 }

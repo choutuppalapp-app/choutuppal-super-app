@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
+import FilterDrawer from '@/components/filter-drawer'
+import { Filter } from 'lucide-react'
 
 interface SearchResult {
   id: string
@@ -61,6 +63,8 @@ export default function SearchView() {
   const [localQuery, setLocalQuery] = useState(searchQuery)
   const [cities, setCities] = useState<Array<{ id: string; name: string; slug: string }>>([])
   const [cityId, setCityId] = useState('')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [filters, setFilters] = useState<Record<string, any>>({})
 
   // Fetch cities
   useEffect(() => {
@@ -89,6 +93,13 @@ export default function SearchView() {
       params.set('search', query)
       params.set('limit', '20')
       if (cityId) params.set('cityId', cityId)
+      
+      // Append advanced filters
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== undefined && filters[key] !== null) {
+          params.set(key, String(filters[key]))
+        }
+      })
 
       const res = await fetch(`/api/listings?${params}`)
       if (res.ok) {
@@ -100,7 +111,7 @@ export default function SearchView() {
     } finally {
       setLoading(false)
     }
-  }, [cityId])
+  }, [cityId, filters])
 
   // Debounced search
   useEffect(() => {
@@ -177,21 +188,32 @@ export default function SearchView() {
               value={localQuery}
               onChange={(e) => {
                 setLocalQuery(e.target.value)
-                setSearchQuery(e.target.value)
               }}
-              autoFocus
-              className="pl-10 pr-10 bg-white/50 border-white/40 focus:border-[#D4AF37]/50 focus:ring-[#D4AF37]/20 text-base"
+              className="pl-10 pr-10 bg-white/50 border-white/40 focus:border-[#4169E1]/50 focus:ring-[#4169E1]/20"
             />
             {localQuery && (
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition"
               >
-                <X className="size-4 text-gray-400 hover:text-gray-600" />
-              </motion.button>
+                <X className="size-4 text-gray-500" />
+              </button>
             )}
           </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-white/50 border-white/40 hover:bg-white shrink-0 relative"
+            onClick={() => setIsFilterOpen(true)}
+          >
+            <Filter className="size-4 text-gray-700" />
+            {Object.keys(filters).length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4169E1] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#4169E1]"></span>
+              </span>
+            )}
+          </Button>
         </div>
       </GlassCard>
 
@@ -327,6 +349,16 @@ export default function SearchView() {
           })}
         </div>
       )}
+
+      <FilterDrawer
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        type="business" // Search view is general, so we default to business filters
+        currentFilters={filters}
+        onApplyFilters={(newFilters) => {
+          setFilters(newFilters)
+        }}
+      />
     </div>
   )
 }

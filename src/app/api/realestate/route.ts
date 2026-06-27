@@ -8,11 +8,26 @@ export async function GET(request: Request) {
     const cityId = searchParams.get('cityId')
     const userId = searchParams.get('userId')
     const all = searchParams.get('all') === 'true'
+    const sort = searchParams.get('sort') // 'newest' | 'popular' | null
+    const bhk = searchParams.get('bhk')
+    const minPrice = searchParams.get('minPrice') // Note: price is string in schema
+    const maxPrice = searchParams.get('maxPrice')
 
     const where: Record<string, unknown> = {}
     if (!all) where.status = 'APPROVED'
     if (cityId) where.cityId = cityId
     if (userId) where.userId = userId
+    if (bhk) where.bedroomCount = parseInt(bhk)
+    
+    let orderBy: any[] = []
+    if (sort === 'newest') {
+      orderBy = [{ createdAt: 'desc' }]
+    } else {
+      orderBy = [
+        { isFeatured: 'desc' },
+        { createdAt: 'desc' },
+      ]
+    }
 
     const listings = await db.realEstateListing.findMany({
       where,
@@ -20,10 +35,7 @@ export async function GET(request: Request) {
         user: { select: { id: true, fullName: true, phone: true } },
         city: { select: { id: true, name: true, slug: true } },
       },
-      orderBy: [
-        { isFeatured: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy,
     })
 
     return NextResponse.json(listings, {
