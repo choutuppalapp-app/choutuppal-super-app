@@ -26,6 +26,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const title = `${news.title} in Choutuppal | Choutuppal App`
   const description = news.content?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Read ${news.title} on Choutuppal App`
+  
+  const rawImage = news.imageUrl || '/brand-logo.png'
+  const image = rawImage.startsWith('http') ? rawImage : `https://choutuppal.in${rawImage}`
 
   return {
     title,
@@ -33,7 +36,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title,
       description,
-      images: news.imageUrl ? [{ url: news.imageUrl, width: 1200, height: 630, alt: title }] : [],
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
       type: 'article',
       url: `https://choutuppal.in/news/${news.id}`,
     },
@@ -41,7 +44,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       card: 'summary_large_image',
       title,
       description,
-      images: news.imageUrl ? [news.imageUrl] : [],
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
     }
   }
 }

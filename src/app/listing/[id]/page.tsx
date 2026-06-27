@@ -30,7 +30,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const title = `${listing.name} in Choutuppal | Choutuppal App`
   const description = listing.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Check out ${listing.name} on Choutuppal App`
-  const image = listing.coverImage || listing.logoUrl || '/brand-logo.png'
+  const rawImage = listing.coverImage || listing.logoUrl || '/brand-logo.png'
+  const image = rawImage.startsWith('http') ? rawImage : `https://choutuppal.in${rawImage}`
 
   return {
     title,
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       card: 'summary_large_image',
       title,
       description,
-      images: [image],
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
     }
   }
 }
