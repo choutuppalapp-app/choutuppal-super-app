@@ -7,15 +7,17 @@ import AdminListings from './admin-listings'
 import AdminBanners from './admin-banners'
 import AdminStories from './admin-stories'
 import AdminNews from './admin-news'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper } from 'lucide-react'
+import AdminUsers from './admin-users'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, Users } from 'lucide-react'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news'
+type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'users'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'users', label: 'Users', icon: Users },
     { id: 'listings', label: 'Listings', icon: Store },
     { id: 'banners', label: 'Banners', icon: ImageIcon },
     { id: 'stories', label: 'Stories', icon: PlaySquare },
@@ -56,6 +58,7 @@ export default function AdminContainer() {
           {(activeTab !== 'overview') && (
             <div className="p-6 md:p-8">
               {activeTab === 'branding' && <AdminSettings />}
+              {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'listings' && <AdminListings />}
               {activeTab === 'banners' && <AdminBanners />}
               {activeTab === 'stories' && <AdminStories />}

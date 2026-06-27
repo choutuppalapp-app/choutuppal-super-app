@@ -1,6 +1,12 @@
 "use server";
 
 import { db } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+);
 
 export async function getAdminStats() {
   return {
@@ -67,4 +73,56 @@ export async function createAdminStory(data: any) {
 
 export async function createAdminNews(data: any) {
   return await db.news.create({ data });
+}
+
+// ─── Users Management ──────────────────────────────────────────────────
+
+export async function getAdminUsers() {
+  return await db.user.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      phone: true,
+      role: true,
+      subscriptionTier: true,
+      createdAt: true,
+    }
+  });
+}
+
+export async function updateAdminUserRole(id: string, role: string) {
+  return await db.user.update({
+    where: { id },
+    data: { role }
+  });
+}
+
+export async function toggleAdminUserPremium(id: string, isPremium: boolean) {
+  return await db.user.update({
+    where: { id },
+    data: { subscriptionTier: isPremium ? 'premium' : 'free' }
+  });
+}
+
+export async function resetAdminUserPassword(email: string) {
+  const { data, error } = await supabaseAdmin.auth.resetPasswordForEmail(email);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+export async function deleteAdminUser(id: string) {
+  // First delete from Supabase Auth
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+  if (error) {
+    console.error('Failed to delete user from Supabase Auth:', error);
+    // Even if it fails (e.g. not found in Supabase Auth), we might still want to delete from Prisma
+  }
+
+  // Delete from Prisma (Cascading will handle their listings/posts if setup correctly, 
+  // but if not we might need to manually delete dependencies or just let prisma cascade)
+  return await db.user.delete({ where: { id } });
 }
