@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users, Image as ImageIcon, Sparkles } from 'lucide-react'
+import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users, Image as ImageIcon, Sparkles, Compass, Bell } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -81,20 +81,12 @@ export function MobileBottomNav() {
             onClick={() => handleNavClick('home')}
           />
 
-          {/* 2. Listings */}
+          {/* 2. Explore */}
           <NavItem
-            icon={Store}
-            label="Listings"
-            isActive={isExploreActive && searchQuery !== 'real estate'}
+            icon={Compass}
+            label="Explore"
+            isActive={isExploreActive}
             onClick={() => handleNavClick('explore', false, '')}
-          />
-
-          {/* 3. Property */}
-          <NavItem
-            icon={Building2}
-            label="Property"
-            isActive={isExploreActive && searchQuery === 'real estate'}
-            onClick={() => handleNavClick('explore', false, 'real estate')}
           />
 
           {/* 3. Center FAB */}
@@ -115,21 +107,13 @@ export function MobileBottomNav() {
 
           {/* 4. Updates */}
           <NavItem
-            icon={Newspaper}
+            icon={Bell}
             label="Updates"
-            isActive={isUpdatesActive}
+            isActive={isUpdatesActive || currentView === 'community'}
             onClick={() => handleNavClick('news')}
           />
 
-          {/* 5. Choutuppal */}
-          <NavItem
-            icon={Users}
-            label="Choutuppal"
-            isActive={currentView === 'community'}
-            onClick={() => handleNavClick('community')}
-          />
-
-          {/* 6. You */}
+          {/* 5. You */}
           <NavItem
             icon={UserCircle}
             label="You"

@@ -22,6 +22,7 @@ import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 import ListingCard from '@/components/listing-card'
 import FilterDrawer from '@/components/filter-drawer'
+import { RealEstateView } from '@/components/real-estate-view'
 
 interface Listing {
   id: string
@@ -96,6 +97,7 @@ export default function ExploreView() {
   const [selectedCityId, setSelectedCityId] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState<Record<string, any>>({})
+  const [activeTab, setActiveTab] = useState<'listings' | 'real-estate'>(storeSearchQuery === 'real estate' ? 'real-estate' : 'listings')
 
   // Sync store's searchQuery to local state
   // When user clicks "Real Estate" in bottom nav, it sets store.searchQuery
@@ -236,7 +238,32 @@ export default function ExploreView() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-      {/* Search & Filter Bar */}
+      
+      {/* Tab Toggle */}
+      <div className="flex bg-gray-100 p-1 rounded-xl w-full max-w-sm mx-auto shadow-inner">
+        <button
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+            activeTab === 'listings' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+          }`}
+          onClick={() => setActiveTab('listings')}
+        >
+          Business Listings
+        </button>
+        <button
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+            activeTab === 'real-estate' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+          }`}
+          onClick={() => setActiveTab('real-estate')}
+        >
+          Real Estate
+        </button>
+      </div>
+
+      {activeTab === 'real-estate' ? (
+        <RealEstateView />
+      ) : (
+        <>
+          {/* Search & Filter Bar */}
       <GlassCard className="!p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -374,6 +401,8 @@ export default function ExploreView() {
           setPage(1)
         }}
       />
+      </>
+      )}
     </div>
   )
 }

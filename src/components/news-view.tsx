@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 import Link from 'next/link'
+import BlogView from '@/components/blog-view'
 
 interface NewsArticle {
   id: string
@@ -34,6 +35,7 @@ export default function NewsView() {
   const [loading, setLoading] = useState(true)
   const [cities, setCities] = useState<Array<{ id: string; name: string; slug: string }>>([])
   const [cityId, setCityId] = useState('')
+  const [activeTab, setActiveTab] = useState<'news' | 'blog'>('news')
 
   // Fetch cities for filter
   useEffect(() => {
@@ -102,19 +104,30 @@ export default function NewsView() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       {/* Combined Updates Tab UI */}
-      <div className="flex gap-4 border-b border-gray-200">
-        <button className="px-4 py-2 text-sm font-bold text-[#4169E1] border-b-2 border-[#4169E1]">
+      <div className="flex bg-gray-100 p-1 rounded-xl w-full max-w-sm mx-auto shadow-inner mb-6">
+        <button
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+            activeTab === 'news' ? 'bg-white text-[#4169E1] shadow-sm' : 'text-gray-500 hover:text-gray-900'
+          }`}
+          onClick={() => setActiveTab('news')}
+        >
           Local News
         </button>
-        <button 
-          onClick={() => useAppStore.getState().navigateTo('blog')}
-          className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+        <button
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+            activeTab === 'blog' ? 'bg-white text-[#4169E1] shadow-sm' : 'text-gray-500 hover:text-gray-900'
+          }`}
+          onClick={() => setActiveTab('blog')}
         >
-          Blog Posts
+          Choutuppal Info / Blogs
         </button>
       </div>
 
-      {/* Header */}
+      {activeTab === 'blog' ? (
+        <BlogView />
+      ) : (
+        <>
+          {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#4169E1]/10 flex items-center justify-center">
@@ -289,6 +302,8 @@ export default function NewsView() {
             ))}
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )
