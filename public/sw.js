@@ -1,11 +1,10 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'choutuppal-v6'
+const CACHE_NAME = 'choutuppal-pwa-v5'
 const STATIC_ASSETS = [
   '/',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/manifest.json?v=2',
+  '/logo.png?v=2',
 ]
 
 // Install — cache core assets

@@ -34,6 +34,11 @@ export function PwaInstallManager() {
       e.preventDefault()
       console.log('beforeinstallprompt FIRED!')
       setDeferredPrompt(e)
+      
+      const dismissed = localStorage.getItem('pwaDismissed') === 'true'
+      if (!dismissed) {
+        setShowPopup(true)
+      }
     }
 
     const handleAppInstalled = () => {
