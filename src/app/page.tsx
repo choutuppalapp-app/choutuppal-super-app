@@ -104,6 +104,14 @@ const CommunityFeed = dynamic(
   { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-20 rounded-xl bg-gray-100 animate-pulse" />{[1,2].map(i => <div key={i} className="h-48 rounded-xl bg-gray-100 animate-pulse" />)}</div> }
 )
 
+const UpdatesView = dynamic(
+  () => import('@/components/updates-view').then(m => ({ default: m.UpdatesView })),
+  {
+    loading: () => <DashboardHeaderSkeleton />,
+    ssr: false,
+  }
+)
+
 const ProfileView = dynamic(
   () => import('@/components/profile-view'),
   { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-24 rounded-xl bg-gray-100 animate-pulse" /><div className="h-48 rounded-xl bg-gray-100 animate-pulse" /></div> }
@@ -293,6 +301,7 @@ export default function CityPage() {
         search: 'Search',
         blog: 'Blog',
         'blog-detail': 'Blog Article',
+        updates: 'Updates',
         community: 'Community',
         profile: 'Profile',
         'individual-profile': 'Professional Profile',
@@ -343,6 +352,8 @@ export default function CityPage() {
       case 'blog-detail':
         if (!config.enableBlog) return <HomeView />
         return <ErrorBoundary name="BlogDetailView"><BlogDetailView /></ErrorBoundary>
+      case 'updates':
+        return <ErrorBoundary name="UpdatesView"><UpdatesView /></ErrorBoundary>
       case 'community':
         return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
       case 'profile':

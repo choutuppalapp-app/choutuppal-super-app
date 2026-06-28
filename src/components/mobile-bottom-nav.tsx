@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users, Image as ImageIcon, Sparkles, Compass, Bell } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
@@ -28,6 +28,29 @@ export function MobileBottomNav() {
   const { config } = useAppConfig()
 
   const [postSheetOpen, setPostSheetOpen] = useState(false)
+  const [hasUnread, setHasUnread] = useState(false)
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch('/api/social/posts?limit=1')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.posts && data.posts.length > 0) {
+            const latestPost = data.posts[0]
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+            if (new Date(latestPost.createdAt) > twentyFourHoursAgo && !latestPost.isDeleted) {
+              const lastRead = localStorage.getItem('lastReadCommunityPosts')
+              if (!lastRead || new Date(latestPost.createdAt) > new Date(lastRead)) {
+                setHasUnread(true)
+              }
+            }
+          }
+        }
+      } catch (err) {}
+    }
+    fetchUnread()
+  }, [currentView])
 
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard') || pathname?.startsWith('/agent') || currentView === 'dashboard') {
     return null; // Force hide global menu
@@ -109,8 +132,12 @@ export function MobileBottomNav() {
           <NavItem
             icon={Bell}
             label="Updates"
-            isActive={isUpdatesActive || currentView === 'community'}
-            onClick={() => handleNavClick('news')}
+            isActive={currentView === 'updates' || currentView === 'community' || currentView === 'news' || currentView === 'blog'}
+            onClick={() => {
+              setHasUnread(false)
+              handleNavClick('updates')
+            }}
+            hasBadge={hasUnread}
           />
 
           {/* 5. You */}
@@ -186,23 +213,28 @@ function NavItem({
   label,
   isActive,
   onClick,
+  hasBadge,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number; style?: React.CSSProperties }>
   label: string
   isActive: boolean
   onClick: () => void
+  hasBadge?: boolean
 }) {
   return (
     <button
       onClick={onClick}
       className="relative flex flex-col items-center justify-center min-h-[48px] min-w-[48px] active:scale-90 transition-all duration-200"
     >
-      <Icon
-        className={`w-6 h-6 transition-colors duration-200 ${
-          isActive ? 'text-[#4169E1]' : 'text-gray-400'
-        }`}
-        strokeWidth={isActive ? 2.5 : 1.8}
-      />
+      <div className="relative">
+        <Icon
+          className={`w-6 h-6 mb-1 ${isActive ? 'text-[#4169E1]' : 'text-gray-500'}`}
+          strokeWidth={isActive ? 2.5 : 2}
+        />
+        {hasBadge && (
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm" />
+        )}
+      </div>
       <span
         className={`whitespace-nowrap text-[10px] tracking-tight mt-0.5 transition-all duration-200 ${
           isActive ? 'text-[#4169E1] font-bold' : 'text-gray-400 font-medium'
