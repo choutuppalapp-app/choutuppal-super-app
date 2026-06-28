@@ -25,7 +25,7 @@ import useSWR from 'swr'
 import dynamic from 'next/dynamic'
 import StoryCreator from '@/components/story-creator'
 import ProfileSettings from '@/components/profile-settings'
-import { usePWA } from '@/contexts/pwa-context'
+
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor').then(mod => mod.RichTextEditor), { ssr: false })
 const StoryViewer = dynamic(() => import('@/components/story-viewer'), { ssr: false })
@@ -139,7 +139,7 @@ export default function DashboardView() {
   const [activeTab, setActiveTab] = useState('listings')
   const { user, logout } = useAuth()
   const navigateTo = useAppStore((s) => s.navigateTo)
-  const { canInstall, triggerInstall } = usePWA()
+
   
   const currentUser = user ? {
     id: user.id,
@@ -2011,18 +2011,7 @@ export default function DashboardView() {
             <User size={20} />
             <span className="text-[10px] mt-0.5 font-semibold">Profile</span>
           </button>
-          
-          {canInstall && (
-            <button
-              onClick={async () => {
-                await triggerInstall()
-              }}
-              className="flex flex-col items-center justify-center min-w-[64px] px-2 text-[#D4AF37] active:scale-90 transition-transform font-bold"
-            >
-              <Download size={20} className="animate-bounce" />
-              <span className="text-[10px] mt-0.5 font-bold">Install</span>
-            </button>
-          )}
+
         </div>
       </div>
     </div>

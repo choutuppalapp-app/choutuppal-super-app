@@ -13,9 +13,7 @@ import { SettingsInitializer } from "@/components/settings-initializer";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
-import { PWAProvider } from "@/contexts/pwa-context";
-import { PWAInstallBanner } from "@/components/pwa-install-banner";
-import { PWAIOSBanner } from "@/components/pwa-ios-banner";
+import { PwaInstallManager } from "@/components/pwa-install-manager";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 
 export const dynamic = 'force-dynamic';
@@ -61,23 +59,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: metaTitle,
     description: metaDescription,
     manifest: '/manifest.json',
-    icons: {
-      icon: [
-        { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-        { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-      ],
-      apple: [
-        { url: '/icons/icon-152x152.png', sizes: '152x152', type: 'image/png' },
-        { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      ],
-      shortcut: faviconUrl,
-    },
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: 'default',
-      title: appName,
-      startupImage: ['/icons/icon-512x512.png'],
-    },
     openGraph: {
       title: metaTitle,
       description: metaDescription,
@@ -112,7 +93,6 @@ export default function RootLayout({
         <ErrorBoundary name="AuthProvider">
           <AuthProvider>
             <AppConfigProvider>
-            <PWAProvider>
               <ErrorBoundary name="SettingsInitializer">
                 <SettingsInitializer />
               </ErrorBoundary>
@@ -136,14 +116,8 @@ export default function RootLayout({
                 <LoginModal />
               </ErrorBoundary>
 
-              {/* PWA Install Banner */}
-              <ErrorBoundary name="PWAInstallBanner">
-                <PWAInstallBanner />
-              </ErrorBoundary>
-
-              {/* PWA iOS Banner — manual instructions for iOS Safari */}
-              <ErrorBoundary name="PWAIOSBanner">
-                <PWAIOSBanner />
+              <ErrorBoundary name="PwaInstallManager">
+                <PwaInstallManager />
               </ErrorBoundary>
 
               <ErrorBoundary name="WhatsAppFloatingButton">
@@ -159,7 +133,6 @@ export default function RootLayout({
                   richColors
                 />
               </ErrorBoundary>
-            </PWAProvider>
             </AppConfigProvider>
           </AuthProvider>
         </ErrorBoundary>

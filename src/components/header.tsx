@@ -11,7 +11,7 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { NotificationPanel } from './notification-panel'
 import { useAuth } from '@/lib/auth-context'
-import { usePWA } from '@/contexts/pwa-context'
+
 import { useAppConfig } from '@/hooks/use-app-config'
 import { usePathname, useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
@@ -51,7 +51,7 @@ export function Header({ className }: HeaderProps) {
   const themeSecondary = useAppStore((s) => s.themeSecondary)
   const siteSettings = useAppStore((s) => s.siteSettings)
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
-  const { canInstall, isIOS, triggerInstall } = usePWA()
+
   const { config } = useAppConfig()
   const { toast } = useToast()
   
@@ -85,16 +85,7 @@ export function Header({ className }: HeaderProps) {
     }
   }
 
-  const handleInstallClick = async () => {
-    const success = await triggerInstall()
-    if (!success) {
-      toast({
-        title: 'Install App',
-        description: 'దయచేసి మీ బ్రౌజర్ మెనూలో Add to Home Screen నొక్కండి',
-        duration: 5000,
-      })
-    }
-  }
+
 
   // Logo rendering removed in favor of static image
   if (pathname?.startsWith('/admin')) return null;
@@ -144,15 +135,6 @@ export function Header({ className }: HeaderProps) {
 
         {/* Right: Notifications + Auth */}
         <div className="flex items-center gap-2">
-          {canInstall && (
-            <button
-              onClick={handleInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-xs font-bold transition-colors"
-            >
-              <Download className="size-4 animate-bounce" />
-              Install App
-            </button>
-          )}
           <NotificationPanel />
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
@@ -190,15 +172,6 @@ export function Header({ className }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-0">
-          {canInstall && (
-            <button
-              onClick={handleInstallClick}
-              className="flex items-center gap-1 px-2.5 py-1.5 mr-1 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-[10px] font-bold"
-            >
-              <Download className="size-3.5 animate-bounce" />
-              Install
-            </button>
-          )}
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
             <NotificationPanel />
           </div>
@@ -305,43 +278,7 @@ export function Header({ className }: HeaderProps) {
                   )
                 })}
 
-                {/* ─── Install App menu item ─── */}
-                {canInstall && (
-                  <>
-                    <div className="mx-5 my-2 border-t border-gray-100" />
-                    <button
-                      onClick={async () => {
-                        if (isIOS) {
-                          // On iOS, the iOS banner handles instructions — just close drawer
-                          setIsDrawerOpen(false)
-                        } else {
-                          await handleInstallClick()
-                          setIsDrawerOpen(false)
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 px-5 py-3.5 text-left text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                    >
-                      <div
-                        className="w-5 h-5 rounded flex items-center justify-center"
-                        style={{ background: `linear-gradient(135deg, ${secondary}, ${primary})` }}
-                      >
-                        <Download className="w-3 h-3 text-white" />
-                      </div>
-                      <span className="text-sm font-medium">
-                        {isIOS ? 'Add to Home Screen' : 'Install App'}
-                      </span>
-                      {!isIOS && (
-                        <span
-                          className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
-                          style={{ background: `linear-gradient(to right, ${primary}, ${secondary})` }}
-                        >
-                          NEW
-                        </span>
-                      )}
-                    </button>
-                  </>
-                )}
-              </nav>
+                </nav>
 
               {/* Drawer footer */}
               <div className="px-5 py-4 border-t border-gray-100">
