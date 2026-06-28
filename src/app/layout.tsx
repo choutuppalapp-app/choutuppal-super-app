@@ -63,19 +63,20 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: '/manifest.json',
     icons: {
       icon: [
-        { url: faviconUrl, sizes: '192x192', type: 'image/png' },
-        { url: faviconUrl, sizes: '512x512', type: 'image/png' },
+        { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
       ],
       apple: [
-        { url: faviconUrl, sizes: '152x152', type: 'image/png' },
-        { url: faviconUrl, sizes: '192x192', type: 'image/png' },
+        { url: '/icons/icon-152x152.png', sizes: '152x152', type: 'image/png' },
+        { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
       ],
+      shortcut: faviconUrl,
     },
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
       title: appName,
-      startupImage: [faviconUrl],
+      startupImage: ['/icons/icon-512x512.png'],
     },
     openGraph: {
       title: metaTitle,
@@ -164,21 +165,7 @@ export default function RootLayout({
         </ErrorBoundary>
         <Analytics />
         <SpeedInsights />
-        {/* Service Worker Killer */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                  registrations.forEach(r => r.unregister());
-                });
-                caches.keys().then(function(names) {
-                  for (let name of names) caches.delete(name);
-                });
-              }
-            `,
-          }}
-        />
+
       </body>
     </html>
   );

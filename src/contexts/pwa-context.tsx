@@ -38,6 +38,14 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
     setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(navigator as any).standalone)
     setIsMobile(/Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent))
 
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => console.log('Service Worker registered', reg))
+        .catch((err) => console.error('Service Worker registration failed', err))
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
