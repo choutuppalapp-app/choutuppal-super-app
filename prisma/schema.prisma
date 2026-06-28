@@ -75,6 +75,7 @@ model User {
   // Agent-specific fields
   agentCityId      String?  // City the agent operates in
   isAgentApproved  Boolean  @default(false) // Super Admin or City Admin must approve
+  isFeatured       Boolean  @default(false) // For featured profiles section
   upiId            String?  // For payout requests
   bankDetails      String?  // JSON string for bank account details
   // Earnings tracking

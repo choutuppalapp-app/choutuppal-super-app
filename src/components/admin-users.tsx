@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getAdminUsers, updateAdminUserRole, toggleAdminUserPremium, resetAdminUserPassword, deleteAdminUser } from '@/app/actions/admin-actions';
-import { Trash2, Key, Crown, Shield, User as UserIcon, Loader2 } from 'lucide-react';
+import { getAdminUsers, updateAdminUserRole, toggleAdminUserPremium, resetAdminUserPassword, deleteAdminUser, toggleAdminUserFeatured } from '@/app/actions/admin-actions';
+import { Trash2, Key, Crown, Shield, User as UserIcon, Loader2, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminUsers() {
@@ -50,6 +50,20 @@ export default function AdminUsers() {
       toast.success(!isPremium ? 'User upgraded to Premium 👑' : 'Premium removed');
     } catch (error) {
       toast.error('Failed to toggle premium');
+      console.error(error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleFeaturedToggle = async (userId: string, currentFeatured: boolean) => {
+    setActionLoading(`${userId}-featured`);
+    try {
+      await toggleAdminUserFeatured(userId, !currentFeatured);
+      setUsers(users.map(u => u.id === userId ? { ...u, isFeatured: !currentFeatured } : u));
+      toast.success(!currentFeatured ? 'User marked as Featured ⭐' : 'Featured status removed');
+    } catch (error) {
+      toast.error('Failed to toggle featured status');
       console.error(error);
     } finally {
       setActionLoading(null);
@@ -118,7 +132,7 @@ export default function AdminUsers() {
               <th className="px-6 py-4">User</th>
               <th className="px-6 py-4">Contact</th>
               <th className="px-6 py-4">Role</th>
-              <th className="px-6 py-4">Premium</th>
+              <th className="px-6 py-4">Premium / Featured</th>
               <th className="px-6 py-4">Joined Date</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
@@ -149,18 +163,32 @@ export default function AdminUsers() {
                   </select>
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => handlePremiumToggle(user.id, user.subscriptionTier)}
-                    disabled={actionLoading === `${user.id}-premium`}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                      user.subscriptionTier === 'premium'
-                        ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20'
-                        : 'bg-gray-100 text-gray-500 border border-transparent hover:bg-gray-200'
-                    }`}
-                  >
-                    <Crown className={`w-3.5 h-3.5 ${user.subscriptionTier === 'premium' ? 'fill-current' : ''}`} />
-                    {user.subscriptionTier === 'premium' ? 'Premium' : 'Standard'}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handlePremiumToggle(user.id, user.subscriptionTier)}
+                      disabled={actionLoading === `${user.id}-premium`}
+                      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all w-24 ${
+                        user.subscriptionTier === 'premium'
+                          ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20'
+                          : 'bg-gray-100 text-gray-500 border border-transparent hover:bg-gray-200'
+                      }`}
+                    >
+                      <Crown className={`w-3.5 h-3.5 ${user.subscriptionTier === 'premium' ? 'fill-current' : ''}`} />
+                      {user.subscriptionTier === 'premium' ? 'Premium' : 'Standard'}
+                    </button>
+                    <button
+                      onClick={() => handleFeaturedToggle(user.id, user.isFeatured)}
+                      disabled={actionLoading === `${user.id}-featured`}
+                      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all w-24 ${
+                        user.isFeatured
+                          ? 'bg-yellow-50 text-yellow-600 border border-yellow-200 hover:bg-yellow-100'
+                          : 'bg-gray-100 text-gray-500 border border-transparent hover:bg-gray-200'
+                      }`}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${user.isFeatured ? 'fill-current' : ''}`} />
+                      {user.isFeatured ? 'Featured' : 'Regular'}
+                    </button>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-gray-500">
                   {new Date(user.createdAt).toLocaleDateString()}

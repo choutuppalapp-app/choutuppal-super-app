@@ -13,7 +13,7 @@ export function FeaturedProfiles() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/social/profiles?publicFigures=true')
+    fetch('/api/featured-profiles')
       .then(res => res.json())
       .then(data => {
         if (data.profiles && Array.isArray(data.profiles)) {
@@ -27,9 +27,9 @@ export function FeaturedProfiles() {
       })
   }, [])
 
-  const handleProfileClick = (profile: any) => {
-    setSelectedProfileUserId(profile.userId)
-    const type = profile.publicFigureCategory === 'POLITICIAN' ? 'leader' : 'individual'
+  const handleProfileClick = (user: any) => {
+    setSelectedProfileUserId(user.id)
+    const type = (user.role === 'city_admin' || user.role === 'super_admin' || user.role === 'agent') ? 'leader' : 'individual'
     setProfileType(type)
     navigateTo(type === 'leader' ? 'leader-profile' : 'individual-profile')
   }
@@ -57,20 +57,20 @@ export function FeaturedProfiles() {
 
       {/* ── Scrollable profile cards ── */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-        {profiles.map((profile) => {
-          const isLeader = profile.publicFigureCategory === 'POLITICIAN'
+        {profiles.map((user) => {
+          const isLeader = user.role === 'city_admin' || user.role === 'super_admin' || user.role === 'agent'
           const IconComponent = isLeader ? Crown : UserIcon
           const gradient = isLeader ? 'from-[#D4AF37] to-[#4169E1]' : 'from-[#4169E1] to-[#6B8DD6]'
           const ringColor = isLeader ? 'ring-[#D4AF37]' : 'ring-[#4169E1]'
 
-          const name = profile.user?.fullName || 'User'
-          const title = profile.bio || (isLeader ? 'Leader' : 'Member')
-          const avatarUrl = profile.user?.avatarUrl || profile.avatarUrl
+          const name = user.fullName || 'User'
+          const title = user.profile?.bio || (isLeader ? 'Leader' : 'Member')
+          const avatarUrl = user.avatarUrl
 
           return (
             <button
-              key={profile.id}
-              onClick={() => handleProfileClick(profile)}
+              key={user.id}
+              onClick={() => handleProfileClick(user)}
               className="flex flex-col items-center gap-2 shrink-0 group transition-all duration-300"
             >
               {/* Avatar */}
@@ -89,7 +89,7 @@ export function FeaturedProfiles() {
                   </div>
                 )}
                 
-                {profile.isVerified && (
+                {user.profile?.isVerified && (
                   <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
                     <ShieldCheck className={`w-4 h-4 ${isLeader ? 'text-[#D4AF37]' : 'text-[#4169E1]'}`} />
                   </div>

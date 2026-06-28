@@ -103,6 +103,7 @@ export async function getAdminUsers() {
       phone: true,
       role: true,
       subscriptionTier: true,
+      isFeatured: true,
       createdAt: true,
     }
   });
@@ -119,6 +120,13 @@ export async function toggleAdminUserPremium(id: string, isPremium: boolean) {
   return await db.user.update({
     where: { id },
     data: { subscriptionTier: isPremium ? 'premium' : 'free' }
+  });
+}
+
+export async function toggleAdminUserFeatured(id: string, isFeatured: boolean) {
+  return await db.user.update({
+    where: { id },
+    data: { isFeatured }
   });
 }
 
