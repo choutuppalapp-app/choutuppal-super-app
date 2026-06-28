@@ -3,8 +3,8 @@
 const CACHE_NAME = 'choutuppal-pwa-v5'
 const STATIC_ASSETS = [
   '/',
-  '/manifest.json?v=2',
-  '/logo.png?v=2',
+  '/manifest.json',
+  '/logo.png',
 ]
 
 // Install — cache core assets

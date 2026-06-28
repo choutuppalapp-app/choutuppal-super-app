@@ -60,8 +60,8 @@ export async function generateMetadata(): Promise<Metadata> {
     description: metaDescription,
     manifest: '/manifest.json',
     icons: {
-      apple: '/logo.png?v=2',
-      icon: '/logo.png?v=2',
+      apple: '/logo.png',
+      icon: '/logo.png',
     },
     openGraph: {
       title: metaTitle,
