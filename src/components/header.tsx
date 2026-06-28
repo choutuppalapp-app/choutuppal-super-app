@@ -98,9 +98,8 @@ export function Header({ className }: HeaderProps) {
         console.error('PWA Installation failed', err)
       }
     } else {
-      toast({
-        description: 'దయచేసి మీ బ్రౌజర్ షేర్ మెనూ ⎋ నుండి Add to Home Screen నొక్కండి లేదా యాప్ ఇప్పటికే ఇన్స్టాల్ అయి ఉండవచ్చు.'
-      })
+      // Dispatch custom event to show the bottom banner manually
+      window.dispatchEvent(new Event('show-pwa-popup'))
     }
   }
 

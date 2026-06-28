@@ -47,12 +47,18 @@ export function PwaInstallManager() {
       setShowPopup(false)
     }
 
+    const handleShowPopup = () => {
+      setShowPopup(true)
+    }
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
+    window.addEventListener('show-pwa-popup', handleShowPopup)
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
+      window.removeEventListener('show-pwa-popup', handleShowPopup)
     }
   }, [])
 
