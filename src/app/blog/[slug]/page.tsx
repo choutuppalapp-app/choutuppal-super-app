@@ -27,14 +27,26 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const title = `${blog.title} in Choutuppal | Choutuppal App`
   const description = blog.content?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Read ${blog.title} on Choutuppal App`
 
+  const rawImage = blog.coverImageUrl || '/logo.png'
+  const absoluteImageUrl = rawImage.startsWith('http') 
+    ? rawImage 
+    : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
+
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      images: blog.coverImageUrl ? [blog.coverImageUrl] : [],
+      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
       type: 'article',
+      url: `https://choutuppal.in/blog/${params.slug}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
     }
   }
 }
