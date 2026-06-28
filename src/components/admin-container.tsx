@@ -10,11 +10,12 @@ import AdminNews from './admin-news'
 import AdminBlogs from './admin-blogs'
 import AdminAnnouncements from './admin-announcements'
 import AdminUsers from './admin-users'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2 } from 'lucide-react'
+import AdminModeration from './admin-moderation'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users'
+type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -32,6 +33,7 @@ export default function AdminContainer() {
     { id: 'news', label: 'News', icon: Newspaper },
     { id: 'blogs', label: 'Blogs', icon: FileText },
     { id: 'announcements', label: 'Announcements', icon: Megaphone },
+    { id: 'moderation', label: 'Moderation', icon: ShieldCheck },
     { id: 'branding', label: 'App Branding', icon: Settings },
   ]
 
@@ -130,10 +132,12 @@ export default function AdminContainer() {
               {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'listings' && <AdminListings />}
               {activeTab === 'banners' && <AdminBanners />}
-              { activeTab === 'stories' && <AdminStories /> }
-              { activeTab === 'news' && <AdminNews /> }
-              { activeTab === 'blogs' && <AdminBlogs /> }
-              { activeTab === 'announcements' && <AdminAnnouncements /> }
+              {activeTab === 'stories' && <AdminStories />}
+              {activeTab === 'news' && <AdminNews />}
+              {activeTab === 'blogs' && <AdminBlogs />}
+              {activeTab === 'announcements' && <AdminAnnouncements />}
+              {activeTab === 'users' && <AdminUsers />}
+              {activeTab === 'moderation' && <AdminModeration />}
             </div>
           )}
         </div>
