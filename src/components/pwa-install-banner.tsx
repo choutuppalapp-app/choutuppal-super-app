@@ -9,6 +9,8 @@ export function PWAInstallBanner() {
   const { canInstall, triggerInstall } = usePWA()
   const [showBanner, setShowBanner] = useState(false)
 
+  console.log('PWA Banner Mounted, canInstall:', canInstall)
+
   useEffect(() => {
     if (!canInstall) return
 
