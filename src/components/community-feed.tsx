@@ -637,8 +637,6 @@ function LeaderCard({
 // ─── Main Community Feed ───────────────────────────────────────
 export default function CommunityFeed() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
-  const communityTab = useAppStore((s) => s.communityTab)
-  const setCommunityTab = useAppStore((s) => s.setCommunityTab)
   const navigateTo = useAppStore((s) => s.navigateTo)
   const setSelectedProfileUserId = useAppStore((s) => s.setSelectedProfileUserId)
   const setProfileType = useAppStore((s) => s.setProfileType)
@@ -659,10 +657,6 @@ export default function CommunityFeed() {
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [commentText, setCommentText] = useState('')
 
-  // Leaders state
-  const [leaders, setLeaders] = useState<LeaderProfile[]>([])
-  const [leadersLoading, setLeadersLoading] = useState(true)
-
   // Share toast
   const [shareToast, setShareToast] = useState<string | null>(null)
 
@@ -682,28 +676,10 @@ export default function CommunityFeed() {
     }
   }, [])
 
-  // Fetch leaders
-  const fetchLeaders = useCallback(async () => {
-    try {
-      const res = await fetch('/api/social/profiles?publicFigures=true')
-      if (!res.ok) throw new Error('Failed to fetch')
-      const data = await res.json()
-      setLeaders(data.profiles || [])
-    } catch {
-      // Silent fail
-    } finally {
-      setLeadersLoading(false)
-    }
-  }, [])
-
   // Initial fetch
   useEffect(() => {
-    if (communityTab === 'feed') {
-      fetchPosts(1)
-    } else {
-      fetchLeaders()
-    }
-  }, [communityTab, fetchPosts, fetchLeaders])
+    fetchPosts()
+  }, [fetchPosts])
 
   // Create post
   const handleCreatePost = async () => {
@@ -870,36 +846,10 @@ export default function CommunityFeed() {
             <p className="text-[10px] text-gray-400 -mt-0.5">Choutuppal Social Feed</p>
           </div>
         </div>
-
-        <div className="flex gap-1.5 bg-white/30 backdrop-blur-md p-1 rounded-xl border border-white/30">
-          <button
-            onClick={() => setCommunityTab('feed')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              communityTab === 'feed'
-                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white shadow-md'
-                : 'text-gray-600 hover:bg-white/40'
-            }`}
-          >
-            <MessageCircle className="w-4 h-4" />
-            Feed
-          </button>
-          <button
-            onClick={() => setCommunityTab('leaders')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              communityTab === 'leaders'
-                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white shadow-md'
-                : 'text-gray-600 hover:bg-white/40'
-            }`}
-          >
-            <Crown className="w-4 h-4" />
-            Leaders
-          </button>
-        </div>
       </div>
 
       {/* ── Feed Tab ── */}
-      {communityTab === 'feed' && (
-        <div className="space-y-4">
+      <div className="space-y-4">
           {/* Post Composer */}
           {isAuthenticated && user && (
             <motion.div
@@ -1023,115 +973,6 @@ export default function CommunityFeed() {
             </>
           )}
         </div>
-      )}
-
-      {/* ── Leaders Tab ── */}
-      {communityTab === 'leaders' && (
-        <div className="space-y-4">
-          {/* Title */}
-          <div className="flex items-center gap-2">
-            <Crown className="w-5 h-5 text-[#D4AF37]" />
-            <h2 className="text-lg font-bold text-gray-900">Local Leaders</h2>
-          </div>
-
-          {leadersLoading ? (
-            <div className="space-y-4">
-              {/* Horizontal scroll skeleton */}
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex flex-col items-center gap-1.5 shrink-0 animate-pulse">
-                    <div className="w-16 h-16 rounded-full bg-gray-200/60 ring-2 ring-gray-200/40" />
-                    <div className="h-2 w-12 bg-gray-200/60 rounded" />
-                  </div>
-                ))}
-              </div>
-              {/* Card skeletons */}
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl p-4 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-full bg-gray-200/60" />
-                    <div className="flex-1">
-                      <div className="h-3 w-28 bg-gray-200/60 rounded" />
-                      <div className="h-2 w-16 bg-gray-200/40 rounded mt-2" />
-                    </div>
-                    <div className="h-8 w-20 bg-gray-200/40 rounded-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : leaders.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl p-8 text-center"
-            >
-              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#4169E1]/20 flex items-center justify-center mb-4">
-                <Crown className="w-8 h-8 text-[#D4AF37]" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-1">No leaders yet</h3>
-              <p className="text-sm text-gray-500">Public figures will appear here once verified.</p>
-            </motion.div>
-          ) : (
-            <>
-              {/* Horizontal scroll of leader avatars */}
-              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-                {leaders.map((leader) => (
-                  <button
-                    key={leader.id}
-                    onClick={() => handleProfileClick(leader.userId)}
-                    className="flex flex-col items-center gap-1.5 shrink-0 group"
-                  >
-                    <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.25)] group-hover:scale-105 transition-transform">
-                      {leader.avatarUrl || leader.user.avatarUrl ? (
-                        <img
-                          src={leader.avatarUrl || leader.user.avatarUrl || ''}
-                          alt={leader.user.fullName}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full flex items-center justify-center text-white font-bold"
-                          style={{
-                            background: 'linear-gradient(135deg, #D4AF37, #4169E1)',
-                            fontSize: 24,
-                          }}
-                        >
-                          {leader.user.fullName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-[11px] font-medium text-gray-700 max-w-[64px] truncate">
-                      {leader.user.fullName.split(' ')[0]}
-                    </span>
-                    {leader.publicFigureCategory && (
-                      <span
-                        className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${getCategoryColor(
-                          leader.publicFigureCategory
-                        )}`}
-                      >
-                        {getCategoryLabel(leader.publicFigureCategory)}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Full list of leader cards */}
-              <div className="space-y-3">
-                {leaders.map((leader) => (
-                  <LeaderCard
-                    key={leader.id}
-                    leader={leader}
-                    currentUserId={user?.id || null}
-                    onProfileClick={handleProfileClick}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
 
       {/* Share Toast */}
       <AnimatePresence>

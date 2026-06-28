@@ -9,8 +9,6 @@ import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useAppStore } from '@/lib/store'
 import Link from 'next/link'
-import BlogView from '@/components/blog-view'
-
 interface NewsArticle {
   id: string
   title: string
@@ -35,8 +33,6 @@ export default function NewsView() {
   const [loading, setLoading] = useState(true)
   const [cities, setCities] = useState<Array<{ id: string; name: string; slug: string }>>([])
   const [cityId, setCityId] = useState('')
-  const [activeTab, setActiveTab] = useState<'news' | 'blog'>('news')
-
   // Fetch cities for filter
   useEffect(() => {
     fetch('/api/cities')
@@ -102,73 +98,7 @@ export default function NewsView() {
   )
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-      {/* Combined Updates Tab UI */}
-      <div className="flex bg-gray-100 p-1 rounded-xl w-full max-w-sm mx-auto shadow-inner mb-6">
-        <button
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-            activeTab === 'news' ? 'bg-white text-[#4169E1] shadow-sm' : 'text-gray-500 hover:text-gray-900'
-          }`}
-          onClick={() => setActiveTab('news')}
-        >
-          Local News
-        </button>
-        <button
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-            activeTab === 'blog' ? 'bg-white text-[#4169E1] shadow-sm' : 'text-gray-500 hover:text-gray-900'
-          }`}
-          onClick={() => setActiveTab('blog')}
-        >
-          Choutuppal Info / Blogs
-        </button>
-      </div>
-
-      {activeTab === 'blog' ? (
-        <BlogView />
-      ) : (
-        <>
-          {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#4169E1]/10 flex items-center justify-center">
-            <Newspaper className="size-5 text-[#4169E1]" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Local News</h1>
-            <p className="text-sm text-gray-500">Stay updated with your city</p>
-          </div>
-        </div>
-        {cities.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setCityId('')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                !cityId
-                  ? 'bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white shadow-md'
-                  : 'bg-white/50 text-gray-600 border border-white/40'
-              }`}
-            >
-              All Cities
-            </motion.button>
-            {cities.map((city) => (
-              <motion.button
-                key={city.id}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setCityId(city.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  cityId === city.id
-                    ? 'bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white shadow-md'
-                    : 'bg-white/50 text-gray-600 border border-white/40'
-                }`}
-              >
-                {city.name}
-              </motion.button>
-            ))}
-          </div>
-        )}
-      </div>
-
+    <div className="max-w-4xl mx-auto px-4 space-y-6">
       {/* Articles */}
       {loading ? (
         <SkeletonList />
@@ -302,8 +232,6 @@ export default function NewsView() {
             ))}
           </div>
         </div>
-      )}
-      </>
       )}
     </div>
   )
