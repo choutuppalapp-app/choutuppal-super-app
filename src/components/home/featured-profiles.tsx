@@ -1,90 +1,46 @@
 'use client'
 
-import { Crown, User, ChevronRight, ShieldCheck } from 'lucide-react'
+import { Crown, User as UserIcon, ChevronRight, ShieldCheck } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import { useEffect, useState } from 'react'
 
-/**
- * FeaturedProfiles — Quick access to Individual & Leader profile pages.
- * Shown on the home page as a horizontal scrollable row of profile cards.
- *
- * ─── HYDRATION-SAFE DESIGN ───
- *
- * 1. The <section> and heading structure have HARDCODED classes that NEVER
- *    change between server and client render.
- * 2. No data is read from localStorage or async sources during render.
- *    The profiles array is hardcoded (static dummy data).
- * 3. No conditional DOM wrappers — the structure is strictly static:
- *    <section className="px-4 py-4">
- *      <div className="flex items-center justify-between mb-3">
- *        <div className="flex items-center gap-2">
- *          <icon> <heading>
- *        </div>
- *        <button>See All</button>
- *      </div>
- *      <scrollable list />
- *    </section>
- */
 export function FeaturedProfiles() {
   const navigateTo = useAppStore((s) => s.navigateTo)
   const setProfileType = useAppStore((s) => s.setProfileType)
   const setSelectedProfileUserId = useAppStore((s) => s.setSelectedProfileUserId)
 
-  const profiles = [
-    {
-      id: 'demo-individual',
-      name: 'Rajesh Kumar',
-      title: 'Digital Marketer',
-      type: 'individual' as const,
-      icon: User,
-      gradient: 'from-[#4169E1] to-[#6B8DD6]',
-      ringColor: 'ring-[#4169E1]',
-      verified: true,
-      followers: '2.5K',
-    },
-    {
-      id: 'demo-leader',
-      name: 'Komatireddy V. Reddy',
-      title: 'MLA - Choutuppal',
-      type: 'leader' as const,
-      icon: Crown,
-      gradient: 'from-[#D4AF37] to-[#4169E1]',
-      ringColor: 'ring-[#D4AF37]',
-      verified: true,
-      followers: '15.4K',
-    },
-    {
-      id: 'demo-individual-2',
-      name: 'Lakshmi Devi',
-      title: 'Tailor & Designer',
-      type: 'individual' as const,
-      icon: User,
-      gradient: 'from-emerald-500 to-teal-500',
-      ringColor: 'ring-emerald-500',
-      verified: false,
-      followers: '890',
-    },
-    {
-      id: 'demo-leader-2',
-      name: 'V. Srinivas Rao',
-      title: 'MPTC - Choutuppal',
-      type: 'leader' as const,
-      icon: Crown,
-      gradient: 'from-[#FF9933] to-[#138808]',
-      ringColor: 'ring-[#FF9933]',
-      verified: true,
-      followers: '5.2K',
-    },
-  ]
+  const [profiles, setProfiles] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleProfileClick = (profile: typeof profiles[number]) => {
-    setSelectedProfileUserId(null)
-    setProfileType(profile.type)
-    navigateTo(profile.type === 'leader' ? 'leader-profile' : 'individual-profile')
+  useEffect(() => {
+    fetch('/api/social/profiles?publicFigures=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.profiles && Array.isArray(data.profiles)) {
+          setProfiles(data.profiles)
+        }
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to fetch featured profiles', err)
+        setLoading(false)
+      })
+  }, [])
+
+  const handleProfileClick = (profile: any) => {
+    setSelectedProfileUserId(profile.userId)
+    const type = profile.publicFigureCategory === 'POLITICIAN' ? 'leader' : 'individual'
+    setProfileType(type)
+    navigateTo(type === 'leader' ? 'leader-profile' : 'individual-profile')
+  }
+
+  if (loading || profiles.length === 0) {
+    return null // Completely hidden if no profiles exist
   }
 
   return (
     <section className="px-4 py-4">
-      {/* ── Static heading — NEVER changes between server & client ── */}
+      {/* ── Static heading ── */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Crown className="w-5 h-5 text-[#4169E1]" />
@@ -102,8 +58,15 @@ export function FeaturedProfiles() {
       {/* ── Scrollable profile cards ── */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {profiles.map((profile) => {
-          const IconComponent = profile.icon
-          const isLeader = profile.type === 'leader'
+          const isLeader = profile.publicFigureCategory === 'POLITICIAN'
+          const IconComponent = isLeader ? Crown : UserIcon
+          const gradient = isLeader ? 'from-[#D4AF37] to-[#4169E1]' : 'from-[#4169E1] to-[#6B8DD6]'
+          const ringColor = isLeader ? 'ring-[#D4AF37]' : 'ring-[#4169E1]'
+
+          const name = profile.user?.fullName || 'User'
+          const title = profile.bio || (isLeader ? 'Leader' : 'Member')
+          const avatarUrl = profile.user?.avatarUrl || profile.avatarUrl
+
           return (
             <button
               key={profile.id}
@@ -112,12 +75,21 @@ export function FeaturedProfiles() {
             >
               {/* Avatar */}
               <div className="relative">
-                <div
-                  className={`w-16 h-16 ${isLeader ? 'rounded-2xl' : 'rounded-full'} bg-gradient-to-br ${profile.gradient} flex items-center justify-center text-white font-bold text-xl ring-2 ${profile.ringColor} ring-offset-2 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`}
-                >
-                  {profile.name.charAt(0)}
-                </div>
-                {profile.verified && (
+                {avatarUrl ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt={name} 
+                    className={`w-16 h-16 ${isLeader ? 'rounded-2xl' : 'rounded-full'} object-cover ring-2 ${ringColor} ring-offset-2 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`} 
+                  />
+                ) : (
+                  <div
+                    className={`w-16 h-16 ${isLeader ? 'rounded-2xl' : 'rounded-full'} bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xl ring-2 ${ringColor} ring-offset-2 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`}
+                  >
+                    {name.charAt(0)}
+                  </div>
+                )}
+                
+                {profile.isVerified && (
                   <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
                     <ShieldCheck className={`w-4 h-4 ${isLeader ? 'text-[#D4AF37]' : 'text-[#4169E1]'}`} />
                   </div>
@@ -132,8 +104,8 @@ export function FeaturedProfiles() {
 
               {/* Info */}
               <div className="text-center max-w-[80px]">
-                <p className="text-xs font-semibold text-gray-900 truncate w-full">{profile.name.split(' ')[0]}</p>
-                <p className="text-[10px] text-gray-400 truncate w-full">{profile.title}</p>
+                <p className="text-xs font-semibold text-gray-900 truncate w-full">{name.split(' ')[0]}</p>
+                <p className="text-[10px] text-gray-400 truncate w-full">{title}</p>
               </div>
             </button>
           )
