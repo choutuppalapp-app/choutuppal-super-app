@@ -13,8 +13,8 @@ import { SettingsInitializer } from "@/components/settings-initializer";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
-import { PWAInstallProvider } from "@/components/pwa-install-provider";
-import { PWAAutoInstallPopup } from "@/components/pwa-auto-install-popup";
+import { PWAProvider } from "@/contexts/pwa-context";
+import { PWAInstallBanner } from "@/components/pwa-install-banner";
 import { PWAIOSBanner } from "@/components/pwa-ios-banner";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 
@@ -111,7 +111,7 @@ export default function RootLayout({
         <ErrorBoundary name="AuthProvider">
           <AuthProvider>
             <AppConfigProvider>
-            <PWAInstallProvider>
+            <PWAProvider>
               <ErrorBoundary name="SettingsInitializer">
                 <SettingsInitializer />
               </ErrorBoundary>
@@ -135,9 +135,9 @@ export default function RootLayout({
                 <LoginModal />
               </ErrorBoundary>
 
-              {/* PWA Install Popup — auto-shows on mobile when installable */}
-              <ErrorBoundary name="PWAAutoInstallPopup">
-                <PWAAutoInstallPopup />
+              {/* PWA Install Banner */}
+              <ErrorBoundary name="PWAInstallBanner">
+                <PWAInstallBanner />
               </ErrorBoundary>
 
               {/* PWA iOS Banner — manual instructions for iOS Safari */}
@@ -158,7 +158,7 @@ export default function RootLayout({
                   richColors
                 />
               </ErrorBoundary>
-            </PWAInstallProvider>
+            </PWAProvider>
             </AppConfigProvider>
           </AuthProvider>
         </ErrorBoundary>

@@ -1,13 +1,13 @@
 'use client'
 
 import { X, Share } from 'lucide-react'
-import { usePWAInstall } from './pwa-install-provider'
+import { usePWA } from '@/contexts/pwa-context'
 import { useState, useEffect } from 'react'
 
 const IOS_DISMISS_KEY = 'pwa-ios-dismissed'
 
 export function PWAIOSBanner() {
-  const { isIOS, isInstalled } = usePWAInstall()
+  const { isIOS } = usePWA()
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function PWAIOSBanner() {
     }
   }, [])
 
-  if (!isIOS || isInstalled || !show) return null
+  if (!isIOS || !show) return null
 
   const handleDismiss = () => {
     setShow(false)
