@@ -43,6 +43,7 @@ export default function AdminListings() {
   const [logoUrl, setLogoUrl] = useState('')
   const [coverUrl, setCoverUrl] = useState('')
   const [galleryUrls, setGalleryUrls] = useState<string[]>([])
+  const [isFeatured, setIsFeatured] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -82,7 +83,8 @@ export default function AdminListings() {
     setPhone(item.phoneNumber || item.ownerPhone || '')
     setLogoUrl(item.logoUrl || '')
     setCoverUrl(item.coverImage || (item.images && JSON.parse(item.images)[0]) || '')
-    setGalleryUrls(item.galleryImages ? JSON.parse(item.galleryImages) : (item.images ? JSON.parse(item.images) : []))
+    setGalleryUrls(item.gallery ? JSON.parse(item.gallery) : (item.images ? JSON.parse(item.images) : []))
+    setIsFeatured(item.isFeatured || false)
   }
 
   const resetForm = () => {
@@ -99,6 +101,7 @@ export default function AdminListings() {
     setLogoUrl('')
     setCoverUrl('')
     setGalleryUrls([])
+    setIsFeatured(false)
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'cover' | 'gallery') => {
@@ -153,6 +156,7 @@ export default function AdminListings() {
           images: JSON.stringify(galleryUrls.length > 0 ? galleryUrls : [coverUrl].filter(Boolean)),
           status: 'APPROVED',
           isApproved: true,
+          isFeatured,
           cityId: isEditing ? isEditing.cityId : cityId,
           userId: isEditing ? isEditing.userId : user?.id,
         }
@@ -170,11 +174,17 @@ export default function AdminListings() {
           address,
           logoUrl,
           coverImage: coverUrl,
-          galleryImages: JSON.stringify(galleryUrls),
+          images: JSON.stringify(galleryUrls),
+          gallery: JSON.stringify(galleryUrls),
           status: 'APPROVED',
           isApproved: true,
+          isFeatured,
           cityId: isEditing ? isEditing.cityId : cityId,
           userId: isEditing ? isEditing.userId : user?.id,
+        } as any;
+
+        if (!isEditing) {
+          payload.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
         }
         if (isEditing) {
           await updateAdminListing(isEditing.id, payload, 'business')
@@ -436,12 +446,49 @@ export default function AdminListings() {
                 </div>
               </div>
 
+              {category !== 'Real Estate' && (
+                <div className="grid grid-cols-1 gap-4 p-4 bg-yellow-50/50 rounded-2xl border border-yellow-100 mt-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <input 
+                        type="checkbox" 
+                        id="isFeaturedBusiness"
+                        checked={isFeatured}
+                        onChange={(e) => setIsFeatured(e.target.checked)}
+                        className="w-5 h-5 text-yellow-600 rounded border-yellow-300 focus:ring-yellow-500"
+                      />
+                      <label htmlFor="isFeaturedBusiness" className="text-sm font-bold text-yellow-900 cursor-pointer">
+                        👑 Mark as Featured Listing (Shows at the top)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {category === 'Real Estate' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Price</label>
-                    <Input required value={price} onChange={e => setPrice(e.target.value)} className="rounded-xl border-white" />
-                  </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-gray-500 uppercase">Property Price</label>
+                            <Input placeholder="e.g. ₹45 Lakhs" value={price} onChange={e => setPrice(e.target.value)} required />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
+                            <div className="flex items-center gap-2 mt-2">
+                              <input 
+                                type="checkbox" 
+                                id="isFeatured"
+                                checked={isFeatured}
+                                onChange={(e) => setIsFeatured(e.target.checked)}
+                                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                              />
+                              <label htmlFor="isFeatured" className="text-sm font-bold text-gray-800 cursor-pointer">
+                                👑 Mark as Featured Listing (Shows at the top)
+                              </label>
+                            </div>
+                          </div>
+                        </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">BHK (Bedrooms)</label>
                     <Input type="number" value={bhk} onChange={e => setBhk(e.target.value)} className="rounded-xl border-white" />

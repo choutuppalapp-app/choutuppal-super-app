@@ -194,12 +194,13 @@ export default function DashboardView() {
     cityId: '',
     coverImage: '',
     gallery: [] as string[],
+    isFeatured: false,
   })
 
   const resetReForm = () => setReForm({
     title: '', listingType: 'Sale', price: '', area: '', bedroomCount: '',
     description: '', address: '', googleMapsUrl: '', phoneNumber: '', whatsappNumber: '',
-    sameAsPhone: false, cityId: '', coverImage: '', gallery: [],
+    sameAsPhone: false, cityId: '', coverImage: '', gallery: [], isFeatured: false,
   })
 
   const handleAddStoryClick = () => {
@@ -218,7 +219,8 @@ export default function DashboardView() {
     coverImage: '', logoUrl: '', images: [] as string[],
     instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
     price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
-    services: [] as { name: string; description: string }[]
+    services: [] as { name: string; description: string }[],
+    isFeatured: false
   })
 
   const [bannerData, setBannerData] = useState({
@@ -464,6 +466,7 @@ export default function DashboardView() {
         rating: formData.rating,
         operatingHours: formData.operatingHours || null,
         googleMapsUrl: formData.googleMapsUrl || null,
+        isFeatured: formData.isFeatured,
       }
 
       if (formData.category === 'Real Estate') {
@@ -498,7 +501,7 @@ export default function DashboardView() {
         setFormData({
           name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
           coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
-          services: []
+          services: [], isFeatured: false
         })
       } else {
         const errData = await res.text()
@@ -641,10 +644,12 @@ export default function DashboardView() {
         area: reForm.area || null,
         address: reForm.address || null,
         description: reForm.description || null,
-        id: editingRealEstateId || undefined,
+        isFeatured: reForm.isFeatured,
       }
+      
+      const url = editingRealEstateId ? `/api/realestate/${editingRealEstateId}` : '/api/realestate'
       const method = editingRealEstateId ? 'PUT' : 'POST'
-      const res = await authFetch('/api/realestate', { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const res = await authFetch(url, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
         toast.success(editingRealEstateId ? 'Property updated!' : 'Property submitted for approval!')
         setIsCreatingRealEstate(false)
@@ -713,7 +718,8 @@ export default function DashboardView() {
         } catch {
           return []
         }
-      })()
+      })(),
+      isFeatured: listing.isFeatured || false
     })
     setIsCreatingListing(true)
   }
@@ -737,6 +743,7 @@ export default function DashboardView() {
       cityId: listing.city?.id || '',
       coverImage: imagesArr[0] || '',
       gallery: imagesArr.slice(1),
+      isFeatured: listing.isFeatured || false
     })
     setIsCreatingRealEstate(true)
   }
@@ -1415,7 +1422,7 @@ export default function DashboardView() {
               <div className="flex flex-col w-full h-full relative">
                 {/* Header */}
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: []}) }}>
+                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: [], isFeatured: false}) }}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
                   <span className="text-gray-950 font-black text-lg">{editingListingId ? 'Edit Listing Details' : 'Publish New Listing'}</span>
                   <div className="w-10"></div>
