@@ -34,6 +34,7 @@ export function PwaInstallManager() {
       e.preventDefault()
       console.log('beforeinstallprompt FIRED!')
       setDeferredPrompt(e)
+      ;(window as any).deferredPrompt = e
       
       const dismissed = localStorage.getItem('pwaDismissed') === 'true'
       if (!dismissed) {

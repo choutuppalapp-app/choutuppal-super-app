@@ -85,6 +85,25 @@ export function Header({ className }: HeaderProps) {
     }
   }
 
+  const handlePwaInstall = async () => {
+    const promptEvent = (window as any).deferredPrompt
+    if (promptEvent) {
+      try {
+        await promptEvent.prompt()
+        const { outcome } = await promptEvent.userChoice
+        if (outcome === 'accepted') {
+          ;(window as any).deferredPrompt = null
+        }
+      } catch (err) {
+        console.error('PWA Installation failed', err)
+      }
+    } else {
+      toast({
+        description: 'దయచేసి మీ బ్రౌజర్ షేర్ మెనూ ⎋ నుండి Add to Home Screen నొక్కండి లేదా యాప్ ఇప్పటికే ఇన్స్టాల్ అయి ఉండవచ్చు.'
+      })
+    }
+  }
+
 
 
   // Logo rendering removed in favor of static image
@@ -135,6 +154,14 @@ export function Header({ className }: HeaderProps) {
 
         {/* Right: Notifications + Auth */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={handlePwaInstall}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-sm hover:shadow-md transition-all whitespace-nowrap"
+            style={{ background: `linear-gradient(to right, ${primary}, ${secondary})` }}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Download App ⬇️
+          </button>
           <NotificationPanel />
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
@@ -172,6 +199,15 @@ export function Header({ className }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-0">
+          <button
+            onClick={handlePwaInstall}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-white text-[11px] font-bold shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap mr-1"
+            style={{ background: `linear-gradient(to right, ${primary}, ${secondary})` }}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Download ⬇️
+          </button>
+          
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
             <NotificationPanel />
           </div>
