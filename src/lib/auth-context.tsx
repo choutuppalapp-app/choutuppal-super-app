@@ -14,6 +14,7 @@ interface AuthUser {
   coinsBalance: number
   subscriptionTier: string
   avatarUrl?: string | null
+  bio?: string | null
   managedCityId?: string | null
   agentCityId?: string | null
   isAgentApproved?: boolean

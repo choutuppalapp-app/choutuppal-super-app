@@ -72,6 +72,7 @@ model User {
   coinsBalance     Int      @default(0)
   whatsappNumber   String?
   avatarUrl        String?
+  bio              String?
   // Agent-specific fields
   agentCityId      String?  // City the agent operates in
   isAgentApproved  Boolean  @default(false) // Super Admin or City Admin must approve

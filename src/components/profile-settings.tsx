@@ -15,6 +15,7 @@ export default function ProfileSettings() {
   const [fullName, setFullName] = useState(user?.fullName || '')
   const [phone, setPhone] = useState(user?.phone || '')
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '')
+  const [bio, setBio] = useState(user?.bio || '')
   
   const [newPassword, setNewPassword] = useState('')
   const [updatingProfile, setUpdatingProfile] = useState(false)
@@ -54,7 +55,7 @@ export default function ProfileSettings() {
     if (!user) return
     setUpdatingProfile(true)
     try {
-      const { error } = await supabase.from('User').update({ fullName, phone }).eq('id', user.id)
+      const { error } = await supabase.from('User').update({ fullName, phone, bio }).eq('id', user.id)
       if (error) throw error
       toast({ title: 'Success', description: 'Profile updated successfully! Reloading...' })
       setTimeout(() => window.location.reload(), 1500)
@@ -136,6 +137,10 @@ export default function ProfileSettings() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
             <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Tell the community about yourself..." className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
           </div>
           <button type="submit" disabled={updatingProfile} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition flex justify-center items-center gap-2 disabled:opacity-50">
             {updatingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Changes'}
