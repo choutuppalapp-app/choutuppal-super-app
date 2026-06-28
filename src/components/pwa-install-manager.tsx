@@ -73,17 +73,23 @@ export function PwaInstallManager() {
   }
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
+    const promptEvent = (window as any).deferredPrompt || deferredPrompt;
+    if (!promptEvent) {
+      toast('దయచేసి మీ బ్రౌజర్ షేర్ మెనూ ⎋ నుండి Add to Home Screen నొక్కండి లేదా యాప్ ఇప్పటికే ఇన్స్టాల్ అయి ఉండవచ్చు.')
+      return
+    }
     
     try {
-      await deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
+      await promptEvent.prompt()
+      const { outcome } = await promptEvent.userChoice
       if (outcome === 'accepted') {
         setDeferredPrompt(null)
+        ;(window as any).deferredPrompt = null
         setShowPopup(false)
       }
     } catch (err) {
       console.error('PWA Installation failed', err)
+      toast.error('Installation failed or already installed.')
     }
   }
 

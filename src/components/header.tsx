@@ -85,22 +85,8 @@ export function Header({ className }: HeaderProps) {
     }
   }
 
-  const handlePwaInstall = async () => {
-    const promptEvent = (window as any).deferredPrompt
-    if (promptEvent) {
-      try {
-        await promptEvent.prompt()
-        const { outcome } = await promptEvent.userChoice
-        if (outcome === 'accepted') {
-          ;(window as any).deferredPrompt = null
-        }
-      } catch (err) {
-        console.error('PWA Installation failed', err)
-      }
-    } else {
-      // Dispatch custom event to show the bottom banner manually
-      window.dispatchEvent(new Event('show-pwa-popup'))
-    }
+  const handlePwaInstall = () => {
+    window.dispatchEvent(new Event('show-pwa-popup'))
   }
 
 
