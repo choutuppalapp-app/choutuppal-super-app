@@ -58,7 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL('https://choutuppal.in'),
     title: metaTitle,
     description: metaDescription,
-    manifest: '/manifest.json?v=2',
+    manifest: '/manifest.json',
     icons: {
       apple: '/logo.png?v=2',
       icon: '/logo.png?v=2',
