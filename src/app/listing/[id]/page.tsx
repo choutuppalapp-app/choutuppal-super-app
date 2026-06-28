@@ -15,14 +15,8 @@ async function getListing(id: string) {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   let listing: any = null
   try {
-    // Check if it's an ID or Slug
     listing = await db.listing.findFirst({
-      where: {
-        OR: [
-          { id: params.id },
-          { slug: params.id }
-        ]
-      }
+      where: { OR: [{ id: params.id }, { slug: params.id }] }
     })
   } catch {}
 
@@ -30,8 +24,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const title = `${listing.name} in Choutuppal | Choutuppal App`
   const description = listing.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Check out ${listing.name} on Choutuppal App`
-  const rawImage = listing.coverImage || listing.logoUrl || '/brand-logo.png'
-  const image = rawImage.startsWith('http') ? rawImage : `https://choutuppal.in${rawImage}`
+  
+  const rawImage = listing.coverImage || listing.logoUrl || '/logo.png'
+  const absoluteImageUrl = rawImage.startsWith('http') 
+    ? rawImage 
+    : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
 
   return {
     title,
@@ -39,7 +36,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title,
       description,
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
       type: 'website',
       url: `https://choutuppal.in/listing/${params.id}`,
     },
@@ -47,7 +44,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       card: 'summary_large_image',
       title,
       description,
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
     }
   }
 }

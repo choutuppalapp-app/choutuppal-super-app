@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 
 interface PWAInstallContextType {
-  installPrompt: BeforeInstallPromptEvent | null
   isInstallable: boolean
   isInstalled: boolean
   isIOS: boolean
@@ -14,14 +13,8 @@ interface PWAInstallContextType {
   wasDismissed: boolean
 }
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
 const PWAInstallContext = createContext<PWAInstallContextType>({
-  installPrompt: null,
-  isInstallable: false,
+  isInstallable: true,
   isInstalled: false,
   isIOS: false,
   isMobile: false,
@@ -63,26 +56,17 @@ function detectMobile(): boolean {
 }
 
 export function PWAInstallProvider({ children }: { children: React.ReactNode }) {
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
-  const [wasDismissed, setWasDismissed] = useState(false)
-  const promptRef = useRef<BeforeInstallPromptEvent | null>(null)
+  const [showInstallPopup, setShowInstallPopup] = useState(false)
 
   useEffect(() => {
     setIsInstalled(checkIsStandalone())
-    setWasDismissed(checkWasDismissed())
   }, [])
 
   const isIOS = detectIOS()
   const isMobile = detectMobile()
 
-
-  // Keep ref in sync
-  useEffect(() => {
-    promptRef.current = installPrompt
-  }, [installPrompt])
-
-  // Listen for display-mode changes (when app gets installed at runtime)
+  // Listen for display-mode changes
   useEffect(() => {
     if (typeof window === 'undefined') return
     const mq = window.matchMedia('(display-mode: standalone)')
@@ -91,22 +75,10 @@ export function PWAInstallProvider({ children }: { children: React.ReactNode }) 
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  // Capture beforeinstallprompt
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const handler = (e: Event) => {
-      console.log('🔥 [PWA Debug] beforeinstallprompt event fired!', e)
-      e.preventDefault()
-      setInstallPrompt(e as BeforeInstallPromptEvent)
-    }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-
   // Listen for appinstalled
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const handler = () => { setIsInstalled(true); setInstallPrompt(null) }
+    const handler = () => { setIsInstalled(true); setShowInstallPopup(false) }
     window.addEventListener('appinstalled', handler)
     return () => window.removeEventListener('appinstalled', handler)
   }, [])
@@ -118,27 +90,20 @@ export function PWAInstallProvider({ children }: { children: React.ReactNode }) 
   }, [])
 
   const triggerInstall = useCallback(async (): Promise<boolean> => {
-    const prompt = promptRef.current
-    if (!prompt) return false
-    try {
-      await prompt.prompt()
-      const { outcome } = await prompt.userChoice
-      if (outcome === 'accepted') { setIsInstalled(true); setInstallPrompt(null); return true }
-      return false
-    } catch { return false }
+    setShowInstallPopup(true)
+    return true
   }, [])
 
   const dismissInstall = useCallback(() => {
-    setWasDismissed(true)
+    setShowInstallPopup(false)
   }, [])
 
-  const isInstallable = !!installPrompt && !isInstalled
-  const showInstallPopup = (isInstallable || (isIOS && isMobile)) && !isInstalled && !wasDismissed
+  const isInstallable = !isInstalled
 
   return (
     <PWAInstallContext.Provider value={{
-      installPrompt, isInstallable, isInstalled, isIOS, isMobile,
-      triggerInstall, dismissInstall, showInstallPopup, wasDismissed,
+      isInstallable, isInstalled, isIOS, isMobile,
+      triggerInstall, dismissInstall, showInstallPopup, wasDismissed: false,
     }}>
       {children}
     </PWAInstallContext.Provider>

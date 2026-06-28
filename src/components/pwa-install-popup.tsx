@@ -38,13 +38,10 @@ export function PWAInstallPopup() {
                   Tap Share <span className="text-xl">⎋</span> and Add to Home Screen
                 </div>
               ) : (
-                <button
-                  onClick={triggerInstall}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-blue-700 text-xs font-bold shadow hover:bg-gray-50 active:scale-95 transition-all"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Install
-                </button>
+                <div className="flex flex-col items-end gap-0.5 px-3 py-1.5 rounded-lg bg-white/20 text-white text-[10px] font-bold">
+                  <span>Tap browser menu (⋮)</span>
+                  <span>Select 'Add to Home screen'</span>
+                </div>
               )}
               <button
                 onClick={dismissInstall}
