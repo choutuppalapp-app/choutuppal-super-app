@@ -25,7 +25,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const title = `${listing.name} in Choutuppal | Choutuppal App`
   const description = listing.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Check out ${listing.name} on Choutuppal App`
   
-  const rawImage = listing.coverImage || listing.logoUrl || '/logo.png'
+  let firstGalleryImage = null;
+  try {
+    if (listing.images && typeof listing.images === 'string') {
+      const parsed = JSON.parse(listing.images);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        firstGalleryImage = parsed[0];
+      }
+    }
+  } catch {}
+
+  const rawImage = listing.coverImage || listing.logoUrl || firstGalleryImage || '/logo.png'
   const absoluteImageUrl = rawImage.startsWith('http') 
     ? rawImage 
     : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
