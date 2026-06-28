@@ -10,7 +10,9 @@ import {
   BadgeDollarSign, Sparkles, UploadCloud,
   Instagram, Facebook, Youtube, MessageCircle,
   ArrowLeft, User, Home, Circle
-, LineChart, Download } from 'lucide-react'
+, LineChart, Download, Film,
+  MessageSquare,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -121,6 +123,7 @@ const TAB_ITEMS = [
   { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
   { key: 'banners', label: 'My Banners', icon: ImageIcon },
   { key: 'stories', label: 'My Stories', icon: Sparkles },
+  { key: 'my_posts', label: 'Community', icon: MessageSquare },
   { key: 'settings', label: 'Profile', icon: User },
 ]
 
@@ -178,6 +181,10 @@ export default function DashboardView() {
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
   const [editingRealEstateId, setEditingRealEstateId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  
+  // Community Post state
+  const [newPostContent, setNewPostContent] = useState('')
+  const [posting, setPosting] = useState(false)
 
   const [reForm, setReForm] = useState({
     title: '',
@@ -1183,11 +1190,55 @@ export default function DashboardView() {
     }
   }
 
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || !currentUser) return
+    setPosting(true)
+    try {
+      const res = await authFetch('/api/social/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          authorId: currentUser.id,
+          content: newPostContent.trim(),
+        }),
+      })
+      if (res.ok) {
+        setNewPostContent('')
+        toast.success('Posted successfully')
+        mutateMyPosts()
+      } else {
+        toast.error('Failed to post')
+      }
+    } catch {
+      toast.error('Failed to post')
+    }
+    setPosting(false)
+  }
+
   const renderMyPosts = () => (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold text-gray-900">నా పోస్ట్లు <span className="text-sm font-normal text-gray-400">(My Posts)</span></h2>
+        <h2 className="text-lg font-bold text-gray-900">కమ్యూనిటీ <span className="text-sm font-normal text-gray-400">(Community)</span></h2>
         <span className="text-xs text-gray-400">{myPosts.length} post{myPosts.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <textarea
+          value={newPostContent}
+          onChange={(e) => setNewPostContent(e.target.value)}
+          placeholder="Share something with the community..."
+          className="w-full resize-none bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/30 focus:border-[#4169E1]/50 min-h-[80px]"
+          rows={3}
+        />
+        <div className="flex justify-end mt-3">
+          <button
+            onClick={handleCreatePost}
+            disabled={!newPostContent.trim() || posting}
+            className="px-5 py-2 rounded-xl bg-[#4169E1] text-white text-sm font-semibold shadow-sm hover:bg-[#4169E1]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {posting ? 'Posting...' : 'Post'}
+          </button>
+        </div>
       </div>
 
       {!myPostsData && (
@@ -1406,6 +1457,7 @@ export default function DashboardView() {
           {activeTab === 'real_estate' && !isCreatingRealEstate && renderRealEstate()}
           {activeTab === 'banners' && !isCreatingBanner && renderBanners()}
           {activeTab === 'stories' && renderStories()}
+          {activeTab === 'my_posts' && renderMyPosts()}
           {activeTab === 'settings' && renderSettings()}
         </div>
 
@@ -2007,8 +2059,8 @@ export default function DashboardView() {
             onClick={() => setActiveTab('my_posts')}
             className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'my_posts' ? 'text-[#4169E1]' : 'text-gray-500'}`}
           >
-            <FileText size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Posts</span>
+            <MessageSquare size={20} />
+            <span className="text-[10px] mt-0.5 font-semibold">Community</span>
           </button>
 
           <button
