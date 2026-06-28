@@ -139,7 +139,7 @@ export default function DashboardView() {
   const [activeTab, setActiveTab] = useState('listings')
   const { user, logout } = useAuth()
   const navigateTo = useAppStore((s) => s.navigateTo)
-  const { isInstallable, triggerInstall } = usePWAInstall()
+  const { isInstallable, deferredPrompt, clearPrompt } = usePWAInstall()
   
   const currentUser = user ? {
     id: user.id,
@@ -2014,7 +2014,17 @@ export default function DashboardView() {
           
           {isInstallable && (
             <button
-              onClick={triggerInstall}
+              onClick={async () => {
+                if (deferredPrompt) {
+                  try {
+                    await deferredPrompt.prompt()
+                    const { outcome } = await deferredPrompt.userChoice
+                    if (outcome === 'accepted') {
+                      clearPrompt()
+                    }
+                  } catch (e) {}
+                }
+              }}
               className="flex flex-col items-center justify-center min-w-[64px] px-2 text-[#D4AF37] active:scale-90 transition-transform font-bold"
             >
               <Download size={20} className="animate-bounce" />

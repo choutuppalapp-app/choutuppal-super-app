@@ -1,35 +1,32 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+
+export interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
 
 interface PWAInstallContextType {
+  deferredPrompt: BeforeInstallPromptEvent | null
   isInstallable: boolean
   isInstalled: boolean
   isIOS: boolean
   isMobile: boolean
-  triggerInstall: () => Promise<boolean>
-  dismissInstall: () => void
-  showInstallPopup: boolean
-  wasDismissed: boolean
+  clearPrompt: () => void
 }
 
 const PWAInstallContext = createContext<PWAInstallContextType>({
-  isInstallable: true,
+  deferredPrompt: null,
+  isInstallable: false,
   isInstalled: false,
   isIOS: false,
   isMobile: false,
-  triggerInstall: async () => false,
-  dismissInstall: () => {},
-  showInstallPopup: false,
-  wasDismissed: false,
+  clearPrompt: () => {},
 })
 
 export function usePWAInstall() {
   return useContext(PWAInstallContext)
-}
-
-function checkWasDismissed(): boolean {
-  return false
 }
 
 function checkIsStandalone(): boolean {
@@ -56,8 +53,8 @@ function detectMobile(): boolean {
 }
 
 export function PWAInstallProvider({ children }: { children: React.ReactNode }) {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
-  const [showInstallPopup, setShowInstallPopup] = useState(false)
 
   useEffect(() => {
     setIsInstalled(checkIsStandalone())
@@ -78,7 +75,7 @@ export function PWAInstallProvider({ children }: { children: React.ReactNode }) 
   // Listen for appinstalled
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const handler = () => { setIsInstalled(true); setShowInstallPopup(false) }
+    const handler = () => { setIsInstalled(true); setDeferredPrompt(null) }
     window.addEventListener('appinstalled', handler)
     return () => window.removeEventListener('appinstalled', handler)
   }, [])
@@ -89,21 +86,26 @@ export function PWAInstallProvider({ children }: { children: React.ReactNode }) 
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   }, [])
 
-  const triggerInstall = useCallback(async (): Promise<boolean> => {
-    setShowInstallPopup(true)
-    return true
+  // Capture beforeinstallprompt globally
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
-  const dismissInstall = useCallback(() => {
-    setShowInstallPopup(false)
+  const clearPrompt = useCallback(() => {
+    setDeferredPrompt(null)
   }, [])
 
-  const isInstallable = !isInstalled
+  const isInstallable = !!deferredPrompt && !isInstalled
 
   return (
     <PWAInstallContext.Provider value={{
-      isInstallable, isInstalled, isIOS, isMobile,
-      triggerInstall, dismissInstall, showInstallPopup, wasDismissed: false,
+      deferredPrompt, isInstallable, isInstalled, isIOS, isMobile, clearPrompt
     }}>
       {children}
     </PWAInstallContext.Provider>

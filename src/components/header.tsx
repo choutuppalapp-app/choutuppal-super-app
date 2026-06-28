@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/auth-context'
 import { usePWAInstall } from './pwa-install-provider'
 import { useAppConfig } from '@/hooks/use-app-config'
 import { usePathname, useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 
 const NAV_LINKS: Array<{
   view: ViewType
@@ -50,9 +51,11 @@ export function Header({ className }: HeaderProps) {
   const themeSecondary = useAppStore((s) => s.themeSecondary)
   const siteSettings = useAppStore((s) => s.siteSettings)
   const { isAuthenticated, setShowLoginModal, logout, user } = useAuth()
-  const { isInstallable, isInstalled, isIOS, triggerInstall } = usePWAInstall()
+  const { isInstallable, isInstalled, isIOS, deferredPrompt } = usePWAInstall()
   const { config } = useAppConfig()
-  const showInstallMenuItem = (isInstallable || isIOS) && !isInstalled
+  const { toast } = useToast()
+  
+  const showInstallMenuItem = !isInstalled
 
   const brandName = currentCity.brandName || 'Choutuppal'
   const appLogoUrl = siteSettings?.appLogoUrl || siteSettings?.logoUrl || '/brand-logo.png'
@@ -79,6 +82,26 @@ export function Header({ className }: HeaderProps) {
     navigateTo('home')
     if (pathname !== '/') {
       router.push('/')
+    }
+  }
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
+        if (outcome === 'accepted') {
+          // Success
+        }
+      } catch (err) {
+        console.error('Install failed', err)
+      }
+    } else {
+      toast({
+        title: 'Install App',
+        description: 'దయచేసి మీ బ్రౌజర్ మెనూలో Add to Home Screen నొక్కండి',
+        duration: 5000,
+      })
     }
   }
 
@@ -132,11 +155,11 @@ export function Header({ className }: HeaderProps) {
         <div className="flex items-center gap-2">
           {showInstallMenuItem && (
             <button
-              onClick={triggerInstall}
+              onClick={handleInstallClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-xs font-bold transition-colors"
             >
               <Download className="size-4 animate-bounce" />
-              Install App ⬇️
+              Install App
             </button>
           )}
           <NotificationPanel />
@@ -178,11 +201,11 @@ export function Header({ className }: HeaderProps) {
         <div className="flex items-center gap-0">
           {showInstallMenuItem && (
             <button
-              onClick={triggerInstall}
+              onClick={handleInstallClick}
               className="flex items-center gap-1 px-2.5 py-1.5 mr-1 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-[10px] font-bold"
             >
               <Download className="size-3.5 animate-bounce" />
-              Install ⬇️
+              Install
             </button>
           )}
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
@@ -301,7 +324,7 @@ export function Header({ className }: HeaderProps) {
                           // On iOS, the iOS banner handles instructions — just close drawer
                           setIsDrawerOpen(false)
                         } else {
-                          await triggerInstall()
+                          await handleInstallClick()
                           setIsDrawerOpen(false)
                         }
                       }}
