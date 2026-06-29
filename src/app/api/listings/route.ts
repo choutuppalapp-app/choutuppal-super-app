@@ -95,6 +95,12 @@ export async function GET(request: Request) {
           _count: {
             select: { reviews: true, leads: true },
           },
+          ...(userId ? {
+            reviews: {
+              include: { user: { select: { id: true, fullName: true, avatarUrl: true } } },
+              orderBy: { createdAt: 'desc' as const }
+            }
+          } : {})
         },
         orderBy,
         skip,

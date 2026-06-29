@@ -50,6 +50,11 @@ export async function GET(request: NextRequest) {
           _count: {
             select: { comments: true, likes: true },
           },
+          comments: {
+            include: { user: { select: { id: true, fullName: true, avatarUrl: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 20
+          }
         },
         orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
         skip,

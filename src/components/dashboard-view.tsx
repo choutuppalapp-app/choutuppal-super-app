@@ -64,6 +64,8 @@ interface UserListing {
   operatingHours: string | null
   googleMapsUrl: string | null
   city?: { id: string; name: string; slug: string }
+  reviews?: any[]
+  _count?: any
 }
 
 interface RealEstateListing {
@@ -177,6 +179,7 @@ export default function DashboardView() {
   const storyFileInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedStoryForViewer, setSelectedStoryForViewer] = useState<any | null>(null)
+  const [selectedStoryStats, setSelectedStoryStats] = useState<any | null>(null)
   const [storyViewerOpen, setStoryViewerOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
   const [editingRealEstateId, setEditingRealEstateId] = useState<string | null>(null)
@@ -276,6 +279,23 @@ export default function DashboardView() {
     fetcher,
     { dedupingInterval: 30000, revalidateOnFocus: false, revalidateOnMount: true, revalidateIfStale: true }
   )
+
+  const { data: notificationsSummary, mutate: fetchNotifications } = useSWR(
+    currentUser ? `/api/notifications/unread-summary?userId=${currentUser.id}` : null,
+    fetcher,
+    { dedupingInterval: 15000, revalidateOnFocus: true }
+  )
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key)
+    if (notificationsSummary && (notificationsSummary as any)[key]) {
+      authFetch(`/api/notifications/mark-read?type=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser?.id })
+      }).then(() => fetchNotifications())
+    }
+  }
 
   const myPosts: any[] = myPostsData?.posts ?? []
 
@@ -890,6 +910,49 @@ export default function DashboardView() {
                         </button>
                       </div>
                     </div>
+                    {/* Insights & Reviews */}
+                    <div className="bg-gray-50/50 border-t border-gray-100 flex flex-col p-4">
+                      <div className="flex gap-4 text-xs font-semibold text-gray-500 mb-3">
+                        <span className="flex items-center gap-1"><Eye size={14} className="text-blue-400" /> {listing.viewsCount || 0} Views</span>
+                        <span className="flex items-center gap-1"><Phone size={14} className="text-green-500" /> {listing._count?.leads ?? 0} Leads</span>
+                        <span className="flex items-center gap-1"><MessageSquare size={14} className="text-orange-400" /> {listing._count?.reviews ?? 0} Reviews</span>
+                      </div>
+                      
+                      {listing.reviews && listing.reviews.length > 0 && (
+                        <div className="space-y-2 mt-2 border-t border-gray-100 pt-3">
+                          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Recent Reviews</h4>
+                          {listing.reviews.map((rev: any) => (
+                            <div key={rev.id} className="flex gap-2 bg-white p-2.5 rounded-xl border border-gray-200 relative group items-start">
+                              <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+                                {rev.user?.avatarUrl ? (
+                                  <img src={rev.user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
+                                    {rev.user?.fullName?.[0] || 'U'}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-bold text-gray-900 truncate">{rev.user?.fullName || 'User'}</span>
+                                  <button
+                                    onClick={() => handleDeleteReview(rev.id)}
+                                    className="text-red-500 hover:text-red-700 shrink-0 transition-opacity"
+                                    title="Delete Review"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                                <div className="flex items-center gap-0.5 mt-0.5 text-yellow-500">
+                                  {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                                </div>
+                                {rev.comment && <p className="text-xs text-gray-600 mt-1">{rev.comment}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1013,7 +1076,9 @@ export default function DashboardView() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {banners.map((banner) => (
+                {banners.map((banner) => {
+                  const isExpired = (banner as any).expiresAt ? new Date((banner as any).expiresAt) < new Date() : false;
+                  return (
                   <div key={banner.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
                     <div className="h-28 relative bg-gray-100">
                       {banner.imageUrl && <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />}
@@ -1021,6 +1086,11 @@ export default function DashboardView() {
                       <div className="absolute bottom-2 left-3">
                         <h4 className="font-bold text-white text-sm truncate max-w-[200px]">{banner.title}</h4>
                       </div>
+                      {isExpired && (
+                        <div className="absolute top-2 right-2 bg-red-600/90 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow flex items-center">
+                          <Circle size={8} className="mr-1 fill-white" /> EXPIRED
+                        </div>
+                      )}
                     </div>
                     <div className="p-3 bg-white flex justify-between items-center">
                       {banner.status === 'PENDING' ? (
@@ -1038,7 +1108,7 @@ export default function DashboardView() {
                       </button>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </div>
@@ -1116,11 +1186,11 @@ export default function DashboardView() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/30" />
                       
                       <div className="absolute top-3 left-3 right-3 flex justify-between items-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-1.5">
-                          <span className="text-[9px] text-white bg-black/60 px-2 py-1 rounded-full font-extrabold flex items-center gap-0.5 shadow-sm">
+                        <div className="flex gap-1.5" onClick={(e) => { e.stopPropagation(); setSelectedStoryStats(story) }}>
+                          <span className="text-[9px] text-white bg-black/60 px-2 py-1 rounded-full font-extrabold flex items-center gap-0.5 shadow-sm hover:bg-black/80 cursor-pointer">
                             👁️ {viewsCount}
                           </span>
-                          <span className="text-[9px] text-white bg-black/60 px-2 py-1 rounded-full font-extrabold flex items-center gap-0.5 shadow-sm">
+                          <span className="text-[9px] text-white bg-black/60 px-2 py-1 rounded-full font-extrabold flex items-center gap-0.5 shadow-sm hover:bg-black/80 cursor-pointer">
                             💬 {repliesCount}
                           </span>
                         </div>
@@ -1215,6 +1285,30 @@ export default function DashboardView() {
     setPosting(false)
   }
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Delete this comment permanently?')) return
+    try {
+      const res = await authFetch(`/api/social/comments/${commentId}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to delete comment')
+      toast.success('Comment deleted')
+      mutateMyPosts()
+    } catch {
+      toast.error('Could not delete comment')
+    }
+  }
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Delete this review permanently?')) return
+    try {
+      const res = await authFetch(`/api/reviews/${reviewId}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to delete review')
+      toast.success('Review deleted')
+      fetchListings()
+    } catch {
+      toast.error('Could not delete review')
+    }
+  }
+
   const renderMyPosts = () => (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       <div className="flex items-center justify-between mb-2">
@@ -1287,11 +1381,11 @@ export default function DashboardView() {
                     <span>{timeAgo}</span>
                     <span className="flex items-center gap-1">
                       <Heart size={11} className="text-rose-400" />
-                      {post._count?.likes ?? 0}
+                      {post._count?.likes ?? 0} Likes
                     </span>
                     <span className="flex items-center gap-1">
                       <MessageCircle size={11} />
-                      {post._count?.comments ?? 0}
+                      {post._count?.comments ?? 0} Comments
                     </span>
                   </div>
                 </div>
@@ -1305,15 +1399,49 @@ export default function DashboardView() {
               </div>
             </div>
 
-            {/* Footer actions */}
-            <div className="flex items-center justify-end px-4 pb-3 pt-0 border-t border-gray-50">
-              <button
-                onClick={() => handleDeletePost(post.id)}
-                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-2.5 py-1.5 transition-all duration-200 active:scale-95"
-              >
-                <Trash2 size={13} />
-                Delete
-              </button>
+            {/* Footer actions and comments */}
+            <div className="flex flex-col bg-gray-50/50 rounded-b-2xl">
+              <div className="flex items-center justify-end px-4 py-2 border-t border-gray-100">
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-2.5 py-1.5 transition-all duration-200 active:scale-95"
+                >
+                  <Trash2 size={13} />
+                  Delete Post
+                </button>
+              </div>
+
+              {post.comments && post.comments.length > 0 && (
+                <div className="px-4 pb-4 space-y-3">
+                  <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Recent Comments</h4>
+                  {post.comments.map((comment: any) => (
+                    <div key={comment.id} className="flex gap-2 bg-white p-2.5 rounded-xl border border-gray-100 relative group">
+                      <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+                        {comment.user?.avatarUrl ? (
+                          <img src={comment.user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
+                            {comment.user?.fullName?.[0] || 'U'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-gray-900 truncate">{comment.user?.fullName || 'User'}</span>
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="text-red-500 hover:text-red-700 shrink-0 transition-opacity"
+                            title="Delete Comment"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-0.5">{comment.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )
@@ -1383,13 +1511,19 @@ export default function DashboardView() {
             {TAB_ITEMS.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.key
+              const hasRedDot = notificationsSummary && (notificationsSummary as any)[tab.key] === true
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10 text-[#4169E1]' : 'text-gray-600 hover:bg-gray-50'}`}
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm relative ${isActive ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10 text-[#4169E1]' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-[#4169E1]' : 'text-gray-400'}`} />
+                  <div className="relative">
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-[#4169E1]' : 'text-gray-400'}`} />
+                    {hasRedDot && (
+                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                    )}
+                  </div>
                   {tab.label}
                 </button>
               )
@@ -1987,28 +2121,107 @@ export default function DashboardView() {
             }}
           />
         )}
+
+        <AnimatePresence>
+          {selectedStoryStats && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-3xl w-full max-w-sm max-h-[80vh] flex flex-col overflow-hidden shadow-2xl relative"
+              >
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                  <h3 className="font-bold text-gray-900">Story Insights</h3>
+                  <button onClick={() => setSelectedStoryStats(null)} className="p-2 text-gray-500 hover:bg-gray-200 rounded-full">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="p-4 overflow-y-auto flex-1 space-y-6">
+                  {/* Viewers */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Viewers</h4>
+                    {selectedStoryStats.viewers && selectedStoryStats.viewers.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedStoryStats.viewers.map((viewer: any) => (
+                          <div key={viewer.id || viewer.userId} className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                              {viewer.user?.avatarUrl ? <img src={viewer.user.avatarUrl} className="w-full h-full object-cover"/> : <User size={16} className="m-auto mt-2 text-gray-500" />}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-800">{viewer.user?.fullName || 'User'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="text-sm text-gray-500 italic">No viewers yet</p>}
+                  </div>
+                  {/* Likes */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Likes</h4>
+                    {selectedStoryStats.likes && selectedStoryStats.likes.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedStoryStats.likes.map((like: any) => (
+                          <div key={like.id || like.userId} className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-red-50 overflow-hidden shrink-0 flex items-center justify-center">
+                              <Heart size={14} className="text-red-500 fill-red-500" />
+                            </div>
+                            <span className="text-sm font-semibold text-gray-800">{like.user?.fullName || 'User'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="text-sm text-gray-500 italic">No likes yet</p>}
+                  </div>
+                  {/* Replies */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Replies</h4>
+                    {selectedStoryStats.replies && selectedStoryStats.replies.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedStoryStats.replies.map((reply: any) => (
+                          <div key={reply.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                              {reply.user?.avatarUrl ? <img src={reply.user.avatarUrl} className="w-full h-full object-cover"/> : <User size={16} className="m-auto mt-2 text-gray-500" />}
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold text-gray-900 block">{reply.user?.fullName || 'User'}</span>
+                              <p className="text-xs text-gray-600 mt-1">{reply.content || reply.text}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="text-sm text-gray-500 italic">No replies yet</p>}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* DEDICATED DASHBOARD MOBILE MENU */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-between items-center px-2 py-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <button
-          onClick={() => setActiveTab('my_posts')}
-          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'my_posts' ? 'text-blue-600' : 'text-gray-500'}`}
+          onClick={() => handleTabChange('my_posts')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform relative ${activeTab === 'my_posts' ? 'text-blue-600' : 'text-gray-500'}`}
         >
-          <MessageSquare size={20} />
+          <div className="relative">
+            <MessageSquare size={20} />
+            {notificationsSummary?.my_posts && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white translate-x-1 -translate-y-1" />}
+          </div>
           <span className="text-[10px] mt-0.5 font-semibold">Community</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('listings')}
-          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'listings' ? 'text-blue-600' : 'text-gray-500'}`}
+          onClick={() => handleTabChange('listings')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform relative ${activeTab === 'listings' ? 'text-blue-600' : 'text-gray-500'}`}
         >
-          <Store size={20} />
+          <div className="relative">
+            <Store size={20} />
+            {notificationsSummary?.listings && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white translate-x-1 -translate-y-1" />}
+          </div>
           <span className="text-[10px] mt-0.5 font-semibold">Listings</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('real_estate')}
+          onClick={() => handleTabChange('real_estate')}
           className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'real_estate' ? 'text-blue-600' : 'text-gray-500'}`}
         >
           <Building2 size={20} />
@@ -2016,7 +2229,7 @@ export default function DashboardView() {
         </button>
 
         <button
-          onClick={() => setActiveTab('banners')}
+          onClick={() => handleTabChange('banners')}
           className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'banners' ? 'text-blue-600' : 'text-gray-500'}`}
         >
           <ImageIcon size={20} />
@@ -2024,15 +2237,18 @@ export default function DashboardView() {
         </button>
 
         <button
-          onClick={() => setActiveTab('stories')}
-          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'stories' ? 'text-blue-600' : 'text-gray-500'}`}
+          onClick={() => handleTabChange('stories')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform relative ${activeTab === 'stories' ? 'text-blue-600' : 'text-gray-500'}`}
         >
-          <Sparkles size={20} />
+          <div className="relative">
+            <Sparkles size={20} />
+            {notificationsSummary?.stories && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white translate-x-1 -translate-y-1" />}
+          </div>
           <span className="text-[10px] mt-0.5 font-semibold">Stories</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('analytics')}
+          onClick={() => handleTabChange('analytics')}
           className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'analytics' ? 'text-blue-600' : 'text-gray-500'}`}
         >
           <LineChart size={20} />
@@ -2040,7 +2256,7 @@ export default function DashboardView() {
         </button>
 
         <button
-          onClick={() => setActiveTab('settings')}
+          onClick={() => handleTabChange('settings')}
           className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-500'}`}
         >
           <User size={20} />
