@@ -1429,27 +1429,7 @@ export default function DashboardView() {
           </div>
         </div>
 
-        {/* Mobile Sub-Navigation Tabs (Horizontal Scrollable) */}
-        <div className="md:hidden flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-100 scrollbar-none">
-          {TAB_ITEMS.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.key
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#4169E1]/10 to-[#D4AF37]/10 text-[#4169E1] border border-[#4169E1]/20'
-                    : 'bg-gray-50 text-gray-500 border border-gray-200/50 hover:bg-gray-100'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            )
-          })}
-        </div>
+        {/* Mobile Sub-Navigation Tabs REMOVED per request */}
 
         <div className="p-4 md:p-8 md:pb-12 max-w-lg md:max-w-4xl mx-auto w-full">
           {activeTab === 'analytics' && <UserAnalytics />}
@@ -2010,68 +1990,62 @@ export default function DashboardView() {
       </div>
 
       {/* DEDICATED DASHBOARD MOBILE MENU */}
-      <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-md overflow-x-auto"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-        <div className="flex justify-around items-center h-16 px-1 min-w-max w-full">
-          <button
-            onClick={() => { router.push('/'); }}
-            className="flex flex-col items-center justify-center min-w-[64px] px-2 text-blue-600 active:scale-90 transition-transform"
-          >
-            <Home size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Home</span>
-          </button>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-between items-center px-2 py-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <button
+          onClick={() => setActiveTab('my_posts')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'my_posts' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <MessageSquare size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Community</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('listings')}
-            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'listings' ? 'text-[#4169E1]' : 'text-gray-500'}`}
-          >
-            <Store size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Listings</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('listings')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'listings' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <Store size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Listings</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('real_estate')}
-            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'real_estate' ? 'text-[#4169E1]' : 'text-gray-500'}`}
-          >
-            <Building2 size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Property</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('real_estate')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'real_estate' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <Building2 size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Property</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('banners')}
-            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'banners' ? 'text-[#4169E1]' : 'text-gray-500'}`}
-          >
-            <ImageIcon size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Banners</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('banners')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'banners' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <ImageIcon size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Banners</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('stories')}
-            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'stories' ? 'text-[#4169E1]' : 'text-gray-500'}`}
-          >
-            <Circle size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Stories</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('stories')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'stories' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <Sparkles size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Stories</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('my_posts')}
-            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'my_posts' ? 'text-[#4169E1]' : 'text-gray-500'}`}
-          >
-            <MessageSquare size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Community</span>
-          </button>
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'analytics' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <LineChart size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Analytics</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center justify-center min-w-[64px] px-2 active:scale-90 transition-transform ${activeTab === 'settings' ? 'text-[#4169E1]' : 'text-gray-500'}`}
-          >
-            <User size={20} />
-            <span className="text-[10px] mt-0.5 font-semibold">Profile</span>
-          </button>
-
-        </div>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+          <User size={20} />
+          <span className="text-[10px] mt-0.5 font-semibold">Profile</span>
+        </button>
       </div>
     </div>
   )
