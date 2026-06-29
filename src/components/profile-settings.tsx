@@ -14,9 +14,37 @@ export default function ProfileSettings() {
   const { toast } = useToast()
   
   const [fullName, setFullName] = useState(user?.fullName || '')
+  const [username, setUsername] = useState(user?.username || '')
   const [phone, setPhone] = useState(user?.phone || '')
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '')
   const [bio, setBio] = useState(user?.bio || '')
+  
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
+  
+  // Real-time username check
+  useEffect(() => {
+    if (!username || username === user?.username) {
+      setUsernameStatus('idle')
+      return
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      setUsernameStatus('checking')
+      try {
+        const res = await fetch(`/api/user/check-username?username=${encodeURIComponent(username)}`)
+        const data = await res.json()
+        if (data.error === 'Invalid format') {
+          setUsernameStatus('invalid')
+        } else if (data.available) {
+          setUsernameStatus('available')
+        } else {
+          setUsernameStatus('taken')
+        }
+      } catch {
+        setUsernameStatus('idle')
+      }
+    }, 500)
+    return () => clearTimeout(delayDebounceFn)
+  }, [username, user?.username])
   
   const [newPassword, setNewPassword] = useState('')
   const [updatingProfile, setUpdatingProfile] = useState(false)
@@ -90,7 +118,7 @@ export default function ProfileSettings() {
     if (!user) return
     setUpdatingProfile(true)
     try {
-      const { error } = await supabase.from('User').update({ fullName, phone, bio }).eq('id', user.id)
+      const { error } = await supabase.from('User').update({ fullName, username: username || null, phone, bio }).eq('id', user.id)
       if (error) throw error
       toast({ title: 'Success', description: 'Profile updated successfully! Reloading...' })
       setTimeout(() => window.location.reload(), 1500)
@@ -174,7 +202,7 @@ export default function ProfileSettings() {
           <div className="mt-3">
             <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              @{user?.id?.substring(0, 8)} • Member since {format(new Date(), 'MMM yyyy')}
+              @{user?.username || user?.id?.substring(0, 8)} • Member since {format(new Date(), 'MMM yyyy')}
             </p>
             {bio && (
               <p className="mt-4 text-gray-800 whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
@@ -208,6 +236,23 @@ export default function ProfileSettings() {
             <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">@</span>
+              <input 
+                type="text" 
+                value={username} 
+                onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} 
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="custom_username"
+              />
+            </div>
+            {usernameStatus === 'checking' && <p className="text-xs text-blue-500 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Checking availability...</p>}
+            {usernameStatus === 'available' && <p className="text-xs text-green-500 mt-1 font-semibold">Username is available!</p>}
+            {usernameStatus === 'taken' && <p className="text-xs text-red-500 mt-1 font-semibold">Username is already taken.</p>}
+            {usernameStatus === 'invalid' && <p className="text-xs text-red-500 mt-1 font-semibold">Only lowercase letters, numbers, and underscores.</p>}
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
             <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
@@ -215,7 +260,7 @@ export default function ProfileSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
             <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Tell the community about yourself..." className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
           </div>
-          <button type="submit" disabled={updatingProfile} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition flex justify-center items-center gap-2 disabled:opacity-50">
+          <button type="submit" disabled={updatingProfile || usernameStatus === 'taken' || usernameStatus === 'invalid'} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition flex justify-center items-center gap-2 disabled:opacity-50">
             {updatingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Changes'}
           </button>
         </form>

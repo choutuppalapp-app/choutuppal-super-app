@@ -11,21 +11,26 @@ interface PageProps {
 export default async function UserProfilePage({ params }: PageProps) {
   const { id } = await params
 
+  const decodedId = decodeURIComponent(id)
+  const isUsername = decodedId.startsWith('@')
+  const queryParam = isUsername ? decodedId.substring(1) : decodedId
+
   const user = await db.user.findUnique({
-    where: { id },
+    where: isUsername ? { username: queryParam } : { id: queryParam },
     include: {
       listings: {
         where: { status: 'APPROVED' },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' as const }
       },
       posts: {
         where: { isDeleted: false },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'desc' as const },
         include: {
           author: {
             select: {
               fullName: true,
-              avatarUrl: true
+              avatarUrl: true,
+              username: true
             }
           }
         }

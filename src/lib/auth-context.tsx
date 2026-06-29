@@ -8,6 +8,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 interface AuthUser {
   id: string
   fullName: string
+  username?: string | null
   email?: string | null
   phone?: string | null
   role: 'user' | 'business' | 'admin' | 'super_admin' | 'city_admin' | 'agent'
@@ -77,10 +78,11 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
       managedCityId: userRecord.managedCityId || null,
       agentCityId: userRecord.agentCityId || null,
       isAgentApproved: userRecord.isAgentApproved ?? false,
-      totalEarnings: userRecord.totalEarnings ?? 0,
-      pendingPayout: userRecord.pendingPayout ?? 0,
-      upiId: userRecord.upiId || null,
-      isPrivate: userRecord.isPrivate ?? false,
+      totalEarnings: userRecord.totalEarnings || 0,
+      pendingPayout: userRecord.pendingPayout || 0,
+      upiId: userRecord.upiId,
+      isPrivate: userRecord.isPrivate,
+      username: userRecord.username
     }
   }
 

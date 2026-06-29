@@ -59,8 +59,10 @@ export default function SearchView() {
   const setShowLeadForm = useAppStore((s) => s.setShowLeadForm)
   const setLeadFormListingId = useAppStore((s) => s.setLeadFormListingId)
   const [results, setResults] = useState<SearchResult[]>([])
+  const [userResults, setUserResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [localQuery, setLocalQuery] = useState(searchQuery)
+  const [activeTab, setActiveTab] = useState<'listings' | 'users'>('listings')
   const [cities, setCities] = useState<Array<{ id: string; name: string; slug: string }>>([])
   const [cityId, setCityId] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -84,6 +86,7 @@ export default function SearchView() {
   const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setResults([])
+      setUserResults([])
       return
     }
 
@@ -101,13 +104,22 @@ export default function SearchView() {
         }
       })
 
-      const res = await fetch(`/api/listings?${params}`)
+      const [res, userRes] = await Promise.all([
+        fetch(`/api/listings?${params}`),
+        fetch(`/api/search?q=${encodeURIComponent(query)}`)
+      ])
+
       if (res.ok) {
         const data = await res.json()
         setResults(data.listings || [])
       }
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        setUserResults(userData.users || [])
+      }
     } catch {
       setResults([])
+      setUserResults([])
     } finally {
       setLoading(false)
     }
@@ -149,6 +161,7 @@ export default function SearchView() {
     setLocalQuery('')
     setSearchQuery('')
     setResults([])
+    setUserResults([])
   }
 
   // Skeleton
@@ -219,17 +232,33 @@ export default function SearchView() {
 
       {/* Results info */}
       {localQuery.trim() && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
-            {loading ? (
-              'Searching...'
-            ) : (
-              <>
-                <span className="font-medium text-gray-700">{results.length}</span> result{results.length !== 1 ? 's' : ''} for &ldquo;
-                <span className="font-medium text-[#4169E1]">{localQuery}</span>&rdquo;
-              </>
-            )}
-          </p>
+        <div className="flex flex-col gap-2 border-b border-gray-100 pb-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              {loading ? (
+                'Searching...'
+              ) : (
+                <>
+                  <span className="font-medium text-gray-700">{activeTab === 'listings' ? results.length : userResults.length}</span> result{(activeTab === 'listings' ? results.length : userResults.length) !== 1 ? 's' : ''} for &ldquo;
+                  <span className="font-medium text-[#4169E1]">{localQuery}</span>&rdquo;
+                </>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-4 mt-2">
+            <button 
+              className={`pb-2 font-semibold text-sm transition-colors ${activeTab === 'listings' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('listings')}
+            >
+              Listings ({results.length})
+            </button>
+            <button 
+              className={`pb-2 font-semibold text-sm transition-colors ${activeTab === 'users' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('users')}
+            >
+              Users ({userResults.length})
+            </button>
+          </div>
         </div>
       )}
 
@@ -260,14 +289,33 @@ export default function SearchView() {
         </GlassCard>
       ) : loading ? (
         <SkeletonGrid />
-      ) : results.length === 0 ? (
+      ) : (activeTab === 'listings' && results.length === 0) || (activeTab === 'users' && userResults.length === 0) ? (
         <GlassCard className="text-center py-12">
           <Store className="size-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No results found</p>
+          <p className="text-gray-500 font-medium">No {activeTab} found</p>
           <p className="text-sm text-gray-400 mt-1">
             Try a different search term or browse categories
           </p>
         </GlassCard>
+      ) : activeTab === 'users' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {userResults.map((u, idx) => (
+            <motion.div key={u.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05, duration: 0.3 }} whileTap={{ scale: 0.98 }}>
+              <Link href={`/user/${u.username ? '@' + u.username : u.id}`} className="block cursor-pointer">
+                <GlassCard className="!p-4 flex items-center gap-4 hover:shadow-xl transition-shadow">
+                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 border-2 border-white shadow-sm">
+                    {u.avatarUrl ? <img src={u.avatarUrl} className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-blue-600">{u.fullName?.[0] || 'U'}</span>}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{u.fullName}</h3>
+                    <p className="text-xs text-gray-500">@{u.username || u.id.substring(0,8)}</p>
+                    {u.bio && <p className="text-xs text-gray-600 mt-1 line-clamp-1">{u.bio}</p>}
+                  </div>
+                </GlassCard>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {results.map((listing, idx) => {
