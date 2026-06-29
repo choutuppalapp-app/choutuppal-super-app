@@ -120,12 +120,11 @@ const CATEGORIES = [
 ]
 
 const TAB_ITEMS = [
+  { key: 'my_posts', label: 'My Posts', icon: MessageSquare },
+  { key: 'listings', label: 'Listings', icon: Store },
+  { key: 'banners', label: 'Banners', icon: ImageIcon },
+  { key: 'stories', label: 'Stories', icon: Sparkles },
   { key: 'analytics', label: 'Analytics', icon: LineChart },
-  { key: 'listings', label: 'My Listings', icon: Store },
-  { key: 'real_estate', label: 'My Real Estate', icon: Building2 },
-  { key: 'banners', label: 'My Banners', icon: ImageIcon },
-  { key: 'stories', label: 'My Stories', icon: Sparkles },
-  { key: 'my_posts', label: 'Community', icon: MessageSquare },
   { key: 'settings', label: 'Profile', icon: User },
 ]
 
@@ -2206,7 +2205,7 @@ export default function DashboardView() {
             <MessageSquare size={20} />
             {notificationsSummary?.my_posts && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white translate-x-1 -translate-y-1" />}
           </div>
-          <span className="text-[10px] mt-0.5 font-semibold">Community</span>
+          <span className="text-[10px] mt-0.5 font-semibold">My Posts</span>
         </button>
 
         <button
@@ -2218,14 +2217,6 @@ export default function DashboardView() {
             {notificationsSummary?.listings && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white translate-x-1 -translate-y-1" />}
           </div>
           <span className="text-[10px] mt-0.5 font-semibold">Listings</span>
-        </button>
-
-        <button
-          onClick={() => handleTabChange('real_estate')}
-          className={`flex flex-col items-center justify-center min-w-[48px] px-1 active:scale-90 transition-transform ${activeTab === 'real_estate' ? 'text-blue-600' : 'text-gray-500'}`}
-        >
-          <Building2 size={20} />
-          <span className="text-[10px] mt-0.5 font-semibold">Property</span>
         </button>
 
         <button
