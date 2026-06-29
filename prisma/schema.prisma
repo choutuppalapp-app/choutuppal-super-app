@@ -267,7 +267,7 @@ model Lead {
   status         String   @default("new") // new, contacted, converted, lost
   createdAt      DateTime @default(now())
 
-  listing Listing @relation(fields: [listingId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -281,7 +281,7 @@ model Review {
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
 
 // ─── Coin Transaction ────────────────────────────────────────
@@ -538,7 +538,7 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
 
-  post Post  @relation(fields: [postId], references: [id])
+  post Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -549,7 +549,7 @@ model Like {
   userId    String
   createdAt DateTime @default(now())
 
-  post Post @relation(fields: [postId], references: [id])
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
@@ -604,7 +604,7 @@ model Short {
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   city     City     @relation(fields: [cityId], references: [id])
-  listing  Listing? @relation(fields: [linkedListingId], references: [id])
+  listing  Listing? @relation(fields: [linkedListingId], references: [id], onDelete: Cascade)
   likes    ShortLike[]
   comments ShortComment[]
 
@@ -619,7 +619,7 @@ model ShortLike {
   userId    String
   createdAt DateTime @default(now())
 
-  short Short @relation(fields: [shortId], references: [id])
+  short Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([shortId, userId])
@@ -633,7 +633,7 @@ model ShortComment {
   content   String
   createdAt DateTime @default(now())
 
-  short Short @relation(fields: [shortId], references: [id])
+  short Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shortId, createdAt])
@@ -690,7 +690,7 @@ model LongVideo {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  playlist    VideoPlaylist   @relation(fields: [playlistId], references: [id])
+  playlist    VideoPlaylist   @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   progress    VideoProgress[]
 
   @@index([playlistId, sortOrder])
@@ -706,7 +706,7 @@ model VideoProgress {
   updatedAt DateTime @updatedAt
 
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  video LongVideo  @relation(fields: [videoId], references: [id])
+  video LongVideo  @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@unique([userId, videoId])
 }
@@ -721,7 +721,7 @@ model ClaimRequest {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  listing     Listing  @relation(fields: [listingId], references: [id])
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

@@ -94,7 +94,7 @@ export default function AdminUsers() {
     setActionLoading(`${userId}-delete`);
     try {
       await deleteAdminUser(userId);
-      setUsers(users.filter(u => u.id !== userId));
+      setUsers(prev => prev.filter(u => u.id !== userId));
       toast.success('User deleted successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete user');
