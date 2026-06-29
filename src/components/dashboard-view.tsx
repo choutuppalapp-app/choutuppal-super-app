@@ -799,7 +799,7 @@ export default function DashboardView() {
 
       {/* Quick Stats */}
       <h3 className="text-lg font-black text-gray-950">Quick Stats</h3>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full mb-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center flex flex-col items-center justify-center space-y-2 hover:shadow-md transition">
           <Store className="w-6 h-6 text-[#4169E1]" />
           <span className="text-2xl font-black text-gray-950">{listings.length}</span>

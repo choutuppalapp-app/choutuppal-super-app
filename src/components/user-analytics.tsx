@@ -51,7 +51,7 @@ export default function UserAnalytics() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full mb-6">
         <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
           <Eye className="w-6 h-6 text-[#4169E1] mb-2" />
           <p className="text-3xl font-black text-gray-900">{data.totalViews}</p>
