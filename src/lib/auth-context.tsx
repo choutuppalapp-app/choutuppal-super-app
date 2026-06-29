@@ -21,6 +21,7 @@ interface AuthUser {
   totalEarnings?: number
   pendingPayout?: number
   upiId?: string | null
+  isPrivate?: boolean
 }
 
 interface AuthContextType {
@@ -79,6 +80,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
       totalEarnings: userRecord.totalEarnings ?? 0,
       pendingPayout: userRecord.pendingPayout ?? 0,
       upiId: userRecord.upiId || null,
+      isPrivate: userRecord.isPrivate ?? false,
     }
   }
 
@@ -91,6 +93,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
     role: 'user',
     coinsBalance: 10,
     subscriptionTier: 'free',
+    isPrivate: false,
   }
 }
 

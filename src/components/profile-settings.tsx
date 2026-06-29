@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { deleteMyAccount } from '@/app/actions/user-actions'
-import { Loader2, UploadCloud, LogOut, ShieldAlert, Key, User as UserIcon } from 'lucide-react'
+import { Loader2, UploadCloud, LogOut, ShieldAlert, Key, User as UserIcon, Lock, FileText, Image as ImageIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import imageCompression from 'browser-image-compression'
+import { format } from 'date-fns'
 
 export default function ProfileSettings() {
   const { user, logout } = useAuth()
@@ -21,6 +22,40 @@ export default function ProfileSettings() {
   const [updatingProfile, setUpdatingProfile] = useState(false)
   const [updatingPassword, setUpdatingPassword] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  const [isPrivate, setIsPrivate] = useState(user?.isPrivate || false)
+  const [updatingPrivate, setUpdatingPrivate] = useState(false)
+  const [stats, setStats] = useState({ posts: 0, listings: 0 })
+
+  useEffect(() => {
+    if (user?.id) {
+      const fetchStats = async () => {
+        const { count: postsCount } = await supabase.from('Post').select('id', { count: 'exact', head: true }).eq('authorId', user.id).eq('isDeleted', false)
+        const { count: listingsCount } = await supabase.from('Listing').select('id', { count: 'exact', head: true }).eq('userId', user.id).eq('status', 'APPROVED')
+        const { data: userData } = await supabase.from('User').select('isPrivate').eq('id', user.id).single()
+        if (userData) setIsPrivate(userData.isPrivate)
+        setStats({ posts: postsCount || 0, listings: listingsCount || 0 })
+      }
+      fetchStats()
+    }
+  }, [user?.id])
+
+  const handleTogglePrivate = async () => {
+    if (!user) return
+    const newValue = !isPrivate
+    setIsPrivate(newValue)
+    setUpdatingPrivate(true)
+    try {
+      const { error } = await supabase.from('User').update({ isPrivate: newValue }).eq('id', user.id)
+      if (error) throw error
+      toast({ title: 'Privacy Updated', description: `Your account is now ${newValue ? 'private' : 'public'}.` })
+    } catch (err: any) {
+      setIsPrivate(!newValue) // Revert on error
+      toast({ title: 'Error', description: err.message, variant: 'destructive' })
+    } finally {
+      setUpdatingPrivate(false)
+    }
+  }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -105,23 +140,61 @@ export default function ProfileSettings() {
 
   return (
     <div className="space-y-6 max-w-xl mx-auto pb-24">
-      {/* Profile Photo */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center">
-        <label className="w-24 h-24 rounded-full bg-gray-100 mb-4 overflow-hidden relative border-4 border-white shadow-md cursor-pointer group">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400">
-              {fullName?.[0] || 'U'}
+      {/* Cover Photo & Header */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+        <div className="h-32 sm:h-40 bg-gradient-to-r from-blue-600 to-yellow-500 w-full relative" />
+        <div className="px-4 sm:px-6 relative pb-6">
+          <div className="flex justify-between items-end">
+            <label className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
+                  {fullName?.[0] || 'U'}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <UploadCloud className="w-6 h-6 text-white" />
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingProfile} />
+            </label>
+            
+            {/* Private Toggle */}
+            <div className="flex flex-col items-end gap-1 mb-2">
+              <span className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                <Lock className="w-4 h-4" /> Private Account
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" checked={isPrivate} onChange={handleTogglePrivate} disabled={updatingPrivate} />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
             </div>
-          )}
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <UploadCloud className="w-6 h-6 text-white" />
           </div>
-          <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingProfile} />
-        </label>
-        <h2 className="text-xl font-bold text-gray-900">{fullName}</h2>
-        <p className="text-gray-500">{phone}</p>
+          
+          <div className="mt-3">
+            <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              @{user?.id?.substring(0, 8)} • Member since {format(new Date(), 'MMM yyyy')}
+            </p>
+            {bio && (
+              <p className="mt-4 text-gray-800 whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
+                {bio}
+              </p>
+            )}
+            
+            {/* Stats Row */}
+            <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <FileText className="w-4 h-4" />
+                <span className="font-bold text-gray-900">{stats.posts}</span> Posts
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <ImageIcon className="w-4 h-4" />
+                <span className="font-bold text-gray-900">{stats.listings}</span> Listings
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Profile Details */}
