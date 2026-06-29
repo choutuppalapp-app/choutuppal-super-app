@@ -162,9 +162,9 @@ model Transaction {
   razorpayPaymentId String? // Razorpay payment reference
   createdAt      DateTime @default(now())
 
-  user        User  @relation("TransactionBuyer", fields: [userId], references: [id])
-  agent       User? @relation("TransactionAgent", fields: [agentId], references: [id])
-  cityAdmin   User  @relation("TransactionCityAdmin", fields: [cityAdminId], references: [id])
+  user        User  @relation("TransactionBuyer", fields: [userId], references: [id], onDelete: Cascade)
+  agent       User? @relation("TransactionAgent", fields: [agentId], references: [id], onDelete: Cascade)
+  cityAdmin   User  @relation("TransactionCityAdmin", fields: [cityAdminId], references: [id], onDelete: Cascade)
   city        City  @relation(fields: [cityId], references: [id])
 }
 
@@ -180,7 +180,7 @@ model PayoutRequest {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Business Listing ───────────────────────────────────────
@@ -268,7 +268,7 @@ model Lead {
   createdAt      DateTime @default(now())
 
   listing Listing @relation(fields: [listingId], references: [id])
-  user    User?   @relation(fields: [userId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Review ──────────────────────────────────────────────────
@@ -292,7 +292,7 @@ model CoinTransaction {
   reason    String
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Subscription ────────────────────────────────────────────
@@ -306,7 +306,7 @@ model Subscription {
   endDate           DateTime?
   createdAt         DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Story (Instagram/WhatsApp Clone) ────────────────────────
@@ -365,7 +365,7 @@ model News {
   authorId    String?
 
   city City @relation(fields: [cityId], references: [id])
-  author User? @relation(fields: [authorId], references: [id])
+  author User? @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 // ─── Site Setting (Global) ──────────────────────────────────
@@ -447,7 +447,7 @@ model BannerAd {
   createdAt DateTime @default(now())
 
   city City? @relation(fields: [cityId], references: [id])
-  user User? @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Announcement (Ticker) ────────────────────────────────────
@@ -472,7 +472,7 @@ model Blog {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  author User  @relation(fields: [authorId], references: [id])
+  author User  @relation(fields: [authorId], references: [id], onDelete: Cascade)
   city   City? @relation(fields: [cityId], references: [id])
 }
 
@@ -491,7 +491,7 @@ model AdminRequest {
   agentCityId     String?  // City the agent wants to operate in
   createdAt       DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Profile (Social Network) ─────────────────────────────────
@@ -509,7 +509,7 @@ model Profile {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Post (Social Network) ────────────────────────────────────
@@ -539,7 +539,7 @@ model Comment {
   createdAt DateTime @default(now())
 
   post Post  @relation(fields: [postId], references: [id])
-  user User  @relation(fields: [userId], references: [id])
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Like (Social Network) ────────────────────────────────────
@@ -550,7 +550,7 @@ model Like {
   createdAt DateTime @default(now())
 
   post Post @relation(fields: [postId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
 }
@@ -562,8 +562,8 @@ model Follow {
   followingId String   // User being followed
   createdAt   DateTime @default(now())
 
-  follower  User @relation("UserFollowing", fields: [followerId], references: [id])
-  following User @relation("UserFollowers", fields: [followingId], references: [id])
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
 }
@@ -580,7 +580,7 @@ model VerificationRequest {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Short (TikTok/Reels Style Vertical Video) ──────────────
@@ -602,7 +602,7 @@ model Short {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user     User     @relation(fields: [userId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   city     City     @relation(fields: [cityId], references: [id])
   listing  Listing? @relation(fields: [linkedListingId], references: [id])
   likes    ShortLike[]
@@ -620,7 +620,7 @@ model ShortLike {
   createdAt DateTime @default(now())
 
   short Short @relation(fields: [shortId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([shortId, userId])
 }
@@ -634,7 +634,7 @@ model ShortComment {
   createdAt DateTime @default(now())
 
   short Short @relation(fields: [shortId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shortId, createdAt])
 }
@@ -668,7 +668,7 @@ model VideoPlaylist {
   updatedAt   DateTime @updatedAt
 
   category VideoCategory @relation(fields: [categoryId], references: [id])
-  creator  User          @relation(fields: [creatorId], references: [id])
+  creator  User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   videos   LongVideo[]
 
   @@index([categoryId, sortOrder])
@@ -705,7 +705,7 @@ model VideoProgress {
   completed Boolean  @default(false)
   updatedAt DateTime @updatedAt
 
-  user  User       @relation(fields: [userId], references: [id])
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   video LongVideo  @relation(fields: [videoId], references: [id])
 
   @@unique([userId, videoId])
@@ -722,7 +722,7 @@ model ClaimRequest {
   updatedAt   DateTime @updatedAt
 
   listing     Listing  @relation(fields: [listingId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 

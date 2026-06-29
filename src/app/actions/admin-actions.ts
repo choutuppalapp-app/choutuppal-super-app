@@ -139,16 +139,19 @@ export async function resetAdminUserPassword(email: string) {
 }
 
 export async function deleteAdminUser(id: string) {
-  // First delete from Supabase Auth
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
-  if (error) {
-    console.error('Failed to delete user from Supabase Auth:', error);
-    // Even if it fails (e.g. not found in Supabase Auth), we might still want to delete from Prisma
-  }
+  try {
+    // First delete from Supabase Auth
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+    if (error) {
+      console.error('Failed to delete user from Supabase Auth:', error);
+    }
 
-  // Delete from Prisma (Cascading will handle their listings/posts if setup correctly, 
-  // but if not we might need to manually delete dependencies or just let prisma cascade)
-  return await db.user.delete({ where: { id } });
+    await db.user.delete({ where: { id } });
+    return JSON.parse(JSON.stringify({ success: true }));
+  } catch (err: any) {
+    console.error('Failed to delete admin user:', err);
+    throw new Error(err.message || 'Failed to delete user');
+  }
 }
 
 // ─── News & Blogs & Ticker ──────────────────────────────────────────
