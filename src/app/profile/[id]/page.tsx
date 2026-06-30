@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { db as prisma } from '@/lib/db'
@@ -11,6 +12,48 @@ import ListingCard from '@/components/listing-card'
 
 const formatJoinedDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date)
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const { id } = params
+  const isUsername = id.startsWith('%40') || id.startsWith('@')
+  const usernameQuery = isUsername ? decodeURIComponent(id).substring(1) : undefined
+
+  let user: any = null
+  try {
+    user = await prisma.user.findFirst({
+      where: usernameQuery ? { username: usernameQuery } : { id }
+    })
+  } catch {}
+
+  if (!user) return { title: 'Profile Not Found' }
+
+  const roleLabel = user.role === 'city_admin' ? 'City Admin' : user.role === 'agent' ? 'Agent' : 'Business Owner'
+  const title = `${user.fullName} | ${roleLabel} | Choutuppal App`
+  const description = user.bio || `View ${user.fullName}'s profile, listings, and stories on Choutuppal App.`
+  
+  const rawImage = user.avatarUrl || '/logo.png'
+  const absoluteImageUrl = rawImage.startsWith('http') 
+    ? rawImage 
+    : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: absoluteImageUrl, width: 800, height: 800 }],
+      type: 'profile',
+      url: `https://choutuppal.in/profile/${params.id}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [{ url: absoluteImageUrl, width: 800, height: 800 }],
+    }
+  }
 }
 
 export default async function PublicProfilePage({ params }: { params: { id: string } }) {
