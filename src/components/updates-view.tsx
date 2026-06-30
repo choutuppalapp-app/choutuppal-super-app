@@ -1,16 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
-import CommunityFeed from '@/components/community-feed'
 import NewsView from '@/components/news-view'
 import BlogView from '@/components/blog-view'
 import { useAppConfig } from '@/hooks/use-app-config'
-import { Users, Newspaper, FileText } from 'lucide-react'
+import { Newspaper, FileText } from 'lucide-react'
 
-type SubTab = 'community' | 'news' | 'blog'
+type SubTab = 'news' | 'blog'
 
 export function UpdatesView() {
-  const [activeTab, setActiveTab] = useState<SubTab>('community')
+  const [activeTab, setActiveTab] = useState<SubTab>('news')
   const { config } = useAppConfig()
 
   return (
@@ -18,18 +17,6 @@ export function UpdatesView() {
       {/* Top Tab Menu */}
       <div className="sticky top-14 md:top-0 z-40 bg-white border-b border-gray-100 shadow-sm overflow-x-auto">
         <div className="flex items-center min-w-max p-2 gap-2 max-w-3xl mx-auto">
-          <button
-            onClick={() => setActiveTab('community')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'community'
-                ? 'bg-blue-50 text-[#4169E1] border border-blue-200'
-                : 'text-gray-500 hover:bg-gray-50 border border-transparent'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            Community
-          </button>
-          
           {config.enableBlog && (
             <>
               <button
@@ -62,7 +49,6 @@ export function UpdatesView() {
 
       {/* Content Area */}
       <div className="flex-1 w-full bg-gray-50/30">
-        {activeTab === 'community' && <CommunityFeed />}
         {activeTab === 'news' && <NewsView />}
         {activeTab === 'blog' && <BlogView />}
       </div>
