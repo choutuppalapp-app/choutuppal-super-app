@@ -71,13 +71,13 @@ export default function ShortsPage() {
       </div>
 
       {/* Floating WhatsApp CTA */}
-      <div className="absolute bottom-[80px] left-4 right-4 z-50">
-        <button
-          onClick={openWhatsApp}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-sm shadow-xl hover:bg-white/20 active:scale-95 transition-all"
+      <div className="fixed bottom-20 left-4 right-4 z-50 bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center justify-between shadow-2xl pointer-events-auto">
+        <p className="text-white font-medium text-sm">🌟 మీ వీడియో ఇక్కడ రావాలా?</p>
+        <button 
+          onClick={openWhatsApp} 
+          className="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg shrink-0"
         >
-          <MessageCircle className="w-5 h-5 text-green-400" />
-          <span className="truncate">🌟మీ వ్యాపారం లేదా వీడియో ఇక్కడ కనిపించాలా? మాకు మెసేజ్ చేయండి.</span>
+          వాట్సాప్ చేయండి
         </button>
       </div>
     </div>
