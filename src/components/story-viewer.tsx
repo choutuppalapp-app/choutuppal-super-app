@@ -900,12 +900,12 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           ) : (
             /* Viewer Reply Input */
             <div 
-              className="pointer-events-auto flex items-center gap-3 w-full max-w-lg mx-auto relative z-[99999]"
-              onClick={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
+              className="pointer-events-auto touch-auto isolation-auto flex items-center gap-3 w-full max-w-lg mx-auto relative z-[99999]"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onTouchStart={(e) => { e.stopPropagation(); }}
+              onTouchMove={(e) => { e.stopPropagation(); }}
+              onTouchEnd={(e) => { e.stopPropagation(); }}
+              onPointerDown={(e) => { e.stopPropagation(); }}
             >
               <div className="flex-1 relative flex items-center">
                 <input 
@@ -913,13 +913,14 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                   placeholder={`Reply to ${currentStory.user.fullName.split(' ')[0]}...`}
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
-                  className="w-full bg-black/40 hover:bg-black/55 focus:bg-black/70 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 rounded-full py-3 pl-5 pr-12 outline-none transition-all text-xs font-semibold"
+                  className="w-full bg-black/40 hover:bg-black/55 focus:bg-black/70 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 rounded-full py-3 pl-5 pr-12 outline-none transition-all text-xs font-semibold pointer-events-auto relative z-[99999]"
                   onFocus={() => setPaused(true)}
                   onBlur={() => {
                     if (!showCommentsDrawer) setPaused(false)
                   }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => { e.stopPropagation(); }}
+                  onTouchStart={(e) => { e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleReplySubmit()
@@ -928,9 +929,12 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                 />
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleReplySubmit()
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleReplySubmit();
                   }}
+                  onPointerDown={(e) => { e.stopPropagation(); }}
+                  onTouchStart={(e) => { e.stopPropagation(); }}
                   disabled={!commentInput.trim()}
                   className="absolute right-3 p-1.5 rounded-full bg-[#4169E1] text-white hover:bg-opacity-90 transition-opacity disabled:opacity-40"
                 >
@@ -938,8 +942,14 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                 </button>
               </div>
               <button
-                onClick={handleLikeClick}
-                className={`p-3 rounded-full backdrop-blur-md border transition-all ${
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleLikeClick();
+                }}
+                onPointerDown={(e) => { e.stopPropagation(); }}
+                onTouchStart={(e) => { e.stopPropagation(); }}
+                className={`p-3 rounded-full backdrop-blur-md border transition-all pointer-events-auto relative z-[99999] ${
                   isLiked 
                     ? 'bg-red-500/20 border-red-500/50 text-red-500 scale-110' 
                     : 'bg-black/40 hover:bg-black/55 border-white/20 text-white hover:text-red-400'
