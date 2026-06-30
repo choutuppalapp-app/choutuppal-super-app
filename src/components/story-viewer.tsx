@@ -6,6 +6,7 @@ import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye, Heart, ChevronUp, Send,
 import { formatDistanceToNow } from 'date-fns'
 import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
+import { useAppStore } from '@/lib/store'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -88,6 +89,12 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   )
 
   const { user: currentUser } = useAuth()
+  const setShowBottomNav = useAppStore((s) => s.setShowBottomNav)
+
+  useEffect(() => {
+    setShowBottomNav(false)
+    return () => setShowBottomNav(true)
+  }, [setShowBottomNav])
 
   const [localLikes, setLocalLikes] = useState(0)
   const [isLiked, setIsLiked] = useState(false)
@@ -645,7 +652,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           scale: isDismissing ? 0.9 : 1,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[200] bg-black select-none overflow-hidden"
+        className="fixed inset-0 z-[9999] bg-black select-none overflow-hidden"
         style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -872,7 +879,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
             </div>
           ) : (
             /* Viewer Reply Input */
-            <div className="pointer-events-auto flex items-center gap-3 w-full max-w-lg mx-auto">
+            <div className="pointer-events-auto flex items-center gap-3 w-full max-w-lg mx-auto relative z-50">
               <div className="flex-1 relative flex items-center">
                 <input 
                   type="text" 
