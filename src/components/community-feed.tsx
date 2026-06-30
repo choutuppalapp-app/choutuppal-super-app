@@ -931,6 +931,7 @@ export default function CommunityFeed() {
                 <UserAvatar author={{
                   id: user.id,
                   fullName: user.fullName,
+                  username: (user as any).username || null,
                   avatarUrl: user.avatarUrl || null,
                   role: user.role,
                   profile: null,
