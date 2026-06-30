@@ -145,11 +145,19 @@ export function MobileBottomNav() {
             </button>
           )}
 
-          {/* 4. Updates */}
+          {/* 4. Community */}
+          <NavItem
+            icon={Users}
+            label="Community"
+            isActive={currentView === 'community'}
+            onClick={() => handleNavClick('community')}
+          />
+
+          {/* 5. Updates */}
           <NavItem
             icon={Bell}
             label="Updates"
-            isActive={currentView === 'updates' || currentView === 'community' || currentView === 'news' || currentView === 'blog'}
+            isActive={currentView === 'updates' || currentView === 'news' || currentView === 'blog'}
             onClick={() => {
               setHasUnread(false)
               handleNavClick('updates')
@@ -157,7 +165,7 @@ export function MobileBottomNav() {
             hasBadge={hasUnread}
           />
 
-          {/* 5. You */}
+          {/* 6. You */}
           <NavItem
             icon={UserCircle}
             label="You"
