@@ -652,7 +652,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           scale: isDismissing ? 0.9 : 1,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[99999] pointer-events-auto bg-black select-none overflow-hidden"
+        className="fixed inset-0 z-[99999] w-screen h-dvh bg-black flex flex-col pointer-events-auto select-none overflow-hidden"
         style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -806,7 +806,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
         )}
 
         {/* ---- Bottom Gradient & Interactions ---- */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-12 gap-3">
+        <div className="relative mt-auto z-50 w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-12 gap-3">
           
           <div className="pointer-events-auto flex items-end justify-between gap-3">
             {/* Music Pill */}
@@ -884,6 +884,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               onClick={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
+              onPointerMove={(e) => e.stopPropagation()}
             >
               <div className="flex-1 relative flex items-center">
                 <input 
