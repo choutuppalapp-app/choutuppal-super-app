@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Star, MapPin, BadgeCheck } from 'lucide-react'
 import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
@@ -33,6 +34,8 @@ interface ListingCardProps {
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
+  const router = useRouter()
+  
   const getFirstImage = (imagesStr: string | null | undefined): string => {
     if (!imagesStr) return ''
     try {
@@ -98,10 +101,14 @@ export default function ListingCard({ listing }: ListingCardProps) {
             )}
             
             {(listing.user || listing.userId) && (
-              <Link
-                href={`/profile/${listing.user?.id || listing.userId}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1.5 mt-2 hover:opacity-80 transition-opacity w-max"
+              <div
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const targetId = listing.user?.id || listing.userId
+                  if (targetId) router.push(`/profile/${targetId}`)
+                }}
+                className="flex items-center gap-1.5 mt-2 hover:opacity-80 transition-opacity w-max cursor-pointer"
               >
                 <div className="w-5 h-5 rounded-full bg-blue-100 overflow-hidden shrink-0 flex items-center justify-center border border-blue-200">
                   {listing.user?.avatarUrl ? (
@@ -111,7 +118,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
                   )}
                 </div>
                 <span className="text-[10px] text-gray-600 font-semibold">{listing.user?.fullName || 'Owner'}</span>
-              </Link>
+              </div>
             )}
           </div>
           

@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     const listings = await db.realEstateListing.findMany({
       where,
       include: {
-        user: { select: { id: true, fullName: true, phone: true } },
+        user: { select: { id: true, fullName: true, phone: true, avatarUrl: true } },
         city: { select: { id: true, name: true, slug: true } },
       },
       orderBy,
