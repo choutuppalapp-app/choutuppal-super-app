@@ -2140,53 +2140,53 @@ export default function DashboardView() {
                   {/* Viewers */}
                   <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Viewers</h4>
-                    {selectedStoryStats.viewers && selectedStoryStats.viewers.length > 0 ? (
-                      <div className="space-y-3">
-                        {selectedStoryStats.viewers.map((viewer: any) => (
-                          <div key={viewer.id || viewer.userId} className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                              {viewer.user?.avatarUrl ? <img src={viewer.user.avatarUrl} className="w-full h-full object-cover"/> : <User size={16} className="m-auto mt-2 text-gray-500" />}
+                    {(() => {
+                      const viewers = typeof selectedStoryStats.viewers === 'string' ? JSON.parse(selectedStoryStats.viewers || '[]') : selectedStoryStats.viewers || []
+                      return viewers.length > 0 ? (
+                        <div className="space-y-3">
+                          {viewers.map((viewer: any, i: number) => (
+                            <div key={viewer.userId || i} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center text-gray-500 text-xs font-bold">
+                                  {viewer.avatarUrl ? <img src={viewer.avatarUrl} className="w-full h-full object-cover"/> : (viewer.fullName?.charAt(0).toUpperCase() || 'U')}
+                                </div>
+                                <span className="text-sm font-semibold text-gray-800">{viewer.fullName || 'User'}</span>
+                              </div>
                             </div>
-                            <span className="text-sm font-semibold text-gray-800">{viewer.user?.fullName || 'User'}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : <p className="text-sm text-gray-500 italic">No viewers yet</p>}
-                  </div>
-                  {/* Likes */}
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Likes</h4>
-                    {selectedStoryStats.likes && selectedStoryStats.likes.length > 0 ? (
-                      <div className="space-y-3">
-                        {selectedStoryStats.likes.map((like: any) => (
-                          <div key={like.id || like.userId} className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-red-50 overflow-hidden shrink-0 flex items-center justify-center">
-                              <Heart size={14} className="text-red-500 fill-red-500" />
-                            </div>
-                            <span className="text-sm font-semibold text-gray-800">{like.user?.fullName || 'User'}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : <p className="text-sm text-gray-500 italic">No likes yet</p>}
+                          ))}
+                        </div>
+                      ) : <p className="text-sm text-gray-500 italic">No viewers yet</p>
+                    })()}
                   </div>
                   {/* Replies */}
                   <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Replies</h4>
-                    {selectedStoryStats.replies && selectedStoryStats.replies.length > 0 ? (
-                      <div className="space-y-3">
-                        {selectedStoryStats.replies.map((reply: any) => (
-                          <div key={reply.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                              {reply.user?.avatarUrl ? <img src={reply.user.avatarUrl} className="w-full h-full object-cover"/> : <User size={16} className="m-auto mt-2 text-gray-500" />}
+                    {(() => {
+                      const replies = typeof selectedStoryStats.replies === 'string' ? JSON.parse(selectedStoryStats.replies || '[]') : selectedStoryStats.replies || []
+                      return replies.length > 0 ? (
+                        <div className="space-y-3">
+                          {replies.map((reply: any, i: number) => (
+                            <div key={reply.userId || i} className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                              <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center text-gray-500 text-xs font-bold">
+                                {reply.avatarUrl ? <img src={reply.avatarUrl} className="w-full h-full object-cover"/> : (reply.fullName?.charAt(0).toUpperCase() || 'U')}
+                              </div>
+                              <div>
+                                <span className="text-sm font-semibold text-gray-900 block">{reply.fullName || 'User'}</span>
+                                <p className="text-xs text-gray-600 mt-1">{reply.text || reply.content}</p>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-sm font-semibold text-gray-900 block">{reply.user?.fullName || 'User'}</span>
-                              <p className="text-xs text-gray-600 mt-1">{reply.content || reply.text}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : <p className="text-sm text-gray-500 italic">No replies yet</p>}
+                          ))}
+                        </div>
+                      ) : <p className="text-sm text-gray-500 italic">No replies yet</p>
+                    })()}
+                  </div>
+                  {/* Likes Count */}
+                  <div>
+                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Likes</h4>
+                     <div className="flex items-center gap-2">
+                       <Heart size={16} className="text-red-500 fill-red-500" />
+                       <span className="text-sm font-semibold text-gray-800">{selectedStoryStats.likes || 0} Likes</span>
+                     </div>
                   </div>
                 </div>
               </motion.div>
