@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { Volume2, VolumeX, Pause, Play } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Pause, Play } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
 interface Announcement {
@@ -16,8 +16,6 @@ export function AnnouncementTicker() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [ready, setReady] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   useEffect(() => {
     async function fetch_() {
@@ -41,39 +39,6 @@ export function AnnouncementTicker() {
     fetch_()
   }, [selectedCity])
 
-  // Stop speech when component unmounts
-  useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel()
-      }
-    }
-  }, [])
-
-  const handleVoiceToggle = () => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return
-
-    if (isSpeaking) {
-      window.speechSynthesis.cancel()
-      setIsSpeaking(false)
-      return
-    }
-
-    const fullText = announcements.map((a) => a.text).join('. ')
-    const utterance = new SpeechSynthesisUtterance(fullText)
-    utterance.lang = 'te-IN'
-    utterance.rate = 0.9
-    utterance.pitch = 1
-    utterance.volume = 1
-
-    utterance.onend = () => setIsSpeaking(false)
-    utterance.onerror = () => setIsSpeaking(false)
-
-    utteranceRef.current = utterance
-    window.speechSynthesis.speak(utterance)
-    setIsSpeaking(true)
-  }
-
   if (!ready || announcements.length === 0) return null
 
   // Join with bullet separators, triple for seamless CSS marquee loop
@@ -81,18 +46,25 @@ export function AnnouncementTicker() {
   const repeatedText = `${tickerText}   •   ${tickerText}   •   ${tickerText}`
 
   return (
-    <div className="w-full flex items-center bg-gray-900 border-y border-yellow-500/30 overflow-hidden select-none">
-      {/* Left badge — speaker icon + label */}
-      <div className="flex-shrink-0 flex items-center gap-1.5 bg-yellow-500 px-3 py-2 self-stretch">
-        <Volume2 className="w-3.5 h-3.5 text-gray-900 flex-shrink-0" />
-        <span className="text-gray-900 text-[11px] font-black uppercase tracking-wider whitespace-nowrap hidden sm:block">
-          LIVE
-        </span>
-      </div>
+    <div className="w-full flex items-center bg-yellow-400 overflow-hidden select-none">
+      
+      {/* Pause / Play toggle button (moved to front) */}
+      <button
+        onClick={() => setIsPaused((p) => !p)}
+        className="flex-shrink-0 flex items-center justify-center w-12 h-full bg-yellow-500 hover:bg-yellow-600 transition-colors self-stretch shadow-[2px_0_10px_rgba(0,0,0,0.1)] z-10"
+        aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
+        title={isPaused ? 'Resume' : 'Pause'}
+      >
+        {isPaused ? (
+          <Play className="w-4 h-4 text-black" fill="currentColor" />
+        ) : (
+          <Pause className="w-4 h-4 text-black" fill="currentColor" />
+        )}
+      </button>
 
       {/* Scrolling ticker text */}
       <div 
-        className="flex-1 overflow-hidden py-2"
+        className="flex-1 overflow-hidden py-2.5"
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
         onMouseEnter={() => setIsPaused(true)}
@@ -105,13 +77,11 @@ export function AnnouncementTicker() {
             animationPlayState: isPaused ? 'paused' : 'running',
           }}
         >
-          <span className="text-yellow-300 text-sm font-semibold px-6 whitespace-nowrap">
+          <span className="text-black text-[13px] font-bold px-6 whitespace-nowrap">
             {repeatedText}
           </span>
         </div>
       </div>
-
-
 
       {/* Inline keyframe style */}
       <style>{`
