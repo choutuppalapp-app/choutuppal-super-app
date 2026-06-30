@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye, Heart, ChevronUp, Send, MessageSquare } from 'lucide-react'
+import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye, Heart, ChevronUp, Send, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
