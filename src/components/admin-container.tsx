@@ -11,11 +11,12 @@ import AdminBlogs from './admin-blogs'
 import AdminAnnouncements from './admin-announcements'
 import AdminUsers from './admin-users'
 import AdminModeration from './admin-moderation'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck } from 'lucide-react'
+import AdminYoutubeSync from './admin-youtube-sync'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation'
+type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -33,6 +34,7 @@ export default function AdminContainer() {
     { id: 'news', label: 'News', icon: Newspaper },
     { id: 'blogs', label: 'Blogs', icon: FileText },
     { id: 'announcements', label: 'Announcements', icon: Megaphone },
+    { id: 'youtube', label: 'YouTube Sync', icon: Youtube },
     { id: 'moderation', label: 'Moderation', icon: ShieldCheck },
     { id: 'branding', label: 'App Branding', icon: Settings },
   ]
@@ -135,8 +137,9 @@ export default function AdminContainer() {
               {activeTab === 'stories' && <AdminStories />}
               {activeTab === 'news' && <AdminNews />}
               {activeTab === 'blogs' && <AdminBlogs />}
-              {activeTab === 'announcements' && <AdminAnnouncements />}
-              {activeTab === 'moderation' && <AdminModeration />}
+              { activeTab === 'announcements' && <AdminAnnouncements /> }
+              { activeTab === 'youtube' && <AdminYoutubeSync /> }
+              { activeTab === 'moderation' && <AdminModeration /> }
             </div>
           )}
         </div>

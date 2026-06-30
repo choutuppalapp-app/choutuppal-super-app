@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users, Image as ImageIcon, Sparkles, Compass, Bell } from 'lucide-react'
+import { Home, Newspaper, BookOpen, Building2, UserCircle, Store, Landmark, PlusCircle, Users, Image as ImageIcon, Sparkles, Compass, Bell, Video } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
@@ -105,15 +105,27 @@ export function MobileBottomNav() {
           <NavItem
             icon={Home}
             label="Home"
-            isActive={currentView === 'home'}
+            isActive={currentView === 'home' && pathname !== '/shorts'}
             onClick={() => handleNavClick('home')}
           />
 
-          {/* 2. Explore */}
+          {/* 2. Shorts */}
+          <NavItem
+            icon={Video}
+            label="Shorts"
+            isActive={pathname === '/shorts'}
+            onClick={() => {
+              if (pathname !== '/shorts') {
+                router.push('/shorts')
+              }
+            }}
+          />
+
+          {/* 3. Explore */}
           <NavItem
             icon={Compass}
             label="Explore"
-            isActive={isExploreActive}
+            isActive={isExploreActive && pathname !== '/shorts'}
             onClick={() => handleNavClick('explore', false, '')}
           />
 

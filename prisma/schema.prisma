@@ -762,3 +762,26 @@ model Notification {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
 }
+
+// ─── Auto-Sync YouTube Shorts ───────────────────────────────
+model YoutubeChannel {
+  id          String   @id @default(cuid())
+  channelId   String   @unique
+  channelName String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shortVideos ShortVideo[]
+}
+
+model ShortVideo {
+  id          String   @id @default(cuid())
+  youtubeUrl  String   @unique
+  title       String
+  channelId   String
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+
+  channel     YoutubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
