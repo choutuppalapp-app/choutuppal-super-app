@@ -105,8 +105,27 @@ export async function getAdminUsers() {
       subscriptionTier: true,
       isFeatured: true,
       createdAt: true,
+      avatarUrl: true,
+      _count: {
+        select: {
+          listings: true,
+          posts: true,
+          stories: true
+        }
+      }
     }
   });
+}
+
+export async function getAdminUserContent(userId: string) {
+  const listings = await db.listing.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  const posts = await db.post.findMany({ where: { authorId: userId }, orderBy: { createdAt: 'desc' } });
+  const stories = await db.story.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  return JSON.parse(JSON.stringify({ listings, posts, stories }));
+}
+
+export async function deleteAdminUserPost(id: string) {
+  return await db.post.delete({ where: { id } });
 }
 
 export async function updateAdminUserRole(id: string, role: string) {

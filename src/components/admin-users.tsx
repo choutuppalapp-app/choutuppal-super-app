@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getAdminUsers, updateAdminUserRole, toggleAdminUserPremium, resetAdminUserPassword, deleteAdminUser, toggleAdminUserFeatured } from '@/app/actions/admin-actions';
-import { Trash2, Key, Crown, Shield, User as UserIcon, Loader2, Star } from 'lucide-react';
+import { getAdminUsers, updateAdminUserRole, toggleAdminUserPremium, resetAdminUserPassword, deleteAdminUser, toggleAdminUserFeatured, getAdminUserContent, deleteAdminListing, deleteAdminUserPost, deleteAdminStory } from '@/app/actions/admin-actions';
+import { Trash2, Key, Crown, Shield, User as UserIcon, Loader2, Star, Eye, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null); // store userId + action
+
+  const [selectedUserForContent, setSelectedUserForContent] = useState<any | null>(null);
+  const [userContent, setUserContent] = useState<{listings: any[], posts: any[], stories: any[]} | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -104,6 +108,36 @@ export default function AdminUsers() {
     }
   };
 
+  const handleViewContent = async (user: any) => {
+    setSelectedUserForContent(user);
+    setLoadingContent(true);
+    setUserContent(null);
+    try {
+      const content = await getAdminUserContent(user.id);
+      setUserContent(content);
+    } catch (error) {
+      toast.error('Failed to load user content');
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+
+  const handleDeleteContent = async (id: string, type: 'listing' | 'post' | 'story') => {
+    if (!window.confirm('Delete this item permanently?')) return;
+    try {
+      if (type === 'listing') await deleteAdminListing(id, 'business');
+      else if (type === 'post') await deleteAdminUserPost(id);
+      else if (type === 'story') await deleteAdminStory(id);
+      
+      toast.success('Item deleted');
+      if (selectedUserForContent) {
+        handleViewContent(selectedUserForContent);
+      }
+    } catch (error) {
+      toast.error('Failed to delete item');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-500">
@@ -143,6 +177,11 @@ export default function AdminUsers() {
                 <td className="px-6 py-4">
                   <div className="font-bold text-gray-900">{user.fullName || 'No Name'}</div>
                   <div className="text-xs text-gray-500">{user.id.slice(0, 8)}...</div>
+                  <div className="mt-1 flex gap-2 text-[10px] font-semibold text-gray-500">
+                    <span>{user._count?.listings ?? 0} Listings</span>
+                    <span>{user._count?.posts ?? 0} Posts</span>
+                    <span>{user._count?.stories ?? 0} Stories</span>
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-gray-900">{user.email || 'No Email'}</div>
@@ -196,6 +235,13 @@ export default function AdminUsers() {
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button
+                      onClick={() => handleViewContent(user)}
+                      title="View Postings"
+                      className="p-2 text-gray-500 hover:text-green-500 hover:bg-green-50 rounded-lg transition"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => handleResetPassword(user.id, user.email)}
                       disabled={actionLoading === `${user.id}-reset`}
                       title="Force Password Reset"
@@ -225,6 +271,101 @@ export default function AdminUsers() {
           </tbody>
         </table>
       </div>
+
+      {selectedUserForContent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-bold text-gray-900 text-lg">
+                Content by {selectedUserForContent.fullName || 'User'}
+              </h3>
+              <button onClick={() => setSelectedUserForContent(null)} className="p-2 text-gray-500 hover:bg-gray-200 rounded-full transition">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1 space-y-6">
+              {loadingContent ? (
+                <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                  <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                  <p>Loading user content...</p>
+                </div>
+              ) : userContent ? (
+                <>
+                  {/* Listings */}
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3 text-lg border-b pb-2">Listings ({userContent.listings.length})</h4>
+                    {userContent.listings.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No listings found.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {userContent.listings.map((l: any) => (
+                          <div key={l.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl hover:shadow-sm">
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-bold text-gray-900 truncate">{l.name}</span>
+                              <span className="text-xs text-gray-500 truncate">{l.category} • {l.status}</span>
+                            </div>
+                            <button onClick={() => handleDeleteContent(l.id, 'listing')} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Community Posts */}
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3 text-lg border-b pb-2">Community Posts ({userContent.posts.length})</h4>
+                    {userContent.posts.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No posts found.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {userContent.posts.map((p: any) => (
+                          <div key={p.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl hover:shadow-sm">
+                            <div className="flex flex-col min-w-0 flex-1 pr-3">
+                              <span className="text-sm text-gray-700 line-clamp-2">{p.content || p.textContent || '(No content)'}</span>
+                              <span className="text-xs text-gray-400 mt-1">{new Date(p.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <button onClick={() => handleDeleteContent(p.id, 'post')} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stories */}
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3 text-lg border-b pb-2">Stories ({userContent.stories.length})</h4>
+                    {userContent.stories.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No stories found.</p>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                        {userContent.stories.map((s: any) => (
+                          <div key={s.id} className="relative aspect-[9/16] rounded-xl overflow-hidden border border-gray-100 group">
+                            {s.mediaUrl ? (
+                              <img src={s.mediaUrl} className="w-full h-full object-cover" alt="Story" />
+                            ) : (
+                              <div className="w-full h-full bg-gray-100 flex items-center justify-center"><span className="text-xs text-gray-400">No Media</span></div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button onClick={() => handleDeleteContent(s.id, 'story')} className="p-2 bg-white text-red-500 hover:bg-red-500 hover:text-white rounded-full">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
