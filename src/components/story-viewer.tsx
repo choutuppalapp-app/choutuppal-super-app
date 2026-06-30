@@ -945,7 +945,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleLikeClick();
+                  handleLikeClick(e);
                 }}
                 onPointerDown={(e) => { e.stopPropagation(); }}
                 onTouchStart={(e) => { e.stopPropagation(); }}
