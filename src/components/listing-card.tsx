@@ -20,6 +20,12 @@ interface ListingCardProps {
     operatingHours?: string | null
     isPremium?: boolean
     isFeatured?: boolean
+    userId?: string | null
+    user?: {
+      id: string
+      fullName?: string | null
+      avatarUrl?: string | null
+    } | null
     _count?: {
       reviews?: number
     }
@@ -89,6 +95,23 @@ export default function ListingCard({ listing }: ListingCardProps) {
                 <MapPin className="size-3 shrink-0 text-gray-400" />
                 {listing.address}
               </p>
+            )}
+            
+            {(listing.user || listing.userId) && (
+              <Link
+                href={`/profile/${listing.user?.id || listing.userId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 mt-2 hover:opacity-80 transition-opacity w-max"
+              >
+                <div className="w-5 h-5 rounded-full bg-blue-100 overflow-hidden shrink-0 flex items-center justify-center border border-blue-200">
+                  {listing.user?.avatarUrl ? (
+                    <img src={listing.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[9px] font-bold text-blue-600">{listing.user?.fullName?.[0] || 'U'}</span>
+                  )}
+                </div>
+                <span className="text-[10px] text-gray-600 font-semibold">{listing.user?.fullName || 'Owner'}</span>
+              </Link>
             )}
           </div>
           
