@@ -656,7 +656,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           scale: isDismissing ? 0.9 : 1,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[99999] w-screen h-[100dvh] bg-black overflow-hidden flex flex-col touch-none"
+        className="fixed inset-0 z-[99999] w-screen h-[100dvh] bg-black overflow-hidden flex flex-col touch-none pointer-events-auto"
         style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -903,8 +903,9 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               className="pointer-events-auto flex items-center gap-3 w-full max-w-lg mx-auto relative z-[99999]"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              onPointerMove={(e) => e.stopPropagation()}
             >
               <div className="flex-1 relative flex items-center">
                 <input 
