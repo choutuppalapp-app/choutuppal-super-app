@@ -132,7 +132,13 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   }, [currentStory])
 
   const handleReplySubmit = async () => {
-    if (!commentInput.trim() || !currentUser || !currentStory) return
+    if (!currentStory) return
+    if (!currentUser) {
+      toast.error('Please login to interact')
+      return
+    }
+    if (!commentInput.trim()) return
+
     const text = commentInput.trim()
     setCommentInput('')
     
@@ -173,8 +179,9 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!currentStory || !currentUser) {
-      toast.error('Please login to like stories')
+    if (!currentStory) return
+    if (!currentUser) {
+      toast.error('Please login to interact')
       return
     }
     if (isLiked) return
@@ -792,7 +799,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
         )}
 
         {/* ---- Bottom Gradient & Interactions ---- */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-4 pt-12 gap-3">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-12 gap-3">
           
           <div className="pointer-events-auto flex items-end justify-between gap-3">
             {/* Music Pill */}
