@@ -111,37 +111,7 @@ export function AnnouncementTicker() {
         </div>
       </div>
 
-      {/* Voice / TTS toggle button */}
-      <button
-        onClick={handleVoiceToggle}
-        className={`flex-shrink-0 flex items-center justify-center w-9 h-full transition-colors border-l border-yellow-500/20 self-stretch px-2 ${
-          isSpeaking
-            ? 'bg-yellow-500 hover:bg-yellow-400'
-            : 'bg-gray-800 hover:bg-gray-700'
-        }`}
-        aria-label={isSpeaking ? 'Stop voice reading' : 'Read announcements aloud in Telugu'}
-        title={isSpeaking ? 'Stop voice' : 'Read in Telugu'}
-      >
-        {isSpeaking ? (
-          <VolumeX className="w-3.5 h-3.5 text-gray-900" />
-        ) : (
-          <Volume2 className="w-3.5 h-3.5 text-yellow-400" />
-        )}
-      </button>
 
-      {/* Pause / Play toggle button */}
-      <button
-        onClick={() => setIsPaused((p) => !p)}
-        className="flex-shrink-0 flex items-center justify-center w-9 h-full bg-gray-800 hover:bg-gray-700 transition-colors border-l border-yellow-500/20 self-stretch px-2"
-        aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
-        title={isPaused ? 'Resume' : 'Pause'}
-      >
-        {isPaused ? (
-          <Play className="w-3.5 h-3.5 text-yellow-400" />
-        ) : (
-          <Pause className="w-3.5 h-3.5 text-yellow-400" />
-        )}
-      </button>
 
       {/* Inline keyframe style */}
       <style>{`
