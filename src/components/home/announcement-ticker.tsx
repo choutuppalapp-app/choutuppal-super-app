@@ -91,7 +91,13 @@ export function AnnouncementTicker() {
       </div>
 
       {/* Scrolling ticker text */}
-      <div className="flex-1 overflow-hidden py-2">
+      <div 
+        className="flex-1 overflow-hidden py-2"
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => setIsPaused(false)}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         <div
           className="flex whitespace-nowrap"
           style={{

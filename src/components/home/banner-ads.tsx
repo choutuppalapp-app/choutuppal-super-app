@@ -103,6 +103,10 @@ export function BannerAds() {
     touchStartX.current = e.touches[0].clientX
     isDragging.current = true
   }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current) return
+    // Optional: prevent default if you want to stop vertical scroll while swiping horizontally
+  }
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDragging.current) return
     const diff = touchStartX.current - e.changedTouches[0].clientX
@@ -122,6 +126,9 @@ export function BannerAds() {
 
   const handleLbTouchStart = (e: React.TouchEvent) => {
     lbTouchStartX.current = e.touches[0].clientX
+  }
+  const handleLbTouchMove = (e: React.TouchEvent) => {
+    // track move
   }
   const handleLbTouchEnd = (e: React.TouchEvent) => {
     const diff = lbTouchStartX.current - e.changedTouches[0].clientX
@@ -153,8 +160,9 @@ export function BannerAds() {
       {/* ─── Main Swipeable Banner ─── */}
       <div
         ref={carouselRef}
-        className="relative w-full overflow-hidden px-4 cursor-pointer"
+        className="relative w-full overflow-hidden px-4 cursor-pointer pointer-events-auto touch-pan-y"
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={() => openLightbox(currentIndex)}
       >
@@ -221,7 +229,7 @@ export function BannerAds() {
       {/* ─── Full-Screen Lightbox ─── */}
       {isLightboxOpen && (
         <div
-          className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center"
+          className="fixed inset-0 bg-black/95 z-[99999] flex flex-col items-center justify-center pointer-events-auto touch-none"
           onClick={(e) => { if (e.target === e.currentTarget) setIsLightboxOpen(false) }}
         >
           {/* Close button */}
@@ -240,8 +248,9 @@ export function BannerAds() {
 
           {/* Swipeable content area */}
           <div
-            className="w-full max-w-2xl px-4 flex items-center justify-center"
+            className="w-full max-w-2xl px-4 flex items-center justify-center pointer-events-auto"
             onTouchStart={handleLbTouchStart}
+            onTouchMove={handleLbTouchMove}
             onTouchEnd={handleLbTouchEnd}
           >
             {/* Prev arrow */}
