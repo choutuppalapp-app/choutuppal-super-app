@@ -11,15 +11,28 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const skip = (page - 1) * limit;
 
+    const feedType = searchParams.get('feedType') || 'foryou'; // 'foryou' | 'following'
+
     const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
-    const where: Record<string, unknown> = {};
+    const where: any = {};
     if (!includeDeleted) {
       where.isDeleted = false;
     }
 
     if (userId) {
-      where.authorId = userId;
+      if (feedType === 'following') {
+        // Find users the current user follows
+        const follows = await db.follow.findMany({
+          where: { followerId: userId },
+          select: { followingId: true }
+        });
+        const followingIds = follows.map(f => f.followingId);
+        where.authorId = { in: followingIds };
+      } else {
+        // specific user's posts
+        where.authorId = userId;
+      }
     }
 
     const [posts, total] = await Promise.all([
@@ -30,6 +43,7 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               fullName: true,
+              username: true,
               avatarUrl: true,
               role: true,
               profile: {

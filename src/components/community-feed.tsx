@@ -36,6 +36,7 @@ interface Profile {
 interface Author {
   id: string
   fullName: string
+  username: string | null
   avatarUrl: string | null
   role: string
   profile: Profile | null
@@ -347,30 +348,39 @@ function PostCard({
       <div className="p-4 flex items-center gap-3">
         <UserAvatar author={post.author} onClick={() => onProfileClick(post.author.id, post.author.profile?.publicFigureCategory === 'POLITICIAN' || post.author.profile?.publicFigureCategory === 'GOVT_OFFICIAL')} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              onClick={() => onProfileClick(post.author.id, post.author.profile?.publicFigureCategory === 'POLITICIAN' || post.author.profile?.publicFigureCategory === 'GOVT_OFFICIAL')}
-              className="text-sm font-semibold text-gray-900 hover:underline truncate"
-            >
-              {post.author.fullName}
-            </button>
-            {isPublicFigure && (
-              <Crown className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-            )}
-            {isVerified && !isPublicFigure && (
-              <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-            )}
-            {isPublicFigure && post.author.profile?.publicFigureCategory && (
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${getCategoryColor(
-                  post.author.profile.publicFigureCategory
-                )}`}
-              >
-                {getCategoryLabel(post.author.profile.publicFigureCategory)}
-              </span>
-            )}
+          <div className="flex items-center justify-between w-full">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  onClick={() => onProfileClick(post.author.id, post.author.profile?.publicFigureCategory === 'POLITICIAN' || post.author.profile?.publicFigureCategory === 'GOVT_OFFICIAL')}
+                  className="text-[15px] font-bold text-gray-900 hover:underline truncate"
+                >
+                  {post.author.fullName}
+                </button>
+                {isPublicFigure && (
+                  <Crown className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                )}
+                {isVerified && !isPublicFigure && (
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                )}
+                {isPublicFigure && post.author.profile?.publicFigureCategory && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${getCategoryColor(
+                      post.author.profile.publicFigureCategory
+                    )}`}
+                  >
+                    {getCategoryLabel(post.author.profile.publicFigureCategory)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {post.author.username && (
+                  <span className="text-[13px] text-gray-500 font-medium">@{post.author.username}</span>
+                )}
+                <span className="text-[13px] text-gray-400">· {timeAgo(post.createdAt)}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-gray-400">{timeAgo(post.createdAt)}</p>
         </div>
       </div>
 
@@ -642,7 +652,10 @@ export default function CommunityFeed() {
   const setProfileType = useAppStore((s) => s.setProfileType)
   const { user, isAuthenticated } = useAuth()
 
-  // Feed state
+  const [feedType, setFeedType] = useState<'foryou' | 'following'>('foryou')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [suggestedUsers, setSuggestedUsers] = useState<any[]>([])
+
   const [posts, setPosts] = useState<Post[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
   const [postsPage, setPostsPage] = useState(1)
@@ -661,9 +674,14 @@ export default function CommunityFeed() {
   const [shareToast, setShareToast] = useState<string | null>(null)
 
   // Fetch posts
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, type: 'foryou' | 'following' = feedType) => {
     try {
-      const res = await fetch(`/api/social/posts?page=${page}&limit=20`)
+      setPostsLoading(true)
+      let url = `/api/social/posts?page=${page}&limit=20`
+      if (type === 'following' && user) {
+        url += `&feedType=following&userId=${user.id}`
+      }
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
       const newPosts = data.posts || []
@@ -674,12 +692,25 @@ export default function CommunityFeed() {
     } finally {
       setPostsLoading(false)
     }
-  }, [])
+  }, [user, feedType])
+
+  // Fetch suggested users
+  const fetchSuggestedUsers = useCallback(async () => {
+    if (!user) return
+    try {
+      const res = await fetch('/api/search?q=&type=users&limit=10')
+      if (res.ok) {
+        const data = await res.json()
+        setSuggestedUsers(data.users?.filter((u: any) => u.id !== user.id) || [])
+      }
+    } catch {}
+  }, [user])
 
   // Initial fetch
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    fetchPosts(1, false, feedType)
+    fetchSuggestedUsers()
+  }, [feedType, fetchSuggestedUsers]) // Re-fetch on feedType change
 
   // Create post
   const handleCreatePost = async () => {
@@ -836,16 +867,55 @@ export default function CommunityFeed() {
       className="space-y-4"
     >
       {/* ── Community Header ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-md">
-            <Users className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Community</h1>
-            <p className="text-[10px] text-gray-400 -mt-0.5">Choutuppal Social Feed</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8962E] flex items-center justify-center shadow-md">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">Community</h1>
+              <p className="text-[10px] text-gray-400 -mt-0.5">Choutuppal Social Feed</p>
+            </div>
           </div>
         </div>
+        
+        {/* Search Bar */}
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search users by name or @username..."
+            className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+          />
+        </div>
+        
+        {/* Dual Feed Tabs */}
+        {isAuthenticated && (
+          <div className="flex bg-white/40 backdrop-blur-md p-1 rounded-xl">
+            <button
+              onClick={() => setFeedType('foryou')}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                feedType === 'foryou'
+                  ? 'bg-white shadow-sm text-gray-900'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              For You
+            </button>
+            <button
+              onClick={() => setFeedType('following')}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                feedType === 'following'
+                  ? 'bg-white shadow-sm text-gray-900'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Following
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Feed Tab ── */}
@@ -900,6 +970,40 @@ export default function CommunityFeed() {
           {!isAuthenticated && (
             <div className="bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl p-4 text-center">
               <p className="text-sm text-gray-500">Sign in to share with your community</p>
+            </div>
+          )}
+
+          {/* Suggested Users / Who to Follow */}
+          {isAuthenticated && suggestedUsers.length > 0 && (
+            <div className="bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl p-4">
+              <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#D4AF37]" />
+                Who to Follow
+              </h3>
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
+                {suggestedUsers.map(u => (
+                  <div key={u.id} className="snap-start shrink-0 w-32 bg-white/60 border border-white/50 rounded-xl p-3 flex flex-col items-center text-center">
+                    <UserAvatar author={{
+                      id: u.id,
+                      fullName: u.fullName,
+                      username: u.username || null,
+                      avatarUrl: u.avatarUrl || null,
+                      role: u.role,
+                      profile: u.profile || null,
+                    }} size="lg" onClick={() => handleProfileClick(u.id)} />
+                    <button onClick={() => handleProfileClick(u.id)} className="font-semibold text-xs text-gray-900 mt-2 truncate w-full hover:underline">
+                      {u.fullName}
+                    </button>
+                    {u.username && <span className="text-[10px] text-gray-500 truncate w-full">@{u.username}</span>}
+                    <button 
+                      onClick={() => handleProfileClick(u.id)}
+                      className="mt-3 w-full py-1.5 bg-[#D4AF37]/10 text-[#B8962E] text-xs font-semibold rounded-lg hover:bg-[#D4AF37]/20 transition"
+                    >
+                      View
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

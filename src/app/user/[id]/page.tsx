@@ -18,6 +18,12 @@ export default async function UserProfilePage({ params }: PageProps) {
   const user = await db.user.findUnique({
     where: isUsername ? { username: queryParam } : { id: queryParam },
     include: {
+      _count: {
+        select: {
+          followers: true,
+          following: true
+        }
+      },
       listings: {
         where: { status: 'APPROVED' },
         orderBy: { createdAt: 'desc' as const }

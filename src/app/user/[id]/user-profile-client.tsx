@@ -5,29 +5,59 @@ import { Header } from '@/components/header'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import ListingCard from '@/components/listing-card'
 import { format } from 'date-fns'
-import { MapPin, Calendar, Star, FileText, Image as ImageIcon, Lock } from 'lucide-react'
+import { MapPin, Calendar, Star, FileText, Image as ImageIcon, Lock, UserPlus, UserCheck, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState as useReactState } from 'react'
 
 interface UserProfileClientProps {
   user: any
 }
 
 export function UserProfileClient({ user }: UserProfileClientProps) {
-  const [activeTab, setActiveTab] = useState<'posts' | 'listings'>('posts')
+  const [activeTab, setActiveTab] = useReactState<'posts' | 'listings'>('posts')
   const { user: currentUser } = useAuth()
   const router = useRouter()
+  
+  const [following, setFollowing] = useReactState(false)
+  const [followLoading, setFollowLoading] = useReactState(false)
+  const [followersCount, setFollowersCount] = useReactState(user._count?.followers || 0)
 
   useEffect(() => {
-    if (currentUser && currentUser.id === user.id) {
-      router.push('/dashboard')
+    if (currentUser && currentUser.id !== user.id) {
+      fetch(`/api/social/follows?followerId=${currentUser.id}&followingId=${user.id}`)
+        .then(res => res.ok ? res.json() : { following: false })
+        .then(data => setFollowing(data.following === true))
+        .catch(() => {})
     }
-  }, [currentUser, user.id, router])
+  }, [currentUser, user.id])
 
-  if (currentUser && currentUser.id === user.id) {
-    return null // Prevent flash of content before redirect
+  const handleFollowToggle = async () => {
+    if (!currentUser) {
+      // maybe redirect to login or show modal
+      return
+    }
+    setFollowLoading(true)
+    try {
+      const res = await fetch('/api/users/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followingId: user.id })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setFollowing(data.following)
+        setFollowersCount(c => data.following ? c + 1 : Math.max(0, c - 1))
+      }
+    } catch {
+      // revert logic if needed
+    }
+    setFollowLoading(false)
   }
+
+  // removed the early redirect for edit profile
+  // wait, the user says "Add an 'Edit Profile' button if it's the user's own profile."
+  // So we shouldn't redirect them away.
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-20 md:pb-0">
@@ -50,7 +80,41 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
               )}
             </div>
             
-            {/* Action Buttons could go here */}
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {currentUser?.id === user.id ? (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-4 py-2 bg-gray-100 text-gray-900 rounded-full font-semibold text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Edit Profile
+                </button>
+              ) : (
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={followLoading || !currentUser}
+                  className={`px-6 py-2 rounded-full font-semibold text-sm transition-colors flex items-center gap-2 ${
+                    following 
+                      ? 'bg-gray-100 text-gray-900 hover:bg-red-50 hover:text-red-600 border border-gray-200'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  {followLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : following ? (
+                    <>
+                      <UserCheck className="w-4 h-4" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Follow
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="mt-3">
@@ -63,8 +127,14 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
               )}
             </div>
             
-            <p className="text-sm text-gray-500 mt-1">
-              @{user.id.substring(0, 8)} • Member since {format(new Date(user.createdAt || new Date()), 'MMM yyyy')}
+            {user.username && (
+              <p className="text-[15px] font-medium text-gray-600 mt-0.5">
+                @{user.username}
+              </p>
+            )}
+            
+            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+              <span>Member since {format(new Date(user.createdAt || new Date()), 'MMM yyyy')}</span>
             </p>
             
             {user.bio && !user.isPrivate && (
@@ -76,13 +146,13 @@ export function UserProfileClient({ user }: UserProfileClientProps) {
             {/* Stats Row */}
             {!user.isPrivate && (
               <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <FileText className="w-4 h-4" />
-                  <span className="font-bold text-gray-900">{user.posts?.length || 0}</span> Posts
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-900 text-lg">{followersCount}</span>
+                  <span className="text-sm text-gray-500">Followers</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <ImageIcon className="w-4 h-4" />
-                  <span className="font-bold text-gray-900">{user.listings?.length || 0}</span> Listings
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-900 text-lg">{user._count?.following || 0}</span>
+                  <span className="text-sm text-gray-500">Following</span>
                 </div>
               </div>
             )}
