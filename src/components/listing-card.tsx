@@ -51,7 +51,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
   return (
     <Link
-      href={`/listing/${listing.id}`}
+      href={`/listing/${listing.slug || listing.id}`}
       className="block cursor-pointer transform transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
     >
       <GlassCard

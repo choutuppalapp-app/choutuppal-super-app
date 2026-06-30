@@ -268,7 +268,7 @@ export default function ListingView() {
 VERSION:3.0
 FN:${listing?.name}
 TEL:${phone}
-URL:${window.location.origin}/listing/${listing?.id}
+URL:${window.location.origin}/listing/${listing?.slug || listing?.id}
 END:VCARD`
     const blob = new Blob([vcard], { type: 'text/vcard' })
     const url = URL.createObjectURL(blob)

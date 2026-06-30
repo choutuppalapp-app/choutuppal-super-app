@@ -2,6 +2,17 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+async function generateUniqueSlug(baseName: string) {
+  let slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+  if (!slug) slug = 'listing'
+  
+  const existing = await db.listing.findUnique({ where: { slug } })
+  if (!existing) return slug
+  
+  return `${slug}-${crypto.randomBytes(3).toString('hex')}`
+}
 
 export async function GET(request: Request) {
   try {
@@ -135,12 +146,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    if (!body.userId || !body.cityId || !body.slug || !body.name || !body.category) {
+    if (!body.userId || !body.cityId || !body.name || !body.category) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, cityId, slug, name, category' },
+        { error: 'Missing required fields: userId, cityId, name, category' },
         { status: 400 }
       )
     }
+    
+    const slug = body.slug || await generateUniqueSlug(body.name)
     // Sanitize string inputs
     const sanitizedName = String(body.name).trim().slice(0, 200)
     const sanitizedCategory = String(body.category).trim().slice(0, 100)
@@ -156,7 +169,7 @@ export async function POST(request: Request) {
       data: {
         userId: body.userId,
         cityId: body.cityId,
-        slug: body.slug,
+        slug: slug,
         name: sanitizedName,
         category: sanitizedCategory,
         description: sanitizedDescription,

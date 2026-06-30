@@ -1,6 +1,17 @@
 
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+async function generateUniqueRealEstateSlug(baseName: string) {
+  let slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+  if (!slug) slug = 'property'
+  
+  const existing = await db.realEstateListing.findUnique({ where: { slug } })
+  if (!existing) return slug
+  
+  return `${slug}-${crypto.randomBytes(3).toString('hex')}`
+}
 
 export async function GET(request: Request) {
   try {
@@ -58,8 +69,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields: title, price, ownerPhone, cityId, userId' }, { status: 400 })
     }
 
+    const slug = await generateUniqueRealEstateSlug(title)
+
     const listing = await db.realEstateListing.create({
       data: {
+        slug,
         title,
         price,
         images: Array.isArray(images) ? JSON.stringify(images) : (images ?? null),

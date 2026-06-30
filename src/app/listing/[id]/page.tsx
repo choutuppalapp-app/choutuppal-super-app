@@ -4,8 +4,8 @@ import ListingView from '@/components/listing-view'
 
 async function getListing(id: string) {
   try {
-    return await db.listing.findUnique({
-      where: { slug: id }, // wait, is it slug or id? The url is usually slug. Let's try both or just findUnique by id. Let's use id. But wait, `listing.slug` might be used. I will look up how listing-view fetches it.
+    return await db.listing.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
     })
   } catch {
     return null

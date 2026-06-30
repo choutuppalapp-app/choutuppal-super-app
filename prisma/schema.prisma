@@ -242,6 +242,7 @@ model RealEstateListing {
   id          String   @id @default(cuid())
   userId      String
   cityId      String
+  slug        String?  @unique
   title       String
   price       String
   images      String?  // JSON string
