@@ -656,7 +656,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           scale: isDismissing ? 0.9 : 1,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[99999] w-screen h-dvh bg-black overflow-hidden touch-none"
+        className="fixed inset-0 z-[99999] w-screen h-[100dvh] bg-black overflow-hidden flex flex-col touch-none"
         style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -826,7 +826,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
         )}
 
         {/* ---- Bottom Gradient & Interactions ---- */}
-        <div className="relative mt-auto z-50 w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-12 gap-3">
+        <div className="absolute bottom-0 left-0 w-full p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/80 to-transparent z-50 pointer-events-none flex flex-col gap-3">
           
           <div className="pointer-events-auto flex items-end justify-between gap-3">
             {/* Music Pill */}
