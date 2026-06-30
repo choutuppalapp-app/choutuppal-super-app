@@ -656,7 +656,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           scale: isDismissing ? 0.9 : 1,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[99999] w-screen h-[100dvh] bg-black overflow-hidden flex flex-col touch-none pointer-events-auto"
+        className="fixed inset-0 z-[99999] w-screen h-[100dvh] bg-black overflow-hidden flex flex-col touch-none isolation-auto pointer-events-auto"
         style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -826,7 +826,12 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
         )}
 
         {/* ---- Bottom Gradient & Interactions ---- */}
-        <div className="absolute bottom-0 left-0 w-full p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/80 to-transparent z-50 pointer-events-none flex flex-col gap-3">
+        <div 
+          className="absolute bottom-0 left-0 w-full z-[99999] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black to-transparent pointer-events-auto flex flex-col gap-3"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           
           <div className="pointer-events-auto flex items-end justify-between gap-3">
             {/* Music Pill */}
@@ -936,7 +941,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
                   onPointerDown={(e) => { e.stopPropagation(); }}
                   onTouchStart={(e) => { e.stopPropagation(); }}
                   disabled={!commentInput.trim()}
-                  className="absolute right-3 p-1.5 rounded-full bg-[#4169E1] text-white hover:bg-opacity-90 transition-opacity disabled:opacity-40"
+                  className="absolute right-3 z-[100000] pointer-events-auto p-1.5 rounded-full bg-[#4169E1] text-white hover:bg-opacity-90 transition-opacity disabled:opacity-40"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>
