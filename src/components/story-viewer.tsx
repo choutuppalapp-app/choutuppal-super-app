@@ -527,7 +527,8 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   /*  Custom gesture handling                                          */
   /* ---------------------------------------------------------------- */
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button, a, [role="button"]')) return
+    if (e.pointerType === 'mouse') return
+    if ((e.target as HTMLElement).closest('button, a, [role="button"], input')) return
 
     const state = pointerState.current
     state.startX = e.clientX
@@ -545,6 +546,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   }, [])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse') return
     const state = pointerState.current
     const dx = e.clientX - state.startX
     const dy = e.clientY - state.startY
@@ -568,6 +570,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
+      if (e.pointerType === 'mouse') return
       const state = pointerState.current
 
       if (state.holdTimer) {
@@ -604,7 +607,8 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
     [goNext, goPrev]
   )
 
-  const handlePointerCancel = useCallback(() => {
+  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse') return
     const state = pointerState.current
     if (state.holdTimer) {
       clearTimeout(state.holdTimer)
@@ -652,7 +656,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           scale: isDismissing ? 0.9 : 1,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[99999] w-screen h-dvh bg-black flex flex-col pointer-events-auto select-none overflow-hidden"
+        className="fixed inset-0 z-[99999] w-screen h-dvh bg-black overflow-hidden touch-none"
         style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -689,6 +693,22 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
               style={{ backgroundColor: '#000' }}
             />
           )}
+        </div>
+
+        {/* ---- Desktop Navigation Arrows ---- */}
+        <div className="hidden md:flex absolute inset-0 items-center justify-between px-4 pointer-events-none z-[60]">
+          <button 
+            onClick={(e) => { e.stopPropagation(); goPrev(); }}
+            className="pointer-events-auto p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 transition-all hover:scale-110"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); goNext(); }}
+            className="pointer-events-auto p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 transition-all hover:scale-110"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
         </div>
 
         {/* ---- Header Gradient ---- */}
