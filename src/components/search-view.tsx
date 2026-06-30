@@ -301,7 +301,7 @@ export default function SearchView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {userResults.map((u, idx) => (
             <motion.div key={u.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05, duration: 0.3 }} whileTap={{ scale: 0.98 }}>
-              <div className="block cursor-pointer" onClick={() => {}}>
+              <Link href={`/profile/${u.id}`} className="block cursor-pointer">
                 <GlassCard className="!p-4 flex items-center gap-4 hover:shadow-xl transition-shadow">
                   <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 border-2 border-white shadow-sm">
                     {u.avatarUrl ? <img src={u.avatarUrl} className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-blue-600">{u.fullName?.[0] || 'U'}</span>}
@@ -312,7 +312,7 @@ export default function SearchView() {
                     {u.bio && <p className="text-xs text-gray-600 mt-1 line-clamp-1">{u.bio}</p>}
                   </div>
                 </GlassCard>
-              </div>
+              </Link>
             </motion.div>
           ))}
         </div>
