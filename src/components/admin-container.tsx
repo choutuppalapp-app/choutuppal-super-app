@@ -122,8 +122,8 @@ export default function AdminContainer() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full overflow-hidden">
-        <div className="h-full overflow-y-auto">
+      <main className="flex-1 w-full min-w-0 pb-20">
+        <div className="w-full">
           {activeTab === 'overview' && <AdminOverview onNavigate={(tab) => setActiveTab(tab as TabType)} />}
           
           {(activeTab !== 'overview') && (
@@ -136,7 +136,6 @@ export default function AdminContainer() {
               {activeTab === 'news' && <AdminNews />}
               {activeTab === 'blogs' && <AdminBlogs />}
               {activeTab === 'announcements' && <AdminAnnouncements />}
-              {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'moderation' && <AdminModeration />}
             </div>
           )}
