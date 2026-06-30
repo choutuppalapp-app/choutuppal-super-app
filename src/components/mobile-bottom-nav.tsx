@@ -24,6 +24,7 @@ export function MobileBottomNav() {
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const selectedListingSlug = useAppStore((s) => s.selectedListingSlug)
   const showBottomNav = useAppStore((s) => s.showBottomNav)
+  const isStoryOpen = useAppStore((s) => s.isStoryOpen)
   const { isAuthenticated, setShowLoginModal } = useAuth()
   const { config } = useAppConfig()
 
@@ -54,6 +55,10 @@ export function MobileBottomNav() {
 
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard') || pathname?.startsWith('/agent') || currentView === 'dashboard') {
     return null; // Force hide global menu
+  }
+
+  if (isStoryOpen) {
+    return null; // Force hide when story viewer is open
   }
 
   const isDetailPage = currentView === 'listing' || pathname?.startsWith('/listing/')

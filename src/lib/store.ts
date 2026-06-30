@@ -130,6 +130,8 @@ interface AppState {
   selectedListingSlug: string | null
   selectedBlogSlug: string | null
   selectedVideoId: string | null
+  isStoryOpen: boolean
+  setIsStoryOpen: (open: boolean) => void
   setSelectedListing: (slug: string | null) => void
   setSelectedBlogSlug: (slug: string | null) => void
   setSelectedVideoId: (id: string | null) => void
@@ -229,6 +231,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedListingSlug: null,
   selectedBlogSlug: null,
   selectedVideoId: null,
+  isStoryOpen: false,
+  setIsStoryOpen: (open) => set({ isStoryOpen: open }),
   setSelectedListing: (slug) => set({ selectedListingSlug: slug, showBottomNav: !slug }),
   setSelectedBlogSlug: (slug) => set({ selectedBlogSlug: slug }),
   setSelectedVideoId: (id) => set({ selectedVideoId: id }),

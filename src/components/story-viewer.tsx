@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Volume2, VolumeX, Music, Pause, Trash2, Eye, Heart, ChevronUp, Send, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -90,11 +91,45 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
 
   const { user: currentUser } = useAuth()
   const setShowBottomNav = useAppStore((s) => s.setShowBottomNav)
+  const setIsStoryOpen = useAppStore((s) => s.setIsStoryOpen)
 
   useEffect(() => {
     setShowBottomNav(false)
-    return () => setShowBottomNav(true)
-  }, [setShowBottomNav])
+    setIsStoryOpen(true)
+    return () => {
+      setShowBottomNav(true)
+      setIsStoryOpen(false)
+    }
+  }, [setShowBottomNav, setIsStoryOpen])
+
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const bottomContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!mounted) return
+    const el = bottomContainerRef.current
+    if (!el) return
+    
+    const blockTouch = (e: Event) => {
+      e.stopPropagation()
+    }
+    
+    el.addEventListener('touchstart', blockTouch, { passive: false })
+    el.addEventListener('pointerdown', blockTouch, { passive: false })
+    el.addEventListener('touchend', blockTouch, { passive: false })
+    el.addEventListener('touchmove', blockTouch, { passive: false })
+    
+    return () => {
+      el.removeEventListener('touchstart', blockTouch)
+      el.removeEventListener('pointerdown', blockTouch)
+      el.removeEventListener('touchend', blockTouch)
+      el.removeEventListener('touchmove', blockTouch)
+    }
+  }, [mounted])
 
   const [localLikes, setLocalLikes] = useState(0)
   const [isLiked, setIsLiked] = useState(false)
@@ -644,7 +679,9 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       <motion.div
         key="story-viewer"
@@ -827,6 +864,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
 
         {/* ---- Bottom Gradient & Interactions ---- */}
         <div 
+          ref={bottomContainerRef}
           className="absolute bottom-0 left-0 w-full z-[99999] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black to-transparent pointer-events-auto flex flex-col gap-3"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onTouchStart={(e) => e.stopPropagation()}
@@ -1100,6 +1138,7 @@ export default function StoryViewer({ stories, initialStoryIndex, onClose }: Sto
           )}
         </AnimatePresence>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
