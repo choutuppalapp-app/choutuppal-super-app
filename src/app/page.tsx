@@ -112,52 +112,9 @@ const UpdatesView = dynamic(
   }
 )
 
-const ProfileView = dynamic(
-  () => import('@/components/profile-view'),
-  { ssr: false, loading: () => <div className="p-6 space-y-4"><div className="h-24 rounded-xl bg-gray-100 animate-pulse" /><div className="h-48 rounded-xl bg-gray-100 animate-pulse" /></div> }
-)
-
 const ManaShortsFeed = dynamic(
   () => import('@/components/shorts-feed'),
   { ssr: false, loading: () => <div className="w-full h-[500px] bg-gray-50 animate-pulse rounded-xl" /> }
-)
-
-const IndividualProfilePage = dynamic(
-  () => import('@/components/profile/individual-profile-page'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-40 md:h-52 bg-gray-200" />
-        <div className="px-4 -mt-12">
-          <div className="w-24 h-24 rounded-full bg-gray-300" />
-        </div>
-        <div className="px-4 space-y-2">
-          <div className="h-5 w-40 bg-gray-200 rounded" />
-          <div className="h-3 w-64 bg-gray-100 rounded" />
-        </div>
-      </div>
-    ),
-  }
-)
-
-const LeaderProfilePage = dynamic(
-  () => import('@/components/profile/leader-profile-page'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-48 md:h-64 bg-gray-200" />
-        <div className="px-4 -mt-14">
-          <div className="w-28 h-28 rounded-2xl bg-gray-300" />
-        </div>
-        <div className="px-4 space-y-2">
-          <div className="h-5 w-40 bg-gray-200 rounded" />
-          <div className="h-3 w-64 bg-gray-100 rounded" />
-        </div>
-      </div>
-    ),
-  }
 )
 
 const Footer = dynamic(
@@ -303,9 +260,6 @@ export default function CityPage() {
         'blog-detail': 'Blog Article',
         updates: 'Updates',
         community: 'Community',
-        profile: 'Profile',
-        'individual-profile': 'Professional Profile',
-        'leader-profile': 'Leader Profile',
         shorts: 'Mana Shorts',
         learn: 'Mana Learn',
         'video-player': 'Watch Video',
@@ -356,13 +310,6 @@ export default function CityPage() {
         return <ErrorBoundary name="UpdatesView"><UpdatesView /></ErrorBoundary>
       case 'community':
         return <ErrorBoundary name="CommunityFeed"><CommunityFeed /></ErrorBoundary>
-      case 'profile':
-        return <ErrorBoundary name="ProfileView"><ProfileView /></ErrorBoundary>
-      case 'individual-profile':
-        return <ErrorBoundary name="IndividualProfilePage"><IndividualProfilePage /></ErrorBoundary>
-      case 'leader-profile':
-        if (!config.enableLeaderProfiles) return <HomeView />
-        return <ErrorBoundary name="LeaderProfilePage"><LeaderProfilePage /></ErrorBoundary>
       case 'shorts':
         if (!config.enableShorts) return <HomeView />
         return <ErrorBoundary name="ManaShortsFeed"><ManaShortsFeed /></ErrorBoundary>
