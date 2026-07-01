@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
 
 const CATEGORIES = ['All', 'Tiffin', 'Medical', 'Salon', 'Plumber', 'Real Estate', 'Services', 'Electronics', 'Automobile', 'Tailor', 'Hardware', 'Education']
 
@@ -109,20 +110,21 @@ export default function AdminListings() {
     if (!files.length) return
 
     setUploading(true)
+    toast.loading('Uploading image(s)...', { id: 'upload' })
     try {
-      const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true }
+      const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true }
       
       const newUrls: string[] = []
       for (const file of files) {
         if (type === 'gallery' && galleryUrls.length + newUrls.length >= 5) break
         
         const compressedFile = await imageCompression(file, options)
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
+        const fileName = `${type}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
         
-        const { error } = await supabase.storage.from('listings').upload(fileName, compressedFile)
+        const { error } = await supabase.storage.from('listing-images').upload(fileName, compressedFile)
         if (error) throw error
 
-        const { data: { publicUrl } } = supabase.storage.from('listings').getPublicUrl(fileName)
+        const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(fileName)
         newUrls.push(publicUrl)
       }
 
@@ -130,12 +132,14 @@ export default function AdminListings() {
       if (type === 'cover') setCoverUrl(newUrls[0])
       if (type === 'gallery') setGalleryUrls(prev => [...prev, ...newUrls].slice(0, 5))
       
-    } catch (error) {
+      toast.success('Upload successful!', { id: 'upload' })
+    } catch (error: any) {
       console.error(error)
-      alert('Upload failed')
+      toast.error(error.message || 'Upload failed', { id: 'upload' })
     } finally {
       setUploading(false)
     }
+    e.target.value = ''
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
