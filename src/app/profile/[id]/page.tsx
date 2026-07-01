@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { GlassCard } from '@/components/glass-card'
 import ListingCard from '@/components/listing-card'
+import { ProfileActions } from '@/components/profile-actions'
 
 const formatJoinedDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date)
@@ -128,24 +129,7 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-gray-100">
-            {phoneToCall && (
-              <a href={`tel:${phoneToCall}`} className="w-full">
-                <Button variant="outline" className="w-full rounded-xl h-12 flex items-center justify-center gap-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50">
-                  <Phone className="size-4 text-gray-600" />
-                  Call
-                </Button>
-              </a>
-            )}
-            {phoneToWA && (
-              <a href={`https://wa.me/91${phoneToWA}`} target="_blank" rel="noopener noreferrer" className="w-full">
-                <Button className="w-full rounded-xl h-12 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-lg shadow-[#25D366]/20 font-bold">
-                  <MessageCircle className="size-4" />
-                  WhatsApp
-                </Button>
-              </a>
-            )}
-          </div>
+          <ProfileActions userId={user.id} phone={phoneToWA} />
         </GlassCard>
 
         {/* Stories Section */}
