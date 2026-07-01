@@ -31,9 +31,16 @@ export async function POST(req: Request) {
 
     const userId = authData.user.id;
 
-    // 2. Create in Prisma
-    const user = await db.user.create({
-      data: {
+    // 2. Create or Update in Prisma
+    const user = await db.user.upsert({
+      where: { id: userId },
+      update: {
+        fullName,
+        email: email || undefined,
+        phone,
+        role: role || 'user',
+      },
+      create: {
         id: userId,
         fullName,
         email: email || undefined,
