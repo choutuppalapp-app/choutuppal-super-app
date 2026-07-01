@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: { id: string } | Pr
     }
   } catch {}
 
-  const rawImage = listing.coverImage || listing.logoUrl || firstGalleryImage || '/logo.png'
+  const rawImage = listing.coverImage || listing.logoUrl || '/logo.png'
   const absoluteImageUrl = rawImage.startsWith('http') 
     ? rawImage 
     : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: { params: { id: string } | Pr
     openGraph: {
       title,
       description,
-      images: [absoluteImageUrl],
+      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
       type: 'website',
       url: `https://choutuppal.in/listing/${resolvedParams.id}`,
     },
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: { params: { id: string } | Pr
       card: 'summary_large_image',
       title,
       description,
-      images: [absoluteImageUrl],
+      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
     }
   }
 }
