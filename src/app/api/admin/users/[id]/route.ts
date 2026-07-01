@@ -12,21 +12,11 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    // Delete Supabase Auth first
-    await supabaseAdmin.auth.admin.deleteUser(id);
+    // Delete associated records via Cascade deletion by simply deleting the user
+    await db.user.delete({ where: { id } });
 
-    // Delete associated records in transaction
-    await db.$transaction([
-      db.listing.deleteMany({ where: { userId: id } }),
-      db.realEstateListing.deleteMany({ where: { userId: id } }),
-      db.story.deleteMany({ where: { userId: id } }),
-      db.post.deleteMany({ where: { authorId: id } }),
-      db.news.deleteMany({ where: { authorId: id } }),
-      db.blog.deleteMany({ where: { authorId: id } }),
-      db.bannerAd.deleteMany({ where: { userId: id } }),
-      db.review.deleteMany({ where: { userId: id } }),
-      db.user.delete({ where: { id } })
-    ]);
+    // Delete Supabase Auth afterwards
+    await supabaseAdmin.auth.admin.deleteUser(id);
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

@@ -3,11 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
 
 // ─── Geographic Hierarchy ───────────────────────────────────
 model Location {
@@ -22,40 +21,40 @@ model Location {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users       User[]  // Users linked to this location
-  cities      City[]  @relation("CityLocation")
+  users  User[] // Users linked to this location
+  cities City[] @relation("CityLocation")
 }
 
 // ─── City (Multi-Tenancy) ───────────────────────────────────
 model City {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique
-  subdomain     String   @unique  // e.g. "choutuppal", "warangal" → choutuppal.mana.in
-  state         String   @default("Telangana")
-  brandName     String   @default("Choutuppal App")
-  logoUrl       String?
-  heroImageUrl  String?
-  primaryColor  String   @default("#4169E1")
-  secondaryColor String  @default("#D4AF37")
-  latitude      Float    @default(17.2985)
-  longitude     Float    @default(78.9256)
-  locationId    String?  // Links to Location for precise targeting
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  subdomain      String   @unique // e.g. "choutuppal", "warangal" → choutuppal.mana.in
+  state          String   @default("Telangana")
+  brandName      String   @default("Choutuppal App")
+  logoUrl        String?
+  heroImageUrl   String?
+  primaryColor   String   @default("#4169E1")
+  secondaryColor String   @default("#D4AF37")
+  latitude       Float    @default(17.2985)
+  longitude      Float    @default(78.9256)
+  locationId     String? // Links to Location for precise targeting
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  location          Location?  @relation("CityLocation", fields: [locationId], references: [id])
-  listings          Listing[]
+  location           Location?           @relation("CityLocation", fields: [locationId], references: [id])
+  listings           Listing[]
   realEstateListings RealEstateListing[]
-  users             User[]
-  cityAdmins        User[]   @relation("CityAdmin")
-  agents            User[]   @relation("AgentCity")
-  stories           Story[]
-  news              News[]
-  blogs             Blog[]
-  bannerAds         BannerAd[]
-  transactions      Transaction[]
-  shorts            Short[]
+  users              User[]
+  cityAdmins         User[]              @relation("CityAdmin")
+  agents             User[]              @relation("AgentCity")
+  stories            Story[]
+  news               News[]
+  blogs              Blog[]
+  bannerAds          BannerAd[]
+  transactions       Transaction[]
+  shorts             Short[]
 }
 
 // ─── User (4 Roles: SUPER_ADMIN, CITY_ADMIN, AGENT, USER) ──
@@ -67,19 +66,19 @@ model User {
   email            String?
   role             String   @default("user") // super_admin, city_admin, agent, user
   cityId           String?
-  managedCityId    String?  // Links a CITY_ADMIN to their specific city
-  locationId       String?  // Links to Location for agents/city_admins
+  managedCityId    String? // Links a CITY_ADMIN to their specific city
+  locationId       String? // Links to Location for agents/city_admins
   subscriptionTier String   @default("free") // free, pro, premium
   coinsBalance     Int      @default(0)
   whatsappNumber   String?
   avatarUrl        String?
   bio              String?
   // Agent-specific fields
-  agentCityId      String?  // City the agent operates in
+  agentCityId      String? // City the agent operates in
   isAgentApproved  Boolean  @default(false) // Super Admin or City Admin must approve
   isFeatured       Boolean  @default(false) // For featured profiles section
-  upiId            String?  // For payout requests
-  bankDetails      String?  // JSON string for bank account details
+  upiId            String? // For payout requests
+  bankDetails      String? // JSON string for bank account details
   // Earnings tracking
   totalEarnings    Float    @default(0) // Running total of earned commission
   pendingPayout    Float    @default(0) // Amount available for payout
@@ -87,45 +86,45 @@ model User {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  city              City?    @relation(fields: [cityId], references: [id])
-  managedCity       City?    @relation("CityAdmin", fields: [managedCityId], references: [id])
-  location          Location? @relation(fields: [locationId], references: [id])
-  agentCity         City?     @relation("AgentCity", fields: [agentCityId], references: [id])
-  listings             Listing[]
-  realEstateListings   RealEstateListing[]
-  leads                Lead[]
-  reviews           Review[]
-  coinTransactions  CoinTransaction[]
-  subscriptions     Subscription[]
-  stories           Story[]
-  blogs             Blog[]
-  news              News[]
-  bannerAds         BannerAd[]
-  adminRequests     AdminRequest[]
+  city                  City?               @relation(fields: [cityId], references: [id])
+  managedCity           City?               @relation("CityAdmin", fields: [managedCityId], references: [id])
+  location              Location?           @relation(fields: [locationId], references: [id])
+  agentCity             City?               @relation("AgentCity", fields: [agentCityId], references: [id])
+  listings              Listing[]
+  realEstateListings    RealEstateListing[]
+  leads                 Lead[]
+  reviews               Review[]
+  coinTransactions      CoinTransaction[]
+  subscriptions         Subscription[]
+  stories               Story[]
+  blogs                 Blog[]
+  news                  News[]
+  bannerAds             BannerAd[]
+  adminRequests         AdminRequest[]
   // Financial relations
-  buyerTransactions    Transaction[]  @relation("TransactionBuyer")
-  agentTransactions   Transaction[]  @relation("TransactionAgent")
-  cityAdminTransactions Transaction[] @relation("TransactionCityAdmin")
-  payoutRequests     PayoutRequest[]
+  buyerTransactions     Transaction[]       @relation("TransactionBuyer")
+  agentTransactions     Transaction[]       @relation("TransactionAgent")
+  cityAdminTransactions Transaction[]       @relation("TransactionCityAdmin")
+  payoutRequests        PayoutRequest[]
 
   // Social Network relations
-  profile             Profile?
-  posts               Post[]
-  comments            Comment[]
-  likes               Like[]
-  following           Follow[]         @relation("UserFollowing")
-  followers           Follow[]         @relation("UserFollowers")
-  verificationRequests VerificationRequest[]
-  claimRequests   ClaimRequest[]
-  notifications   Notification[]
-  triggeredNotifications Notification[] @relation("NotificationActor")
+  profile                Profile?
+  posts                  Post[]
+  comments               Comment[]
+  likes                  Like[]
+  following              Follow[]              @relation("UserFollowing")
+  followers              Follow[]              @relation("UserFollowers")
+  verificationRequests   VerificationRequest[]
+  claimRequests          ClaimRequest[]
+  notifications          Notification[]
+  triggeredNotifications Notification[]        @relation("NotificationActor")
 
   // Shorts & Learn relations
-  shorts              Short[]
-  shortLikes          ShortLike[]
-  shortComments       ShortComment[]
-  videoPlaylists      VideoPlaylist[]
-  videoProgress       VideoProgress[]
+  shorts         Short[]
+  shortLikes     ShortLike[]
+  shortComments  ShortComment[]
+  videoPlaylists VideoPlaylist[]
+  videoProgress  VideoProgress[]
 }
 
 // ─── Platform Settings (Commission Engine) ──────────────────
@@ -133,7 +132,7 @@ model PlatformSetting {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String
-  label     String?  // Human-readable label for UI
+  label     String? // Human-readable label for UI
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -151,36 +150,36 @@ model Category {
 
 // ─── Transaction (Financial Tracking) ───────────────────────
 model Transaction {
-  id             String   @id @default(cuid())
-  userId         String   // Buyer (the business owner who pays)
-  agentId        String?  // Agent who referred the sale (nullable = direct purchase)
-  cityAdminId    String   // City Admin who owns the city
-  cityId         String
-  type           String   // LISTING, BANNER, NEWS_POST, SUBSCRIPTION, FRANCHISEE_FEE
-  amount         Float    // Total amount paid
-  agentCommission Float   @default(0) // Commission earned by agent
-  cityAdminShare Float   @default(0) // Revenue share for city admin
-  superAdminShare Float  @default(0) // Revenue share for super admin (platform)
-  status         String   @default("completed") // completed, pending, failed, refunded
-  description    String?  // Human-readable description
+  id                String   @id @default(cuid())
+  userId            String // Buyer (the business owner who pays)
+  agentId           String? // Agent who referred the sale (nullable = direct purchase)
+  cityAdminId       String // City Admin who owns the city
+  cityId            String
+  type              String // LISTING, BANNER, NEWS_POST, SUBSCRIPTION, FRANCHISEE_FEE
+  amount            Float // Total amount paid
+  agentCommission   Float    @default(0) // Commission earned by agent
+  cityAdminShare    Float    @default(0) // Revenue share for city admin
+  superAdminShare   Float    @default(0) // Revenue share for super admin (platform)
+  status            String   @default("completed") // completed, pending, failed, refunded
+  description       String? // Human-readable description
   razorpayPaymentId String? // Razorpay payment reference
-  createdAt      DateTime @default(now())
+  createdAt         DateTime @default(now())
 
-  user        User  @relation("TransactionBuyer", fields: [userId], references: [id], onDelete: Cascade)
-  agent       User? @relation("TransactionAgent", fields: [agentId], references: [id], onDelete: Cascade)
-  cityAdmin   User  @relation("TransactionCityAdmin", fields: [cityAdminId], references: [id], onDelete: Cascade)
-  city        City  @relation(fields: [cityId], references: [id])
+  user      User  @relation("TransactionBuyer", fields: [userId], references: [id], onDelete: Cascade)
+  agent     User? @relation("TransactionAgent", fields: [agentId], references: [id], onDelete: Cascade)
+  cityAdmin User  @relation("TransactionCityAdmin", fields: [cityAdminId], references: [id], onDelete: Cascade)
+  city      City  @relation(fields: [cityId], references: [id])
 }
 
 // ─── Payout Request ─────────────────────────────────────────
 model PayoutRequest {
   id          String   @id @default(cuid())
-  userId      String   // Agent or City Admin requesting payout
-  amount      Float    // Amount requested
+  userId      String // Agent or City Admin requesting payout
+  amount      Float // Amount requested
   status      String   @default("pending") // pending, approved, rejected, paid
-  upiId       String?  // UPI ID for transfer
-  bankDetails String?  // JSON string for bank details
-  note        String?  // Admin note on approval/rejection
+  upiId       String? // UPI ID for transfer
+  bankDetails String? // JSON string for bank details
+  note        String? // Admin note on approval/rejection
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -189,72 +188,72 @@ model PayoutRequest {
 
 // ─── Business Listing ───────────────────────────────────────
 model Listing {
-  id            String   @id @default(cuid())
-  userId        String
-  cityId        String
-  slug          String   @unique
-  name          String
-  category      String
-  description   String?
-  services      String?  // JSON string of services
-  images        String?  // JSON string of image URLs
-  coverImage    String?
-  logoUrl       String?
-  gallery       String?  // JSON string of gallery image URLs
-  instagramUrl  String?
+  id                String   @id @default(cuid())
+  userId            String
+  cityId            String
+  slug              String   @unique
+  name              String
+  category          String
+  description       String?
+  services          String? // JSON string of services
+  images            String? // JSON string of image URLs
+  coverImage        String?
+  logoUrl           String?
+  gallery           String? // JSON string of gallery image URLs
+  instagramUrl      String?
   instagramUsername String?
-  facebookUrl   String?
-  youtubeUrl    String?
-  phoneNumber   String?
-  whatsappNumber String?
-  address       String?
-  latitude      Float?
-  longitude     Float?
-  googleMapsUrl String?
-  isApproved    Boolean  @default(false)
-  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  isPremium     Boolean  @default(false)
-  isFeatured    Boolean  @default(false)
-  viewsCount    Int      @default(0)
-  operatingHours String?
-  qrCodeUrl     String?
-  rating        Float    @default(5)
+  facebookUrl       String?
+  youtubeUrl        String?
+  phoneNumber       String?
+  whatsappNumber    String?
+  address           String?
+  latitude          Float?
+  longitude         Float?
+  googleMapsUrl     String?
+  isApproved        Boolean  @default(false)
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  isPremium         Boolean  @default(false)
+  isFeatured        Boolean  @default(false)
+  viewsCount        Int      @default(0)
+  operatingHours    String?
+  qrCodeUrl         String?
+  rating            Float    @default(5)
   // Agent referral tracking
   referredByAgentId String? // If an agent referred this listing
-  isClaimed     Boolean  @default(true) // Set to false for bulk uploads
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isClaimed         Boolean  @default(true) // Set to false for bulk uploads
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  city     City    @relation(fields: [cityId], references: [id])
-  leads    Lead[]
-  reviews  Review[]
-  shorts   Short[]
-  claimRequests ClaimRequest[]
-  whatsappClicks Int      @default(0)
-  callClicks     Int      @default(0)
-  shareClicks    Int      @default(0)
-  catalogItems   String?  // JSON string for products/menu items
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city           City           @relation(fields: [cityId], references: [id])
+  leads          Lead[]
+  reviews        Review[]
+  shorts         Short[]
+  claimRequests  ClaimRequest[]
+  whatsappClicks Int            @default(0)
+  callClicks     Int            @default(0)
+  shareClicks    Int            @default(0)
+  catalogItems   String? // JSON string for products/menu items
 }
 
 // ─── Real Estate Listing ─────────────────────────────────────
 model RealEstateListing {
-  id          String   @id @default(cuid())
-  userId      String
-  cityId      String
-  slug        String?  @unique
-  title       String
-  price       String
-  images      String?  // JSON string
-  ownerPhone  String
-  address     String?
+  id           String   @id @default(cuid())
+  userId       String
+  cityId       String
+  slug         String?  @unique
+  title        String
+  price        String
+  images       String? // JSON string
+  ownerPhone   String
+  address      String?
   bedroomCount Int?
-  area        String?
-  isApproved  Boolean  @default(false)
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  isFeatured  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  area         String?
+  isApproved   Boolean  @default(false)
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   city City @relation(fields: [cityId], references: [id])
@@ -262,15 +261,15 @@ model RealEstateListing {
 
 // ─── Lead ────────────────────────────────────────────────────
 model Lead {
-  id             String   @id @default(cuid())
-  listingId      String
-  userId         String?
-  customerPhone  String
-  customerName   String?
+  id              String   @id @default(cuid())
+  listingId       String
+  userId          String?
+  customerPhone   String
+  customerName    String?
   requirementText String?
-  source         String   @default("form") // whatsapp, form, enquiry
-  status         String   @default("new") // new, contacted, converted, lost
-  createdAt      DateTime @default(now())
+  source          String   @default("form") // whatsapp, form, enquiry
+  status          String   @default("new") // new, contacted, converted, lost
+  createdAt       DateTime @default(now())
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -302,42 +301,42 @@ model CoinTransaction {
 
 // ─── Subscription ────────────────────────────────────────────
 model Subscription {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   userId            String
   razorpayPaymentId String?
-  plan              String   // free, pro, premium
-  status            String   @default("active") // active, expired, cancelled
-  startDate         DateTime @default(now())
+  plan              String // free, pro, premium
+  status            String    @default("active") // active, expired, cancelled
+  startDate         DateTime  @default(now())
   endDate           DateTime?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Story (Instagram/WhatsApp Clone) ────────────────────────
 model Story {
-  id          String   @id @default(cuid())
-  userId      String
-  cityId      String
-  title       String?
-  mediaType   String   @default("IMAGE") // IMAGE, VIDEO
-  mediaUrl    String   // URL to image or video (Cloudinary)
-  musicId     String?  // Optional: linked MusicLibrary track
-  musicName   String?  // Denormalized for quick display
-  isPremium   Boolean  @default(false)
-  viewsCount  Int      @default(0)
-  views       Int      @default(0)
-  likes       Int      @default(0)
-  comments    Json     @default("[]")
-  replies     Json     @default("[]")
-  viewers     Json     @default("[]")
-  ctaLink     String?
-  text        String?
-  expiresAt   DateTime // Auto-delete after 24hrs (filtered in API)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  cityId     String
+  title      String?
+  mediaType  String   @default("IMAGE") // IMAGE, VIDEO
+  mediaUrl   String // URL to image or video (Cloudinary)
+  musicId    String? // Optional: linked MusicLibrary track
+  musicName  String? // Denormalized for quick display
+  isPremium  Boolean  @default(false)
+  viewsCount Int      @default(0)
+  views      Int      @default(0)
+  likes      Int      @default(0)
+  comments   Json     @default("[]")
+  replies    Json     @default("[]")
+  viewers    Json     @default("[]")
+  ctaLink    String?
+  text       String?
+  expiresAt  DateTime // Auto-delete after 24hrs (filtered in API)
+  createdAt  DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  city City @relation(fields: [cityId], references: [id])
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city  City          @relation(fields: [cityId], references: [id])
   music MusicLibrary? @relation(fields: [musicId], references: [id])
 
   @@index([expiresAt])
@@ -346,9 +345,9 @@ model Story {
 // ─── Music Library (Royalty-Free Only) ──────────────────────
 model MusicLibrary {
   id        String   @id @default(cuid())
-  name      String   // e.g. "Telugu Folk Beat", "Celebration Lo-Fi"
+  name      String // e.g. "Telugu Folk Beat", "Celebration Lo-Fi"
   artist    String   @default("Royalty Free")
-  audioUrl  String   // MP3 URL from Cloudinary
+  audioUrl  String // MP3 URL from Cloudinary
   genre     String   @default("Telugu") // e.g. "Telugu", "Traditional"
   duration  Int      @default(30) // seconds
   isActive  Boolean  @default(true)
@@ -369,49 +368,49 @@ model News {
   createdAt   DateTime @default(now())
   authorId    String?
 
-  city City @relation(fields: [cityId], references: [id])
+  city   City  @relation(fields: [cityId], references: [id])
   author User? @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 // ─── Site Setting (Global) ──────────────────────────────────
 model SiteSetting {
-  id              String   @id @default(cuid())
-  logoUrl         String?
-  faviconUrl      String?
-  pwaIconUrl      String?
-  appLogoUrl      String?
-  affiliateBaseUrl String?
-  heroHeadline    String?
-  heroDescription String?
-  heroImageUrl    String?
-  primaryColor    String   @default("#D4AF37")
-  accentColor     String   @default("#4169E1")
+  id                    String  @id @default(cuid())
+  logoUrl               String?
+  faviconUrl            String?
+  pwaIconUrl            String?
+  appLogoUrl            String?
+  affiliateBaseUrl      String?
+  heroHeadline          String?
+  heroDescription       String?
+  heroImageUrl          String?
+  primaryColor          String  @default("#D4AF37")
+  accentColor           String  @default("#4169E1")
   // SEO & Meta fields
-  metaTitle       String?
-  metaDescription String?
-  ogImageUrl      String?
+  metaTitle             String?
+  metaDescription       String?
+  ogImageUrl            String?
   // Contact & WhatsApp Integration
-  whatsappSupportNumber  String   @default("918790083706")
-  whatsappCommunityLink  String   @default("")
-  whatsappChannelLink    String   @default("")
-  heroWhatsappText       String   @default("నమస్కారం, చౌతుప్పల్ యాప్ గురించి సమాచారం కావాలి")
-  franchiseWhatsappText  String   @default("నా నగరానికి ఫ్రాంచైజీ కోసం అప్లై చేయాలనుకుంటున్నాను")
-  agentWhatsappText      String   @default("చౌతుప్పల్ యాప్ లో ఏజెంట్ గా చేరాలనుకుంటున్నాను")
-  instagramUrl           String   @default("")
-  facebookUrl            String   @default("")
-  youtubeUrl             String   @default("")
-  xUrl                   String   @default("")
-  appName                String   @default("Choutuppal App")
-  tagline                String?
-  supportEmail           String?
-  announcementTicker     String?
-  contactName            String   @default("Citizen CSC")
-  contactAddress         String   @default("Choutuppal, Yadadri, Telangana-508252")
-  contactPhone           String   @default("8790083706")
-  pwaPromptText          String?  @default("Install our app for a better experience")
+  whatsappSupportNumber String  @default("918790083706")
+  whatsappCommunityLink String  @default("")
+  whatsappChannelLink   String  @default("")
+  heroWhatsappText      String  @default("నమస్కారం, చౌతుప్పల్ యాప్ గురించి సమాచారం కావాలి")
+  franchiseWhatsappText String  @default("నా నగరానికి ఫ్రాంచైజీ కోసం అప్లై చేయాలనుకుంటున్నాను")
+  agentWhatsappText     String  @default("చౌతుప్పల్ యాప్ లో ఏజెంట్ గా చేరాలనుకుంటున్నాను")
+  instagramUrl          String  @default("")
+  facebookUrl           String  @default("")
+  youtubeUrl            String  @default("")
+  xUrl                  String  @default("")
+  appName               String  @default("Choutuppal App")
+  tagline               String?
+  supportEmail          String?
+  announcementTicker    String?
+  contactName           String  @default("Citizen CSC")
+  contactAddress        String  @default("Choutuppal, Yadadri, Telangana-508252")
+  contactPhone          String  @default("8790083706")
+  pwaPromptText         String? @default("Install our app for a better experience")
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Push Subscription ───────────────────────────────────────
@@ -419,37 +418,37 @@ model PushSubscription {
   id        String   @id @default(cuid())
   userId    String?
   endpoint  String
-  keys      String   // JSON string
+  keys      String // JSON string
   createdAt DateTime @default(now())
 }
 
 // ─── Spin Prize ──────────────────────────────────────────────
 model SpinPrize {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   label       String
-  prizeType   String   // coins, discount, free_listing, none
-  prizeValue  Int      @default(0)
-  probability Float    @default(0.1)
-  color       String   @default("#D4AF37")
-  isActive    Boolean  @default(true)
+  prizeType   String // coins, discount, free_listing, none
+  prizeValue  Int     @default(0)
+  probability Float   @default(0.1)
+  color       String  @default("#D4AF37")
+  isActive    Boolean @default(true)
 }
 
 // ─── Banner Ad ───────────────────────────────────────────────
 model BannerAd {
-  id        String   @id @default(cuid())
-  userId    String?  // The user who created the banner
-  title     String
-  imageUrl  String?
-  shopName  String   @default("")
-  offerText String?
-  linkUrl   String?
-  cityId    String?
-  isActive  Boolean  @default(true)
-  status    String   @default("APPROVED") // PENDING, APPROVED, REJECTED
-  pricePerDay Int    @default(99)
-  isFree    Boolean  @default(true)
-  expiresAt DateTime?
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  userId      String? // The user who created the banner
+  title       String
+  imageUrl    String?
+  shopName    String    @default("")
+  offerText   String?
+  linkUrl     String?
+  cityId      String?
+  isActive    Boolean   @default(true)
+  status      String    @default("APPROVED") // PENDING, APPROVED, REJECTED
+  pricePerDay Int       @default(99)
+  isFree      Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
 
   city City? @relation(fields: [cityId], references: [id])
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -458,8 +457,8 @@ model BannerAd {
 // ─── Announcement (Ticker) ────────────────────────────────────
 model Announcement {
   id        String   @id @default(cuid())
-  text      String   // The announcement/ticker text (supports Telugu)
-  citySlug  String?  // Optional: null = global (shown everywhere), set = city-specific
+  text      String // The announcement/ticker text (supports Telugu)
+  citySlug  String? // Optional: null = global (shown everywhere), set = city-specific
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 }
@@ -470,9 +469,9 @@ model Blog {
   title         String
   slug          String   @unique
   coverImageUrl String?
-  content       String?  // Rich text HTML content
+  content       String? // Rich text HTML content
   authorId      String
-  cityId        String?  // Optional: null = global blog
+  cityId        String? // Optional: null = global blog
   isPublished   Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -483,36 +482,36 @@ model Blog {
 
 // ─── Admin Request (Franchisee / Agent Applications) ────────
 model AdminRequest {
-  id              String   @id @default(cuid())
-  userId          String
-  cityName        String
-  reason          String?  // Why they want to manage it
-  type            String   @default("city_admin") // city_admin (franchisee), agent
-  status          String   @default("pending") // pending, approved, rejected
+  id                String   @id @default(cuid())
+  userId            String
+  cityName          String
+  reason            String? // Why they want to manage it
+  type              String   @default("city_admin") // city_admin (franchisee), agent
+  status            String   @default("pending") // pending, approved, rejected
   // Franchisee-specific
-  franchiseeFeePaid Boolean @default(false)
+  franchiseeFeePaid Boolean  @default(false)
   razorpayPaymentId String?
   // Agent-specific
-  agentCityId     String?  // City the agent wants to operate in
-  createdAt       DateTime @default(now())
+  agentCityId       String? // City the agent wants to operate in
+  createdAt         DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Profile (Social Network) ─────────────────────────────────
 model Profile {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  bio                 String   @default("")
-  avatarUrl           String?
-  coverImageUrl       String?
-  isPublicFigure      Boolean  @default(false)
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  bio                  String   @default("")
+  avatarUrl            String?
+  coverImageUrl        String?
+  isPublicFigure       Boolean  @default(false)
   publicFigureCategory String? // POLITICIAN, INFLUENCER, CELEBRITY, GOVT_OFFICIAL
-  isVerified          Boolean  @default(false)
-  followersCount      Int      @default(0)
-  followingCount      Int      @default(0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  isVerified           Boolean  @default(false)
+  followersCount       Int      @default(0)
+  followingCount       Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -522,7 +521,7 @@ model Post {
   id            String   @id @default(cuid())
   authorId      String
   content       String
-  mediaUrls     String?  // JSON array of image/video URLs
+  mediaUrls     String? // JSON array of image/video URLs
   likesCount    Int      @default(0)
   commentsCount Int      @default(0)
   isPinned      Boolean  @default(false)
@@ -543,8 +542,8 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
 
-  post Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Like (Social Network) ────────────────────────────────────
@@ -563,8 +562,8 @@ model Like {
 // ─── Follow (Social Network) ──────────────────────────────────
 model Follow {
   id          String   @id @default(cuid())
-  followerId  String   // User who follows
-  followingId String   // User being followed
+  followerId  String // User who follows
+  followingId String // User being followed
   createdAt   DateTime @default(now())
 
   follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
@@ -575,15 +574,15 @@ model Follow {
 
 // ─── Verification Request (Public Figure) ─────────────────────
 model VerificationRequest {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  category    String   // POLITICIAN, INFLUENCER, CELEBRITY, GOVT_OFFICIAL
-  idProofUrl  String?  // URL to uploaded ID proof
-  reason      String
-  status      String   @default("pending") // pending, approved, rejected
-  adminNote   String?  // Note from admin on approval/rejection
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  category   String // POLITICIAN, INFLUENCER, CELEBRITY, GOVT_OFFICIAL
+  idProofUrl String? // URL to uploaded ID proof
+  reason     String
+  status     String   @default("pending") // pending, approved, rejected
+  adminNote  String? // Note from admin on approval/rejection
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -594,22 +593,22 @@ model Short {
   userId          String
   cityId          String
   title           String
-  youtubeVideoId  String   // YouTube video ID for hosting
+  youtubeVideoId  String // YouTube video ID for hosting
   thumbnailUrl    String?
   viewsCount      Int      @default(0)
   likesCount      Int      @default(0)
   commentsCount   Int      @default(0)
   category        String   @default("GENERAL") // GENERAL, PROMOTION, NEWS
-  linkedListingId String?  // Optional: link to a business listing
-  isPinned        Boolean  @default(false)    // City Admin can pin
-  isPromoted      Boolean  @default(false)    // Sponsored short
-  isApproved      Boolean  @default(true)     // Moderation flag
+  linkedListingId String? // Optional: link to a business listing
+  isPinned        Boolean  @default(false) // City Admin can pin
+  isPromoted      Boolean  @default(false) // Sponsored short
+  isApproved      Boolean  @default(true) // Moderation flag
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  city     City     @relation(fields: [cityId], references: [id])
-  listing  Listing? @relation(fields: [linkedListingId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city     City           @relation(fields: [cityId], references: [id])
+  listing  Listing?       @relation(fields: [linkedListingId], references: [id], onDelete: Cascade)
   likes    ShortLike[]
   comments ShortComment[]
 
@@ -647,7 +646,7 @@ model ShortComment {
 // ─── Video Category (For Learn Platform) ─────────────────────
 model VideoCategory {
   id        String   @id @default(cuid())
-  name      String   @unique  // e.g. "Education", "Skill Development"
+  name      String   @unique // e.g. "Education", "Skill Development"
   slug      String   @unique
   iconUrl   String?
   sortOrder Int      @default(0)
@@ -659,18 +658,18 @@ model VideoCategory {
 
 // ─── Video Playlist (Course/Collection) ──────────────────────
 model VideoPlaylist {
-  id          String   @id @default(cuid())
-  categoryId  String
-  title       String
-  description String?
+  id           String   @id @default(cuid())
+  categoryId   String
+  title        String
+  description  String?
   thumbnailUrl String?
-  creatorId   String
-  isPremium   Boolean  @default(false)  // Behind paywall
-  isFeatured  Boolean  @default(false)  // Featured by admin
-  isApproved  Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  creatorId    String
+  isPremium    Boolean  @default(false) // Behind paywall
+  isFeatured   Boolean  @default(false) // Featured by admin
+  isApproved   Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   category VideoCategory @relation(fields: [categoryId], references: [id])
   creator  User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
@@ -681,22 +680,22 @@ model VideoPlaylist {
 
 // ─── Long Video (Educational/Long-form Content) ──────────────
 model LongVideo {
-  id              String   @id @default(cuid())
-  playlistId      String
-  title           String
-  description     String?
-  youtubeVideoId  String   // YouTube video ID
-  thumbnailUrl    String?
-  duration        String?  // e.g. "12:34"
-  viewsCount      Int      @default(0)
-  likesCount      Int      @default(0)
-  isPublished     Boolean  @default(true)
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  playlistId     String
+  title          String
+  description    String?
+  youtubeVideoId String // YouTube video ID
+  thumbnailUrl   String?
+  duration       String? // e.g. "12:34"
+  viewsCount     Int      @default(0)
+  likesCount     Int      @default(0)
+  isPublished    Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  playlist    VideoPlaylist   @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  progress    VideoProgress[]
+  playlist VideoPlaylist   @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  progress VideoProgress[]
 
   @@index([playlistId, sortOrder])
 }
@@ -706,12 +705,12 @@ model VideoProgress {
   id        String   @id @default(cuid())
   userId    String
   videoId   String
-  timestamp Float    @default(0)  // Seconds watched
+  timestamp Float    @default(0) // Seconds watched
   completed Boolean  @default(false)
   updatedAt DateTime @updatedAt
 
-  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  video LongVideo  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video LongVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@unique([userId, videoId])
 }
@@ -726,11 +725,9 @@ model ClaimRequest {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-
 
 // ─── App Branding ───────────────────────────────────────────
 model AppBranding {
@@ -742,7 +739,7 @@ model AppBranding {
   whatsappNumber  String?
   email           String?
   address         String?
-  socialLinks     String?  // JSON string
+  socialLinks     String? // JSON string
   seoOgImage      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -752,11 +749,11 @@ model AppBranding {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  actorId   String?  // The user who triggered the notification
-  type      String   // LIKE, COMMENT, REVIEW, FOLLOW, REPLY
+  actorId   String? // The user who triggered the notification
+  type      String // LIKE, COMMENT, REVIEW, FOLLOW, REPLY
   title     String
   message   String?
-  linkUrl   String?  // Where to take the user on click
+  linkUrl   String? // Where to take the user on click
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -784,5 +781,5 @@ model ShortVideo {
   publishedAt DateTime
   createdAt   DateTime @default(now())
 
-  channel     YoutubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel YoutubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 }
