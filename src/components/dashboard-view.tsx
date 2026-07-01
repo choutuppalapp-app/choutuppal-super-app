@@ -11,7 +11,7 @@ import {
   Instagram, Facebook, Youtube, MessageCircle,
   ArrowLeft, User, Home, Circle
 , LineChart, Download, Film,
-  MessageSquare,
+  MessageSquare, Search,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -168,6 +168,8 @@ export default function DashboardView() {
 
   const [claimedToday, setClaimedToday] = useState(false)
   const [claimingDaily, setClaimingDaily] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
 
   // Modals & Creation Forms
   const [isCreatingListing, setIsCreatingListing] = useState(false)
@@ -839,7 +841,7 @@ export default function DashboardView() {
   )
 
   const renderListings = () => {
-    const businessListings = listings.filter(l => l.category !== 'Real Estate')
+    const businessListings = listings.filter(l => l.category !== 'Real Estate').filter(l => l.name?.toLowerCase().includes(searchTerm.toLowerCase())).filter(l => statusFilter === 'All' || l.status === statusFilter)
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -980,9 +982,11 @@ export default function DashboardView() {
             </Button>
           </div>
           <div className="p-4 md:p-6">
-            {!realEstateListings ? (
+            const filteredRE = realEstateListings?.filter(l => l.title?.toLowerCase().includes(searchTerm.toLowerCase())).filter(l => statusFilter === 'All' || l.status === statusFilter) || [];
+            return (
+            <>{!realEstateListings ? (
               <div className="space-y-4">{[1].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>
-            ) : realEstateListings.length === 0 ? (
+            ) : filteredRE.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                 <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <h4 className="text-gray-900 font-bold mb-1">No properties listed yet</h4>
@@ -993,7 +997,7 @@ export default function DashboardView() {
               </div>
             ) : (
               <div className="space-y-4">
-                {realEstateListings.map((listing) => {
+                {filteredRE.map((listing) => {
                   let imgsArr: string[] = []
                   try { if (listing.images) imgsArr = JSON.parse(listing.images) } catch {}
                   return (
@@ -1043,6 +1047,7 @@ export default function DashboardView() {
   }
 
   const renderBanners = () => {
+    const filteredBanners = banners.filter(b => (b.title?.toLowerCase().includes(searchTerm.toLowerCase()) || b.shopName?.toLowerCase().includes(searchTerm.toLowerCase()))).filter(b => statusFilter === 'All' || b.status === statusFilter);
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -1067,7 +1072,7 @@ export default function DashboardView() {
               <div className="space-y-4">
                 {[1].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
               </div>
-            ) : banners.length === 0 ? (
+            ) : filteredBanners.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                 <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <h4 className="text-gray-900 font-bold mb-1">No active banners</h4>
@@ -1075,7 +1080,7 @@ export default function DashboardView() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {banners.map((banner) => {
+                {filteredBanners.map((banner) => {
                   const isExpired = (banner as any).expiresAt ? new Date((banner as any).expiresAt) < new Date() : false;
                   return (
                   <div key={banner.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
@@ -1117,6 +1122,7 @@ export default function DashboardView() {
   }
 
   const renderStories = () => {
+    const filteredStories = userStories.filter((s: any) => (s.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) || s.offerText?.toLowerCase().includes(searchTerm.toLowerCase()))).filter((s: any) => statusFilter === 'All' || s.status === statusFilter);
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -1134,7 +1140,7 @@ export default function DashboardView() {
             </Button>
           </div>
           <div className="p-4 md:p-6">
-            {userStories.length === 0 ? (
+            {filteredStories.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                 <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <h4 className="text-gray-900 font-bold mb-1">No stories active</h4>
@@ -1142,7 +1148,7 @@ export default function DashboardView() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {userStories.map((story: any) => {
+                {filteredStories.map((story: any) => {
                   const viewsCount = story.views || story.viewsCount || 0
                   const repliesCount = Array.isArray(story.replies)
                     ? story.replies.length

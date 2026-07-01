@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Store, Eye, Phone, Plus, Pencil, Trash2, Edit2, Wallet, Clock, LayoutDashboard,
   X, Image as ImageIcon, MapPin, Loader2, FileText, UploadCloud, Download,
-  Wrench, Sparkles, Instagram, Facebook, Youtube
+  Wrench, Sparkles, Search, Instagram, Facebook, Youtube
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -108,6 +108,8 @@ export default function AgentDashboard() {
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [parsedData, setParsedData] = useState<any[]>([])
   const [isUploadingBulk, setIsUploadingBulk] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
 
   // --- Functions: Single Listing ───
   const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logoUrl') => {
