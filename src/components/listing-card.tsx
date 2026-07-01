@@ -102,6 +102,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
             
             {(listing.user || listing.userId) && (
               <div
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()

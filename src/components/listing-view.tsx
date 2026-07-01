@@ -409,12 +409,21 @@ END:VCARD`
 
                 <div className="flex items-center gap-3 mt-1.5 flex-wrap text-sm text-gray-500 font-semibold">
                   {listing.user && (
-                    <Link href={`/profile/${listing.user.id}`} className="flex items-center gap-1.5 hover:bg-gray-100 pr-2 py-0.5 rounded-full transition-colors border border-transparent hover:border-gray-200 cursor-pointer w-max">
+                    <div 
+                      role="button" 
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        router.push(`/profile/${listing.user.id}`)
+                      }}
+                      className="flex items-center gap-1.5 hover:bg-gray-100 pr-2 py-0.5 rounded-full transition-colors border border-transparent hover:border-gray-200 cursor-pointer w-max"
+                    >
                       <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 border border-blue-200">
                         {listing.user.avatarUrl ? <img src={listing.user.avatarUrl} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] font-bold text-blue-600">{listing.user.fullName?.[0] || 'U'}</span>}
                       </div>
                       <span className="text-xs font-bold text-gray-700">{listing.user.fullName}</span>
-                    </Link>
+                    </div>
                   )}
                   <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-none font-bold">
                     {listing.category}
