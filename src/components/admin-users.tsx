@@ -14,6 +14,32 @@ export default function AdminUsers() {
   const [userContent, setUserContent] = useState<{listings: any[], posts: any[], stories: any[]} | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ fullName: '', email: '', phone: '', password: '', role: 'user' });
+  const [isAddingUser, setIsAddingUser] = useState(false);
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAddingUser(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUserForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add user');
+      toast.success('User added successfully');
+      setNewUserForm({ fullName: '', email: '', phone: '', password: '', role: 'user' });
+      setShowAddUserModal(false);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsAddingUser(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -97,7 +123,10 @@ export default function AdminUsers() {
     }
     setActionLoading(`${userId}-delete`);
     try {
-      await deleteAdminUser(userId);
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete user');
+      
       setUsers(prev => prev.filter(u => u.id !== userId));
       toast.success('User deleted successfully');
     } catch (error: any) {
@@ -154,8 +183,16 @@ export default function AdminUsers() {
           <UserIcon className="w-5 h-5 mr-2 text-[#4169E1]" />
           Users Management
         </h3>
-        <div className="text-sm text-gray-500 font-bold bg-white px-3 py-1 rounded-full border border-gray-200">
-          Total: {users.length}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-500 font-bold bg-white px-3 py-1 rounded-full border border-gray-200">
+            Total: {users.length}
+          </div>
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            className="bg-[#4169E1] hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm"
+          >
+            + Add New User
+          </button>
         </div>
       </div>
 
@@ -363,6 +400,54 @@ export default function AdminUsers() {
                 </>
               ) : null}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b">
+              <h3 className="font-bold text-xl">Add New User</h3>
+              <button onClick={() => setShowAddUserModal(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddUser} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+                <input required type="text" value={newUserForm.fullName} onChange={e => setNewUserForm({...newUserForm, fullName: e.target.value})} className="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4169E1] outline-none" placeholder="John Doe" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
+                <input required type="tel" value={newUserForm.phone} onChange={e => setNewUserForm({...newUserForm, phone: e.target.value})} className="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4169E1] outline-none" placeholder="+91..." />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+                <input type="email" value={newUserForm.email} onChange={e => setNewUserForm({...newUserForm, email: e.target.value})} className="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4169E1] outline-none" placeholder="john@example.com (optional)" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                <input required type="password" value={newUserForm.password} onChange={e => setNewUserForm({...newUserForm, password: e.target.value})} className="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4169E1] outline-none" placeholder="Min 6 characters" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Role</label>
+                <select value={newUserForm.role} onChange={e => setNewUserForm({...newUserForm, role: e.target.value})} className="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4169E1] outline-none bg-white">
+                  <option value="user">User</option>
+                  <option value="agent">Agent</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowAddUserModal(false)} className="px-5 py-2.5 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                <button type="submit" disabled={isAddingUser} className="px-5 py-2.5 rounded-xl font-bold text-white bg-[#4169E1] hover:bg-blue-700 transition flex items-center gap-2">
+                  {isAddingUser ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Create User
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
