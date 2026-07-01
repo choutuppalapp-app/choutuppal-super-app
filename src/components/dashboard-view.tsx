@@ -965,6 +965,7 @@ export default function DashboardView() {
   }
 
   const renderRealEstate = () => {
+    const filteredRE = realEstateListings?.filter(l => l.title?.toLowerCase().includes(searchTerm.toLowerCase())).filter(l => statusFilter === 'All' || l.status === statusFilter) || [];
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -982,9 +983,7 @@ export default function DashboardView() {
             </Button>
           </div>
           <div className="p-4 md:p-6">
-            const filteredRE = realEstateListings?.filter(l => l.title?.toLowerCase().includes(searchTerm.toLowerCase())).filter(l => statusFilter === 'All' || l.status === statusFilter) || [];
-            return (
-            <>{!realEstateListings ? (
+            {!realEstateListings ? (
               <div className="space-y-4">{[1].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>
             ) : filteredRE.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
