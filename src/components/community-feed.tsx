@@ -2,20 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Users,
-  MessageCircle,
-  Crown,
-  Heart,
-  Share2,
-  Camera,
-  ShieldCheck,
-  Pin,
-  Send,
-  Loader2,
-  X,
-  ImagePlus,
-} from 'lucide-react'
+import { MoreHorizontal, Heart, MessageSquare, Share2, MapPin, CheckCircle, Image as ImageIcon, Send, X, Users, MessageCircle, Crown, Camera, ShieldCheck, Pin, Loader2, ImagePlus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
@@ -651,10 +639,16 @@ export default function CommunityFeed() {
   const setSelectedProfileUserId = useAppStore((s) => s.setSelectedProfileUserId)
   const setProfileType = useAppStore((s) => s.setProfileType)
   const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
 
+  const [viewMode, setViewMode] = useState<'feed' | 'people'>('feed')
   const [feedType, setFeedType] = useState<'foryou' | 'following'>('foryou')
   const [searchQuery, setSearchQuery] = useState('')
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([])
+
+  const [peopleUsers, setPeopleUsers] = useState<any[]>([])
+  const [peopleLoading, setPeopleLoading] = useState(false)
+  const [peopleSearch, setPeopleSearch] = useState('')
 
   const [posts, setPosts] = useState<Post[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
@@ -706,11 +700,28 @@ export default function CommunityFeed() {
     } catch {}
   }, [user])
 
+  // Fetch people directory
+  const fetchPeople = useCallback(async () => {
+    setPeopleLoading(true)
+    try {
+      const res = await fetch('/api/community/users')
+      if (res.ok) {
+        const data = await res.json()
+        setPeopleUsers(data || [])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setPeopleLoading(false)
+    }
+  }, [])
+
   // Initial fetch
   useEffect(() => {
     fetchPosts(1, false, feedType)
     fetchSuggestedUsers()
-  }, [feedType, fetchSuggestedUsers]) // Re-fetch on feedType change
+    fetchPeople()
+  }, [feedType, fetchSuggestedUsers, fetchPeople]) // Re-fetch on feedType change
 
   // Create post
   const handleCreatePost = async () => {
@@ -879,47 +890,74 @@ export default function CommunityFeed() {
             </div>
           </div>
         </div>
-        
-        {/* Search Bar */}
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search users by name or @username..."
-            className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-          />
+        {/* Master View Tabs: Feed vs People */}
+        <div className="flex bg-white/40 backdrop-blur-md p-1 rounded-xl mb-2">
+          <button
+            onClick={() => setViewMode('feed')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+              viewMode === 'feed'
+                ? 'bg-gradient-to-r from-[#4169E1] to-[#3a5dca] text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Community Feed
+          </button>
+          <button
+            onClick={() => setViewMode('people')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+              viewMode === 'people'
+                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8962E] text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            People Directory
+          </button>
         </div>
         
-        {/* Dual Feed Tabs */}
-        {isAuthenticated && (
-          <div className="flex bg-white/40 backdrop-blur-md p-1 rounded-xl">
-            <button
-              onClick={() => setFeedType('foryou')}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                feedType === 'foryou'
-                  ? 'bg-white shadow-sm text-gray-900'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              For You
-            </button>
-            <button
-              onClick={() => setFeedType('following')}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                feedType === 'following'
-                  ? 'bg-white shadow-sm text-gray-900'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Following
-            </button>
-          </div>
+        {viewMode === 'feed' && (
+          <>
+            {/* Search Bar for Feed */}
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search users by name or @username..."
+                className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+              />
+            </div>
+            
+            {/* Dual Feed Tabs */}
+            {isAuthenticated && (
+              <div className="flex bg-white/40 backdrop-blur-md p-1 rounded-xl">
+                <button
+                  onClick={() => setFeedType('foryou')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    feedType === 'foryou'
+                      ? 'bg-white shadow-sm text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  For You
+                </button>
+                <button
+                  onClick={() => setFeedType('following')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    feedType === 'following'
+                      ? 'bg-white shadow-sm text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Following
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* ── Feed Tab ── */}
-      <div className="space-y-4">
+      {viewMode === 'feed' ? (
+        <div className="space-y-4">
           {/* Post Composer */}
           {isAuthenticated && user && (
             <motion.div
@@ -1078,6 +1116,62 @@ export default function CommunityFeed() {
             </>
           )}
         </div>
+      ) : (
+        /* ── People Directory Tab ── */
+        <div className="space-y-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={peopleSearch}
+              onChange={(e) => setPeopleSearch(e.target.value)}
+              placeholder="Search users..."
+              className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+            />
+          </div>
+          
+          {peopleLoading ? (
+            <div className="py-20 flex justify-center">
+              <div className="w-8 h-8 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {peopleUsers
+                .filter(u => u.fullName?.toLowerCase().includes(peopleSearch.toLowerCase()))
+                .map(user => (
+                  <div
+                    key={user.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      router.push(`/profile/${user.id}`)
+                    }}
+                    className="bg-white/40 backdrop-blur-xl border border-white/30 p-4 rounded-2xl flex flex-col items-center gap-3 hover:bg-white/60 transition cursor-pointer"
+                  >
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#4169E1]/10 text-[#4169E1] font-bold text-xl">
+                          {user.fullName?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center w-full">
+                      <div className="font-bold text-gray-900 text-sm truncate">{user.fullName}</div>
+                      <div className="text-xs text-[#D4AF37] font-semibold mt-0.5 truncate capitalize">
+                        {user.role === 'city_admin' ? 'City Admin' : user.role === 'agent' ? 'Agent' : 'Business Owner'}
+                      </div>
+                    </div>
+                  </div>
+              ))}
+              
+              {peopleUsers.length > 0 && peopleUsers.filter(u => u.fullName?.toLowerCase().includes(peopleSearch.toLowerCase())).length === 0 && (
+                <div className="col-span-full py-10 text-center text-gray-500">No users found matching "{peopleSearch}"</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Share Toast */}
       <AnimatePresence>
