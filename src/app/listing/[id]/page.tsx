@@ -12,13 +12,16 @@ async function getListing(id: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } | Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
   let listing: any = null
   try {
     listing = await db.listing.findFirst({
-      where: { OR: [{ id: params.id }, { slug: params.id }] }
+      where: { OR: [{ id: resolvedParams.id }, { slug: resolvedParams.id }] }
     })
-  } catch {}
+  } catch (error) {
+    console.error('Error fetching listing for metadata:', error);
+  }
 
   if (!listing) return { title: 'Listing Not Found' }
 
@@ -46,15 +49,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title,
       description,
-      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
+      images: [absoluteImageUrl],
       type: 'website',
-      url: `https://choutuppal.in/listing/${params.id}`,
+      url: `https://choutuppal.in/listing/${resolvedParams.id}`,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
+      images: [absoluteImageUrl],
     }
   }
 }
