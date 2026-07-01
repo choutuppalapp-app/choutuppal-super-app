@@ -33,7 +33,10 @@ interface UserListing {
   description: string | null
   phoneNumber: string | null
   whatsappNumber: string | null
+  secondaryPhone: string | null
   address: string | null
+  ownerName: string | null
+  establishedYear: string | null
   coverImage: string | null
   logoUrl: string | null
   images: string | null
@@ -94,8 +97,8 @@ export default function AgentDashboard() {
   
   const [formData, setFormData] = useState({
     name: '', category: '', description: '',
-    phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
-    address: '', coverImage: '', logoUrl: '', images: [] as string[],
+    phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false,
+    address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [] as string[],
     rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
     price: '', bedroomCount: '', area: '',
     instagramUsername: '', facebookUrl: '', youtubeUrl: '',
@@ -186,7 +189,10 @@ export default function AgentDashboard() {
         description: formData.description || null,
         phoneNumber: formData.phoneNumber || null,
         whatsappNumber: formData.sameAsPhone ? formData.phoneNumber : (formData.whatsappNumber || null),
+        secondaryPhone: formData.secondaryPhone || null,
         address: formData.address || null,
+        ownerName: formData.ownerName || null,
+        establishedYear: formData.establishedYear || null,
         coverImage: formData.coverImage || null,
         logoUrl: formData.logoUrl || null,
         images: formData.images.length > 0 ? formData.images : null,
@@ -229,8 +235,8 @@ export default function AgentDashboard() {
         setEditingListingId(null)
         setFormData({
           name: '', category: '', description: '',
-          phoneNumber: '', whatsappNumber: '', cityId: choutuppalCityId, sameAsPhone: false,
-          address: '', coverImage: '', logoUrl: '', images: [] as string[],
+          phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: choutuppalCityId, sameAsPhone: false,
+          address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [] as string[],
           rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
           price: '', bedroomCount: '', area: '',
           instagramUsername: '', facebookUrl: '', youtubeUrl: '',
@@ -267,9 +273,9 @@ export default function AgentDashboard() {
     setEditingListingId(l.id)
     setFormData({
       name: l.name, category: l.category, description: l.description || '',
-      phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', cityId: l.cityId,
+      phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', secondaryPhone: l.secondaryPhone || '', cityId: l.cityId,
       sameAsPhone: l.phoneNumber === l.whatsappNumber,
-      address: l.address || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '',
+      address: l.address || '', ownerName: l.ownerName || '', establishedYear: l.establishedYear || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '',
       images: (() => {
         const raw = l.images || l.gallery
         if (!raw) return []
@@ -590,6 +596,17 @@ export default function AgentDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Owner Name</label>
+                      <Input value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} placeholder="e.g. Ramesh Kumar" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Established Year</label>
+                      <Input value={formData.establishedYear} onChange={e => setFormData({...formData, establishedYear: e.target.value})} placeholder="e.g. Estd. 1998" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
                       <Input value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="10-digit number" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
                     </div>
@@ -613,6 +630,13 @@ export default function AgentDashboard() {
                         placeholder="WhatsApp number" 
                         className="h-11 bg-gray-50 border-gray-200 rounded-xl" 
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Secondary Phone Number</label>
+                      <Input value={formData.secondaryPhone} onChange={e => setFormData({...formData, secondaryPhone: e.target.value})} placeholder="Optional number" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
                     </div>
                   </div>
                   

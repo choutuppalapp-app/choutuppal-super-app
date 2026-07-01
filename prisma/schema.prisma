@@ -206,7 +206,10 @@ model Listing {
   youtubeUrl        String?
   phoneNumber       String?
   whatsappNumber    String?
+  secondaryPhone    String?
   address           String?
+  ownerName         String?
+  establishedYear   String?
   latitude          Float?
   longitude         Float?
   googleMapsUrl     String?

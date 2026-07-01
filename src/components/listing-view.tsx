@@ -48,6 +48,9 @@ interface ListingData {
   youtubeUrl: string | null
   phoneNumber: string | null
   whatsappNumber: string | null
+  secondaryPhone: string | null
+  ownerName: string | null
+  establishedYear: string | null
   address: string | null
   latitude: number | null
   longitude: number | null
@@ -448,6 +451,29 @@ END:VCARD`
                 <div className="flex items-start gap-2 text-gray-600 mt-4 pt-4 border-t border-gray-100">
                   <MapPin className="size-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <span className="text-sm font-medium">{listing.address}</span>
+                </div>
+              )}
+
+              {(listing.ownerName || listing.establishedYear || listing.secondaryPhone) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
+                  {listing.ownerName && (
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Owner Name</span>
+                      <span className="text-sm font-semibold text-gray-800">{listing.ownerName}</span>
+                    </div>
+                  )}
+                  {listing.establishedYear && (
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Established</span>
+                      <span className="text-sm font-semibold text-gray-800">{listing.establishedYear}</span>
+                    </div>
+                  )}
+                  {listing.secondaryPhone && (
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Secondary Phone</span>
+                      <span className="text-sm font-semibold text-gray-800">{listing.secondaryPhone}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

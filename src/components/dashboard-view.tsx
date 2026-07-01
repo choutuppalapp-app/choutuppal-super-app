@@ -42,6 +42,9 @@ interface UserListing {
   description: string | null
   phoneNumber: string | null
   whatsappNumber: string | null
+  secondaryPhone: string | null
+  ownerName: string | null
+  establishedYear: string | null
   images: string | null
   coverImage: string | null
   logoUrl: string | null
@@ -225,8 +228,8 @@ export default function DashboardView() {
 
   const [formData, setFormData] = useState({
     name: '', category: '', description: '',
-    phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false,
-    address: '',
+    phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false,
+    address: '', ownerName: '', establishedYear: '',
     coverImage: '', logoUrl: '', images: [] as string[],
     instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
     price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
@@ -481,7 +484,10 @@ export default function DashboardView() {
         description: formData.description || null,
         phoneNumber: formData.phoneNumber || null,
         whatsappNumber: formData.sameAsPhone ? formData.phoneNumber : (formData.whatsappNumber || null),
+        secondaryPhone: formData.secondaryPhone || null,
         address: formData.address || null,
+        ownerName: formData.ownerName || null,
+        establishedYear: formData.establishedYear || null,
         coverImage: formData.coverImage || null,
         logoUrl: formData.logoUrl || null,
         images: rawImages.length > 0 ? rawImages : null,
@@ -527,7 +533,7 @@ export default function DashboardView() {
         
         // Reset state
         setFormData({
-          name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '',
+          name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false, address: '', ownerName: '', establishedYear: '',
           coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
           services: [], isFeatured: false
         })
@@ -715,9 +721,12 @@ export default function DashboardView() {
       description: listing.description || '',
       phoneNumber: listing.phoneNumber || '',
       whatsappNumber: listing.whatsappNumber || '', 
+      secondaryPhone: listing.secondaryPhone || '',
       cityId: listing.cityId,
       sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
       address: listing.address || '',
+      ownerName: listing.ownerName || '',
+      establishedYear: listing.establishedYear || '',
       coverImage: listing.coverImage || '',
       logoUrl: listing.logoUrl || '',
       images: (() => {
@@ -1592,7 +1601,7 @@ export default function DashboardView() {
               <div className="flex flex-col w-full h-full relative">
                 {/* Header */}
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', cityId: '', sameAsPhone: false, address: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: [], isFeatured: false}) }}>
+                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false, address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: [], isFeatured: false}) }}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
                   <span className="text-gray-950 font-black text-lg">{editingListingId ? 'Edit Listing Details' : 'Publish New Listing'}</span>
                   <div className="w-10"></div>
@@ -1722,8 +1731,23 @@ export default function DashboardView() {
                       </div>
 
                       <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Owner Name</span>
+                        <Input placeholder="e.g., Ramesh Kumar" value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Established Year</span>
+                        <Input placeholder="e.g., Estd. 1998" value={formData.establishedYear} onChange={e => setFormData({...formData, establishedYear: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
                         <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Phone Number *</span>
                         <Input placeholder="10-digit number" type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Secondary Phone Number</span>
+                        <Input placeholder="Optional alternative number" type="tel" value={formData.secondaryPhone} onChange={e => setFormData({...formData, secondaryPhone: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
                       </div>
 
                       <div className="flex flex-col gap-1.5">
@@ -1748,6 +1772,7 @@ export default function DashboardView() {
                           className="bg-white border-gray-200 h-11 rounded-xl disabled:bg-gray-100" 
                         />
                       </div>
+
 
                       <div className="flex flex-col gap-1.5">
                         <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Physical Address</span>
