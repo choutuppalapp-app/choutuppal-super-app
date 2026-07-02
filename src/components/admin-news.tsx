@@ -11,6 +11,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
+import imageCompression from 'browser-image-compression'
 
 export default function AdminNews() {
   const { user } = useAuth()
@@ -88,14 +89,21 @@ export default function AdminNews() {
 
     setSavingNews(true)
     try {
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
-      const { error } = await supabase.storage.from('news').upload(fileName, file)
+      const options = {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1280,
+        useWebWorker: true,
+      }
+      const compressedFile = await imageCompression(file, options)
+
+      const fileName = `news/${Date.now()}-${compressedFile.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
+      const { error } = await supabase.storage.from('listing-images').upload(fileName, compressedFile)
       if (error) throw error
 
-      const { data: { publicUrl } } = supabase.storage.from('news').getPublicUrl(fileName)
+      const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(fileName)
       setImageUrl(publicUrl)
     } catch (error) {
-      console.error(error)
+      console.error('News upload error:', error)
       alert('Image upload failed')
     } finally {
       setSavingNews(false)
