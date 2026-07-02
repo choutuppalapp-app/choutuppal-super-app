@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 
 import { useInView } from 'react-intersection-observer'
-import { Loader2, MessageCircle } from 'lucide-react'
+import { Loader2, MessageCircle, PlayCircle } from 'lucide-react'
 
 
 
@@ -87,28 +87,51 @@ function ShortPlayer({ short }: { short: ShortVideo }) {
   const { ref, inView } = useInView({
     threshold: 0.6,
   })
+  const [isPlaying, setIsPlaying] = useState(false)
+  const videoId = short.youtubeUrl.split('v=')[1]
+
+  useEffect(() => {
+    if (!inView) {
+      setIsPlaying(false)
+    }
+  }, [inView])
 
   return (
-    <div ref={ref} className="h-[100dvh] w-full snap-start relative flex items-center justify-center bg-black group">
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <iframe
-          src={`https://www.youtube.com/embed/${short.youtubeUrl.split('v=')[1]}?autoplay=${inView ? '1' : '0'}&loop=1&mute=1&controls=0&playsinline=1&modestbranding=1&rel=0`}
-          className="w-full h-full object-cover"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          frameBorder="0"
-          title={short.title}
-        />
+    <div ref={ref} className="h-screen w-full snap-start relative flex items-center justify-center bg-black group">
+      <div className="absolute inset-0 z-0">
+        {!isPlaying ? (
+          <div 
+            className="w-full h-full relative cursor-pointer flex items-center justify-center"
+            onClick={() => setIsPlaying(true)}
+          >
+            <img 
+              src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
+              className="w-full h-full object-cover opacity-80" 
+              alt={short.title} 
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <PlayCircle className="w-16 h-16 text-white drop-shadow-2xl" />
+            </div>
+          </div>
+        ) : (
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
+            className="w-full h-full"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            frameBorder="0"
+            title={short.title}
+          />
+        )}
       </div>
 
       {/* Top Gradient for text readability */}
-      <div className="absolute top-0 left-0 w-full p-4 pt-12 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none">
-        <h2 className="text-white font-bold text-lg drop-shadow-md">{short.channel.channelName}</h2>
-        <p className="text-white/80 text-sm line-clamp-2 drop-shadow-md">{short.title}</p>
-      </div>
-      
-      {/* Invisible overlay to block YouTube interactions and enable scrolling */}
-      <div className="absolute inset-0 z-20 opacity-0" />
+      {!isPlaying && (
+        <div className="absolute top-0 left-0 w-full p-4 pt-12 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none">
+          <h2 className="text-white font-bold text-lg drop-shadow-md">{short.channel.channelName}</h2>
+          <p className="text-white/80 text-sm line-clamp-2 drop-shadow-md">{short.title}</p>
+        </div>
+      )}
     </div>
   )
 }

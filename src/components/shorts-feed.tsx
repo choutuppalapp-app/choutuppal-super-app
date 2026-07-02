@@ -19,6 +19,7 @@ import {
   MapPin,
   Send,
   Loader2,
+  PlayCircle,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -338,6 +339,7 @@ function ShortVideoCard({
   onDoubleTapLike,
 }: ShortVideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const [showHeart, setShowHeart] = useState(false)
   const lastTapRef = useRef<number>(0)
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -357,11 +359,12 @@ function ShortVideoCard({
     iframeRef.current.contentWindow?.postMessage(command, '*')
   }, [isPlaying])
 
-  // Auto-play when card becomes active
+  // Reset state when card is not active
   useEffect(() => {
-    requestAnimationFrame(() => {
-      setIsPlaying(isActive)
-    })
+    if (!isActive) {
+      setIsPlaying(false)
+      setHasStarted(false)
+    }
   }, [isActive])
 
   // Handle tap (single = play/pause, double = like)
@@ -403,20 +406,39 @@ function ShortVideoCard({
     <div className="relative w-full h-full snap-start snap-always shrink-0 overflow-hidden bg-black select-none">
       {/* ---- YouTube Iframe (background) ---- */}
       <div className="absolute inset-0">
-        <iframe
-          ref={iframeRef}
-          src={`https://www.youtube.com/embed/${short.youtubeVideoId}?autoplay=0&loop=1&mute=1&controls=0&playsinline=1&enablejsapi=1&playlist=${short.youtubeVideoId}&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1`}
-          className="absolute inset-0 w-full h-full"
-          style={{
-            // Scale up slightly to hide YouTube controls area
-            transform: 'scale(1.02)',
-            transformOrigin: 'center center',
-          }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          frameBorder="0"
-          title={short.title}
-        />
+        {!hasStarted ? (
+          <div 
+            className="w-full h-full relative cursor-pointer flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation()
+              setHasStarted(true)
+              setIsPlaying(true)
+            }}
+          >
+            <img 
+              src={`https://img.youtube.com/vi/${short.youtubeVideoId}/hqdefault.jpg`} 
+              className="w-full h-full object-cover opacity-80" 
+              alt={short.title} 
+            />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <PlayCircle className="w-16 h-16 text-white drop-shadow-2xl" />
+            </div>
+          </div>
+        ) : (
+          <iframe
+            ref={iframeRef}
+            src={`https://www.youtube.com/embed/${short.youtubeVideoId}?autoplay=1&loop=1&controls=0&playsinline=1&enablejsapi=1&playlist=${short.youtubeVideoId}&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1`}
+            className="absolute inset-0 w-full h-full"
+            style={{
+              transform: 'scale(1.02)',
+              transformOrigin: 'center center',
+            }}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            frameBorder="0"
+            title={short.title}
+          />
+        )}
       </div>
 
       {/* ---- Semi-transparent overlay for readability ---- */}
