@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { deleteMyAccount } from '@/app/actions/user-actions'
-import { Loader2, UploadCloud, LogOut, ShieldAlert, Key, User as UserIcon, Lock, FileText, Image as ImageIcon } from 'lucide-react'
+import { Loader2, UploadCloud, LogOut, ShieldAlert, Key, User as UserIcon, Lock, FileText, Image as ImageIcon, X } from 'lucide-react'
+import { useSWRConfig } from 'swr'
 import { useToast } from '@/hooks/use-toast'
 import imageCompression from 'browser-image-compression'
 import { format } from 'date-fns'
@@ -12,6 +13,7 @@ import { format } from 'date-fns'
 export default function ProfileSettings() {
   const { user, logout } = useAuth()
   const { toast } = useToast()
+  const { mutate } = useSWRConfig()
   
   const [fullName, setFullName] = useState(user?.fullName || '')
   const [username, setUsername] = useState(user?.username || '')
@@ -102,9 +104,12 @@ export default function ProfileSettings() {
     toast({ title: 'Uploading...', description: 'Please wait' });
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 0.5 });
-      const fileName = `${type}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
-      const bucket = type === 'profile' ? 'avatars' : 'covers';
+      const fileName = `avatars/${type}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
+      const bucket = 'listing-images'; // Using listing-images bucket as a fallback
       
+      console.log(`Uploading to bucket: ${bucket}, fileName: ${fileName}`);
+      // SUPABASE RLS CHECK: Please ensure Supabase Dashboard -> Storage -> avatars (and covers) bucket -> Policies has a policy:
+      // ALLOW INSERT FOR authenticated USING (true) WITH CHECK (true)
       const { data, error } = await supabase.storage.from(bucket).upload(fileName, compressedFile, { upsert: false });
       
       if (error) {
@@ -154,8 +159,17 @@ export default function ProfileSettings() {
         })
       })
       if (!res.ok) throw new Error('Failed to update profile')
-      toast({ title: 'Success', description: 'Profile updated successfully! Reloading...' })
-      setTimeout(() => window.location.reload(), 1500)
+      
+      // Tell SWR to revalidate everything to instantly update the UI
+      await mutate(
+        () => true,
+        undefined,
+        { revalidate: true }
+      )
+      // Also refresh Supabase session to update auth context
+      await supabase.auth.refreshSession()
+      
+      toast({ title: 'Success', description: 'Profile updated successfully!' })
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' })
     } finally {
@@ -208,6 +222,15 @@ export default function ProfileSettings() {
           {coverImage && (
             <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
           )}
+          {coverImage && (
+            <button 
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setCoverImage(''); toast({ title: 'Cover removed', description: 'Click Save Changes to apply' }) }} 
+              className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow hover:bg-red-600 z-20"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <div onClick={() => coverInputRef.current?.click()} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer">
             <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm text-white font-medium flex items-center gap-2">
               <UploadCloud className="w-4 h-4" /> Change Cover
@@ -217,17 +240,29 @@ export default function ProfileSettings() {
         </div>
         <div className="px-4 sm:px-6 relative pb-6">
           <div className="flex justify-between items-end">
-            <div onClick={() => profileInputRef.current?.click()} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
-                  {fullName?.[0] || 'U'}
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 group flex items-center justify-center">
+              <div className="w-full h-full rounded-full overflow-hidden relative cursor-pointer" onClick={() => profileInputRef.current?.click()}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
+                    {fullName?.[0] || 'U'}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <UploadCloud className="w-6 h-6 text-white" />
                 </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <UploadCloud className="w-6 h-6 text-white" />
               </div>
+              
+              {avatarUrl && (
+                <button 
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setAvatarUrl(''); toast({ title: 'Avatar removed', description: 'Click Save Changes to apply' }) }} 
+                  className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 z-20"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
               <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'profile')} disabled={updatingProfile} />
             </div>
             

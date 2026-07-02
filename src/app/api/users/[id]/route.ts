@@ -15,6 +15,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (body.coverImage !== undefined) dataToUpdate.coverImage = body.coverImage
     if (body.isPublic !== undefined) dataToUpdate.isPublic = body.isPublic
     
+    console.log('Updating user profile with:', dataToUpdate);
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data: dataToUpdate
