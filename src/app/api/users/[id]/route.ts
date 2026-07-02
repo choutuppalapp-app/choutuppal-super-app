@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await req.json()
 
     // Ensure we are updating valid fields

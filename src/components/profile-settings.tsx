@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { deleteMyAccount } from '@/app/actions/user-actions'
@@ -88,6 +88,9 @@ export default function ProfileSettings() {
     }
   }
 
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
@@ -104,11 +107,7 @@ export default function ProfileSettings() {
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName)
       
       setAvatarUrl(publicUrl)
-      
-      // Auto-save avatar to profile
-      await supabase.from('User').update({ avatarUrl: publicUrl }).eq('id', user.id)
-      toast({ title: 'Success', description: 'Profile photo updated! Reloading...' })
-      setTimeout(() => window.location.reload(), 1500)
+      toast({ title: 'Success', description: 'Profile photo ready to save!' })
     } catch (err: any) {
       toast({ title: 'Upload Failed', description: err.message, variant: 'destructive' })
     } finally {
@@ -122,21 +121,17 @@ export default function ProfileSettings() {
 
     setUpdatingProfile(true)
     try {
-      const options = { maxSizeMB: 1, maxWidthOrHeight: 1024, useWebWorker: true }
+      const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true }
       const compressedFile = await imageCompression(file, options)
       const fileName = `${user.id}-cover-${Date.now()}`
       
-      const { error } = await supabase.storage.from('avatars').upload(fileName, compressedFile)
+      const { error } = await supabase.storage.from('covers').upload(fileName, compressedFile)
       if (error) throw error
 
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName)
+      const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(fileName)
       
       setCoverImage(publicUrl)
-      
-      // Auto-save cover to profile
-      await supabase.from('User').update({ coverImage: publicUrl }).eq('id', user.id)
-      toast({ title: 'Success', description: 'Cover photo updated! Reloading...' })
-      setTimeout(() => window.location.reload(), 1500)
+      toast({ title: 'Success', description: 'Cover photo ready to save!' })
     } catch (err: any) {
       toast({ title: 'Upload Failed', description: err.message, variant: 'destructive' })
     } finally {
@@ -147,10 +142,27 @@ export default function ProfileSettings() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
+    if (!fullName.trim()) {
+      toast({ title: 'Error', description: 'దయచేసి పేరు నమోదు చేయండి (Please enter your name)', variant: 'destructive' })
+      return
+    }
+
     setUpdatingProfile(true)
     try {
-      const { error } = await supabase.from('User').update({ fullName, username: username || null, phone, whatsappNumber, bio }).eq('id', user.id)
-      if (error) throw error
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          username: username || null,
+          phone,
+          whatsappNumber,
+          bio,
+          avatarUrl,
+          coverImage
+        })
+      })
+      if (!res.ok) throw new Error('Failed to update profile')
       toast({ title: 'Success', description: 'Profile updated successfully! Reloading...' })
       setTimeout(() => window.location.reload(), 1500)
     } catch (err: any) {
@@ -205,16 +217,16 @@ export default function ProfileSettings() {
           {coverImage && (
             <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
           )}
-          <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer">
+          <div onClick={() => coverInputRef.current?.click()} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer">
             <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm text-white font-medium flex items-center gap-2">
               <UploadCloud className="w-4 h-4" /> Change Cover
             </div>
-            <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={updatingProfile} />
-          </label>
+            <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={updatingProfile} />
+          </div>
         </div>
         <div className="px-4 sm:px-6 relative pb-6">
           <div className="flex justify-between items-end">
-            <label className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
+            <div onClick={() => avatarInputRef.current?.click()} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -225,8 +237,8 @@ export default function ProfileSettings() {
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <UploadCloud className="w-6 h-6 text-white" />
               </div>
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingProfile} />
-            </label>
+              <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingProfile} />
+            </div>
             
             {/* Public Toggle */}
             <div className="flex flex-col items-end gap-1 mb-2">

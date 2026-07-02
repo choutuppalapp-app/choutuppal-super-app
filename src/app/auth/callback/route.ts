@@ -40,9 +40,54 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!error) {
+    if (!error && data?.session?.user) {
+      const authUser = data.session.user
+      
+      // Auto-generate logic if name is missing in metadata
+      let fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name
+      if (!fullName) {
+        const phone = authUser.phone || authUser.user_metadata?.phone
+        if (phone && phone.length >= 4) {
+          fullName = `Guest-${phone.slice(-4)}`
+        } else {
+          fullName = `User-${Math.floor(1000 + Math.random() * 9000)}`
+        }
+      }
+
+      try {
+        const { db } = await import('@/lib/db')
+        
+        // Upsert user to ensure they exist with a valid fullName
+        await db.user.upsert({
+          where: { id: authUser.id },
+          update: {
+            // Update name only if it's currently null or empty
+            // But upsert doesn't have a direct "only if null" without raw SQL,
+            // so let's just make sure they have a name.
+          },
+          create: {
+            id: authUser.id,
+            email: authUser.email,
+            fullName: fullName,
+            phone: authUser.phone || authUser.user_metadata?.phone || '',
+            avatarUrl: authUser.user_metadata?.avatar_url || null,
+          }
+        })
+        
+        // Ensure the fullName is set in DB if it was generated
+        const existingUser = await db.user.findUnique({ where: { id: authUser.id }})
+        if (existingUser && (!existingUser.fullName || existingUser.fullName.trim() === '')) {
+           await db.user.update({
+             where: { id: authUser.id },
+             data: { fullName }
+           })
+        }
+      } catch (dbError) {
+        console.error('Callback DB Error:', dbError)
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

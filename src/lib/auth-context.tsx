@@ -180,11 +180,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signup = useCallback(async (fullName: string, phone: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    let finalFullName = fullName?.trim()
+    if (!finalFullName) {
+      if (phone && phone.length >= 4) {
+        finalFullName = `Guest-${phone.slice(-4)}`
+      } else {
+        finalFullName = `User-${Math.floor(1000 + Math.random() * 9000)}`
+      }
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, phone: phone },
+        data: { full_name: finalFullName, phone: phone },
       },
     })
     if (error) {
