@@ -20,8 +20,9 @@ async function getNews(id: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const news = await getNews(params.id)
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const news = await getNews(id)
   if (!news) return { title: 'News Not Found' }
 
   const title = `${news.title} in Choutuppal | Choutuppal App`
@@ -51,8 +52,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function NewsDetailPage({ params }: { params: { id: string } }) {
-  const news = await getNews(params.id)
+export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const news = await getNews(id)
 
   if (!news) {
     notFound()
