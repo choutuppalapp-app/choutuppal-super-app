@@ -130,7 +130,19 @@ export default function AdminNews() {
       if (isEditing) {
         await updateAdminNews(isEditing.id, payload)
       } else {
-        await createAdminNews(payload)
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/api/news', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
+          body: JSON.stringify(payload)
+        })
+        if (!res.ok) {
+          const errData = await res.json()
+          throw new Error(errData.error || 'Failed to create news')
+        }
       }
 
       resetForm()

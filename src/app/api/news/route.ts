@@ -41,3 +41,47 @@ export async function GET(request: Request) {
     )
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const token = req.headers.get('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const dbUser = await db.user.findUnique({ where: { id: user.id } });
+    if (!dbUser || !['admin', 'city_admin', 'super_admin'].includes(dbUser.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    let { title, content, source, imageUrl, cityId, authorId, isPublished } = body;
+
+    // Ensure cityId is valid
+    const city = await db.city.findFirst({ where: { id: cityId } });
+    if (!city) {
+      const defaultCity = await db.city.findFirst();
+      if (defaultCity) {
+        cityId = defaultCity.id;
+      } else {
+        return NextResponse.json({ error: 'No city found to associate with news' }, { status: 400 });
+      }
+    }
+
+    const news = await db.news.create({
+      data: {
+        title,
+        content,
+        source,
+        imageUrl,
+        cityId,
+        authorId: user.id,
+        isPublished: isPublished ?? true
+      }
+    });
+    return NextResponse.json(news, { status: 201 });
+  } catch (error: any) {
+    console.error('Prisma News Create Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
