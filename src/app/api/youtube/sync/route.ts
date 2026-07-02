@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     }
 
     if (!YOUTUBE_API_KEY) {
+      console.error('YouTube API Key is missing in .env')
       return NextResponse.json({ error: 'YouTube API key not configured' }, { status: 500 })
     }
 
@@ -41,10 +42,13 @@ export async function POST(req: Request) {
     for (const channel of channels) {
       // Fetch latest videos from this channel
       const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channel.channelId}&maxResults=15&order=date&type=video&key=${YOUTUBE_API_KEY}`
+        `https://www.googleapis.com/youtube/v3/search?part=snippet,id&channelId=${channel.channelId}&maxResults=50&order=date&type=video&key=${YOUTUBE_API_KEY}`
       )
       
       if (!response.ok) {
+        if (response.status === 403 || response.status === 400) {
+          return NextResponse.json({ error: 'YouTube API Quota Exceeded or Invalid Key' }, { status: response.status })
+        }
         console.error(`Failed to fetch for channel ${channel.channelId}`)
         continue
       }
@@ -59,21 +63,21 @@ export async function POST(req: Request) {
           const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`
 
           // Upsert into ShortVideo
-          const existing = await prisma.shortVideo.findUnique({
-            where: { youtubeUrl }
+          await prisma.shortVideo.upsert({
+            where: { youtubeUrl },
+            update: {
+              title,
+              channelId: channel.id,
+              publishedAt
+            },
+            create: {
+              youtubeUrl,
+              title,
+              channelId: channel.id,
+              publishedAt
+            }
           })
-
-          if (!existing) {
-            await prisma.shortVideo.create({
-              data: {
-                youtubeUrl,
-                title,
-                channelId: channel.id,
-                publishedAt
-              }
-            })
-            totalAdded++
-          }
+          totalAdded++
         }
       }
     }

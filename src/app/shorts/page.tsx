@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import dynamic from 'next/dynamic'
+
 import { useInView } from 'react-intersection-observer'
 import { Loader2, MessageCircle } from 'lucide-react'
 
-// Dynamically import ReactPlayer to avoid SSR hydration issues
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any
+
 
 interface ShortVideo {
   id: string
@@ -92,27 +91,13 @@ function ShortPlayer({ short }: { short: ShortVideo }) {
   return (
     <div ref={ref} className="h-[100dvh] w-full snap-start relative flex items-center justify-center bg-black group">
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <ReactPlayer
-          url={short.youtubeUrl}
-          playing={inView}
-          loop={true}
-          muted={false}
-          width="100%"
-          height="100%"
-          style={{ objectFit: 'cover' }}
-          config={{
-            youtube: {
-              playerVars: {
-                showinfo: 0,
-                controls: 0,
-                rel: 0,
-                modestbranding: 1,
-                iv_load_policy: 3,
-                fs: 0,
-                playsinline: 1
-              }
-            }
-          }}
+        <iframe
+          src={`https://www.youtube.com/embed/${short.youtubeUrl.split('v=')[1]}?autoplay=${inView ? '1' : '0'}&loop=1&mute=1&controls=0&playsinline=1&modestbranding=1&rel=0`}
+          className="w-full h-full object-cover"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          frameBorder="0"
+          title={short.title}
         />
       </div>
 

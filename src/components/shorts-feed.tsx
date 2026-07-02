@@ -412,7 +412,7 @@ function ShortVideoCard({
             transform: 'scale(1.02)',
             transformOrigin: 'center center',
           }}
-          allow="autoplay; encrypted-media"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           frameBorder="0"
           title={short.title}
