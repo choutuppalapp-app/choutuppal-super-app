@@ -8,6 +8,13 @@ export async function POST(req: Request) {
   try {
     const token = req.headers.get('Authorization')?.split(' ')[1]
     const { data: { user }, error } = await supabase.auth.getUser(token)
+    let requestBody: any = {}
+    try {
+      requestBody = await req.json()
+    } catch (e) {
+      // Ignored for empty bodies
+    }
+    const { channelId } = requestBody
 
     if (error || !user) {
       console.log('POST /youtube/sync - Auth Error:', error?.message)
@@ -29,8 +36,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'YouTube API key not configured' }, { status: 500 })
     }
 
+    const whereClause: any = { isActive: true }
+    if (channelId) {
+      whereClause.channelId = channelId
+    }
+
     const channels = await prisma.youtubeChannel.findMany({
-      where: { isActive: true }
+      where: whereClause
     })
 
     if (channels.length === 0) {

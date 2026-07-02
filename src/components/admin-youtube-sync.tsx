@@ -14,6 +14,12 @@ export default function AdminYoutubeSync() {
   const [newChannelName, setNewChannelName] = useState('')
   const [isAdding, setIsAdding] = useState(false)
 
+  const [newVideoUrl, setNewVideoUrl] = useState('')
+  const [isAddingVideo, setIsAddingVideo] = useState(false)
+  
+  // Track which channel is syncing right now
+  const [syncingChannelId, setSyncingChannelId] = useState<string | null>(null)
+
   useEffect(() => {
     fetchChannels()
   }, [])
@@ -98,15 +104,21 @@ export default function AdminYoutubeSync() {
     }
   }
 
-  const handleManualSync = async () => {
-    setIsSyncing(true)
+  const handleManualSync = async (specificChannelId?: string) => {
+    if (specificChannelId) {
+      setSyncingChannelId(specificChannelId)
+    } else {
+      setIsSyncing(true)
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/youtube/sync', { 
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
         },
+        body: specificChannelId ? JSON.stringify({ channelId: specificChannelId }) : '{}',
         credentials: 'include'
       })
       if (res.ok) {
@@ -119,6 +131,38 @@ export default function AdminYoutubeSync() {
       toast.error('An error occurred during sync')
     } finally {
       setIsSyncing(false)
+      setSyncingChannelId(null)
+    }
+  }
+
+  const handleAddVideo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newVideoUrl.trim()) return
+
+    setIsAddingVideo(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/youtube/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ videoUrl: newVideoUrl.trim() }),
+        credentials: 'include'
+      })
+      
+      if (res.ok) {
+        toast.success('Video added successfully')
+        setNewVideoUrl('')
+      } else {
+        const err = await res.json()
+        toast.error(err.error || 'Failed to add video')
+      }
+    } catch (e) {
+      toast.error('An error occurred')
+    } finally {
+      setIsAddingVideo(false)
     }
   }
 
@@ -134,12 +178,12 @@ export default function AdminYoutubeSync() {
           <p className="text-gray-500 mt-1">Manage connected YouTube channels for the Shorts feed.</p>
         </div>
         <button
-          onClick={handleManualSync}
+          onClick={() => handleManualSync()}
           disabled={isSyncing || channels.length === 0}
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-700 hover:to-red-600 transition shadow-sm disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? 'Syncing...' : 'Manual Sync Now'}
+          {isSyncing ? 'Syncing All...' : 'Sync All Now'}
         </button>
       </div>
 
@@ -194,17 +238,50 @@ export default function AdminYoutubeSync() {
                     <p className="text-xs text-gray-500 font-mono mt-0.5">{channel.channelId}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(channel.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                  title="Remove Channel"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleManualSync(channel.channelId)}
+                    disabled={syncingChannelId === channel.channelId}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${syncingChannelId === channel.channelId ? 'animate-spin' : ''}`} />
+                    Sync
+                  </button>
+                  <button
+                    onClick={() => handleDelete(channel.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                    title="Remove Channel"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Add Specific Video</h3>
+        <p className="text-gray-500 text-sm mb-4">Manually add a single YouTube video or Short by pasting its link.</p>
+        <form onSubmit={handleAddVideo} className="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="YouTube URL (e.g. https://youtu.be/...)"
+            value={newVideoUrl}
+            onChange={(e) => setNewVideoUrl(e.target.value)}
+            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <button
+            type="submit"
+            disabled={isAddingVideo}
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" />
+            Add Video
+          </button>
+        </form>
       </div>
     </div>
   )

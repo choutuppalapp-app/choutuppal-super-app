@@ -783,9 +783,10 @@ model ShortVideo {
   id          String   @id @default(cuid())
   youtubeUrl  String   @unique
   title       String
-  channelId   String
+  channelId   String?
   publishedAt DateTime
+  isManual    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  channel YoutubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel YoutubeChannel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
 }
