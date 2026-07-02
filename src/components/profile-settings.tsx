@@ -88,56 +88,47 @@ export default function ProfileSettings() {
     }
   }
 
-  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const profileInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !user) return
-
-    setUpdatingProfile(true)
-    try {
-      const options = { maxSizeMB: 0.5, maxWidthOrHeight: 512, useWebWorker: true }
-      const compressedFile = await imageCompression(file, options)
-      const fileName = `${user.id}-avatar-${Date.now()}`
-      
-      const { error } = await supabase.storage.from('avatars').upload(fileName, compressedFile)
-      if (error) throw error
-
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName)
-      
-      setAvatarUrl(publicUrl)
-      toast({ title: 'Success', description: 'Profile photo ready to save!' })
-    } catch (err: any) {
-      toast({ title: 'Upload Failed', description: err.message, variant: 'destructive' })
-    } finally {
-      setUpdatingProfile(false)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'profile' | 'cover') => {
+    const file = e.target.files?.[0];
+    if (!file || !user) {
+      toast({ title: 'Error', description: 'No file selected', variant: 'destructive' });
+      return;
     }
-  }
-
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !user) return
-
-    setUpdatingProfile(true)
+    
+    setUpdatingProfile(true);
+    toast({ title: 'Uploading...', description: 'Please wait' });
     try {
-      const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true }
-      const compressedFile = await imageCompression(file, options)
-      const fileName = `${user.id}-cover-${Date.now()}`
+      const compressedFile = await imageCompression(file, { maxSizeMB: 0.5 });
+      const fileName = `${type}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
+      const bucket = type === 'profile' ? 'avatars' : 'covers';
       
-      const { error } = await supabase.storage.from('covers').upload(fileName, compressedFile)
-      if (error) throw error
-
-      const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(fileName)
+      const { data, error } = await supabase.storage.from(bucket).upload(fileName, compressedFile, { upsert: false });
       
-      setCoverImage(publicUrl)
-      toast({ title: 'Success', description: 'Cover photo ready to save!' })
+      if (error) {
+        toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+        return;
+      }
+      
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
+      const publicUrl = urlData.publicUrl;
+      
+      // Update state immediately
+      if (type === 'profile') {
+        setAvatarUrl(publicUrl);
+      } else {
+        setCoverImage(publicUrl);
+      }
+      toast({ title: 'Success', description: 'Image uploaded! Click Save Changes to apply.' });
     } catch (err: any) {
-      toast({ title: 'Upload Failed', description: err.message, variant: 'destructive' })
+      toast({ title: 'Error uploading file', description: err.message, variant: 'destructive' });
     } finally {
-      setUpdatingProfile(false)
+      setUpdatingProfile(false);
+      e.target.value = '';
     }
-  }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,12 +212,12 @@ export default function ProfileSettings() {
             <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm text-white font-medium flex items-center gap-2">
               <UploadCloud className="w-4 h-4" /> Change Cover
             </div>
-            <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={updatingProfile} />
+            <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'cover')} disabled={updatingProfile} />
           </div>
         </div>
         <div className="px-4 sm:px-6 relative pb-6">
           <div className="flex justify-between items-end">
-            <div onClick={() => avatarInputRef.current?.click()} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
+            <div onClick={() => profileInputRef.current?.click()} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -237,7 +228,7 @@ export default function ProfileSettings() {
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <UploadCloud className="w-6 h-6 text-white" />
               </div>
-              <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingProfile} />
+              <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'profile')} disabled={updatingProfile} />
             </div>
             
             {/* Public Toggle */}
