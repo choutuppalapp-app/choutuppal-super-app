@@ -446,6 +446,7 @@ model BannerAd {
   shopName    String    @default("")
   offerText   String?
   linkUrl     String?
+  phoneNumber String?
   cityId      String?
   isActive    Boolean   @default(true)
   status      String    @default("APPROVED") // PENDING, APPROVED, REJECTED

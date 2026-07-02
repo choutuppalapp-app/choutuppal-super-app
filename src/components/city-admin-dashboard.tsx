@@ -148,9 +148,10 @@ interface BannerItem {
   title: string
   imageUrl: string | null
   shopName: string
-  offerText: string | null
-  linkUrl: string | null
-  cityId: string | null
+  offerText?: string | null
+  linkUrl?: string | null
+  phoneNumber?: string | null
+  cityId?: string | null
   isActive: boolean
   createdAt: string
 }
@@ -229,7 +230,7 @@ export function CityAdminDashboard() {
   const [banners, setBanners] = useState<BannerItem[]>([])
   const [bannersLoading, setBannersLoading] = useState(false)
   const [editingBanner, setEditingBanner] = useState<BannerItem | null>(null)
-  const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', isActive: true })
+  const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', phoneNumber: '', isActive: true })
   const [savingBanner, setSavingBanner] = useState(false)
   const [showBannerForm, setShowBannerForm] = useState(false)
   const [deleteBannerDialog, setDeleteBannerDialog] = useState<string | null>(null)
@@ -542,6 +543,10 @@ export function CityAdminDashboard() {
       toast.error('Title is required')
       return
     }
+    if (!bannerForm.phoneNumber) {
+      toast.error('Business Owner Phone Number is required')
+      return
+    }
     setSavingBanner(true)
     try {
       const payload = {
@@ -551,6 +556,7 @@ export function CityAdminDashboard() {
         shopName: bannerForm.shopName || '',
         offerText: bannerForm.offerText || null,
         linkUrl: bannerForm.linkUrl || null,
+        phoneNumber: bannerForm.phoneNumber || null,
         cityId: managedCityId || null,
         isActive: bannerForm.isActive,
       }
@@ -563,7 +569,7 @@ export function CityAdminDashboard() {
         toast.success(editingBanner ? 'Banner updated!' : 'Banner created!')
         setShowBannerForm(false)
         setEditingBanner(null)
-        setBannerForm({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', isActive: true })
+        setBannerForm({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', phoneNumber: '', isActive: true })
         fetchBanners()
       } else {
         toast.error('Failed to save banner')
@@ -1467,7 +1473,7 @@ export function CityAdminDashboard() {
                               size="sm"
                               onClick={() => {
                                 setEditingBanner(null)
-                                setBannerForm({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', isActive: true })
+                                setBannerForm({ title: '', imageUrl: '', shopName: '', offerText: '', linkUrl: '', phoneNumber: '', isActive: true })
                                 document.getElementById('city-banner-file-input')?.click()
                               }}
                               className="bg-[#D4AF37] text-white"
@@ -1546,6 +1552,7 @@ export function CityAdminDashboard() {
                                         shopName: banner.shopName || '',
                                         offerText: banner.offerText || '',
                                         linkUrl: banner.linkUrl || '',
+                                        phoneNumber: banner.phoneNumber || '',
                                         isActive: banner.isActive,
                                       })
                                       setShowBannerForm(true)
@@ -1620,6 +1627,15 @@ export function CityAdminDashboard() {
                                   value={bannerForm.linkUrl}
                                   onChange={(e) => setBannerForm((p) => ({ ...p, linkUrl: e.target.value }))}
                                   placeholder="https://..."
+                                />
+                              </div>
+                              <div>
+                                <Label>Business Owner Phone Number (Required for Auto-Claim) *</Label>
+                                <Input
+                                  required
+                                  value={bannerForm.phoneNumber}
+                                  onChange={(e) => setBannerForm((p) => ({ ...p, phoneNumber: e.target.value }))}
+                                  placeholder="e.g. 9876543210"
                                 />
                               </div>
                               <div className="flex items-center gap-2">

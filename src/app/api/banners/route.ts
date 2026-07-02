@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 import { db } from '@/lib/db'
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
 
 
     const body = await request.json()
-    const { title, imageUrl, shopName, offerText, linkUrl, cityId, isActive, userId } = body
+    const { title, imageUrl, shopName, offerText, linkUrl, phoneNumber, cityId, isActive, userId } = body
 
     if (!title || typeof title !== 'string' || !title.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -124,6 +124,7 @@ export async function POST(request: Request) {
         shopName: shopName || '',
         offerText: offerText || null,
         linkUrl: linkUrl || null,
+        phoneNumber: phoneNumber || null,
         cityId: cityId || null,
         userId: userId || null,
         isActive: true,
@@ -177,7 +178,7 @@ export async function PUT(request: Request) {
 
 
     const body = await request.json()
-    const { id, title, imageUrl, shopName, offerText, linkUrl, cityId, isActive } = body
+    const { id, title, imageUrl, shopName, offerText, linkUrl, phoneNumber, cityId, isActive } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Banner ID is required' }, { status: 400 })
@@ -194,6 +195,7 @@ export async function PUT(request: Request) {
     if (shopName !== undefined) updateData.shopName = shopName || ''
     if (offerText !== undefined) updateData.offerText = offerText || null
     if (linkUrl !== undefined) updateData.linkUrl = linkUrl || null
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber || null
     if (cityId !== undefined) updateData.cityId = cityId || null
     if (isActive !== undefined) updateData.isActive = Boolean(isActive)
 

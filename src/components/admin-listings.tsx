@@ -441,7 +441,7 @@ export default function AdminListings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Phone Number</label>
+                  <label className="text-sm font-semibold text-gray-700">Business Owner Phone Number (Required for Auto-Claim)</label>
                   <Input required value={phone} onChange={e => setPhone(e.target.value)} className="rounded-xl border-gray-200 bg-gray-50" />
                 </div>
                 <div className="space-y-2">

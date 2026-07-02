@@ -311,6 +311,31 @@ export default function DashboardView() {
   }, [listingsData])
 
   useEffect(() => {
+    const autoClaimListings = async () => {
+      if (!currentUser?.id || !currentUser?.phone) return
+      try {
+        const res = await fetch('/api/auth/auto-claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, phoneNumber: currentUser.phone })
+        })
+        const data = await res.json()
+        if (data.success && (data.listingsTransferred > 0 || data.bannersTransferred > 0)) {
+          toast.success('మీ షాప్ లిస్టింగ్ మీ అకౌంట్ కి అటాచ్ అయింది!')
+          fetchListings()
+          fetchBanners()
+        }
+      } catch (err) {
+        console.error('Auto claim failed:', err)
+      }
+    }
+    // Only run if we actually have a phone number to claim with
+    if (currentUser?.phone) {
+      autoClaimListings()
+    }
+  }, [currentUser?.id, currentUser?.phone, fetchListings, fetchBanners])
+
+  useEffect(() => {
     if (realEstateData) {
       // API returns array directly (not {listings:[]})
       setRealEstateListings(Array.isArray(realEstateData) ? realEstateData : (realEstateData.listings || []))
