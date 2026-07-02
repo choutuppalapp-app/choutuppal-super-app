@@ -23,13 +23,13 @@ export async function GET(request: Request) {
         username: true,
         avatarUrl: true,
         bio: true,
-        isPrivate: true,
+        isPublic: true,
       },
       take: 20
     })
 
     // Optionally filter out private users if requested
-    const publicUsers = users.filter(u => !u.isPrivate)
+    const publicUsers = users.filter(u => u.isPublic)
 
     return NextResponse.json({ users: publicUsers })
   } catch (error: any) {

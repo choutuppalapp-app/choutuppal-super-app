@@ -22,7 +22,9 @@ interface AuthUser {
   totalEarnings?: number
   pendingPayout?: number
   upiId?: string | null
-  isPrivate?: boolean
+  isPublic?: boolean
+  whatsappNumber?: string | null
+  coverImage?: string | null
 }
 
 interface AuthContextType {
@@ -81,7 +83,9 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
       totalEarnings: userRecord.totalEarnings || 0,
       pendingPayout: userRecord.pendingPayout || 0,
       upiId: userRecord.upiId,
-      isPrivate: userRecord.isPrivate,
+      isPublic: userRecord.isPublic,
+      whatsappNumber: userRecord.whatsappNumber,
+      coverImage: userRecord.coverImage,
       username: userRecord.username
     }
   }
@@ -95,7 +99,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AuthUser> {
     role: 'user',
     coinsBalance: 10,
     subscriptionTier: 'free',
-    isPrivate: false,
+    isPublic: true,
   }
 }
 

@@ -16,8 +16,11 @@ export default function ProfileSettings() {
   const [fullName, setFullName] = useState(user?.fullName || '')
   const [username, setUsername] = useState(user?.username || '')
   const [phone, setPhone] = useState(user?.phone || '')
+  const [whatsappNumber, setWhatsappNumber] = useState(user?.whatsappNumber || '')
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '')
   const [bio, setBio] = useState(user?.bio || '')
+  
+  const [coverImage, setCoverImage] = useState(user?.coverImage || '')
   
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   
@@ -51,8 +54,8 @@ export default function ProfileSettings() {
   const [updatingPassword, setUpdatingPassword] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const [isPrivate, setIsPrivate] = useState(user?.isPrivate || false)
-  const [updatingPrivate, setUpdatingPrivate] = useState(false)
+  const [isPublic, setIsPublic] = useState(user?.isPublic ?? true)
+  const [updatingPublic, setUpdatingPublic] = useState(false)
   const [stats, setStats] = useState({ posts: 0, listings: 0 })
 
   useEffect(() => {
@@ -60,28 +63,28 @@ export default function ProfileSettings() {
       const fetchStats = async () => {
         const { count: postsCount } = await supabase.from('Post').select('id', { count: 'exact', head: true }).eq('authorId', user.id).eq('isDeleted', false)
         const { count: listingsCount } = await supabase.from('Listing').select('id', { count: 'exact', head: true }).eq('userId', user.id).eq('status', 'APPROVED')
-        const { data: userData } = await supabase.from('User').select('isPrivate').eq('id', user.id).single()
-        if (userData) setIsPrivate(userData.isPrivate)
+        const { data: userData } = await supabase.from('User').select('isPublic').eq('id', user.id).single()
+        if (userData) setIsPublic(userData.isPublic)
         setStats({ posts: postsCount || 0, listings: listingsCount || 0 })
       }
       fetchStats()
     }
   }, [user?.id])
 
-  const handleTogglePrivate = async () => {
+  const handleTogglePublic = async () => {
     if (!user) return
-    const newValue = !isPrivate
-    setIsPrivate(newValue)
-    setUpdatingPrivate(true)
+    const newValue = !isPublic
+    setIsPublic(newValue)
+    setUpdatingPublic(true)
     try {
-      const { error } = await supabase.from('User').update({ isPrivate: newValue }).eq('id', user.id)
+      const { error } = await supabase.from('User').update({ isPublic: newValue }).eq('id', user.id)
       if (error) throw error
-      toast({ title: 'Privacy Updated', description: `Your account is now ${newValue ? 'private' : 'public'}.` })
+      toast({ title: 'Privacy Updated', description: `Your account is now ${newValue ? 'public' : 'private'}.` })
     } catch (err: any) {
-      setIsPrivate(!newValue) // Revert on error
+      setIsPublic(!newValue) // Revert on error
       toast({ title: 'Error', description: err.message, variant: 'destructive' })
     } finally {
-      setUpdatingPrivate(false)
+      setUpdatingPublic(false)
     }
   }
 
@@ -93,7 +96,7 @@ export default function ProfileSettings() {
     try {
       const options = { maxSizeMB: 0.5, maxWidthOrHeight: 512, useWebWorker: true }
       const compressedFile = await imageCompression(file, options)
-      const fileName = `${user.id}-${Date.now()}`
+      const fileName = `${user.id}-avatar-${Date.now()}`
       
       const { error } = await supabase.storage.from('avatars').upload(fileName, compressedFile)
       if (error) throw error
@@ -113,12 +116,40 @@ export default function ProfileSettings() {
     }
   }
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+
+    setUpdatingProfile(true)
+    try {
+      const options = { maxSizeMB: 1, maxWidthOrHeight: 1024, useWebWorker: true }
+      const compressedFile = await imageCompression(file, options)
+      const fileName = `${user.id}-cover-${Date.now()}`
+      
+      const { error } = await supabase.storage.from('avatars').upload(fileName, compressedFile)
+      if (error) throw error
+
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName)
+      
+      setCoverImage(publicUrl)
+      
+      // Auto-save cover to profile
+      await supabase.from('User').update({ coverImage: publicUrl }).eq('id', user.id)
+      toast({ title: 'Success', description: 'Cover photo updated! Reloading...' })
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (err: any) {
+      toast({ title: 'Upload Failed', description: err.message, variant: 'destructive' })
+    } finally {
+      setUpdatingProfile(false)
+    }
+  }
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
     setUpdatingProfile(true)
     try {
-      const { error } = await supabase.from('User').update({ fullName, username: username || null, phone, bio }).eq('id', user.id)
+      const { error } = await supabase.from('User').update({ fullName, username: username || null, phone, whatsappNumber, bio }).eq('id', user.id)
       if (error) throw error
       toast({ title: 'Success', description: 'Profile updated successfully! Reloading...' })
       setTimeout(() => window.location.reload(), 1500)
@@ -169,8 +200,18 @@ export default function ProfileSettings() {
   return (
     <div className="space-y-6 max-w-xl mx-auto pb-24">
       {/* Cover Photo & Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
-        <div className="h-32 sm:h-40 bg-gradient-to-r from-blue-600 to-yellow-500 w-full relative" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group/cover">
+        <div className="h-32 sm:h-40 bg-gradient-to-r from-blue-600 to-yellow-500 w-full relative">
+          {coverImage && (
+            <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+          )}
+          <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer">
+            <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm text-white font-medium flex items-center gap-2">
+              <UploadCloud className="w-4 h-4" /> Change Cover
+            </div>
+            <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={updatingProfile} />
+          </label>
+        </div>
         <div className="px-4 sm:px-6 relative pb-6">
           <div className="flex justify-between items-end">
             <label className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white bg-white shadow-md relative z-10 shrink-0 -mt-12 sm:-mt-14 overflow-hidden cursor-pointer group flex items-center justify-center">
@@ -187,13 +228,14 @@ export default function ProfileSettings() {
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingProfile} />
             </label>
             
-            {/* Private Toggle */}
+            {/* Public Toggle */}
             <div className="flex flex-col items-end gap-1 mb-2">
               <span className="text-sm font-bold text-gray-700 flex items-center gap-1">
-                <Lock className="w-4 h-4" /> Private Account
+                {isPublic ? <UserIcon className="w-4 h-4" /> : <Lock className="w-4 h-4" />} 
+                {isPublic ? 'Public Profile' : 'Private Account'}
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" checked={isPrivate} onChange={handleTogglePrivate} disabled={updatingPrivate} />
+                <input type="checkbox" className="sr-only peer" checked={isPublic} onChange={handleTogglePublic} disabled={updatingPublic} />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
@@ -252,9 +294,15 @@ export default function ProfileSettings() {
             {usernameStatus === 'taken' && <p className="text-xs text-red-500 mt-1 font-semibold">Username is already taken.</p>}
             {usernameStatus === 'invalid' && <p className="text-xs text-red-500 mt-1 font-semibold">Only lowercase letters, numbers, and underscores.</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-            <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (Optional)</label>
+              <input type="tel" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 9876543210" />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>

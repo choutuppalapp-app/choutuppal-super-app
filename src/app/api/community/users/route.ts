@@ -6,12 +6,16 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   try {
     const allUsers = await prisma.user.findMany({
+      where: {
+        isPublic: true
+      },
       select: {
         id: true,
         fullName: true,
         avatarUrl: true,
         role: true,
         createdAt: true,
+        bio: true,
       },
       take: 100,
       orderBy: {
