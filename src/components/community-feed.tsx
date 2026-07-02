@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MoreHorizontal, Heart, MessageSquare, Share2, MapPin, CheckCircle, Image as ImageIcon, Send, X, Users, MessageCircle, Crown, Camera, ShieldCheck, Pin, Loader2, ImagePlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAppStore } from '@/lib/store'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
@@ -1138,13 +1139,9 @@ export default function CommunityFeed() {
               {peopleUsers
                 .filter(u => u.fullName?.toLowerCase().includes(peopleSearch.toLowerCase()))
                 .map(user => (
-                  <div
+                  <Link
                     key={user.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      router.push(`/profile/${user.id}`)
-                    }}
+                    href={`/profile/${user.id}`}
                     className="bg-white/40 backdrop-blur-xl border border-white/30 p-4 rounded-2xl flex flex-col items-center gap-3 hover:bg-white/60 transition cursor-pointer"
                   >
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
@@ -1162,7 +1159,7 @@ export default function CommunityFeed() {
                         {user.role === 'city_admin' ? 'City Admin' : user.role === 'agent' ? 'Agent' : 'Business Owner'}
                       </div>
                     </div>
-                  </div>
+                  </Link>
               ))}
               
               {peopleUsers.length > 0 && peopleUsers.filter(u => u.fullName?.toLowerCase().includes(peopleSearch.toLowerCase())).length === 0 && (

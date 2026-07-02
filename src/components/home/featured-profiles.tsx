@@ -1,14 +1,10 @@
 'use client'
 
 import { Crown, User as UserIcon, ChevronRight, ShieldCheck } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 export function FeaturedProfiles() {
-  const navigateTo = useAppStore((s) => s.navigateTo)
-  const setProfileType = useAppStore((s) => s.setProfileType)
-  const setSelectedProfileUserId = useAppStore((s) => s.setSelectedProfileUserId)
-
   const [profiles, setProfiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -27,13 +23,6 @@ export function FeaturedProfiles() {
       })
   }, [])
 
-  const handleProfileClick = (user: any) => {
-    setSelectedProfileUserId(user.id)
-    const type = (user.role === 'city_admin' || user.role === 'super_admin' || user.role === 'agent') ? 'leader' : 'individual'
-    setProfileType(type)
-    navigateTo(type === 'leader' ? 'leader-profile' : 'individual-profile')
-  }
-
   if (loading || profiles.length === 0) {
     return null // Completely hidden if no profiles exist
   }
@@ -46,13 +35,13 @@ export function FeaturedProfiles() {
           <Crown className="w-5 h-5 text-[#4169E1]" />
           <h2 className="text-lg font-bold text-gray-800">Featured Profiles</h2>
         </div>
-        <button
-          onClick={() => navigateTo('community')}
+        <Link
+          href="/community"
           className="flex items-center gap-1 text-xs text-[#4169E1] font-medium hover:text-[#4169E1]/80 transition-colors"
         >
           View All
           <ChevronRight className="w-3.5 h-3.5" />
-        </button>
+        </Link>
       </div>
 
       {/* ── Scrollable profile cards ── */}
@@ -68,9 +57,9 @@ export function FeaturedProfiles() {
           const avatarUrl = user.avatarUrl
 
           return (
-            <button
+            <Link
               key={user.id}
-              onClick={() => handleProfileClick(user)}
+              href={`/profile/${user.id}`}
               className="flex flex-col items-center gap-2 shrink-0 group transition-all duration-300"
             >
               {/* Avatar */}
@@ -107,7 +96,7 @@ export function FeaturedProfiles() {
                 <p className="text-xs font-semibold text-gray-900 truncate w-full">{name.split(' ')[0]}</p>
                 <p className="text-[10px] text-gray-400 truncate w-full">{title}</p>
               </div>
-            </button>
+            </Link>
           )
         })}
       </div>
