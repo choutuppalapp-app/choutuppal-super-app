@@ -91,7 +91,26 @@ export async function GET(request: Request) {
     const [listings, total] = await Promise.all([
       db.listing.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          category: true,
+          images: true,
+          coverImage: true,
+          logoUrl: true,
+          whatsappNumber: true,
+          phoneNumber: true,
+          address: true,
+          isPremium: true,
+          isFeatured: true,
+          viewsCount: true,
+          rating: true,
+          operatingHours: true,
+          status: true,
+          createdAt: true,
+          userId: true,
+          cityId: true,
           user: {
             select: {
               id: true,

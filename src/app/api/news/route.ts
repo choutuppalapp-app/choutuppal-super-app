@@ -15,10 +15,15 @@ export async function GET(request: Request) {
 
     const news = await db.news.findMany({
       where,
-      include: {
-        city: {
-          select: { id: true, name: true, slug: true },
-        },
+      select: {
+        id: true,
+        title: true,
+        imageUrl: true,
+        source: true,
+        createdAt: true,
+        cityId: true,
+        authorId: true,
+        city: { select: { id: true, name: true, slug: true } }
       },
       orderBy: { createdAt: 'desc' },
     })

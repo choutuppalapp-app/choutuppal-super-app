@@ -158,7 +158,7 @@ export default function AdminNews() {
           <div key={article.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col md:flex-row">
             {article.imageUrl && (
               <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-gray-100">
-                <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
               </div>
             )}
             <div className="p-4 flex-1 flex flex-col justify-between">
@@ -238,7 +238,7 @@ export default function AdminNews() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Cover Image</label>
                   <div className="flex items-center gap-4">
-                    {imageUrl && <img src={imageUrl} alt="Cover" className="w-16 h-12 rounded-lg object-cover border border-gray-200" />}
+                    {imageUrl && <img loading="lazy" decoding="async" src={imageUrl} alt="Cover" className="w-16 h-12 rounded-lg object-cover border border-gray-200" />}
                     <Input 
                       type="file" 
                       accept="image/*" 

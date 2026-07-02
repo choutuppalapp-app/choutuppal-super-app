@@ -61,7 +61,7 @@ export default function AdminBanners() {
             <div key={banner.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
               <div className="aspect-[21/9] bg-gray-100 relative">
                 {banner.imageUrl ? (
-                  <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium">
                     No Image

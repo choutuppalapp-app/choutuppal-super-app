@@ -960,7 +960,7 @@ export default function DashboardView() {
                             <div key={rev.id} className="flex gap-2 bg-white p-2.5 rounded-xl border border-gray-200 relative group items-start">
                               <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0 overflow-hidden">
                                 {rev.user?.avatarUrl ? (
-                                  <img src={rev.user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                                  <img loading="lazy" decoding="async" src={rev.user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
                                     {rev.user?.fullName?.[0] || 'U'}
@@ -1456,7 +1456,7 @@ export default function DashboardView() {
                     <div key={comment.id} className="flex gap-2 bg-white p-2.5 rounded-xl border border-gray-100 relative group">
                       <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0 overflow-hidden">
                         {comment.user?.avatarUrl ? (
-                          <img src={comment.user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={comment.user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
                             {comment.user?.fullName?.[0] || 'U'}
@@ -1939,7 +1939,7 @@ export default function DashboardView() {
                       <label className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-100 transition overflow-hidden relative" style={{ aspectRatio: '16/9' }}>
                         {reForm.coverImage ? (
                           <>
-                            <img src={reForm.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={reForm.coverImage} alt="Cover" className="w-full h-full object-cover" />
                             <button type="button" onClick={(e) => { e.preventDefault(); setReForm(p => ({ ...p, coverImage: '' })) }} className="absolute top-2 right-2 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
                               <Trash2 className="size-3.5" />
                             </button>
@@ -2203,7 +2203,7 @@ export default function DashboardView() {
                             <div key={viewer.userId || i} className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center text-gray-500 text-xs font-bold">
-                                  {viewer.avatarUrl ? <img src={viewer.avatarUrl} className="w-full h-full object-cover"/> : (viewer.fullName?.charAt(0).toUpperCase() || 'U')}
+                                  {viewer.avatarUrl ? <img loading="lazy" decoding="async" src={viewer.avatarUrl} className="w-full h-full object-cover"/> : (viewer.fullName?.charAt(0).toUpperCase() || 'U')}
                                 </div>
                                 <span className="text-sm font-semibold text-gray-800">{viewer.fullName || 'User'}</span>
                               </div>
@@ -2223,7 +2223,7 @@ export default function DashboardView() {
                           {replies.map((reply: any, i: number) => (
                             <div key={reply.userId || i} className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
                               <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center text-gray-500 text-xs font-bold">
-                                {reply.avatarUrl ? <img src={reply.avatarUrl} className="w-full h-full object-cover"/> : (reply.fullName?.charAt(0).toUpperCase() || 'U')}
+                                {reply.avatarUrl ? <img loading="lazy" decoding="async" src={reply.avatarUrl} className="w-full h-full object-cover"/> : (reply.fullName?.charAt(0).toUpperCase() || 'U')}
                               </div>
                               <div>
                                 <span className="text-sm font-semibold text-gray-900 block">{reply.fullName || 'User'}</span>

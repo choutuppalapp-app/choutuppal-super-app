@@ -23,6 +23,7 @@ import { useAppStore } from '@/lib/store'
 import ListingCard from '@/components/listing-card'
 import FilterDrawer from '@/components/filter-drawer'
 import { RealEstateView } from '@/components/real-estate-view'
+import { useInView } from 'react-intersection-observer'
 
 interface Listing {
   id: string
@@ -98,6 +99,17 @@ export default function ExploreView() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [activeTab, setActiveTab] = useState<'listings' | 'real-estate'>(storeSearchQuery === 'real estate' ? 'real-estate' : 'listings')
+
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0,
+    rootMargin: '100px',
+  })
+
+  useEffect(() => {
+    if (inView && !loading && !loadingMore && page < totalPages) {
+      handleLoadMore()
+    }
+  }, [inView, loading, loadingMore, page, totalPages])
 
   // Sync store's searchQuery to local state
   // When user clicks "Real Estate" in bottom nav, it sets store.searchQuery
@@ -370,22 +382,10 @@ export default function ExploreView() {
             ))}
           </div>
 
-          {/* Load More */}
+          {/* Infinite Scroll Trigger */}
           {page < totalPages && (
-            <div className="text-center pt-4">
-              <Button
-                variant="outline"
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/5 px-8 active:scale-95 transition-transform"
-              >
-                {loadingMore ? (
-                  <div className="size-4 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full mr-2 animate-spin" />
-                ) : (
-                  <ChevronDown className="size-4 mr-1" />
-                )}
-                Load More
-              </Button>
+            <div ref={loadMoreRef} className="text-center pt-4 flex justify-center py-6">
+              <div className="size-6 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
             </div>
           )}
         </>

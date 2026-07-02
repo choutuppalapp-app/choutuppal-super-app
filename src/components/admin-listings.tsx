@@ -337,7 +337,7 @@ export default function AdminListings() {
             <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden group">
               <div className="h-40 bg-gray-100 relative">
                 {item.coverImage || (item.images && JSON.parse(item.images)?.[0]) ? (
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={item.coverImage || JSON.parse(item.images)[0]} 
                     alt={item.name}
                     className="w-full h-full object-cover"
@@ -511,7 +511,7 @@ export default function AdminListings() {
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block mb-2">Logo</label>
                     <div className="flex items-center gap-4">
-                      {logoUrl && <img src={logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />}
+                      {logoUrl && <img loading="lazy" decoding="async" src={logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />}
                       <Input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'logo')} disabled={uploading} className="rounded-xl" />
                     </div>
                   </div>
@@ -520,7 +520,7 @@ export default function AdminListings() {
                 <div>
                   <label className="text-sm font-semibold text-gray-700 block mb-2">Cover Image</label>
                   <div className="flex items-center gap-4">
-                    {coverUrl && <img src={coverUrl} alt="Cover" className="w-24 h-16 rounded-xl object-cover border border-gray-200" />}
+                    {coverUrl && <img loading="lazy" decoding="async" src={coverUrl} alt="Cover" className="w-24 h-16 rounded-xl object-cover border border-gray-200" />}
                     <Input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'cover')} disabled={uploading} className="rounded-xl" />
                   </div>
                 </div>
@@ -531,7 +531,7 @@ export default function AdminListings() {
                   <div className="flex flex-wrap gap-2">
                     {galleryUrls.map((url, i) => (
                       <div key={i} className="relative group">
-                        <img src={url} alt="Gallery" className="w-20 h-20 rounded-xl object-cover border border-gray-200" />
+                        <img loading="lazy" decoding="async" src={url} alt="Gallery" className="w-20 h-20 rounded-xl object-cover border border-gray-200" />
                         <button type="button" onClick={() => setGalleryUrls(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <X className="w-3 h-3" />
                         </button>

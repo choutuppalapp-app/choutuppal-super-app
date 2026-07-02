@@ -108,7 +108,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
               >
                 <div className="w-5 h-5 rounded-full bg-blue-100 overflow-hidden shrink-0 flex items-center justify-center border border-blue-200">
                   {listing.user?.avatarUrl ? (
-                    <img src={listing.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={listing.user.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-[9px] font-bold text-blue-600">{listing.user?.fullName?.[0] || 'U'}</span>
                   )}
