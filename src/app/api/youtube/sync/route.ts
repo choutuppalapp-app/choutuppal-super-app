@@ -6,9 +6,11 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY
 
 export async function POST(req: Request) {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const token = req.headers.get('Authorization')?.split(' ')[1]
+    const { data: { user }, error } = await supabase.auth.getUser(token)
 
-    if (!user) {
+    if (error || !user) {
+      console.log('POST /youtube/sync - Auth Error:', error?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -16,7 +18,9 @@ export async function POST(req: Request) {
       where: { id: user.id }
     })
 
-    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'super_admin')) {
+    console.log('POST /youtube/sync - User role:', dbUser?.role)
+
+    if (!dbUser || !['admin', 'super_admin', 'city_admin'].includes(dbUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

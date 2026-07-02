@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
 import { supabase } from '@/lib/supabase'
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const token = req.headers.get('Authorization')?.split(' ')[1]
+    const { data: { user }, error } = await supabase.auth.getUser(token)
 
-    if (!user) {
+    if (error || !user) {
+      console.log('GET /admin/youtube-channels - Auth Error:', error?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -14,7 +16,9 @@ export async function GET() {
       where: { id: user.id }
     })
 
-    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'super_admin')) {
+    console.log('GET /admin/youtube-channels - User role:', dbUser?.role)
+
+    if (!dbUser || !['admin', 'super_admin', 'city_admin'].includes(dbUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -31,9 +35,11 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const token = req.headers.get('Authorization')?.split(' ')[1]
+    const { data: { user }, error } = await supabase.auth.getUser(token)
 
-    if (!user) {
+    if (error || !user) {
+      console.log('POST /admin/youtube-channels - Auth Error:', error?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -41,7 +47,9 @@ export async function POST(req: Request) {
       where: { id: user.id }
     })
 
-    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'super_admin')) {
+    console.log('POST /admin/youtube-channels - User role:', dbUser?.role)
+
+    if (!dbUser || !['admin', 'super_admin', 'city_admin'].includes(dbUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -55,7 +63,8 @@ export async function POST(req: Request) {
     const channel = await prisma.youtubeChannel.create({
       data: {
         channelId,
-        channelName
+        channelName,
+        userId: user.id
       }
     })
 
@@ -71,9 +80,11 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const token = req.headers.get('Authorization')?.split(' ')[1]
+    const { data: { user }, error } = await supabase.auth.getUser(token)
 
-    if (!user) {
+    if (error || !user) {
+      console.log('DELETE /admin/youtube-channels - Auth Error:', error?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -81,7 +92,9 @@ export async function DELETE(req: Request) {
       where: { id: user.id }
     })
 
-    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'super_admin')) {
+    console.log('DELETE /admin/youtube-channels - User role:', dbUser?.role)
+
+    if (!dbUser || !['admin', 'super_admin', 'city_admin'].includes(dbUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

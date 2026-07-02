@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Youtube, Trash2, Plus, Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminYoutubeSync() {
   const [channels, setChannels] = useState<any[]>([])
@@ -19,7 +20,13 @@ export default function AdminYoutubeSync() {
 
   const fetchChannels = async () => {
     try {
-      const res = await fetch('/api/admin/youtube-channels')
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin/youtube-channels', {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        credentials: 'include'
+      })
       if (res.ok) {
         const data = await res.json()
         setChannels(data.channels || [])
@@ -37,9 +44,14 @@ export default function AdminYoutubeSync() {
 
     setIsAdding(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/admin/youtube-channels', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        credentials: 'include',
         body: JSON.stringify({
           channelId: newChannelId.trim(),
           channelName: newChannelName.trim()
@@ -66,8 +78,13 @@ export default function AdminYoutubeSync() {
     if (!confirm('Are you sure you want to remove this channel?')) return
     
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch(`/api/admin/youtube-channels?id=${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        credentials: 'include'
       })
       
       if (res.ok) {
@@ -84,7 +101,14 @@ export default function AdminYoutubeSync() {
   const handleManualSync = async () => {
     setIsSyncing(true)
     try {
-      const res = await fetch('/api/youtube/sync', { method: 'POST' })
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/youtube/sync', { 
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        credentials: 'include'
+      })
       if (res.ok) {
         const data = await res.json()
         toast.success(`Synced successfully! Added ${data.addedCount} new videos.`)
