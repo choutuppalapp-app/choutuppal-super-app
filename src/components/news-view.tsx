@@ -120,7 +120,7 @@ export default function NewsView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <Link href={`/news/${articles[0].slug}`} className="block">
+              <Link href={`/news/${articles[0].slug || articles[0].id}`} className="block">
                 <GlassCard variant="gold" className="!p-0 overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="relative max-h-[250px] h-48 sm:h-[250px] overflow-hidden">
                     {articles[0].imageUrl ? (
@@ -178,7 +178,7 @@ export default function NewsView() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05, duration: 0.3 }}
               >
-                <Link href={`/news/${article.slug}`} className="block">
+                <Link href={`/news/${article.slug || article.id}`} className="block">
                   <GlassCard className="!p-0 overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="flex gap-4 p-4">
                       {/* Thumbnail */}

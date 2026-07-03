@@ -6,9 +6,11 @@ import { useAppStore } from '@/lib/store'
 import { GlassCard } from '@/components/glass-card'
 import { OptimizedImage } from '@/components/optimized-image'
 import { Skeleton } from '@/components/ui/skeleton'
+import Link from 'next/link'
 
 interface NewsItem {
   id: string
+  slug: string
   title: string
   content: string | null
   imageUrl: string | null
@@ -115,41 +117,43 @@ export function NewsSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {news.slice(0, 6).map((item, index) => (
             <div key={item.id}>
-              <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
-                {/* Image or Royal Glassmorphism gradient fallback */}
-                <div className="relative aspect-video w-full overflow-hidden">
-                  {item.imageUrl ? (
-                    <OptimizedImage
-                      src={item.imageUrl}
-                      alt={item.title}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-t-xl flex items-center justify-center">
-                      <Newspaper className="w-8 h-8 text-white/60" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-3 space-y-2">
-                  <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">
-                    {item.title}
-                  </h3>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-gray-400">
-                      <Clock className="size-3" />
-                      <span className="text-[11px]">{formatDate(item.createdAt)}</span>
-                    </div>
-                    {item.source && (
-                      <span className="text-[11px] text-[#4169E1] font-medium">
-                        {item.source}
-                      </span>
+              <Link href={`/news/${item.slug || item.id}`} className="block">
+                <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
+                  {/* Image or Royal Glassmorphism gradient fallback */}
+                  <div className="relative aspect-video w-full overflow-hidden">
+                    {item.imageUrl ? (
+                      <OptimizedImage
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-t-xl flex items-center justify-center">
+                        <Newspaper className="w-8 h-8 text-white/60" />
+                      </div>
                     )}
                   </div>
-                </div>
-              </GlassCard>
+
+                  <div className="p-3 space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">
+                      {item.title}
+                    </h3>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <Clock className="size-3" />
+                        <span className="text-[11px]">{formatDate(item.createdAt)}</span>
+                      </div>
+                      {item.source && (
+                        <span className="text-[11px] text-[#4169E1] font-medium">
+                          {item.source}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </GlassCard>
+              </Link>
             </div>
           ))}
         </div>

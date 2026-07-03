@@ -11,8 +11,8 @@ import { ShareButtons } from './share-buttons'
 
 async function getNews(slug: string) {
   try {
-    return await db.news.findUnique({
-      where: { slug },
+    return await db.news.findFirst({
+      where: { OR: [{ slug }, { id: slug }] },
       include: { city: true },
     })
   } catch {

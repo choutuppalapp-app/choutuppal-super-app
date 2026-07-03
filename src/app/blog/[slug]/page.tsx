@@ -11,8 +11,8 @@ import { ShareButtons } from '@/app/news/[slug]/share-buttons'
 
 async function getBlog(slug: string) {
   try {
-    return await db.blog.findUnique({
-      where: { slug },
+    return await db.blog.findFirst({
+      where: { OR: [{ slug }, { id: slug }] },
       include: { author: true },
     })
   } catch {
