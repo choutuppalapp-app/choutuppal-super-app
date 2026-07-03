@@ -111,7 +111,7 @@ export default function AdminBlogs() {
     setSavingBlog(true)
     try {
       const content = editor?.getHTML() || ''
-      const cityId = blogs[0]?.cityId || user?.id // fallback
+      const cityId = blogs[0]?.cityId || null // fallback removed user?.id
 
       const payload = {
         title,

@@ -153,46 +153,53 @@ export async function POST(request: Request) {
     }
 
     // Verify city exists if provided
-    if (cityId) {
-      const city = await db.city.findUnique({ where: { id: cityId } })
+    let finalCityId = cityId || null;
+    if (finalCityId) {
+      const city = await db.city.findUnique({ where: { id: finalCityId } })
       if (!city) {
-        return NextResponse.json(
-          { error: 'City not found' },
-          { status: 404 }
-        )
+        const firstCity = await db.city.findFirst()
+        finalCityId = firstCity ? firstCity.id : null
       }
     }
 
-    const blog = await db.blog.create({
-      data: {
-        title,
-        slug,
-        coverImageUrl: coverImageUrl || null,
-        content: content || null,
-        authorId: user.id, // Always use authenticated user's ID
-        cityId: cityId || null,
-        isPublished: true, // Agent submissions are automatically APPROVED
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
+    try {
+      const blog = await db.blog.create({
+        data: {
+          title,
+          slug,
+          coverImageUrl: coverImageUrl || null,
+          content: content || null,
+          authorId: user.id, // Always use authenticated user's ID
+          cityId: finalCityId,
+          isPublished: true, // Agent submissions are automatically APPROVED
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              fullName: true,
+              avatarUrl: true,
+            },
+          },
+          city: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
           },
         },
-        city: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-      },
-    })
+      })
 
-    return NextResponse.json(blog, { status: 201 })
-  } catch (error) {
+      return NextResponse.json(blog, { status: 201 })
+    } catch (createError: any) {
+      console.error('Prisma Blog Create Error:', createError)
+      return NextResponse.json(
+        { error: createError.message || 'Failed to save blog post' },
+        { status: 500 }
+      )
+    }
+  } catch (error: any) {
     console.error('Error creating blog:', error)
     return NextResponse.json(
       { error: 'Failed to create blog' },

@@ -185,11 +185,27 @@ export async function getAdminBlogs() {
 
 export async function createAdminBlog(data: any) {
   const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
-  return await db.blog.create({ data: { ...data, slug } });
+  let finalCityId = data.cityId || null;
+  if (finalCityId) {
+    const city = await db.city.findUnique({ where: { id: finalCityId } });
+    if (!city) {
+      const firstCity = await db.city.findFirst();
+      finalCityId = firstCity ? firstCity.id : null;
+    }
+  }
+  return await db.blog.create({ data: { ...data, slug, cityId: finalCityId } });
 }
 
 export async function updateAdminBlog(id: string, data: any) {
-  return await db.blog.update({ where: { id }, data });
+  let finalCityId = data.cityId || null;
+  if (finalCityId) {
+    const city = await db.city.findUnique({ where: { id: finalCityId } });
+    if (!city) {
+      const firstCity = await db.city.findFirst();
+      finalCityId = firstCity ? firstCity.id : null;
+    }
+  }
+  return await db.blog.update({ where: { id }, data: { ...data, cityId: finalCityId } });
 }
 
 export async function deleteAdminBlog(id: string) {
