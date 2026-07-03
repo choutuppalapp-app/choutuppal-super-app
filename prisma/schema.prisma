@@ -126,6 +126,7 @@ model User {
   shortComments  ShortComment[]
   videoPlaylists VideoPlaylist[]
   videoProgress  VideoProgress[]
+  pushSubscriptions PushSubscription[]
 }
 
 // ─── Platform Settings (Commission Engine) ──────────────────
@@ -423,9 +424,11 @@ model SiteSetting {
 model PushSubscription {
   id        String   @id @default(cuid())
   userId    String?
-  endpoint  String
-  keys      String // JSON string
+  endpoint  String   @unique
+  keys      Json
   createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Spin Prize ──────────────────────────────────────────────
@@ -757,11 +760,10 @@ model AppBranding {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  actorId   String? // The user who triggered the notification
-  type      String // LIKE, COMMENT, REVIEW, FOLLOW, REPLY
-  title     String
-  message   String?
-  linkUrl   String? // Where to take the user on click
+  actorId   String?
+  type      String
+  message   String
+  link      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 

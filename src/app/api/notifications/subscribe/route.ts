@@ -1,37 +1,41 @@
 import { NextResponse } from 'next/server'
-import { db as prisma } from '@/lib/db'
+import { db } from '@/lib/db'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+
+async function getUser() {
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: { get(name: string) { return cookieStore.get(name)?.value } },
+    }
+  )
+  const { data } = await supabase.auth.getUser()
+  return data.user
+}
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json()
-    const { endpoint, keys, userId } = data
+    const user = await getUser()
+    const userId = user?.id || null 
+
+    const { endpoint, keys } = await request.json()
 
     if (!endpoint || !keys) {
-      return NextResponse.json({ error: 'Invalid subscription data' }, { status: 400 })
+      return NextResponse.json({ error: 'Endpoint and keys are required' }, { status: 400 })
     }
 
-    const existing = await prisma.pushSubscription.findFirst({ where: { endpoint } });
-    if (existing) {
-      await prisma.pushSubscription.update({
-        where: { id: existing.id },
-        data: {
-          keys: JSON.stringify(keys),
-          userId: userId || null
-        }
-      })
-    } else {
-      await prisma.pushSubscription.create({
-        data: {
-          endpoint,
-          keys: JSON.stringify(keys),
-          userId: userId || null
-        }
-      })
-    }
+    const subscription = await db.pushSubscription.upsert({
+      where: { endpoint },
+      update: { userId, keys },
+      create: { userId, endpoint, keys },
+    })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, subscription })
   } catch (error) {
-    console.error('Push Subscription Error:', error)
-    return NextResponse.json({ error: 'Failed to subscribe' }, { status: 500 })
+    console.error('Error saving subscription:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

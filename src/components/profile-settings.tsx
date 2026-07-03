@@ -9,6 +9,7 @@ import { useSWRConfig } from 'swr'
 import { useToast } from '@/hooks/use-toast'
 import imageCompression from 'browser-image-compression'
 import { format } from 'date-fns'
+import PushPermissionManager from './push-permission-manager'
 
 export default function ProfileSettings() {
   const { user, logout } = useAuth()
@@ -351,6 +352,9 @@ export default function ProfileSettings() {
           </button>
         </form>
       </div>
+
+      {/* Push Notifications Settings */}
+      <PushPermissionManager />
 
       {/* Change Password */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

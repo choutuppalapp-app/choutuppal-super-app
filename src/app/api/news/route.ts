@@ -88,6 +88,22 @@ export async function POST(req: Request) {
         isPublished: isPublished ?? true
       }
     });
+
+    // Create notifications for all users
+    try {
+      const allUsers = await db.user.findMany({ select: { id: true } });
+      const notifications = allUsers.map(u => ({
+        userId: u.id,
+        actorId: user.id,
+        type: 'NEWS',
+        message: `కొత్త వార్త: ${title}`,
+        link: `/news/${slug}`,
+      }));
+      await db.notification.createMany({ data: notifications });
+    } catch (notifError) {
+      console.error('Error creating notifications for news:', notifError);
+    }
+
     return NextResponse.json(news, { status: 201 });
   } catch (error: any) {
     console.error('Prisma News Create Error:', error);

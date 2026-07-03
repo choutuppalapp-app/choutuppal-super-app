@@ -12,11 +12,12 @@ import AdminAnnouncements from './admin-announcements'
 import AdminUsers from './admin-users'
 import AdminModeration from './admin-moderation'
 import AdminYoutubeSync from './admin-youtube-sync'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube } from 'lucide-react'
+import AdminPush from './admin-push'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube, BellRing } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube'
+type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -35,6 +36,7 @@ export default function AdminContainer() {
     { id: 'blogs', label: 'Blogs', icon: FileText },
     { id: 'announcements', label: 'Announcements', icon: Megaphone },
     { id: 'youtube', label: 'YouTube Sync', icon: Youtube },
+    { id: 'push', label: 'Push Notifications', icon: BellRing },
     { id: 'moderation', label: 'Moderation', icon: ShieldCheck },
     { id: 'branding', label: 'App Branding', icon: Settings },
   ]
@@ -139,6 +141,7 @@ export default function AdminContainer() {
               {activeTab === 'blogs' && <AdminBlogs />}
               { activeTab === 'announcements' && <AdminAnnouncements /> }
               { activeTab === 'youtube' && <AdminYoutubeSync /> }
+              { activeTab === 'push' && <AdminPush /> }
               { activeTab === 'moderation' && <AdminModeration /> }
             </div>
           )}

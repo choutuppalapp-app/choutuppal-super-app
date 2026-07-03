@@ -192,6 +192,21 @@ export async function POST(request: Request) {
         },
       })
 
+      // Create notifications for all users
+      try {
+        const allUsers = await db.user.findMany({ select: { id: true } });
+        const notifications = allUsers.map(u => ({
+          userId: u.id,
+          actorId: user.id,
+          type: 'NEWS',
+          message: `కొత్త బ్లాగ్: ${title}`,
+          link: `/blog/${slug}`,
+        }));
+        await db.notification.createMany({ data: notifications });
+      } catch (notifError) {
+        console.error('Error creating notifications for blog:', notifError);
+      }
+
       return NextResponse.json(blog, { status: 201 })
     } catch (createError: any) {
       console.error('Prisma Blog Create Error:', createError)

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Verify post exists and is not deleted
     const post = await db.post.findUnique({
       where: { id: postId },
-      select: { id: true, isDeleted: true },
+      select: { id: true, isDeleted: true, authorId: true },
     });
 
     if (!post || post.isDeleted) {
@@ -82,6 +82,19 @@ export async function POST(request: NextRequest) {
           where: { id: postId },
           data: { likesCount: { increment: 1 } },
         });
+        
+        const actor = await tx.user.findUnique({ where: { id: userId }, select: { fullName: true } });
+        if (post.authorId !== userId && actor) {
+          await tx.notification.create({
+            data: {
+              userId: post.authorId,
+              actorId: userId,
+              type: 'LIKE',
+              message: `${actor.fullName} మీ పోస్ట్ ని లైక్ చేశారు`,
+              link: `/community`,
+            }
+          });
+        }
       });
 
       return NextResponse.json({ liked: true });

@@ -1,0 +1,111 @@
+'use client'
+
+import { useState } from 'react'
+import { Send, Loader2, BellRing } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+
+export default function AdminPush() {
+  const { toast } = useToast()
+  const [title, setTitle] = useState('')
+  const [message, setMessage] = useState('')
+  const [url, setUrl] = useState('/')
+  const [isSending, setIsSending] = useState(false)
+
+  const handleSendPush = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title || !message) {
+      toast({ title: 'Error', description: 'Title and Message are required', variant: 'destructive' })
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const res = await fetch('/api/admin/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message, url }),
+      })
+      const data = await res.json()
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to send')
+      
+      toast({ title: 'Success', description: `Successfully sent push notification to ${data.sentCount} devices!` })
+      setTitle('')
+      setMessage('')
+      setUrl('/')
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Error sending push notifications', variant: 'destructive' })
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  return (
+    <div className="max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Push Notifications</h1>
+        <p className="text-gray-500 mt-1">Send a global push notification to all subscribed users across the platform.</p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+        <form onSubmit={handleSendPush} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Notification Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="e.g., New Feature Alert!"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Message Body</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none min-h-[120px] resize-none"
+              placeholder="Enter the notification message here..."
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Link URL (Optional)</label>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="e.g., /news/latest-update"
+            />
+            <p className="text-xs text-gray-500 mt-2">Where the user is taken when they click the notification.</p>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100 flex justify-end">
+            <button
+              type="submit"
+              disabled={isSending}
+              className="flex items-center gap-2 px-6 py-3 text-white rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm shadow-blue-200"
+              style={{ background: 'linear-gradient(to right, #4169E1, #D4AF37)' }}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  Send Push Notification
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

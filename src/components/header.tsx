@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
-import { NotificationPanel } from './notification-panel'
+import NotificationBell from './notification-bell'
 import { useAuth } from '@/lib/auth-context'
 
 import { useAppConfig } from '@/hooks/use-app-config'
@@ -147,7 +147,7 @@ export function Header({ className }: HeaderProps) {
             <Download className="w-3.5 h-3.5" />
             Download App ⬇️
           </button>
-          <NotificationPanel />
+          <NotificationBell />
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <button
@@ -194,7 +194,7 @@ export function Header({ className }: HeaderProps) {
           </button>
           
           <div className="min-w-[44px] min-h-[44px] flex items-center justify-center relative">
-            <NotificationPanel />
+            <NotificationBell />
           </div>
           <button
             onClick={() => setIsDrawerOpen(true)}

@@ -122,6 +122,19 @@ export async function POST(request: NextRequest) {
             data: { followersCount: { increment: 1 } },
           });
         }
+        
+        const followerUser = await tx.user.findUnique({ where: { id: followerId }, select: { fullName: true } });
+        if (followerUser) {
+          await tx.notification.create({
+            data: {
+              userId: followingId,
+              actorId: followerId,
+              type: 'FOLLOW',
+              message: `${followerUser.fullName} మిమ్మల్ని ఫాలో అవుతున్నారు`,
+              link: `/profile/${followerId}`,
+            }
+          });
+        }
       });
 
       return NextResponse.json({ following: true });
