@@ -15,6 +15,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
 import { PwaInstallManager } from "@/components/pwa-install-manager";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
+import PushPermissionManager from "@/components/push-permission-manager";
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -122,6 +123,10 @@ export default function RootLayout({
 
               <ErrorBoundary name="PwaInstallManager">
                 <PwaInstallManager />
+              </ErrorBoundary>
+
+              <ErrorBoundary name="PushPermissionManager">
+                <PushPermissionManager />
               </ErrorBoundary>
 
               <ErrorBoundary name="WhatsAppFloatingButton">
