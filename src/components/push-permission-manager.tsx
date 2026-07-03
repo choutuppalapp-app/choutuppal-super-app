@@ -56,6 +56,7 @@ export default function PushPermissionManager() {
         
         if (!res.ok) throw new Error('Failed to save subscription')
         
+        console.log('Subscribed successfully', subscription)
         toast({ title: 'Success', description: 'Notifications enabled!' })
       }
     } catch (error) {

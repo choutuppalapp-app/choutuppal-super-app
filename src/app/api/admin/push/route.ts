@@ -24,11 +24,10 @@ export async function POST(request: Request) {
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
     const privateKey = process.env.VAPID_PRIVATE_KEY || ''
     
-    if (publicKey && privateKey) {
-      webpush.setVapidDetails('mailto:support@choutuppal.in', publicKey, privateKey)
-    } else {
-      console.warn('VAPID keys not configured, push notifications will fail')
+    if (!publicKey || !privateKey) {
+      return NextResponse.json({ error: 'VAPID keys are missing in .env' }, { status: 500 })
     }
+    webpush.setVapidDetails('mailto:admin@choutuppal.in', publicKey, privateKey)
 
     const sessionUser = await getUser()
     if (!sessionUser?.id) {
@@ -47,6 +46,10 @@ export async function POST(request: Request) {
     }
 
     const subscriptions = await db.pushSubscription.findMany()
+    
+    if (subscriptions.length === 0) {
+      return NextResponse.json({ error: 'No subscribed users found' }, { status: 400 })
+    }
 
     const payload = JSON.stringify({
       title,
@@ -71,8 +74,8 @@ export async function POST(request: Request) {
     const successful = results.filter(r => r.status === 'fulfilled').length
 
     return NextResponse.json({ success: true, sentCount: successful })
-  } catch (error) {
-    console.error('Error sending push notifications:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Push Send Error:', error)
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }
