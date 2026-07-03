@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { Send, Loader2, BellRing } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 export default function AdminPush() {
-  const { toast } = useToast()
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
   const [url, setUrl] = useState('/')
@@ -14,11 +13,14 @@ export default function AdminPush() {
   const handleSendPush = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !message) {
-      toast({ title: 'Error', description: 'Title and Message are required', variant: 'destructive' })
+      toast.error('Title and Message are required')
       return
     }
 
+    const toastId = toast.loading('Sending notification...')
+    console.log('Sending push...', { title, message })
     setIsSending(true)
+    
     try {
       const res = await fetch('/api/admin/push', {
         method: 'POST',
@@ -29,12 +31,12 @@ export default function AdminPush() {
       
       if (!res.ok) throw new Error(data.error || 'Failed to send')
       
-      toast({ title: 'Success', description: `Successfully sent push notification to ${data.sentCount} devices!` })
+      toast.success('Notification sent successfully!', { id: toastId })
       setTitle('')
       setMessage('')
       setUrl('/')
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Error sending push notifications', variant: 'destructive' })
+      toast.error('Error: ' + error.message, { id: toastId })
     } finally {
       setIsSending(false)
     }
