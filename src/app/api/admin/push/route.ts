@@ -6,7 +6,7 @@ import { createServerClient } from '@supabase/ssr'
 
 
 
-async function getUser() {
+async function getSessionUser() {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,8 +15,8 @@ async function getUser() {
       cookies: { get(name: string) { return cookieStore.get(name)?.value } },
     }
   )
-  const { data } = await supabase.auth.getUser()
-  return data.user
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.user || null
 }
 
 export async function POST(request: Request) {
@@ -29,12 +29,13 @@ export async function POST(request: Request) {
     }
     webpush.setVapidDetails('mailto:admin@choutuppal.in', publicKey, privateKey)
 
-    const sessionUser = await getUser()
+    const sessionUser = await getSessionUser()
     if (!sessionUser?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const user = await db.user.findUnique({ where: { id: sessionUser.id } })
+    console.log('Push Auth User:', user?.role)
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin' && user.role !== 'city_admin')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }

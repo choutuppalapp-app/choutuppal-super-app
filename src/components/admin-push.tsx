@@ -25,6 +25,7 @@ export default function AdminPush() {
       const res = await fetch('/api/admin/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ title, message, url }),
       })
       const data = await res.json()
