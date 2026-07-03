@@ -167,7 +167,7 @@ export function BannerAds() {
         onClick={() => openLightbox(currentIndex)}
       >
         <div
-          className="w-full aspect-[16/9] overflow-hidden bg-gray-100 rounded-lg relative shadow-sm border-2 border-transparent"
+          className="w-full aspect-[16/9] md:max-w-3xl md:mx-auto md:rounded-xl md:my-4 overflow-hidden bg-gray-100 rounded-lg relative shadow-sm border-2 border-transparent"
           style={{
             backgroundClip: 'padding-box, border-box',
             backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, #4169E1, #D4AF37)',
