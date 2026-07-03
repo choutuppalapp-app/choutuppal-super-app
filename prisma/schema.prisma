@@ -369,6 +369,7 @@ model News {
   content     String?
   imageUrl    String?
   source      String?
+  authorName  String?  @default("Choutuppal App Team")
   isPublished Boolean  @default(true)
   createdAt   DateTime @default(now())
   authorId    String?
@@ -477,6 +478,7 @@ model Blog {
   coverImageUrl String?
   content       String? // Rich text HTML content
   authorId      String
+  authorName    String?  @default("Choutuppal App Team")
   cityId        String? // Optional: null = global blog
   isPublished   Boolean  @default(false)
   createdAt     DateTime @default(now())

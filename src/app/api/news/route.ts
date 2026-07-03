@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    let { title, content, source, imageUrl, cityId, authorId, isPublished } = body;
+    let { title, content, source, imageUrl, cityId, authorId, authorName, isPublished } = body;
 
     const city = await db.city.findFirst({ where: { id: cityId } });
     if (!city) {
@@ -82,6 +82,7 @@ export async function POST(req: Request) {
         content,
         source,
         imageUrl,
+        authorName: authorName || 'Choutuppal App Team',
         cityId,
         authorId: user.id,
         isPublished: isPublished ?? true

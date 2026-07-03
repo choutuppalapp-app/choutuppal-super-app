@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
-import { Newspaper, Calendar, MapPin, Share2, ArrowLeft } from 'lucide-react'
+import { Newspaper, Calendar, MapPin, Share2, ArrowLeft, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { OptimizedImage } from '@/components/optimized-image'
 import Link from 'next/link'
@@ -130,6 +130,12 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 <div className="flex items-center gap-1">
                   <MapPin className="size-4" />
                   {news.city.name}
+                </div>
+              )}
+              {news.authorName && (
+                <div className="flex items-center gap-1">
+                  <User className="size-4" />
+                  {news.authorName}
                 </div>
               )}
             </div>

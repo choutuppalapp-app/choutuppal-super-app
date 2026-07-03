@@ -126,10 +126,10 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                   })}
                 </time>
               </div>
-              {blog.author && (
+              {(blog.authorName || blog.author) && (
                 <div className="flex items-center gap-1">
                   <User className="size-4" />
-                  {blog.author.fullName}
+                  {blog.authorName || blog.author?.fullName || "Choutuppal App Team"}
                 </div>
               )}
             </div>

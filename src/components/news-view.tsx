@@ -16,6 +16,7 @@ interface NewsArticle {
   content: string | null
   imageUrl: string | null
   source: string | null
+  authorName: string | null
   isPublished: boolean
   createdAt: string
   city: {
@@ -212,10 +213,10 @@ export default function NewsView() {
                             <Clock className="size-3" />
                             {getTimeAgo(article.createdAt)}
                           </span>
-                          {article.source && (
+                          {article.authorName && (
                             <span className="flex items-center gap-1">
                               <ExternalLink className="size-3" />
-                              {article.source}
+                              {article.authorName}
                             </span>
                           )}
                           {article.city && (

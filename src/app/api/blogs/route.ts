@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { title, slug, coverImageUrl, content, cityId } = body
+    const { title, slug, coverImageUrl, content, cityId, authorName } = body
 
     if (!title || !slug) {
       return NextResponse.json(
@@ -169,6 +169,7 @@ export async function POST(request: Request) {
           slug,
           coverImageUrl: coverImageUrl || null,
           content: content || null,
+          authorName: authorName || 'Choutuppal App Team',
           authorId: user.id, // Always use authenticated user's ID
           cityId: finalCityId,
           isPublished: true, // Agent submissions are automatically APPROVED

@@ -17,6 +17,7 @@ interface BlogPost {
   slug: string
   coverImageUrl: string | null
   content: string | null
+  authorName: string | null
   authorId: string
   cityId: string | null
   isPublished: boolean
@@ -194,7 +195,7 @@ export default function BlogView() {
                   <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100 md:border-white/20">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500">
                       <User className="size-3.5" style={{ color: themePrimary }} />
-                      <span className="font-medium">{blog.author.fullName}</span>
+                      <span className="font-medium">{blog.authorName || blog.author.fullName}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-400">
                       <Calendar className="size-3" />

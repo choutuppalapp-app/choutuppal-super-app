@@ -24,6 +24,7 @@ export default function AdminBlogs() {
   // Blog Form State
   const [title, setTitle] = useState('')
   const [coverImageUrl, setCoverImageUrl] = useState('')
+  const [authorName, setAuthorName] = useState('Choutuppal App Team')
   
   const editor = useEditor({
     extensions: [
@@ -68,6 +69,7 @@ export default function AdminBlogs() {
     setIsEditing(item)
     setTitle(item.title || '')
     setCoverImageUrl(item.coverImageUrl || '')
+    setAuthorName(item.authorName || 'Choutuppal App Team')
     editor?.commands.setContent(item.content || '')
   }
 
@@ -76,6 +78,7 @@ export default function AdminBlogs() {
     setIsEditing(null)
     setTitle('')
     setCoverImageUrl('')
+    setAuthorName('Choutuppal App Team')
     editor?.commands.setContent('')
   }
 
@@ -117,6 +120,7 @@ export default function AdminBlogs() {
         title,
         content,
         coverImageUrl,
+        authorName,
         cityId: isEditing ? isEditing.cityId : cityId,
         authorId: user?.id,
         isPublished: true,
@@ -223,6 +227,15 @@ export default function AdminBlogs() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Author Name</label>
+                  <Input 
+                    value={authorName} 
+                    onChange={e => setAuthorName(e.target.value)} 
+                    className="rounded-xl bg-gray-50 border-gray-200"
+                    placeholder="e.g. Choutuppal App Team"
+                  />
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Cover Image</label>
                   <div className="flex items-center gap-4">

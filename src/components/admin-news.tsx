@@ -26,6 +26,7 @@ export default function AdminNews() {
   const [title, setTitle] = useState('')
   const [source, setSource] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [authorName, setAuthorName] = useState('Choutuppal App Team')
   
   const editor = useEditor({
     extensions: [
@@ -71,6 +72,7 @@ export default function AdminNews() {
     setTitle(item.title || '')
     setSource(item.source || '')
     setImageUrl(item.imageUrl || '')
+    setAuthorName(item.authorName || 'Choutuppal App Team')
     editor?.commands.setContent(item.content || '')
   }
 
@@ -80,6 +82,7 @@ export default function AdminNews() {
     setTitle('')
     setSource('')
     setImageUrl('')
+    setAuthorName('Choutuppal App Team')
     editor?.commands.setContent('')
   }
 
@@ -122,6 +125,7 @@ export default function AdminNews() {
         content,
         source,
         imageUrl,
+        authorName,
         cityId: isEditing ? isEditing.cityId : cityId,
         authorId: user?.id,
         isPublished: true,
@@ -247,7 +251,16 @@ export default function AdminNews() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Source / Author (Optional)</label>
+                  <label className="text-sm font-semibold text-gray-700">Author Name</label>
+                  <Input 
+                    value={authorName} 
+                    onChange={e => setAuthorName(e.target.value)} 
+                    className="rounded-xl bg-gray-50 border-gray-200"
+                    placeholder="e.g. Choutuppal App Team"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Source (Optional)</label>
                   <Input 
                     value={source} 
                     onChange={e => setSource(e.target.value)} 
@@ -255,6 +268,9 @@ export default function AdminNews() {
                     placeholder="e.g. Local News Daily"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Cover Image</label>
                   <div className="flex items-center gap-4">
