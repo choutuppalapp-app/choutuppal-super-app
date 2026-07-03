@@ -33,11 +33,10 @@ async function main() {
   }
   console.log(`Updated ${listings.length} listings with valid slugs and isFeatured status.`);
 
-  // 3. Add 3 Local News Items
   const newsItems = [
-    { title: 'చౌటుప్పల్ లో కొత్త వాటర్ ట్యాంక్ ప్రారంభోత్సవం', content: 'స్థానిక ప్రజల దాహార్తిని తీర్చడానికి కొత్త వాటర్ ట్యాంక్ ప్రారంభించబడింది.', isPublished: true, cityId: city.id },
-    { title: 'హైదరాబాద్-విజయవాడ హైవే పై రోడ్డు మరమ్మతు పనులు', content: 'ప్రయాణికుల సౌకర్యార్థం హైవే పై రోడ్డు మరమ్మతు పనులు వేగవంతం చేయబడ్డాయి.', isPublished: true, cityId: city.id },
-    { title: 'చౌటుప్పల్ పట్టణంలో బోనాలు పండుగ వైభవం', content: 'చౌటుప్పల్ పట్టణంలో ప్రజలు బోనాలు పండుగను ఎంతో భక్తి శ్రద్ధలతో మరియు వైభవంగా జరుపుకున్నారు.', isPublished: true, cityId: city.id },
+    { title: 'చౌటుప్పల్ లో కొత్త వాటర్ ట్యాంక్ ప్రారంభోత్సవం', slug: 'water-tank-' + Date.now(), content: 'స్థానిక ప్రజల దాహార్తిని తీర్చడానికి కొత్త వాటర్ ట్యాంక్ ప్రారంభించబడింది.', isPublished: true, cityId: city.id },
+    { title: 'హైదరాబాద్-విజయవాడ హైవే పై రోడ్డు మరమ్మతు పనులు', slug: 'highway-repairs-' + Date.now(), content: 'ప్రయాణికుల సౌకర్యార్థం హైవే పై రోడ్డు మరమ్మతు పనులు వేగవంతం చేయబడ్డాయి.', isPublished: true, cityId: city.id },
+    { title: 'చౌటుప్పల్ పట్టణంలో బోనాలు పండుగ వైభవం', slug: 'bonalu-festival-' + Date.now(), content: 'చౌటుప్పల్ పట్టణంలో ప్రజలు బోనాలు పండుగను ఎంతో భక్తి శ్రద్ధలతో మరియు వైభవంగా జరుపుకున్నారు.', isPublished: true, cityId: city.id },
   ];
 
   for (const news of newsItems) {

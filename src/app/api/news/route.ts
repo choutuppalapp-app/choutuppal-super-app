@@ -57,7 +57,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     let { title, content, source, imageUrl, cityId, authorId, isPublished } = body;
 
-    // Ensure cityId is valid
     const city = await db.city.findFirst({ where: { id: cityId } });
     if (!city) {
       const defaultCity = await db.city.findFirst();
@@ -68,9 +67,18 @@ export async function POST(req: Request) {
       }
     }
 
+    let baseSlug = title.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '') || 'news-' + Date.now();
+    let slug = baseSlug;
+    let counter = 1;
+    while (await db.news.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
     const news = await db.news.create({
       data: {
         title,
+        slug,
         content,
         source,
         imageUrl,

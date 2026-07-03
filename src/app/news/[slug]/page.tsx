@@ -9,10 +9,10 @@ import { OptimizedImage } from '@/components/optimized-image'
 import Link from 'next/link'
 import { ShareButtons } from './share-buttons'
 
-async function getNews(id: string) {
+async function getNews(slug: string) {
   try {
     return await db.news.findUnique({
-      where: { id },
+      where: { slug },
       include: { city: true },
     })
   } catch {
@@ -20,9 +20,9 @@ async function getNews(id: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params
-  const news = await getNews(id)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const news = await getNews(slug)
   if (!news) return { title: 'News Not Found' }
 
   const title = `${news.title} in Choutuppal | Choutuppal App`
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       description,
       images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
       type: 'article',
-      url: `https://choutuppal.in/news/${news.id}`,
+      url: `https://choutuppal.in/news/${news.slug}`,
     },
     twitter: {
       card: 'summary_large_image',
@@ -52,9 +52,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const news = await getNews(id)
+export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const news = await getNews(slug)
 
   if (!news) {
     notFound()

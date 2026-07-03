@@ -365,6 +365,7 @@ model News {
   id          String   @id @default(cuid())
   cityId      String
   title       String
+  slug        String   @unique
   content     String?
   imageUrl    String?
   source      String?

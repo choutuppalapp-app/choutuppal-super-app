@@ -7,7 +7,7 @@ import { Calendar, FileText, ArrowLeft, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { OptimizedImage } from '@/components/optimized-image'
 import Link from 'next/link'
-import { ShareButtons } from '@/app/news/[id]/share-buttons'
+import { ShareButtons } from '@/app/news/[slug]/share-buttons'
 
 async function getBlog(slug: string) {
   try {
@@ -20,8 +20,9 @@ async function getBlog(slug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const blog = await getBlog(params.slug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const blog = await getBlog(slug)
   if (!blog || !blog.isPublished) return { title: 'Blog Not Found' }
 
   const title = `${blog.title} in Choutuppal | Choutuppal App`
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description,
       images: [{ url: absoluteImageUrl, width: 1200, height: 630 }],
       type: 'article',
-      url: `https://choutuppal.in/blog/${params.slug}`,
+      url: `https://choutuppal.in/blog/${slug}`,
     },
     twitter: {
       card: 'summary_large_image',
@@ -51,8 +52,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BlogDetailPage({ params }: { params: { slug: string } }) {
-  const blog = await getBlog(params.slug)
+export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const blog = await getBlog(slug)
 
   if (!blog || !blog.isPublished) {
     notFound()

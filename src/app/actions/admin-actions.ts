@@ -88,7 +88,14 @@ export async function createAdminStory(data: any) {
 }
 
 export async function createAdminNews(data: any) {
-  return await db.news.create({ data });
+  let baseSlug = data.title.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '') || 'news-' + Date.now();
+  let slug = baseSlug;
+  let counter = 1;
+  while (await db.news.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  return await db.news.create({ data: { ...data, slug } });
 }
 
 // ─── Users Management ──────────────────────────────────────────────────

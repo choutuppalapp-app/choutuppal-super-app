@@ -19,6 +19,7 @@ async function insertContent() {
   const news = await prisma.news.create({
     data: {
       title: 'చౌటుప్పల్: కొత్త డిజిటల్ సేవల కేంద్రం ప్రారంభం',
+      slug: 'choutuppal-new-digital-center-' + Date.now(),
       content: 'సిటిజన్ సీఎస్సీ ఆధ్వర్యంలో చౌటుప్పల్ లో కొత్త డిజిటల్ సేవల కేంద్రం ప్రారంభమైంది. ఆధార్, పాస్పోర్ట్, మరియు ఇతర ప్రభుత్వ సేవలు ఇప్పుడు ఆన్లైన్ లో అందుబాటులో ఉన్నాయి.',
       isPublished: true,
       cityId: city.id
