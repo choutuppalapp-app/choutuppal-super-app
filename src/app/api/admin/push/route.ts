@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const privateKey = process.env.VAPID_PRIVATE_KEY || ''
     
     if (!publicKey || !privateKey) {
-      return NextResponse.json({ error: 'VAPID keys are missing in .env' }, { status: 500 })
+      return NextResponse.json({ error: 'VAPID Keys missing in Vercel Env' }, { status: 500 })
     }
     webpush.setVapidDetails('mailto:admin@choutuppal.in', publicKey, privateKey)
 
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     const subscriptions = await db.pushSubscription.findMany()
     
     if (subscriptions.length === 0) {
-      return NextResponse.json({ error: 'No subscribed users found' }, { status: 400 })
+      return NextResponse.json({ error: 'No users subscribed yet. Subscribe on a phone first.' }, { status: 400 })
     }
 
     const payload = JSON.stringify({
@@ -57,21 +57,22 @@ export async function POST(request: Request) {
       url: url || '/',
     })
 
-    const results = await Promise.allSettled(
-      subscriptions.map(sub => 
-        webpush.sendNotification(
+    let successful = 0;
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: sub.keys as any },
           payload
-        ).catch(e => {
-          if (e.statusCode === 410 || e.statusCode === 404) {
-            return db.pushSubscription.delete({ where: { id: sub.id } })
-          }
+        )
+        successful++;
+      } catch (e: any) {
+        if (e.statusCode === 410 || e.statusCode === 404) {
+          await db.pushSubscription.delete({ where: { id: sub.id } })
+        } else {
           throw e
-        })
-      )
-    )
-
-    const successful = results.filter(r => r.status === 'fulfilled').length
+        }
+      }
+    }
 
     return NextResponse.json({ success: true, sentCount: successful })
   } catch (error: any) {
