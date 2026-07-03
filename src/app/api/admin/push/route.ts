@@ -6,18 +6,7 @@ import { createServerClient } from '@supabase/ssr'
 
 
 
-async function getSessionUser() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: { get(name: string) { return cookieStore.get(name)?.value } },
-    }
-  )
-  const { data: { session } } = await supabase.auth.getSession()
-  return session?.user || null
-}
+
 
 export async function POST(request: Request) {
   try {
@@ -29,15 +18,15 @@ export async function POST(request: Request) {
     }
     webpush.setVapidDetails('mailto:admin@choutuppal.in', publicKey, privateKey)
 
-    const sessionUser = await getSessionUser()
-    if (!sessionUser?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { supabase } = await import('@/lib/supabase');
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const user = await db.user.findUnique({ where: { id: sessionUser.id } })
-    console.log('Push Auth User:', user?.role)
-    if (!user || (user.role !== 'admin' && user.role !== 'super_admin' && user.role !== 'city_admin')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const dbUser = await db.user.findUnique({ where: { id: user.id } });
+    console.log('Push API - Session User Role:', dbUser?.role);
+    if (!dbUser || !['admin', 'city_admin', 'super_admin'].includes(dbUser.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { title, message, url } = await request.json()
