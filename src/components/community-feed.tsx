@@ -1142,21 +1142,40 @@ export default function CommunityFeed() {
                   <Link
                     key={user.id}
                     href={`/profile/${user.id}`}
-                    className="bg-white/40 backdrop-blur-xl border border-white/30 p-4 rounded-2xl flex flex-col items-center gap-3 hover:bg-white/60 transition cursor-pointer"
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col"
                   >
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#4169E1]/10 text-[#4169E1] font-bold text-xl">
-                          {user.fullName?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                    {/* Top half: subtle Blue-to-Gold gradient background */}
+                    <div className="h-24 w-full bg-gradient-to-r from-[#4169E1]/20 to-[#D4AF37]/20 relative">
+                       {/* Center: Profile Photo */}
+                       <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
+                          <div className="w-20 h-20 rounded-full overflow-hidden bg-white shrink-0 border-4 border-white shadow-md">
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#4169E1] to-[#D4AF37] text-white font-bold text-2xl">
+                                {user.fullName?.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                       </div>
                     </div>
-                    <div className="text-center w-full">
-                      <div className="font-bold text-gray-900 text-sm truncate">{user.fullName}</div>
-                      <div className="text-xs text-[#D4AF37] font-semibold mt-0.5 truncate capitalize">
+                    {/* Below: User Name and Bio */}
+                    <div className="pt-12 pb-5 px-4 text-center flex-1 flex flex-col items-center">
+                      <div className="font-bold text-gray-900 text-lg truncate w-full">{user.fullName}</div>
+                      <div className="text-xs text-[#D4AF37] font-semibold mt-1 mb-2 capitalize">
                         {user.role === 'city_admin' ? 'City Admin' : user.role === 'agent' ? 'Agent' : 'Business Owner'}
+                      </div>
+                      {user.bio ? (
+                         <p className="text-sm text-gray-500 line-clamp-1 w-full">{user.bio}</p>
+                      ) : (
+                         <p className="text-sm text-gray-400 italic line-clamp-1 w-full">No bio provided</p>
+                      )}
+                      
+                      {/* Bottom: 'View Profile' button styling on the whole card */}
+                      <div className="mt-4 w-full pt-4 border-t border-gray-100">
+                         <span className="text-[#4169E1] text-sm font-semibold group-hover:text-[#3a5dca] flex items-center justify-center gap-1">
+                           View Profile
+                         </span>
                       </div>
                     </div>
                   </Link>

@@ -75,7 +75,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     console.error('Error fetching profile:', err)
   }
 
-  if (!user || !user.isPublic) {
+  if (!user) {
     notFound()
   }
 

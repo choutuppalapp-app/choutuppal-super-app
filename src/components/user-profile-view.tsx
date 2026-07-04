@@ -72,30 +72,33 @@ export function UserProfileView({ user, initialIsFollowing }: UserProfileViewPro
 
   return (
     <div className="min-h-[100dvh] bg-gray-50 pb-20">
-      {/* Cover Image */}
-      <div className="h-48 md:h-64 w-full relative bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden">
+      {/* Cover & Avatar Container */}
+      <div className="relative h-40 w-full bg-gradient-to-r from-gray-200 to-gray-300">
         {user.coverImage ? (
           <img src={user.coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-tr from-[#4169E1] to-[#D4AF37]" />
         )}
+        
+        {/* Profile Photo Overlapping */}
+        {user.avatarUrl ? (
+          <img 
+            src={user.avatarUrl} 
+            alt={user.fullName} 
+            className="absolute -bottom-12 left-4 w-24 h-24 rounded-full border-4 border-white object-cover shadow-lg bg-white z-10" 
+          />
+        ) : (
+          <div className="absolute -bottom-12 left-4 w-24 h-24 rounded-full border-4 border-white shadow-lg bg-blue-100 flex items-center justify-center text-blue-600 text-3xl font-bold z-10">
+            {user.fullName.charAt(0).toUpperCase()}
+          </div>
+        )}
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10 -mt-16 sm:-mt-24 space-y-6">
-        {/* Profile Card */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 space-y-6">
+        {/* Profile Card Info */}
         <GlassCard className="p-6 bg-white shadow-xl">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            <div className="size-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white shrink-0 relative">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 text-5xl font-bold">
-                  {user.fullName.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 text-center sm:text-left mt-2 sm:mt-6 w-full">
+            <div className="flex-1 text-center sm:text-left w-full">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{user.fullName}</h1>
               {user.username && <p className="text-gray-500 font-medium">@{user.username}</p>}
               
