@@ -5,13 +5,10 @@ import { UserProfileView } from '@/components/user-profile-view'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const isUsername = id.startsWith('%40') || id.startsWith('@')
-  const usernameQuery = isUsername ? decodeURIComponent(id).substring(1) : undefined
-
   let user: any = null
   try {
-    user = await prisma.user.findFirst({
-      where: usernameQuery ? { username: usernameQuery } : { id }
+    user = await prisma.user.findUnique({
+      where: { id }
     })
   } catch {}
 
@@ -49,14 +46,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const { id } = await params
   console.log('Profile Page Loaded with ID:', id)
   
-  const isUsername = id.startsWith('%40') || id.startsWith('@')
-  const usernameQuery = isUsername ? decodeURIComponent(id).substring(1) : undefined
-
   let user: any = null
 
   try {
-    user = await prisma.user.findFirst({
-      where: usernameQuery ? { username: usernameQuery } : { id },
+    user = await prisma.user.findUnique({
+      where: { id },
       include: {
         listings: {
           where: { isApproved: true },

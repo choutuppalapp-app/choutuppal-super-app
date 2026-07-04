@@ -62,41 +62,43 @@ export function FeaturedProfiles() {
             <Link
               key={user.id}
               href={`/profile/${user.id}`}
-              className="flex flex-col items-center gap-2 shrink-0 group transition-all duration-300"
+              className="shrink-0 group"
             >
-              {/* Avatar */}
-              <div className="relative">
-                {avatarUrl ? (
-                  <img 
-                    src={avatarUrl} 
-                    alt={name} 
-                    className={`w-16 h-16 ${isLeader ? 'rounded-2xl' : 'rounded-full'} object-cover ring-2 ${ringColor} ring-offset-2 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`} 
-                  />
-                ) : (
-                  <div
-                    className={`w-16 h-16 ${isLeader ? 'rounded-2xl' : 'rounded-full'} bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xl ring-2 ${ringColor} ring-offset-2 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`}
-                  >
-                    {name.charAt(0)}
-                  </div>
-                )}
-                
-                {user.profile?.isVerified && (
-                  <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
-                    <ShieldCheck className={`w-4 h-4 ${isLeader ? 'text-[#D4AF37]' : 'text-[#4169E1]'}`} />
-                  </div>
-                )}
+              <div className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-xl rounded-2xl p-4 flex flex-col items-center gap-2 w-36 hover:bg-white/30 hover:scale-[1.02] transition-all duration-300 relative overflow-hidden">
                 {/* Type indicator */}
-                <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${
+                <div className={`absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${
                   isLeader ? 'bg-[#FF9933]' : 'bg-[#4169E1]'
                 }`}>
                   <IconComponent className="w-3 h-3 text-white" />
                 </div>
-              </div>
+                
+                {/* Avatar */}
+                <div className="relative mt-1">
+                  {avatarUrl ? (
+                    <img 
+                      src={avatarUrl} 
+                      alt={name} 
+                      className="w-16 h-16 rounded-full object-cover ring-2 ring-white/50 shadow-md" 
+                    />
+                  ) : (
+                    <div
+                      className={`w-16 h-16 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xl ring-2 ring-white/50 shadow-md`}
+                    >
+                      {name.charAt(0)}
+                    </div>
+                  )}
+                  {user.profile?.isVerified && (
+                    <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
+                      <ShieldCheck className={`w-4 h-4 ${isLeader ? 'text-[#D4AF37]' : 'text-[#4169E1]'}`} />
+                    </div>
+                  )}
+                </div>
 
-              {/* Info */}
-              <div className="text-center max-w-[80px]">
-                <p className="text-xs font-semibold text-gray-900 truncate w-full">{name.split(' ')[0]}</p>
-                <p className="text-[10px] text-gray-400 truncate w-full">{title}</p>
+                {/* Info */}
+                <div className="text-center w-full mt-1">
+                  <p className="text-sm font-bold text-gray-900 truncate w-full">{name.split(' ')[0]}</p>
+                  <p className="text-xs text-gray-500 truncate w-full">{title}</p>
+                </div>
               </div>
             </Link>
           )

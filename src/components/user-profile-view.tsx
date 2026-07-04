@@ -73,7 +73,7 @@ export function UserProfileView({ user, initialIsFollowing }: UserProfileViewPro
   return (
     <div className="min-h-[100dvh] bg-gray-50 pb-20">
       {/* Cover & Avatar Container */}
-      <div className="relative h-40 w-full bg-gradient-to-r from-gray-200 to-gray-300">
+      <div className="relative h-40 md:h-56 w-full bg-gradient-to-r from-gray-200 to-gray-300">
         {user.coverImage ? (
           <img src={user.coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
@@ -85,10 +85,10 @@ export function UserProfileView({ user, initialIsFollowing }: UserProfileViewPro
           <img 
             src={user.avatarUrl} 
             alt={user.fullName} 
-            className="absolute -bottom-12 left-4 w-24 h-24 rounded-full border-4 border-white object-cover shadow-lg bg-white z-10" 
+            className="absolute -bottom-12 left-4 w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-lg bg-white z-10" 
           />
         ) : (
-          <div className="absolute -bottom-12 left-4 w-24 h-24 rounded-full border-4 border-white shadow-lg bg-blue-100 flex items-center justify-center text-blue-600 text-3xl font-bold z-10">
+          <div className="absolute -bottom-12 left-4 w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg bg-blue-100 flex items-center justify-center text-blue-600 text-3xl font-bold z-10">
             {user.fullName.charAt(0).toUpperCase()}
           </div>
         )}

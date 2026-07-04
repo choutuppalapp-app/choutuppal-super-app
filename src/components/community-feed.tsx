@@ -1135,32 +1135,39 @@ export default function CommunityFeed() {
               <div className="w-8 h-8 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {peopleUsers
                 .filter(u => u.fullName?.toLowerCase().includes(peopleSearch.toLowerCase()))
                 .map(user => (
                   <Link
                     key={user.id}
                     href={`/profile/${user.id}`}
-                    className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col"
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col relative"
                   >
-                    {/* Top half: subtle Blue-to-Gold gradient background */}
-                    <div className="h-24 w-full bg-gradient-to-r from-[#4169E1]/20 to-[#D4AF37]/20 relative">
-                       {/* Center: Profile Photo */}
-                       <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-                          <div className="w-20 h-20 rounded-full overflow-hidden bg-white shrink-0 border-4 border-white shadow-md">
-                            {user.avatarUrl ? (
-                              <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#4169E1] to-[#D4AF37] text-white font-bold text-2xl">
-                                {user.fullName?.charAt(0).toUpperCase()}
-                              </div>
-                            )}
+                    {/* Cover Photo */}
+                    <div className="h-20 w-full bg-gradient-to-r from-[#4169E1]/20 to-[#D4AF37]/20 relative">
+                      {(user.profile?.coverImageUrl || user.coverImageUrl) && (
+                        <img 
+                          src={user.profile?.coverImageUrl || user.coverImageUrl} 
+                          alt="Cover" 
+                          className="w-full h-full object-cover" 
+                        />
+                      )}
+                    </div>
+                    {/* Center: Profile Photo overlapping */}
+                    <div className="flex justify-center -mt-8 relative z-10">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-white shrink-0 border-4 border-white shadow-md">
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#4169E1] to-[#D4AF37] text-white font-bold text-xl">
+                            {user.fullName?.charAt(0).toUpperCase()}
                           </div>
-                       </div>
+                        )}
+                      </div>
                     </div>
                     {/* Below: User Name and Bio */}
-                    <div className="pt-12 pb-5 px-4 text-center flex-1 flex flex-col items-center">
+                    <div className="pt-2 pb-5 px-4 text-center flex-1 flex flex-col items-center">
                       <div className="font-bold text-gray-900 text-lg truncate w-full">{user.fullName}</div>
                       <div className="text-xs text-[#D4AF37] font-semibold mt-1 mb-2 capitalize">
                         {user.role === 'city_admin' ? 'City Admin' : user.role === 'agent' ? 'Agent' : 'Business Owner'}
