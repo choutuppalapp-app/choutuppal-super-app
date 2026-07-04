@@ -54,6 +54,7 @@ export async function GET(request: Request) {
     if (!all) {
       where.isActive = true
       where.status = 'APPROVED'
+      where.expiresAt = { gt: new Date() }
     }
     // Single city architecture: return all approved banners.
     // Ignored cityId and citySlug filtering.
@@ -117,6 +118,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
     const banner = await db.bannerAd.create({
       data: {
         title: title.trim(),
@@ -129,6 +132,7 @@ export async function POST(request: Request) {
         userId: userId || null,
         isActive: true,
         status: 'APPROVED',
+        expiresAt,
       },
     })
 
