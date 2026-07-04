@@ -81,6 +81,7 @@ export async function POST(request: Request) {
         bedroomCount: bedroomCount ? parseInt(String(bedroomCount)) : null,
         area: area || null,
         address: address || null,
+        listingType: listingType || 'Sale',
         cityId,
         userId,
         status: 'PENDING',
@@ -112,6 +113,7 @@ export async function PUT(request: Request) {
     if (ownerPhone !== undefined) updateData.ownerPhone = ownerPhone
     if (bedroomCount !== undefined) updateData.bedroomCount = bedroomCount ? parseInt(String(bedroomCount)) : null
     if (area !== undefined) updateData.area = area || null
+    if (listingType !== undefined) updateData.listingType = listingType
     if (cityId !== undefined) updateData.cityId = cityId
     if (address !== undefined) updateData.address = address || null
 

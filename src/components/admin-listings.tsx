@@ -13,12 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
-const CATEGORIES = ['All', 'Tiffin', 'Medical', 'Salon', 'Plumber', 'Real Estate', 'Services', 'Electronics', 'Automobile', 'Tailor', 'Hardware', 'Education']
+const CATEGORIES = ['All', 'Tiffin', 'Medical', 'Salon', 'Plumber', 'Services', 'Electronics', 'Automobile', 'Tailor', 'Hardware', 'Education']
 
 export default function AdminListings() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<{ listings: any[], realEstate: any[] }>({ listings: [], realEstate: [] })
+  const [data, setData] = useState<{ listings: any[] }>({ listings: [] })
   
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,9 +72,9 @@ export default function AdminListings() {
     }
   }
 
-  const handleEditClick = (item: any, isRealEstate: boolean) => {
+  const handleEditClick = (item: any) => {
     setIsEditing(item)
-    setCategory(isRealEstate ? 'Real Estate' : item.category || 'Business')
+    setCategory(item.category || 'Business')
     setName(item.name || item.title || '')
     setDescription(item.description || '')
     setPrice(item.price || '')
@@ -146,30 +146,8 @@ export default function AdminListings() {
     e.preventDefault()
     setUploading(true)
     try {
-      const cityId = data.listings[0]?.cityId || data.realEstate[0]?.cityId || user?.id // fallback cityId
+      const cityId = data.listings[0]?.cityId || (user as any)?.cityId || user?.id // fallback cityId
 
-      if (category === 'Real Estate') {
-        const payload = {
-          title: name,
-          description,
-          price,
-          ownerPhone: phone,
-          bedroomCount: bhk ? parseInt(bhk) : null,
-          area,
-          address,
-          images: JSON.stringify(galleryUrls.length > 0 ? galleryUrls : [coverUrl].filter(Boolean)),
-          status: 'APPROVED',
-          isApproved: true,
-          isFeatured,
-          cityId: isEditing ? isEditing.cityId : cityId,
-          userId: isEditing ? isEditing.userId : user?.id,
-        }
-        if (isEditing) {
-          await updateAdminListing(isEditing.id, payload, 'real_estate')
-        } else {
-          await createAdminListing(payload, 'real_estate')
-        }
-      } else {
         const payload = {
           name,
           category,
@@ -195,7 +173,6 @@ export default function AdminListings() {
         } else {
           await createAdminListing(payload, 'business')
         }
-      }
       
       resetForm()
       fetchData()
@@ -259,10 +236,8 @@ export default function AdminListings() {
     })
   }
 
-  // Combined and filtered data
   const allListings = [
-    ...data.listings.map(l => ({ ...l, _type: 'business' })),
-    ...data.realEstate.map(r => ({ ...r, _type: 'real_estate', name: r.title, category: 'Real Estate' }))
+    ...data.listings.map(l => ({ ...l, _type: 'business' }))
   ]
 
   const filteredListings = allListings.filter(item => {
@@ -368,7 +343,7 @@ export default function AdminListings() {
                     size="sm" 
                     variant="ghost" 
                     className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                    onClick={() => handleEditClick(item, item._type === 'real_estate')}
+                    onClick={() => handleEditClick(item)}
                   >
                     <Edit className="w-4 h-4 mr-1" /> Edit
                   </Button>
@@ -450,7 +425,6 @@ export default function AdminListings() {
                 </div>
               </div>
 
-              {category !== 'Real Estate' && (
                 <div className="grid grid-cols-1 gap-4 p-4 bg-yellow-50/50 rounded-2xl border border-yellow-100 mt-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
@@ -468,46 +442,12 @@ export default function AdminListings() {
                     </div>
                   </div>
                 </div>
-              )}
 
-              {category === 'Real Estate' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 uppercase">Property Price</label>
-                            <Input placeholder="e.g. ₹45 Lakhs" value={price} onChange={e => setPrice(e.target.value)} required />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
-                            <div className="flex items-center gap-2 mt-2">
-                              <input 
-                                type="checkbox" 
-                                id="isFeatured"
-                                checked={isFeatured}
-                                onChange={(e) => setIsFeatured(e.target.checked)}
-                                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                              />
-                              <label htmlFor="isFeatured" className="text-sm font-bold text-gray-800 cursor-pointer">
-                                👑 Mark as Featured Listing (Shows at the top)
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">BHK (Bedrooms)</label>
-                    <Input type="number" value={bhk} onChange={e => setBhk(e.target.value)} className="rounded-xl border-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Area (sqft/sqyd)</label>
-                    <Input value={area} onChange={e => setArea(e.target.value)} className="rounded-xl border-white" />
-                  </div>
-                </div>
-              )}
+
 
               <div className="space-y-4">
                 <h3 className="font-bold text-lg text-gray-900 border-b pb-2">Images</h3>
                 
-                {category !== 'Real Estate' && (
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block mb-2">Logo</label>
                     <div className="flex items-center gap-4">
@@ -515,7 +455,6 @@ export default function AdminListings() {
                       <Input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'logo')} disabled={uploading} className="rounded-xl" />
                     </div>
                   </div>
-                )}
                 
                 <div>
                   <label className="text-sm font-semibold text-gray-700 block mb-2">Cover Image</label>

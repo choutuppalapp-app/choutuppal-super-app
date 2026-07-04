@@ -13,11 +13,12 @@ import AdminUsers from './admin-users'
 import AdminModeration from './admin-moderation'
 import AdminYoutubeSync from './admin-youtube-sync'
 import AdminPush from './admin-push'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube, BellRing } from 'lucide-react'
+import AdminRealEstate from './admin-real-estate'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube, BellRing, Building2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push'
+type TabType = 'overview' | 'branding' | 'listings' | 'realestate' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -29,7 +30,8 @@ export default function AdminContainer() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'listings', label: 'Listings', icon: Store },
+    { id: 'listings', label: 'Business', icon: Store },
+    { id: 'realestate', label: 'Real Estate', icon: Building2 },
     { id: 'banners', label: 'Banners', icon: ImageIcon },
     { id: 'stories', label: 'Stories', icon: PlaySquare },
     { id: 'news', label: 'News', icon: Newspaper },
@@ -135,6 +137,7 @@ export default function AdminContainer() {
               {activeTab === 'branding' && <AdminBranding />}
               {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'listings' && <AdminListings />}
+              {activeTab === 'realestate' && <AdminRealEstate />}
               {activeTab === 'banners' && <AdminBanners />}
               {activeTab === 'stories' && <AdminStories />}
               {activeTab === 'news' && <AdminNews />}

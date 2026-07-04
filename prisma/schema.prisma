@@ -249,6 +249,7 @@ model RealEstateListing {
   slug         String?  @unique
   title        String
   price        String
+  listingType  String?  @default("sale") // sale, rent
   images       String? // JSON string
   ownerPhone   String
   address      String?

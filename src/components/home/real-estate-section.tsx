@@ -13,6 +13,7 @@ interface RealEstateListing {
   id: string
   title: string
   price: string
+  listingType: string | null
   images: string | null
   address: string | null
   bedroomCount: number | null
@@ -148,12 +149,7 @@ export function RealEstateSection() {
                         <Building2 className="size-12 text-white/50" />
                       </div>
                     )}
-                    {/* Price overlay */}
-                    <div className="absolute bottom-2 left-2">
-                      <Badge className="bg-[#D4AF37] text-white text-xs font-bold border-0 shadow-md">
-                        {listing.price}
-                      </Badge>
-                    </div>
+
                     {listing.isFeatured && (
                       <div className="absolute top-2 right-2">
                         <Badge className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-white text-[10px] border-0 shadow-sm">
@@ -164,12 +160,22 @@ export function RealEstateSection() {
                   </div>
 
                   {/* Content */}
-                  <div className="p-3 space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                        {listing.price}
+                      </h3>
+                      {listing.listingType && (
+                        <Badge variant="outline" className={listing.listingType?.toLowerCase() === 'rent' ? 'text-purple-600 bg-purple-50 border-purple-200' : 'text-blue-600 bg-blue-50 border-blue-200'}>
+                          {listing.listingType}
+                        </Badge>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-semibold text-gray-700 line-clamp-1">
                       {listing.title}
-                    </h3>
+                    </h4>
 
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 pt-2 text-xs text-gray-500 font-medium">
                       {listing.bedroomCount !== null && (
                         <div className="flex items-center gap-1">
                           <Bed className="size-3.5" />
