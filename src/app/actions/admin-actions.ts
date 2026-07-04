@@ -2,6 +2,9 @@
 
 import { db } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
+import webpush from 'web-push';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -235,5 +238,66 @@ export async function updateAnnouncementTicker(ticker: string) {
     return await db.siteSetting.create({
       data: { announcementTicker: ticker }
     });
+  }
+}
+
+export async function sendPushNotification(title: string, message: string, link?: string) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) { return cookieStore.get(name)?.value; },
+        },
+      }
+    );
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return { error: 'Unauthorized: No active session' };
+    }
+
+    const user = await db.user.findUnique({ where: { id: session.user.id } });
+    if (!user || !['admin', 'super_admin', 'city_admin'].includes(user.role)) {
+      return { error: 'Forbidden: Not an admin' };
+    }
+
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+    const privateKey = process.env.VAPID_PRIVATE_KEY || '';
+
+    if (!publicKey || !privateKey) {
+      return { error: 'VAPID Keys missing in Vercel Env' };
+    }
+    webpush.setVapidDetails('mailto:admin@choutuppal.in', publicKey, privateKey);
+
+    const subscriptions = await db.pushSubscription.findMany();
+    if (subscriptions.length === 0) {
+      return { error: 'No users subscribed yet.' };
+    }
+
+    const payload = JSON.stringify({
+      title,
+      body: message,
+      url: link || '/',
+    });
+
+    let successful = 0;
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys as any }, payload);
+        successful++;
+      } catch (e: any) {
+        if (e.statusCode === 410 || e.statusCode === 404) {
+          await db.pushSubscription.delete({ where: { id: sub.id } });
+        }
+      }
+    }
+
+    return { success: true, sentCount: successful };
+  } catch (error: any) {
+    console.error('Push Send Error:', error);
+    return { error: error.message || 'Internal Server Error' };
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Send, Loader2, BellRing } from 'lucide-react'
 import { toast } from 'sonner'
+import { sendPushNotification } from '@/app/actions/admin-actions'
 
 export default function AdminPush() {
   const [title, setTitle] = useState('')
@@ -22,15 +23,9 @@ export default function AdminPush() {
     setIsSending(true)
     
     try {
-      const res = await fetch('/api/admin/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ title, message, url }),
-      })
-      const data = await res.json()
+      const result = await sendPushNotification(title, message, url)
       
-      if (!res.ok) throw new Error(data.error || 'Failed to send')
+      if (result.error) throw new Error(result.error)
       
       toast.success('Notification sent successfully!', { id: toastId })
       setTitle('')
