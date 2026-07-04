@@ -16,6 +16,7 @@ import { GlobalErrorHandler } from "@/components/global-error-handler";
 import { PwaInstallManager } from "@/components/pwa-install-manager";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 import PushPermissionManager from "@/components/push-permission-manager";
+import { SwrProvider } from "@/components/swr-provider";
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -94,60 +95,61 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen w-full bg-gray-50 flex flex-col`}
       >
-        <GlobalErrorHandler />
-        <ErrorBoundary name="AuthProvider">
-          <AuthProvider>
-            <AppConfigProvider>
-              <ErrorBoundary name="SettingsInitializer">
-                <SettingsInitializer />
-              </ErrorBoundary>
-              <ErrorBoundary name="Header">
-                <Header className="flex-none" />
-              </ErrorBoundary>
+        <SwrProvider>
+          <GlobalErrorHandler />
+          <ErrorBoundary name="AuthProvider">
+            <AuthProvider>
+              <AppConfigProvider>
+                <ErrorBoundary name="SettingsInitializer">
+                  <SettingsInitializer />
+                </ErrorBoundary>
+                <ErrorBoundary name="Header">
+                  <Header className="flex-none" />
+                </ErrorBoundary>
 
-              <main className="flex-1 w-full max-w-7xl mx-auto flex flex-col pt-0 pb-16 md:pb-0 safe-bottom">
-                  {children}
-              </main>
+                <main className="flex-1 w-full max-w-7xl mx-auto flex flex-col pt-0 pb-16 md:pb-0 safe-bottom">
+                    {children}
+                </main>
 
-              <ErrorBoundary name="MobileBottomNav">
-                <MobileBottomNav />
-              </ErrorBoundary>
+                <ErrorBoundary name="MobileBottomNav">
+                  <MobileBottomNav />
+                </ErrorBoundary>
 
-              <ErrorBoundary name="FloatingOverlays">
-                <FloatingOverlays />
-              </ErrorBoundary>
+                <ErrorBoundary name="FloatingOverlays">
+                  <FloatingOverlays />
+                </ErrorBoundary>
 
-              <ErrorBoundary name="LoginModal">
-                <LoginModal />
-              </ErrorBoundary>
+                <ErrorBoundary name="LoginModal">
+                  <LoginModal />
+                </ErrorBoundary>
 
-              <ErrorBoundary name="PwaInstallManager">
-                <PwaInstallManager />
-              </ErrorBoundary>
+                <ErrorBoundary name="PwaInstallManager">
+                  <PwaInstallManager />
+                </ErrorBoundary>
 
-              <ErrorBoundary name="PushPermissionManager">
-                <PushPermissionManager />
-              </ErrorBoundary>
+                <ErrorBoundary name="PushPermissionManager">
+                  <PushPermissionManager />
+                </ErrorBoundary>
 
-              <ErrorBoundary name="WhatsAppFloatingButton">
-                <WhatsAppFloatingButton />
-              </ErrorBoundary>
+                <ErrorBoundary name="WhatsAppFloatingButton">
+                  <WhatsAppFloatingButton />
+                </ErrorBoundary>
 
-              <ErrorBoundary name="Toaster">
-                <Toaster
-                  position="bottom-center"
-                  toastOptions={{
-                    className: "!bg-white !text-gray-900 !border !border-gray-200 !shadow-lg !rounded-xl",
-                  }}
-                  richColors
-                />
-              </ErrorBoundary>
-            </AppConfigProvider>
-          </AuthProvider>
-        </ErrorBoundary>
+                <ErrorBoundary name="Toaster">
+                  <Toaster
+                    position="bottom-center"
+                    toastOptions={{
+                      className: "!bg-white !text-gray-900 !border !border-gray-200 !shadow-lg !rounded-xl",
+                    }}
+                    richColors
+                  />
+                </ErrorBoundary>
+              </AppConfigProvider>
+            </AuthProvider>
+          </ErrorBoundary>
+        </SwrProvider>
         <Analytics />
         <SpeedInsights />
-
       </body>
     </html>
   );

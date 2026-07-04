@@ -1,26 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import AdminOverview from './admin-overview'
-import AdminBranding from './admin-branding'
-import AdminListings from './admin-listings'
-import AdminBanners from './admin-banners'
-import AdminStories from './admin-stories'
-import AdminNews from './admin-news'
-import AdminBlogs from './admin-blogs'
-import AdminAnnouncements from './admin-announcements'
-import AdminUsers from './admin-users'
-import AdminModeration from './admin-moderation'
-import AdminYoutubeSync from './admin-youtube-sync'
-import AdminPush from './admin-push'
-import AdminRealEstate from './admin-real-estate'
-import AdminCategories from './admin-categories'
-import AdminVillages from './admin-villages'
+import dynamic from 'next/dynamic'
+
+const AdminOverview = dynamic(() => import('./admin-overview'), { ssr: false })
+const AdminBranding = dynamic(() => import('./admin-branding'), { ssr: false })
+const AdminListings = dynamic(() => import('./admin-listings'), { ssr: false })
+const AdminBanners = dynamic(() => import('./admin-banners'), { ssr: false })
+const AdminStories = dynamic(() => import('./admin-stories'), { ssr: false })
+const AdminNews = dynamic(() => import('./admin-news'), { ssr: false })
+const AdminBlogs = dynamic(() => import('./admin-blogs'), { ssr: false })
+const AdminAnnouncements = dynamic(() => import('./admin-announcements'), { ssr: false })
+const AdminUsers = dynamic(() => import('./admin-users'), { ssr: false })
+const AdminModeration = dynamic(() => import('./admin-moderation'), { ssr: false })
+const AdminYoutubeSync = dynamic(() => import('./admin-youtube-sync'), { ssr: false })
+const AdminPush = dynamic(() => import('./admin-push'), { ssr: false })
+const AdminRealEstate = dynamic(() => import('./admin-real-estate'), { ssr: false })
+const AdminCategories = dynamic(() => import('./admin-categories'), { ssr: false })
+const AdminVillages = dynamic(() => import('./admin-villages'), { ssr: false })
+const AdminSettings = dynamic(() => import('./admin-settings'), { ssr: false })
 import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube, BellRing, Building2, MapPin, Layers } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'realestate' | 'categories' | 'villages' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push'
+type TabType = 'overview' | 'branding' | 'listings' | 'realestate' | 'categories' | 'villages' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push' | 'settings'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -45,6 +48,7 @@ export default function AdminContainer() {
     { id: 'push', label: 'Push Notifications', icon: BellRing },
     { id: 'moderation', label: 'Moderation', icon: ShieldCheck },
     { id: 'branding', label: 'App Branding', icon: Settings },
+    { id: 'settings', label: 'Maintenance', icon: Settings },
   ]
 
   if (isLoading) {
@@ -150,7 +154,8 @@ export default function AdminContainer() {
               {activeTab === 'blogs' && <AdminBlogs />}
               { activeTab === 'announcements' && <AdminAnnouncements /> }
               { activeTab === 'youtube' && <AdminYoutubeSync /> }
-              { activeTab === 'push' && <AdminPush /> }
+              {activeTab === 'push' && <AdminPush />}
+              {activeTab === 'settings' && <AdminSettings />}
               { activeTab === 'moderation' && <AdminModeration /> }
             </div>
           )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShieldAlert, Loader2, Save, CheckCircle, Upload, Image as ImageIcon } from 'lucide-react'
+import { ShieldAlert, Loader2, Save, CheckCircle, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import imageCompression from 'browser-image-compression'
@@ -49,6 +49,7 @@ export default function AdminSettings() {
   const [success, setSuccess] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingFavicon, setUploadingFavicon] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   const logoInputRef = useRef<HTMLInputElement>(null)
   const faviconInputRef = useRef<HTMLInputElement>(null)
@@ -193,9 +194,30 @@ export default function AdminSettings() {
       setTimeout(() => setSuccess(false), 3000)
     } catch (error) {
       console.error('Error saving settings:', error)
-      alert('Failed to save settings. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleClearCache = async () => {
+    setIsClearing(true)
+    try {
+      const res = await fetch('/api/admin/revalidate', { method: 'POST' })
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Cache cleared successfully!' })
+      } else {
+        toast({ title: 'Error', description: 'Failed to clear cache', variant: 'destructive' })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({ title: 'Error', description: 'An error occurred while clearing cache', variant: 'destructive' })
+    } finally {
+      setIsClearing(false)
     }
   }
 
@@ -333,6 +355,25 @@ export default function AdminSettings() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">X (Twitter) URL</label>
             <input type="url" name="xUrl" value={settings.xUrl} onChange={handleChange} placeholder="https://x.com/..." className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+          </div>
+        </div>
+      </section>
+
+      {/* 5. System Maintenance */}
+      <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">5. System Maintenance</h3>
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-sm font-medium text-gray-700">Cache Management</h4>
+            <p className="text-xs text-gray-500 mt-1 mb-4">Clear the Next.js cache across the entire application to force all pages to re-fetch fresh data.</p>
+            <button
+              onClick={handleClearCache}
+              disabled={isClearing}
+              className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 font-semibold rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-5 h-5 ${isClearing ? 'animate-spin' : ''}`} />
+              {isClearing ? 'Clearing Cache...' : 'Clear App Cache & Refresh'}
+            </button>
           </div>
         </div>
       </section>
