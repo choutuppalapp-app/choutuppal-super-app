@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { db as prisma } from '@/lib/db'
 import { UserProfileView } from '@/components/user-profile-view'
 
@@ -47,6 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  console.log('Profile Page Loaded with ID:', id)
   
   const isUsername = id.startsWith('%40') || id.startsWith('@')
   const usernameQuery = isUsername ? decodeURIComponent(id).substring(1) : undefined
@@ -76,7 +77,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   }
 
   if (!user) {
-    notFound()
+    console.log('User not found in DB for ID:', id, 'Redirecting to home.')
+    redirect('/')
   }
 
   // Without server session readily available, default initialIsFollowing to false

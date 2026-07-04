@@ -55,6 +55,8 @@ export function FeaturedProfiles() {
           const name = user.fullName || 'User'
           const title = user.profile?.bio || (isLeader ? 'Leader' : 'Member')
           const avatarUrl = user.avatarUrl
+          
+          console.log('Featured Profile Link:', '/profile/' + user.id)
 
           return (
             <Link
