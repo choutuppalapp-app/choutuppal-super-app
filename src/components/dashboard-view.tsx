@@ -168,6 +168,8 @@ export default function DashboardView() {
   const [coinTransactions, setCoinTransactions] = useState<CoinTransaction[]>([])
   const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
   const [cities, setCities] = useState<City[]>([])
+  const [subCategories, setSubCategories] = useState<any[]>([])
+  const [villages, setVillages] = useState<any[]>([])
 
   const [claimedToday, setClaimedToday] = useState(false)
   const [claimingDaily, setClaimingDaily] = useState(false)
@@ -227,8 +229,8 @@ export default function DashboardView() {
   }
 
   const [formData, setFormData] = useState({
-    name: '', category: '', description: '',
-    phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false,
+    name: '', category: '', subCategoryId: '', description: '',
+    phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', villageId: '', sameAsPhone: false,
     address: '', ownerName: '', establishedYear: '',
     coverImage: '', logoUrl: '', images: [] as string[],
     instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '',
@@ -367,6 +369,34 @@ export default function DashboardView() {
       setCities(Array.isArray(citiesData) ? citiesData : [])
     }
   }, [citiesData])
+
+  useEffect(() => {
+    if (formData.category) {
+      const parent = dynamicCategories.find(c => c.name === formData.category)
+      if (parent) {
+        fetch(`/api/categories?active=true&parentId=${parent.id}`)
+          .then(r => r.json())
+          .then(data => setSubCategories(Array.isArray(data) ? data : []))
+          .catch(() => {})
+      } else {
+        setSubCategories([])
+      }
+    } else {
+      setSubCategories([])
+    }
+  }, [formData.category, dynamicCategories])
+
+  useEffect(() => {
+    const cId = formData.cityId || cities[0]?.id || 'default'
+    if (cId && cId !== 'default') {
+      fetch(`/api/villages?cityId=${cId}`)
+        .then(r => r.json())
+        .then(data => setVillages(Array.isArray(data) ? data : []))
+        .catch(() => {})
+    } else {
+      setVillages([])
+    }
+  }, [formData.cityId, cities])
 
   // Daily reward coins claim
   const handleDailyClaim = async () => {
@@ -526,6 +556,8 @@ export default function DashboardView() {
         operatingHours: formData.operatingHours || null,
         googleMapsUrl: formData.googleMapsUrl || null,
         isFeatured: formData.isFeatured,
+        villageId: formData.villageId || null,
+        subCategoryId: formData.subCategoryId || null,
       }
 
       if (formData.category === 'Real Estate') {
@@ -558,7 +590,7 @@ export default function DashboardView() {
         
         // Reset state
         setFormData({
-          name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false, address: '', ownerName: '', establishedYear: '',
+          name: '', category: '', subCategoryId: '', description: '', phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', villageId: '', sameAsPhone: false, address: '', ownerName: '', establishedYear: '',
           coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
           services: [], isFeatured: false
         })
@@ -748,6 +780,8 @@ export default function DashboardView() {
       whatsappNumber: listing.whatsappNumber || '', 
       secondaryPhone: listing.secondaryPhone || '',
       cityId: listing.cityId,
+      villageId: (listing as any).villageId || '',
+      subCategoryId: (listing as any).subCategoryId || '',
       sameAsPhone: listing.phoneNumber === listing.whatsappNumber,
       address: listing.address || '',
       ownerName: listing.ownerName || '',
@@ -1626,7 +1660,7 @@ export default function DashboardView() {
               <div className="flex flex-col w-full h-full relative">
                 {/* Header */}
                 <div className="p-4 pt-safe-top flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
-                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', description: '', phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false, address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: [], isFeatured: false}) }}>
+                  <Button variant="outline" className="text-gray-600 rounded-xl" onClick={() => { setIsCreatingListing(false); setEditingListingId(null); setFormData({name: '', category: '', subCategoryId: '', description: '', phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', villageId: '', sameAsPhone: false, address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '', services: [], isFeatured: false}) }}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Cancel</Button>
                   <span className="text-gray-950 font-black text-lg">{editingListingId ? 'Edit Listing Details' : 'Publish New Listing'}</span>
                   <div className="w-10"></div>
@@ -1710,7 +1744,7 @@ export default function DashboardView() {
                         <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Category *</span>
                         <select 
                           value={formData.category} 
-                          onChange={(e) => setFormData({...formData, category: e.target.value})}
+                          onChange={(e) => setFormData({...formData, category: e.target.value, subCategoryId: ''})}
                           className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
                         >
                           <option value="" disabled>Select Category</option>
@@ -1719,6 +1753,22 @@ export default function DashboardView() {
                           ))}
                         </select>
                       </div>
+
+                      {subCategories.length > 0 && (
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Sub-Category</span>
+                          <select 
+                            value={formData.subCategoryId} 
+                            onChange={(e) => setFormData({...formData, subCategoryId: e.target.value})}
+                            className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
+                          >
+                            <option value="">Select Sub-Category (Optional)</option>
+                            {subCategories.map(c => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
 
                       {formData.category === 'Real Estate' && (
                         <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200/60">
@@ -1798,6 +1848,20 @@ export default function DashboardView() {
                         />
                       </div>
 
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Village / Area</span>
+                        <select 
+                          value={formData.villageId} 
+                          onChange={(e) => setFormData({...formData, villageId: e.target.value})}
+                          className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
+                        >
+                          <option value="">Select Village/Area (Optional)</option>
+                          {villages.map(v => (
+                            <option key={v.id} value={v.id}>{v.name} - {v.pincode}</option>
+                          ))}
+                        </select>
+                      </div>
 
                       <div className="flex flex-col gap-1.5">
                         <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Physical Address</span>

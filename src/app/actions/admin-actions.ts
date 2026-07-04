@@ -301,3 +301,49 @@ export async function sendPushNotification(title: string, message: string, link?
     return { error: error.message || 'Internal Server Error' };
   }
 }
+
+// ─── Categories & Villages Management ───────────────────────────────────
+
+export async function getAdminCategories() {
+  return await db.category.findMany({ orderBy: { name: 'asc' } });
+}
+
+export async function createAdminCategory(data: any) {
+  let baseSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'category-' + Date.now();
+  let slug = baseSlug;
+  let counter = 1;
+  while (await db.category.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  return await db.category.create({ data: { ...data, slug } });
+}
+
+export async function updateAdminCategory(id: string, data: any) {
+  return await db.category.update({ where: { id }, data });
+}
+
+export async function deleteAdminCategory(id: string) {
+  return await db.category.delete({ where: { id } });
+}
+
+export async function getAdminVillages() {
+  return await db.village.findMany({ orderBy: { name: 'asc' }, include: { city: true } });
+}
+
+export async function createAdminVillage(data: any) {
+  let cityId = data.cityId;
+  if (!cityId) {
+    const firstCity = await db.city.findFirst();
+    if (firstCity) cityId = firstCity.id;
+  }
+  return await db.village.create({ data: { ...data, cityId } });
+}
+
+export async function updateAdminVillage(id: string, data: any) {
+  return await db.village.update({ where: { id }, data });
+}
+
+export async function deleteAdminVillage(id: string) {
+  return await db.village.delete({ where: { id } });
+}

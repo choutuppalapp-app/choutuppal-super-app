@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppStore } from '@/lib/store';
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -17,6 +18,25 @@ interface FilterDrawerProps {
 
 export default function FilterDrawer({ isOpen, onClose, type = 'business', onApplyFilters, currentFilters }: FilterDrawerProps) {
   const [filters, setFilters] = useState<Record<string, any>>(currentFilters);
+  const selectedCity = useAppStore((s) => s.selectedCity);
+  const [villages, setVillages] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (selectedCity) {
+      fetch('/api/cities')
+        .then(r => r.json())
+        .then(data => {
+          const city = (Array.isArray(data) ? data : data.cities || []).find((c: any) => c.slug === selectedCity);
+          if (city) {
+            fetch(`/api/villages?cityId=${city.id}`)
+              .then(r => r.json())
+              .then(v => setVillages(Array.isArray(v) ? v : []))
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+  }, [selectedCity]);
 
   useEffect(() => {
     setFilters(currentFilters);
@@ -147,6 +167,23 @@ export default function FilterDrawer({ isOpen, onClose, type = 'business', onApp
                   </div>
                 </div>
               )}
+
+              {/* Village Filter */}
+              <div>
+                <h4 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Village / Area</h4>
+                <div className="flex flex-col gap-2">
+                  <select 
+                    value={filters.villageId || ''}
+                    onChange={(e) => updateFilter('villageId', e.target.value || undefined)}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl h-11 px-4 focus:ring-2 focus:ring-[#4169E1] focus:outline-none appearance-none"
+                  >
+                    <option value="">All Villages</option>
+                    {villages.map(v => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               {/* Real Estate Specific */}
               {type === 'real_estate' && (

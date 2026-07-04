@@ -23,6 +23,8 @@ export async function GET(request: Request) {
     const isFeatured = searchParams.get('isFeatured')
     const isPremium = searchParams.get('isPremium')
     const minRating = searchParams.get('minRating')
+    const villageId = searchParams.get('villageId')
+    const subCategoryId = searchParams.get('subCategoryId')
     const sort = searchParams.get('sort') // 'newest' | 'popular' | null
     const openNow = searchParams.get('openNow')
     const userId = searchParams.get('userId')
@@ -47,8 +49,14 @@ export async function GET(request: Request) {
     if (cityId) {
       where.cityId = cityId
     }
+    if (villageId) {
+      where.villageId = villageId
+    }
     if (category) {
       where.category = category
+    }
+    if (subCategoryId) {
+      where.subCategoryId = subCategoryId
     }
     if (isFeatured === 'true') {
       where.isFeatured = true
@@ -111,6 +119,8 @@ export async function GET(request: Request) {
           createdAt: true,
           userId: true,
           cityId: true,
+          villageId: true,
+          subCategoryId: true,
           user: {
             select: {
               id: true,
@@ -216,6 +226,8 @@ export async function POST(request: Request) {
         operatingHours: body.operatingHours || null,
         referredByAgentId: body.referredByAgentId || null,
         rating: body.rating ? parseFloat(body.rating) : 5,
+        villageId: body.villageId || null,
+        subCategoryId: body.subCategoryId || null,
       },
       include: {
         user: {

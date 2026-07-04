@@ -14,11 +14,13 @@ import AdminModeration from './admin-moderation'
 import AdminYoutubeSync from './admin-youtube-sync'
 import AdminPush from './admin-push'
 import AdminRealEstate from './admin-real-estate'
-import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube, BellRing, Building2 } from 'lucide-react'
+import AdminCategories from './admin-categories'
+import AdminVillages from './admin-villages'
+import { LayoutDashboard, Settings, Store, Image as ImageIcon, PlaySquare, Newspaper, FileText, Megaphone, Users, LogOut, ShieldAlert, Loader2, ShieldCheck, Youtube, BellRing, Building2, MapPin, Layers } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 
-type TabType = 'overview' | 'branding' | 'listings' | 'realestate' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push'
+type TabType = 'overview' | 'branding' | 'listings' | 'realestate' | 'categories' | 'villages' | 'banners' | 'stories' | 'news' | 'blogs' | 'announcements' | 'users' | 'moderation' | 'youtube' | 'push'
 
 export default function AdminContainer() {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
@@ -32,6 +34,8 @@ export default function AdminContainer() {
     { id: 'users', label: 'Users', icon: Users },
     { id: 'listings', label: 'Business', icon: Store },
     { id: 'realestate', label: 'Real Estate', icon: Building2 },
+    { id: 'categories', label: 'Categories', icon: Layers },
+    { id: 'villages', label: 'Villages', icon: MapPin },
     { id: 'banners', label: 'Banners', icon: ImageIcon },
     { id: 'stories', label: 'Stories', icon: PlaySquare },
     { id: 'news', label: 'News', icon: Newspaper },
@@ -138,6 +142,8 @@ export default function AdminContainer() {
               {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'listings' && <AdminListings />}
               {activeTab === 'realestate' && <AdminRealEstate />}
+              {activeTab === 'categories' && <AdminCategories />}
+              {activeTab === 'villages' && <AdminVillages />}
               {activeTab === 'banners' && <AdminBanners />}
               {activeTab === 'stories' && <AdminStories />}
               {activeTab === 'news' && <AdminNews />}

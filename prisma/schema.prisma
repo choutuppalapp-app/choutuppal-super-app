@@ -55,6 +55,7 @@ model City {
   bannerAds          BannerAd[]
   transactions       Transaction[]
   shorts             Short[]
+  villages           Village[]
 }
 
 // ─── User (4 Roles: SUPER_ADMIN, CITY_ADMIN, AGENT, USER) ──
@@ -146,8 +147,23 @@ model Category {
   slug      String   @unique
   icon      String?
   isActive  Boolean  @default(true)
+  parentId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  listings  Listing[]
+}
+
+// ─── Village ────────────────────────────────────────────────
+model Village {
+  id        String   @id @default(cuid())
+  name      String
+  pincode   String
+  cityId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city     City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  listings Listing[]
 }
 
 // ─── Transaction (Financial Tracking) ───────────────────────
@@ -226,11 +242,15 @@ model Listing {
   // Agent referral tracking
   referredByAgentId String? // If an agent referred this listing
   isClaimed         Boolean  @default(true) // Set to false for bulk uploads
+  villageId         String?
+  subCategoryId     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   city           City           @relation(fields: [cityId], references: [id])
+  village        Village?       @relation(fields: [villageId], references: [id])
+  subCategory    Category?      @relation(fields: [subCategoryId], references: [id])
   leads          Lead[]
   reviews        Review[]
   shorts         Short[]

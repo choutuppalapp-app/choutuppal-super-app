@@ -84,6 +84,9 @@ export default function AgentDashboard() {
   const choutuppalCityId = cities.find((c: any) => c.slug === 'choutuppal')?.id || ''
 
   const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
+  const [subCategories, setSubCategories] = useState<any[]>([])
+  const [villages, setVillages] = useState<any[]>([])
+
   useEffect(() => {
     fetch('/api/admin/categories?active=true')
       .then(r => r.json())
@@ -91,19 +94,49 @@ export default function AgentDashboard() {
       .catch(() => {})
   }, [])
 
+
+
   // --- Single Listing Form State ───
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingListingId, setEditingListingId] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
-    name: '', category: '', description: '',
-    phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', sameAsPhone: false,
+    name: '', category: '', subCategoryId: '', description: '',
+    phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: '', villageId: '', sameAsPhone: false,
     address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [] as string[],
     rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
     price: '', bedroomCount: '', area: '',
     instagramUsername: '', facebookUrl: '', youtubeUrl: '',
     services: [] as { name: string; description: string }[]
   })
+
+  useEffect(() => {
+    if (formData.category) {
+      const parent = dynamicCategories.find(c => c.name === formData.category)
+      if (parent) {
+        fetch(`/api/categories?active=true&parentId=${parent.id}`)
+          .then(r => r.json())
+          .then(data => setSubCategories(Array.isArray(data) ? data : []))
+          .catch(() => {})
+      } else {
+        setSubCategories([])
+      }
+    } else {
+      setSubCategories([])
+    }
+  }, [formData.category, dynamicCategories])
+
+  useEffect(() => {
+    const cId = formData.cityId || choutuppalCityId || cities[0]?.id || 'default'
+    if (cId && cId !== 'default') {
+      fetch(`/api/villages?cityId=${cId}`)
+        .then(r => r.json())
+        .then(data => setVillages(Array.isArray(data) ? data : []))
+        .catch(() => {})
+    } else {
+      setVillages([])
+    }
+  }, [formData.cityId, cities, choutuppalCityId])
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -206,6 +239,8 @@ export default function AgentDashboard() {
         youtubeUrl: formData.youtubeUrl || null,
         isApproved: true,
         status: 'APPROVED',
+        villageId: formData.villageId || null,
+        subCategoryId: formData.subCategoryId || null,
       }
 
       if (formData.category === 'Real Estate') {
@@ -234,8 +269,8 @@ export default function AgentDashboard() {
         mutateListings()
         setEditingListingId(null)
         setFormData({
-          name: '', category: '', description: '',
-          phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: choutuppalCityId, sameAsPhone: false,
+          name: '', category: '', subCategoryId: '', description: '',
+          phoneNumber: '', whatsappNumber: '', secondaryPhone: '', cityId: choutuppalCityId, villageId: '', sameAsPhone: false,
           address: '', ownerName: '', establishedYear: '', coverImage: '', logoUrl: '', images: [] as string[],
           rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
           price: '', bedroomCount: '', area: '',
@@ -274,6 +309,7 @@ export default function AgentDashboard() {
     setFormData({
       name: l.name, category: l.category, description: l.description || '',
       phoneNumber: l.phoneNumber || '', whatsappNumber: l.whatsappNumber || '', secondaryPhone: l.secondaryPhone || '', cityId: l.cityId,
+      villageId: (l as any).villageId || '', subCategoryId: (l as any).subCategoryId || '',
       sameAsPhone: l.phoneNumber === l.whatsappNumber,
       address: l.address || '', ownerName: l.ownerName || '', establishedYear: l.establishedYear || '', coverImage: l.coverImage || '', logoUrl: l.logoUrl || '',
       images: (() => {
@@ -566,7 +602,7 @@ export default function AgentDashboard() {
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
-                      <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val})}>
+                      <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val, subCategoryId: ''})}>
                         <SelectTrigger className="h-11 bg-gray-50 border-gray-200 rounded-xl"><SelectValue placeholder="Select Category" /></SelectTrigger>
                         <SelectContent>
                           {(dynamicCategories.length > 0 ? dynamicCategories.map(c => c.name) : CATEGORIES).map(c => (
@@ -576,6 +612,20 @@ export default function AgentDashboard() {
                       </Select>
                     </div>
                   </div>
+
+                  {subCategories.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Sub-Category</label>
+                      <Select value={formData.subCategoryId} onValueChange={(val) => setFormData({...formData, subCategoryId: val})}>
+                        <SelectTrigger className="h-11 bg-gray-50 border-gray-200 rounded-xl"><SelectValue placeholder="Select Sub-Category" /></SelectTrigger>
+                        <SelectContent>
+                          {subCategories.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   {formData.category === 'Real Estate' && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-yellow-50/40 p-4 rounded-xl border border-yellow-100">
@@ -640,9 +690,22 @@ export default function AgentDashboard() {
                     </div>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Physical Address</label>
-                    <Input value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full address" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Village / Area</label>
+                      <Select value={formData.villageId} onValueChange={(val) => setFormData({...formData, villageId: val})}>
+                        <SelectTrigger className="h-11 bg-gray-50 border-gray-200 rounded-xl"><SelectValue placeholder="Select Village/Area" /></SelectTrigger>
+                        <SelectContent>
+                          {villages.map(v => (
+                            <SelectItem key={v.id} value={v.id}>{v.name} - {v.pincode}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Physical Address</label>
+                      <Input value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full address" className="h-11 bg-gray-50 border-gray-200 rounded-xl" />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
