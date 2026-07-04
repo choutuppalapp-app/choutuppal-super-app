@@ -3,10 +3,12 @@
 import { Crown, User as UserIcon, ChevronRight, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useAppStore } from '@/lib/store'
 
 export function FeaturedProfiles() {
   const [profiles, setProfiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const navigateTo = useAppStore(s => s.navigateTo)
 
   useEffect(() => {
     fetch('/api/featured-profiles')
@@ -35,13 +37,13 @@ export function FeaturedProfiles() {
           <Crown className="w-5 h-5 text-[#4169E1]" />
           <h2 className="text-lg font-bold text-gray-800">Featured Profiles</h2>
         </div>
-        <Link
-          href="/community"
-          className="flex items-center gap-1 text-xs text-[#4169E1] font-medium hover:text-[#4169E1]/80 transition-colors"
+        <button
+          onClick={() => navigateTo('community')}
+          className="flex items-center gap-1 text-xs text-[#4169E1] font-medium hover:text-[#4169E1]/80 transition-colors bg-transparent border-none p-0 cursor-pointer"
         >
           View All
           <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
+        </button>
       </div>
 
       {/* ── Scrollable profile cards ── */}
