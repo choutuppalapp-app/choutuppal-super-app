@@ -23,10 +23,20 @@ interface NewsItem {
   }
 }
 
+interface BlogItem {
+  id: string
+  slug: string
+  title: string
+  coverImageUrl: string | null
+  authorName: string
+  createdAt: string
+}
+
 export function NewsSection() {
   // Use individual selectors to prevent re-rendering on unrelated store changes
   const selectedCity = useAppStore((s) => s.selectedCity)
   const [news, setNews] = useState<NewsItem[]>([])
+  const [blogs, setBlogs] = useState<BlogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [cityId, setCityId] = useState<string | null>(null)
 
@@ -58,6 +68,17 @@ export function NewsSection() {
         if (res.ok) {
           const data = await res.json()
           setNews(Array.isArray(data) ? data : (data?.news || []))
+        }
+      } catch {
+        // ignore
+      }
+
+      // Fetch Blogs
+      try {
+        const resBlogs = await fetch(`/api/blogs?cityId=${cityId}&limit=5`)
+        if (resBlogs.ok) {
+          const dataBlogs = await resBlogs.json()
+          setBlogs(Array.isArray(dataBlogs) ? dataBlogs : [])
         }
       } catch {
         // ignore
@@ -155,6 +176,68 @@ export function NewsSection() {
                 </GlassCard>
               </Link>
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Informative Blogs Section */}
+      <div className="flex items-center justify-between mb-3 mt-8">
+        <h2 className="text-lg font-bold text-gray-800">
+          📝 ఇన్ఫర్మేటివ్ బ్లాగ్స్
+        </h2>
+        <Link href="/blog" className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline active:scale-95 transition-transform">
+          View All <ArrowRight className="size-4" />
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="aspect-video rounded-t-xl" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : blogs.length === 0 ? (
+        <GlassCard className="!p-6 text-center">
+          <Newspaper className="size-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-gray-500 text-sm">No blogs available yet.</p>
+        </GlassCard>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {blogs.map((blog) => (
+            <Link key={blog.id} href={`/blog/${blog.slug}`} className="block">
+              <GlassCard className="!p-3 overflow-hidden cursor-pointer group flex gap-4 items-center">
+                <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-lg">
+                  {blog.coverImageUrl ? (
+                    <OptimizedImage
+                      src={blog.coverImageUrl}
+                      alt={blog.title}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
+                      <Newspaper className="w-6 h-6 text-white/60" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
+                    {blog.title}
+                  </h3>
+                  <div className="flex flex-col gap-1 text-gray-500">
+                    <span className="text-[12px] font-medium">By {blog.authorName}</span>
+                    <span className="text-[11px] flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {formatDate(blog.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              </GlassCard>
+            </Link>
           ))}
         </div>
       )}

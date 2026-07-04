@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     const cityId = searchParams.get('cityId')
     const slug = searchParams.get('slug')
     const all = searchParams.get('all')
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
     // Fetch single blog by slug
     if (slug) {
@@ -87,6 +89,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
+      ...(limit ? { take: limit } : {}),
     })
 
     return NextResponse.json(blogs)
