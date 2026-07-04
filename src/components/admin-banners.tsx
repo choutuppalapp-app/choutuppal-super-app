@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { getAdminBanners, deleteAdminBanner } from '@/app/actions/admin-actions'
-import { Loader2, Trash2, Calendar, Link as LinkIcon, Building2, UploadCloud, Plus, X } from 'lucide-react'
+import { Loader2, Trash2, Calendar, Link as LinkIcon, Building2, UploadCloud, Plus, X, Send } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
