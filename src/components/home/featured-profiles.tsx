@@ -30,82 +30,73 @@ export function FeaturedProfiles() {
   }
 
   return (
-    <section className="px-4 py-4">
+    <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-yellow-500 rounded-3xl p-6 my-8">
       {/* ── Static heading ── */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Crown className="w-5 h-5 text-[#4169E1]" />
-          <h2 className="text-lg font-bold text-gray-800">Featured Profiles</h2>
+          <Crown className="w-6 h-6 text-yellow-400" />
+          <h2 className="text-xl font-bold text-white">Featured Profiles</h2>
         </div>
-        <button
-          onClick={() => navigateTo('community')}
-          className="flex items-center gap-1 text-xs text-[#4169E1] font-medium hover:text-[#4169E1]/80 transition-colors bg-transparent border-none p-0 cursor-pointer"
-        >
-          View All
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
       </div>
 
-      {/* ── Scrollable profile cards ── */}
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+      {/* ── Grid of Profile Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {profiles.map((user) => {
           const isLeader = user.role === 'city_admin' || user.role === 'super_admin' || user.role === 'agent'
-          const IconComponent = isLeader ? Crown : UserIcon
-          const gradient = isLeader ? 'from-[#D4AF37] to-[#4169E1]' : 'from-[#4169E1] to-[#6B8DD6]'
-          const ringColor = isLeader ? 'ring-[#D4AF37]' : 'ring-[#4169E1]'
-
           const name = user.fullName || 'User'
           const title = user.profile?.bio || (isLeader ? 'Leader' : 'Member')
-          const avatarUrl = user.avatarUrl
+          const avatarUrl = user.avatarUrl || '/og-default.png'
+          const coverUrl = user.coverImage || user.profile?.coverImageUrl || '/og-default.png'
           
-          console.log('Featured Profile Link:', '/profile/' + user.id)
-
           return (
             <Link
               key={user.id}
               href={`/profile/${user.id}`}
-              className="shrink-0 group"
+              className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-xl rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl group relative"
             >
-              <div className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-xl rounded-2xl p-4 flex flex-col items-center gap-2 w-36 hover:bg-white/30 hover:scale-[1.02] transition-all duration-300 relative overflow-hidden">
-                {/* Type indicator */}
-                <div className={`absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${
-                  isLeader ? 'bg-[#FF9933]' : 'bg-[#4169E1]'
-                }`}>
-                  <IconComponent className="w-3 h-3 text-white" />
-                </div>
-                
-                {/* Avatar */}
-                <div className="relative mt-1">
-                  {avatarUrl ? (
-                    <img 
-                      src={avatarUrl} 
-                      alt={name} 
-                      className="w-16 h-16 rounded-full object-cover ring-2 ring-white/50 shadow-md" 
-                    />
-                  ) : (
-                    <div
-                      className={`w-16 h-16 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xl ring-2 ring-white/50 shadow-md`}
-                    >
-                      {name.charAt(0)}
-                    </div>
-                  )}
-                  {user.profile?.isVerified && (
-                    <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
-                      <ShieldCheck className={`w-4 h-4 ${isLeader ? 'text-[#D4AF37]' : 'text-[#4169E1]'}`} />
-                    </div>
-                  )}
-                </div>
+              {/* Featured Badge */}
+              <div className="absolute top-2 right-2 bg-black/30 text-yellow-400 text-xs font-bold px-2 py-1 rounded-full backdrop-blur-md z-10">
+                Featured
+              </div>
+              
+              {/* Cover Photo */}
+              <div className="h-24 w-full">
+                <img 
+                  src={coverUrl} 
+                  alt="Cover" 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
 
-                {/* Info */}
-                <div className="text-center w-full mt-1">
-                  <p className="text-sm font-bold text-gray-900 truncate w-full">{name.split(' ')[0]}</p>
-                  <p className="text-xs text-gray-500 truncate w-full">{title}</p>
-                </div>
+              {/* Profile Photo */}
+              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/80 shadow-lg -mt-10 mx-auto overflow-hidden bg-gray-100 z-10">
+                <img 
+                  src={avatarUrl} 
+                  alt={name} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+
+              {/* Details */}
+              <div className="mt-2 pb-4 px-4 text-center">
+                <h3 className="text-white font-bold text-lg truncate w-full">{name}</h3>
+                <p className="text-white/80 text-sm truncate w-full mt-1">{title}</p>
               </div>
             </Link>
           )
         })}
       </div>
-    </section>
+
+      {/* ── View All Button ── */}
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={() => navigateTo('community')}
+          className="bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-6 py-2 text-white font-semibold hover:bg-white/30 transition-all flex items-center gap-2 cursor-pointer"
+        >
+          View All Profiles
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
   )
 }
