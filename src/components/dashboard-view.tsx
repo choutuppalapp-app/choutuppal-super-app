@@ -909,7 +909,7 @@ export default function DashboardView() {
   )
 
   const renderListings = () => {
-    const businessListings = listings.filter(l => l.category !== 'Real Estate').filter(l => l.name?.toLowerCase().includes(searchTerm.toLowerCase())).filter(l => statusFilter === 'All' || l.status === statusFilter)
+    const businessListings = listings.filter(l => l.name?.toLowerCase().includes(searchTerm.toLowerCase())).filter(l => statusFilter === 'All' || l.status === statusFilter)
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

@@ -89,7 +89,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
               {listing.name}
             </h3>
             
-            <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-none text-[10px] py-0.5 font-bold inline-flex w-max">
+            <Badge variant="secondary" className={`border-none text-[10px] py-0.5 font-bold inline-flex w-max ${listing.category === 'Real Estate' ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#4169E1]/10 text-[#4169E1]'}`}>
               {listing.category}
             </Badge>
             
