@@ -183,7 +183,7 @@ export function NewsSection() {
       {/* Informative Blogs Section */}
       <div className="flex items-center justify-between mb-3 mt-8">
         <h2 className="text-lg font-bold text-gray-800">
-          📝 ఇన్ఫర్మేటివ్ బ్లాగ్స్
+          📝 Informative Blogs
         </h2>
         <Link href="/blog" className="flex items-center gap-1 text-sm text-[#4169E1] font-medium hover:underline active:scale-95 transition-transform">
           View All <ArrowRight className="size-4" />
@@ -206,38 +206,46 @@ export function NewsSection() {
           <p className="text-gray-500 text-sm">No blogs available yet.</p>
         </GlassCard>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {blogs.map((blog) => (
-            <Link key={blog.id} href={`/blog/${blog.slug}`} className="block">
-              <GlassCard className="!p-3 overflow-hidden cursor-pointer group flex gap-4 items-center">
-                <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-lg">
-                  {blog.coverImageUrl ? (
-                    <OptimizedImage
-                      src={blog.coverImageUrl}
-                      alt={blog.title}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] flex items-center justify-center">
-                      <Newspaper className="w-6 h-6 text-white/60" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
-                    {blog.title}
-                  </h3>
-                  <div className="flex flex-col gap-1 text-gray-500">
-                    <span className="text-[12px] font-medium">By {blog.authorName}</span>
-                    <span className="text-[11px] flex items-center gap-1">
-                      <Clock className="size-3" />
-                      {formatDate(blog.createdAt)}
-                    </span>
+            <div key={blog.id}>
+              <Link href={`/blog/${blog.slug}`} className="block">
+                <GlassCard className="!p-0 overflow-hidden cursor-pointer group">
+                  <div className="relative aspect-video w-full overflow-hidden">
+                    {blog.coverImageUrl ? (
+                      <OptimizedImage
+                        src={blog.coverImageUrl}
+                        alt={blog.title}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#4169E1] to-[#D4AF37] rounded-t-xl flex items-center justify-center">
+                        <Newspaper className="w-8 h-8 text-white/60" />
+                      </div>
+                    )}
                   </div>
-                </div>
-              </GlassCard>
-            </Link>
+
+                  <div className="p-3 space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">
+                      {blog.title}
+                    </h3>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <Clock className="size-3" />
+                        <span className="text-[11px]">{formatDate(blog.createdAt)}</span>
+                      </div>
+                      {blog.authorName && (
+                        <span className="text-[11px] text-[#4169E1] font-medium line-clamp-1 text-right">
+                          {blog.authorName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </GlassCard>
+              </Link>
+            </div>
           ))}
         </div>
       )}
