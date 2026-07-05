@@ -18,10 +18,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const title = `${user.fullName} | ${roleLabel} | Choutuppal App`
   const description = user.bio || `View ${user.fullName}'s profile, listings, and stories on Choutuppal App.`
   
-  const rawImage = user.avatarUrl || '/logo.png'
-  const absoluteImageUrl = rawImage.startsWith('http') 
-    ? rawImage 
-    : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
+  const rawImage = user.coverImage || user.avatarUrl || '/og-default.png'
+  const absoluteImageUrl = rawImage.startsWith('/') 
+    ? `https://choutuppal.in${rawImage}` 
+    : rawImage
 
   return {
     title,

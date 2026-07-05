@@ -28,10 +28,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = `${blog.title} in Choutuppal | Choutuppal App`
   const description = blog.content?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Read ${blog.title} on Choutuppal App`
 
-  const rawImage = blog.coverImageUrl || '/logo.png'
-  const absoluteImageUrl = rawImage.startsWith('http') 
-    ? rawImage 
-    : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
+  const rawImage = blog.coverImageUrl || '/og-default.png'
+  const absoluteImageUrl = rawImage.startsWith('/') 
+    ? `https://choutuppal.in${rawImage}` 
+    : rawImage
 
   return {
     title,

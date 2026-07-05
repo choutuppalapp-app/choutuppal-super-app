@@ -38,10 +38,10 @@ export async function generateMetadata({ params }: { params: { id: string } | Pr
     }
   } catch {}
 
-  const rawImage = listing.coverImage || listing.logoUrl || '/logo.png'
-  const absoluteImageUrl = rawImage.startsWith('http') 
-    ? rawImage 
-    : `https://choutuppal.in${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
+  const rawImage = listing.coverImage || listing.logoUrl || '/og-default.png'
+  const absoluteImageUrl = rawImage.startsWith('/') 
+    ? `https://choutuppal.in${rawImage}` 
+    : rawImage
 
   return {
     title,
