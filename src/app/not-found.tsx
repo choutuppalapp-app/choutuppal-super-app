@@ -24,10 +24,10 @@ export default function NotFound() {
         <div className="flex justify-center">
           <Button
             onClick={() => window.location.href = '/'}
-            className="bg-gradient-to-r from-[#4169E1] to-[#D4AF37] hover:opacity-90 text-white font-bold py-6 px-8 rounded-full shadow-lg transition-transform hover:scale-105"
+            className="bg-gradient-to-r from-blue-600 to-yellow-500 hover:opacity-90 text-white font-bold py-6 px-8 rounded-full shadow-lg transition-transform hover:scale-105"
           >
             <Home className="size-5 mr-2" />
-            Go to Home Page
+            Return to Home
           </Button>
         </div>
       </motion.div>

@@ -18,6 +18,7 @@ import { PwaInstallManager } from "@/components/pwa-install-manager";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 import PushPermissionManager from "@/components/push-permission-manager";
 import { SwrProvider } from "@/components/swr-provider";
+import FacebookPixel from "@/components/fb-pixel";
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -96,29 +97,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen w-full bg-gray-50 flex flex-col`}
       >
-        {process.env.NEXT_PUBLIC_FB_PIXEL_ID && (
-          <>
-            <Script id="fb-pixel-script" strategy="afterInteractive">
-              {`
-                !function(f,b,e,v,n,t,s)
-                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                n.queue=[];t=b.createElement(e);t.async=!0;
-                t.src=v;s=b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t,s)}(window, document,'script',
-                'https://connect.facebook.net/en_US/fbevents.js');
-                fbq('init', '${process.env.NEXT_PUBLIC_FB_PIXEL_ID}');
-                fbq('track', 'PageView');
-              `}
-            </Script>
-            <noscript>
-              <img height="1" width="1" style={{ display: 'none' }}
-                src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_FB_PIXEL_ID}&ev=PageView&noscript=1`} alt=""
-              />
-            </noscript>
-          </>
-        )}
+        <FacebookPixel />
         <SwrProvider>
           <GlobalErrorHandler />
           <ErrorBoundary name="AuthProvider">
