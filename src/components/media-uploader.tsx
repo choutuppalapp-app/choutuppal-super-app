@@ -1,5 +1,5 @@
 'use client'
-import { supabase } from '@/lib/supabase'
+
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
@@ -98,21 +98,22 @@ export function MediaUploader({
         setProgress((prev) => Math.min(prev + 15, 90))
       }, 500)
 
-      const { data: uploadResult, error } = await supabase.storage
-        .from('listing-images')
-        .upload(`${folder}/${Date.now()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, fileToUpload, { cacheControl: '3600', upsert: false });
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
       clearInterval(progressInterval)
 
-      if (error) {
-        throw new Error('Upload failed')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Upload failed')
       }
 
-      const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(uploadResult.path);
-      const data = { url: urlData.publicUrl };
+      const data = await response.json()
       setProgress(100)
 
-      // Clean up local blob URL and use Cloudinary URL
+      // Clean up local blob URL and use R2 URL
       URL.revokeObjectURL(localUrl)
       setPreview(data.url)
       onChange(data.url)
@@ -292,16 +293,17 @@ export function MultiMediaUploader({
       formData.append('file', file)
       formData.append('folder', folder)
 
-      const { data: uploadResult, error } = await supabase.storage
-        .from('listing-images')
-        .upload(`${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, file, { cacheControl: '3600', upsert: false });
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      if (error) {
-        throw new Error('Upload failed')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Upload failed')
       }
 
-      const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(uploadResult.path);
-      const data = { url: urlData.publicUrl };
+      const data = await response.json()
       onChange([...value, data.url])
       toast.success('Image uploaded!')
     } catch (error) {

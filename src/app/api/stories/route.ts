@@ -11,7 +11,8 @@ export async function GET(request: Request) {
     const userId = searchParams.get('userId')
 
     const where: any = {
-      expiresAt: { gt: new Date() }
+      expiresAt: { gt: new Date() },
+      createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
     }
 
     if (cityId) {

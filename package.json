@@ -1,6 +1,6 @@
 {
   "name": "choutuppal2",
-  "version": "2.0.0",
+  "version": "2.0.3",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -15,6 +15,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1085.0",
     "@prisma/client": "^6.11.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",

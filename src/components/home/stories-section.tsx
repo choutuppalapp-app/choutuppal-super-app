@@ -87,7 +87,14 @@ export function StoriesSection() {
     setLoading(true)
     fetch(`/api/stories?cityId=${cityId}`)
       .then((res) => res.ok ? res.json() : [])
-      .then((data) => setStories(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const activeStories = (Array.isArray(data) ? data : []).filter((story: any) => {
+          const createdTime = new Date(story.createdAt).getTime()
+          const diff = Date.now() - createdTime
+          return diff < 24 * 60 * 60 * 1000
+        })
+        setStories(activeStories)
+      })
       .catch(() => setStories([]))
       .finally(() => setLoading(false))
   }, [cityId])

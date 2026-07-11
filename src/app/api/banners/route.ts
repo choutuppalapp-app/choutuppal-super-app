@@ -50,11 +50,12 @@ export async function GET(request: Request) {
     const userId = searchParams.get('userId')
     const all = searchParams.get('all') === 'true'
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, any> = {}
     if (!all) {
       where.isActive = true
       where.status = 'APPROVED'
       where.expiresAt = { gt: new Date() }
+      where.createdAt = { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
     }
     // Single city architecture: return all approved banners.
     // Ignored cityId and citySlug filtering.

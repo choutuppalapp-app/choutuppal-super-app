@@ -74,7 +74,13 @@ export function BannerAds() {
 
   useEffect(() => {
     if (data && Array.isArray(data) && data.length > 0) {
-      setAds(data)
+      const activeBanners = data.filter((ad: any) => {
+        if (!ad.createdAt) return true
+        const createdTime = new Date(ad.createdAt).getTime()
+        const diff = Date.now() - createdTime
+        return diff < 24 * 60 * 60 * 1000
+      })
+      setAds(activeBanners.length > 0 ? activeBanners : FALLBACK_ADS)
     } else if (data && Array.isArray(data) && data.length === 0) {
       setAds(FALLBACK_ADS)
     }
