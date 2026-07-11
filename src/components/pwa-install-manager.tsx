@@ -147,7 +147,7 @@ export function PwaInstallManager() {
                 <div className="flex flex-col gap-3 w-full">
                   <button
                     onClick={handleInstallClick}
-                    className="w-full bg-gradient-to-r from-[#4169E1] to-[#3155C1] text-white font-bold py-3.5 rounded-xl active:scale-95 transition-transform shadow-md"
+                    className="w-full bg-gradient-to-r from-blue-600 to-yellow-500 text-white font-bold py-3.5 rounded-xl active:scale-95 transition-transform shadow-md"
                   >
                     Install Now
                   </button>
