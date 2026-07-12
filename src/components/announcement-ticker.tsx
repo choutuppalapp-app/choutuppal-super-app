@@ -41,25 +41,24 @@ export default function AnnouncementTicker() {
 
   if (!ready || announcements.length === 0) return null
 
-  const tickerText = announcements.map((a) => a.text).join('   •   ')
-  const repeatedText = `${tickerText}   •   ${tickerText}   •   ${tickerText}`
+  const tickerText = announcements.map((a) => a.text).join('   •   ') + '   •   '
 
   return (
-    <div className="w-full flex items-center bg-yellow-400 overflow-hidden select-none">
+    <div className="w-full flex items-center bg-yellow-400 overflow-hidden select-none py-1">
       <button
         onClick={() => setIsPaused((p) => !p)}
-        className="flex-shrink-0 flex items-center justify-center w-12 h-full bg-yellow-500 hover:bg-yellow-600 transition-colors self-stretch shadow-[2px_0_10px_rgba(0,0,0,0.1)] z-10 py-2.5"
+        className="flex-shrink-0 flex items-center justify-center w-10 h-8 bg-yellow-500 hover:bg-yellow-600 transition-colors shadow-md z-10 mr-2 rounded-r-lg"
         aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
       >
         {isPaused ? (
-          <Play className="w-4 h-4 text-black" fill="currentColor" />
+          <Play className="w-3.5 h-3.5 text-black" fill="currentColor" />
         ) : (
-          <Pause className="w-4 h-4 text-black" fill="currentColor" />
+          <Pause className="w-3.5 h-3.5 text-black" fill="currentColor" />
         )}
       </button>
 
       <div 
-        className="flex-1 overflow-hidden"
+        className="flex-1 overflow-hidden relative flex items-center"
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
         onMouseEnter={() => setIsPaused(true)}
@@ -68,20 +67,30 @@ export default function AnnouncementTicker() {
         <div
           className="flex whitespace-nowrap"
           style={{
-            animation: 'ticker-scroll 25s linear infinite',
+            animation: 'marquee-animation 25s linear infinite',
             animationPlayState: isPaused ? 'paused' : 'running',
           }}
         >
-          <span className="text-black text-xs font-black px-6 whitespace-nowrap">
-            {repeatedText}
+          <span className="text-black text-xs font-black px-2">
+            {tickerText}
+          </span>
+          <span className="text-black text-xs font-black px-2">
+            {tickerText}
+          </span>
+          <span className="text-black text-xs font-black px-2">
+            {tickerText}
           </span>
         </div>
       </div>
 
       <style>{`
-        @keyframes ticker-scroll {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-33.333%); }
+        @keyframes marquee-animation {
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(-33.333%);
+          }
         }
       `}</style>
     </div>
