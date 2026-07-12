@@ -26,7 +26,10 @@ const HeroSection = () => {
 
   const cityName = currentCity.name || 'Choutuppal'
   const brandName = currentCity.brandName || 'Choutuppal App'
-  const heroImageUrl = currentCity.heroImageUrl || siteSettings.heroImageUrl || null
+  let heroImageUrl = currentCity.heroImageUrl || siteSettings.heroImageUrl || null
+  if (heroImageUrl && heroImageUrl.includes('.supabase.co/storage')) {
+    heroImageUrl = null
+  }
   const whatsappNumber = siteSettings.whatsappSupportNumber || '918790083706'
   const waText = siteSettings.heroWhatsappText || 'నమస్కారం, చౌతుప్పల్ యాప్ గురించి సమాచారం కావాలి'
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waText)}`
@@ -62,9 +65,8 @@ const HeroSection = () => {
         </div>
       ) : (
         <>
-          <div className="absolute inset-0 bg-gradient-to-br from-[#4169E1] to-[#D4AF37]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,#4169E140,transparent_60%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,#D4AF3733,transparent_60%)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-yellow-500" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15),transparent_60%)]" />
         </>
       )}
 
@@ -76,7 +78,7 @@ const HeroSection = () => {
         <div className="text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-md mb-3">
-            <Sparkles className="size-3.5 text-[#D4AF37]" />
+            <Sparkles className="size-3.5 text-white" />
             <span className="text-xs font-medium text-white">{badgeText}</span>
           </div>
 
@@ -99,7 +101,7 @@ const HeroSection = () => {
             <Button
               onClick={() => navigateTo('explore')}
               size="sm"
-              className="text-white font-bold px-6 py-2 shadow-lg text-sm min-h-[40px] bg-gradient-to-r from-[#D4AF37] to-[#4169E1] hover:from-[#C9A533] hover:to-[#3b5fd4]"
+              className="text-white font-bold px-6 py-2 shadow-lg text-sm min-h-[40px] bg-gradient-to-r from-blue-600 to-yellow-500 hover:opacity-90 active:scale-95 transition-all"
             >
               Explore Now
               <ChevronRight className="size-4 ml-1" />

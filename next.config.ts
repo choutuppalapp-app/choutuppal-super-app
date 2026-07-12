@@ -51,6 +51,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: 'media.choutuppal.in',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.r2.dev',
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
