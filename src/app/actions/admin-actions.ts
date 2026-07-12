@@ -286,7 +286,13 @@ export async function sendPushNotification(title: string, message: string, link?
     let successful = 0;
     for (const sub of subscriptions) {
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys as any }, payload);
+        await webpush.sendNotification({
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth
+          }
+        }, payload);
         successful++;
       } catch (e: any) {
         if (e.statusCode === 410 || e.statusCode === 404) {
