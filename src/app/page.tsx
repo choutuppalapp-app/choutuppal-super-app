@@ -11,7 +11,7 @@ import { ErrorBoundary } from '@/components/error-boundary'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
 import { StoriesSection } from '@/components/home/stories-section'
-import { BannerAds } from '@/components/home/banner-ads'
+import BannerAd from '@/components/banner-ad'
 import { CategoriesSection } from '@/components/home/categories-section'
 import { FeaturedListings } from '@/components/home/featured-listings'
 import { RealEstateSection } from '@/components/home/real-estate-section'
@@ -148,7 +148,7 @@ function HomeView() {
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
       {/* Ticker sits directly below Stories, full-width with no padding */}
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
-      <ErrorBoundary name="BannerAds"><BannerAds /></ErrorBoundary>
+      <ErrorBoundary name="BannerAd"><BannerAd /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
       {config.enableLeaderProfiles && (
         <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
