@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, usePathname } from 'next/navigation'
-import { LayoutDashboard, Image as ImageIcon, PlaySquare, Store, BellRing, LogOut, ShieldAlert, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Image as ImageIcon, PlaySquare, Store, BellRing, LogOut, ShieldAlert, Loader2, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'User Stories', href: '/admin/stories', icon: PlaySquare },
     { label: 'Listings Moderation', href: '/admin/listings', icon: Store },
     { label: 'Send Notifications', href: '/admin/notifications', icon: BellRing },
+    { label: 'System Settings', href: '/admin/settings', icon: Settings },
   ]
 
   if (isLoading) {
