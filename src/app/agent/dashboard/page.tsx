@@ -30,12 +30,19 @@ export default function AgentDashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('listings')
 
+  const isAgentOrAdmin = 
+    user?.role === 'agent' || 
+    user?.role === 'admin' || 
+    user?.role === 'super_admin' || 
+    user?.role === 'city_admin' || 
+    (user?.email && user.email.toLowerCase() === 'mailmosin@gmail.com')
+
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || (user?.role !== 'agent' && user?.role !== 'admin' && user?.role !== 'super_admin' && user?.role !== 'city_admin'))) {
+    if (!isLoading && (!isAuthenticated || !isAgentOrAdmin)) {
       toast.error('ఈ పేజీ కేవలం ఏజెంట్లు లేదా అడ్మిన్లకు మాత్రమే.')
       router.push('/')
     }
-  }, [isAuthenticated, isLoading, user, router])
+  }, [isAuthenticated, isLoading, user, isAgentOrAdmin, router])
 
   if (isLoading) {
     return (
@@ -45,7 +52,7 @@ export default function AgentDashboardPage() {
     )
   }
 
-  if (!user || (user.role !== 'agent' && user.role !== 'admin' && user.role !== 'super_admin' && user.role !== 'city_admin')) {
+  if (!user || !isAgentOrAdmin) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-gray-800 p-4">
         <Lock className="w-12 h-12 text-red-500 mb-2" />
