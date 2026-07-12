@@ -15,6 +15,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
 import { PwaInstallManager } from "@/components/pwa-install-manager";
+import PwaInstallPrompt from "@/components/pwa-install-prompt";
 import { WhatsAppFloatingButton } from "@/components/whatsapp-floating-button";
 import PushPermissionManager from "@/components/push-permission-manager";
 import { SwrProvider } from "@/components/swr-provider";
@@ -128,6 +129,10 @@ export default function RootLayout({
 
                 <ErrorBoundary name="PwaInstallManager">
                   <PwaInstallManager />
+                </ErrorBoundary>
+
+                <ErrorBoundary name="PwaInstallPrompt">
+                  <PwaInstallPrompt />
                 </ErrorBoundary>
 
                 <ErrorBoundary name="PushPermissionManager">
