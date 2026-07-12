@@ -11,7 +11,7 @@ import { ErrorBoundary } from '@/components/error-boundary'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
 import { StoriesSection } from '@/components/home/stories-section'
-import BannerAd from '@/components/banner-ad'
+import BannerSlider from '@/components/banner-slider'
 import { CategoriesSection } from '@/components/home/categories-section'
 import { FeaturedListings } from '@/components/home/featured-listings'
 import { RealEstateSection } from '@/components/home/real-estate-section'
@@ -22,6 +22,7 @@ import SpinWheel from '@/components/spin-wheel'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
 import { AnnouncementTicker } from '@/components/home/announcement-ticker'
 import SearchBar from '@/components/search-bar'
+import { ClassifiedsSection } from '@/components/home/classifieds-section'
 
 import { FeaturedProfiles } from '@/components/home/featured-profiles'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
@@ -146,34 +147,70 @@ function HomeView() {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
-      {/* Ticker sits directly below Stories, full-width with no padding */}
-      <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
-      <ErrorBoundary name="SearchBar"><SearchBar /></ErrorBoundary>
-      <ErrorBoundary name="BannerAd"><BannerAd /></ErrorBoundary>
-      <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
-      {config.enableLeaderProfiles && (
-        <ErrorBoundary name="FeaturedProfiles"><FeaturedProfiles /></ErrorBoundary>
-      )}
-      <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
-      {config.enableSpinAndWin && (
-        <ErrorBoundary name="SpinWheel"><SpinWheel /></ErrorBoundary>
-      )}
-      {config.enableListings && (
-        <>
-          <ErrorBoundary name="CategoriesSection"><CategoriesSection /></ErrorBoundary>
-          <ErrorBoundary name="FeaturedListings"><FeaturedListings /></ErrorBoundary>
-        </>
-      )}
-      {config.enableRealEstate && (
-        <ErrorBoundary name="RealEstateSection"><RealEstateSection /></ErrorBoundary>
-      )}
-      {config.enableBlog && (
-        <ErrorBoundary name="NewsSection"><NewsSection /></ErrorBoundary>
-      )}
-      <ErrorBoundary name="TestimonialsSection"><TestimonialsSection /></ErrorBoundary>
-      <ErrorBoundary name="PricingSection"><PricingSection /></ErrorBoundary>
+      {/* 2. Stories / Your Story horizontal feed */}
+      <ErrorBoundary name="StoriesSection">
+        <StoriesSection />
+      </ErrorBoundary>
 
+      {/* 3. BannerSlider (16:9 Premium Ads) */}
+      <ErrorBoundary name="BannerSlider">
+        <BannerSlider />
+      </ErrorBoundary>
+
+      {/* 4. SearchBar (Advanced search with Telugu placeholder and filter pills) */}
+      <ErrorBoundary name="SearchBar">
+        <SearchBar />
+      </ErrorBoundary>
+
+      {/* 5. Spin & Win! Banner */}
+      {config.enableSpinAndWin && (
+        <ErrorBoundary name="SpinWheel">
+          <SpinWheel />
+        </ErrorBoundary>
+      )}
+
+      {/* 6. Categories Grid */}
+      {config.enableListings && (
+        <ErrorBoundary name="CategoriesSection">
+          <CategoriesSection />
+        </ErrorBoundary>
+      )}
+
+      {/* 7. Featured Listings Section */}
+      {config.enableListings && (
+        <ErrorBoundary name="FeaturedListings">
+          <FeaturedListings />
+        </ErrorBoundary>
+      )}
+
+      {/* 8. Local Classifieds Feed (Jobs, Sale, Rent) */}
+      <ErrorBoundary name="ClassifiedsSection">
+        <ClassifiedsSection />
+      </ErrorBoundary>
+
+      {/* 9. Real Estate Section */}
+      {config.enableRealEstate && (
+        <ErrorBoundary name="RealEstateSection">
+          <RealEstateSection />
+        </ErrorBoundary>
+      )}
+
+      {/* 10. Local News & Blogs Section */}
+      {config.enableBlog && (
+        <ErrorBoundary name="NewsSection">
+          <NewsSection />
+        </ErrorBoundary>
+      )}
+
+      {/* 11. User Reviews Slider (Testimonials) */}
+      <ErrorBoundary name="TestimonialsSection">
+        <TestimonialsSection />
+      </ErrorBoundary>
+
+      {/* 12. Pricing Plans & Offers Section */}
+      <ErrorBoundary name="PricingSection">
+        <PricingSection />
+      </ErrorBoundary>
     </div>
   )
 }
