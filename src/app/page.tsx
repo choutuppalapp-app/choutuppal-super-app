@@ -21,6 +21,7 @@ import { NewsSection } from '@/components/home/news-section'
 import SpinWheel from '@/components/spin-wheel'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
 import { AnnouncementTicker } from '@/components/home/announcement-ticker'
+import SearchBar from '@/components/search-bar'
 
 import { FeaturedProfiles } from '@/components/home/featured-profiles'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
@@ -148,6 +149,7 @@ function HomeView() {
       <ErrorBoundary name="StoriesSection"><StoriesSection /></ErrorBoundary>
       {/* Ticker sits directly below Stories, full-width with no padding */}
       <ErrorBoundary name="AnnouncementTicker"><AnnouncementTicker /></ErrorBoundary>
+      <ErrorBoundary name="SearchBar"><SearchBar /></ErrorBoundary>
       <ErrorBoundary name="BannerAd"><BannerAd /></ErrorBoundary>
       <ErrorBoundary name="HeroSection"><DynamicHeroSection /></ErrorBoundary>
       {config.enableLeaderProfiles && (
