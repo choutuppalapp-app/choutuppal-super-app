@@ -10,6 +10,8 @@ import {
   Wrench, Sparkles, BadgeCheck
 , ShoppingBag, Minus, Plus } from 'lucide-react'
 import ListingCard from '@/components/listing-card'
+import ReviewForm from '@/components/review-form'
+import ReviewList from '@/components/review-list'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -87,6 +89,43 @@ export default function ListingView() {
   const [listing, setListing] = useState<ListingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+
+  // Review states & fetching logic
+  const [reviewsData, setReviewsData] = useState<{ reviews: any[]; averageRating: number; totalCount: number }>({
+    reviews: [],
+    averageRating: 5.0,
+    totalCount: 0
+  })
+
+  const fetchReviews = useCallback(async () => {
+    if (!listing?.id) return
+    try {
+      const res = await fetch(`/api/reviews?listingId=${listing.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setReviewsData(data)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }, [listing?.id])
+
+  useEffect(() => {
+    if (listing?.id) {
+      fetchReviews()
+    }
+  }, [listing?.id, fetchReviews])
+
+  useEffect(() => {
+    if (listing) {
+      setReviewsData(prev => ({
+        ...prev,
+        averageRating: listing.rating || 5.0
+      }))
+    }
+  }, [listing])
+
+  const hasUserReviewed = user ? reviewsData.reviews.some((r: any) => r.userId === user.id) : false
 
   const handleBack = () => {
     navigateTo('explore')
@@ -431,9 +470,9 @@ END:VCARD`
                   <Badge variant="secondary" className="bg-[#4169E1]/10 text-[#4169E1] border-none font-bold">
                     {listing.category}
                   </Badge>
-                  <div className="flex items-center gap-1 bg-yellow-50 px-2.5 py-0.5 rounded border border-yellow-100 text-yellow-700">
+                  <div className="flex items-center gap-1.5 bg-yellow-50 px-2.5 py-0.5 rounded border border-yellow-100 text-yellow-750 font-bold text-xs">
                     <Star className="size-3.5 fill-yellow-500 text-yellow-500" />
-                    <span>{listing.rating || 5.0}</span>
+                    <span>{reviewsData.averageRating} ⭐ ({reviewsData.totalCount})</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Eye className="size-4 text-gray-400" />
@@ -565,6 +604,20 @@ END:VCARD`
                 </div>
               </div>
             )}
+
+            {/* Reviews Section */}
+            <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 p-5 md:p-6 space-y-6">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 border-b pb-3">
+                <div className="w-1.5 h-6 bg-gradient-to-b from-[#4169E1] to-[#D4AF37] rounded-full"></div>
+                వినియోగదారుల అభిప్రాయాలు (Reviews & Ratings)
+              </h2>
+
+              {listing && !hasUserReviewed && (
+                <ReviewForm listingId={listing.id} onSuccess={fetchReviews} />
+              )}
+
+              <ReviewList reviews={reviewsData.reviews} />
+            </div>
 
             {/* Bottom: Related Listings */}
             {relatedListings.length > 0 && (
