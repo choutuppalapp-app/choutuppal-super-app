@@ -130,6 +130,7 @@ model User {
   videoPlaylists VideoPlaylist[]
   videoProgress  VideoProgress[]
   pushSubscriptions PushSubscription[]
+  classifieds    Classified[]
 }
 
 // ─── Platform Settings (Commission Engine) ──────────────────
@@ -828,4 +829,17 @@ model ShortVideo {
   createdAt   DateTime @default(now())
 
   channel YoutubeChannel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model Classified {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  category      String   // e.g., JOB, SALE, RENT
+  contactNumber String
+  imageUrl      String?
+  userId        String
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
