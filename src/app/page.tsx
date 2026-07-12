@@ -20,9 +20,11 @@ import { PricingSection } from '@/components/home/pricing-section'
 import { NewsSection } from '@/components/home/news-section'
 import SpinWheel from '@/components/spin-wheel'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
-import { AnnouncementTicker } from '@/components/home/announcement-ticker'
+import AnnouncementTicker from '@/components/announcement-ticker'
 import SearchBar from '@/components/search-bar'
 import { ClassifiedsSection } from '@/components/home/classifieds-section'
+import AgentCTA from '@/components/agent-cta'
+import WhiteLabelCTA from '@/components/white-label-cta'
 
 import { FeaturedProfiles } from '@/components/home/featured-profiles'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
@@ -147,69 +149,84 @@ function HomeView() {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      {/* 2. Stories / Your Story horizontal feed */}
+      {/* 2. Announcement Ticker */}
+      <ErrorBoundary name="AnnouncementTicker">
+        <AnnouncementTicker />
+      </ErrorBoundary>
+
+      {/* 3. Stories / Your Story horizontal feed */}
       <ErrorBoundary name="StoriesSection">
         <StoriesSection />
       </ErrorBoundary>
 
-      {/* 3. BannerSlider (16:9 Premium Ads) */}
+      {/* 4. BannerSlider (16:9 Premium Ads) */}
       <ErrorBoundary name="BannerSlider">
         <BannerSlider />
       </ErrorBoundary>
 
-      {/* 4. SearchBar (Advanced search with Telugu placeholder and filter pills) */}
+      {/* 5. SearchBar (Advanced search with Telugu placeholder and filter pills) */}
       <ErrorBoundary name="SearchBar">
         <SearchBar />
       </ErrorBoundary>
 
-      {/* 5. Spin & Win! Banner */}
+      {/* 6. Spin & Win! Banner */}
       {config.enableSpinAndWin && (
         <ErrorBoundary name="SpinWheel">
           <SpinWheel />
         </ErrorBoundary>
       )}
 
-      {/* 6. Categories Grid */}
+      {/* 7. Categories Grid */}
       {config.enableListings && (
         <ErrorBoundary name="CategoriesSection">
           <CategoriesSection />
         </ErrorBoundary>
       )}
 
-      {/* 7. Featured Listings Section */}
+      {/* 8. Featured Listings Section */}
       {config.enableListings && (
         <ErrorBoundary name="FeaturedListings">
           <FeaturedListings />
         </ErrorBoundary>
       )}
 
-      {/* 8. Local Classifieds Feed (Jobs, Sale, Rent) */}
+      {/* 9. Local Classifieds Feed (Jobs, Sale, Rent) */}
       <ErrorBoundary name="ClassifiedsSection">
         <ClassifiedsSection />
       </ErrorBoundary>
 
-      {/* 9. Real Estate Section */}
+      {/* 10. Real Estate Section */}
       {config.enableRealEstate && (
         <ErrorBoundary name="RealEstateSection">
           <RealEstateSection />
         </ErrorBoundary>
       )}
 
-      {/* 10. Local News & Blogs Section */}
+      {/* 11. Local News & Blogs Section */}
       {config.enableBlog && (
         <ErrorBoundary name="NewsSection">
           <NewsSection />
         </ErrorBoundary>
       )}
 
-      {/* 11. User Reviews Slider (Testimonials) */}
+      {/* 12. User Reviews Slider (Testimonials) */}
       <ErrorBoundary name="TestimonialsSection">
         <TestimonialsSection />
       </ErrorBoundary>
 
-      {/* 12. Pricing Plans & Offers Section */}
+      {/* 13. Pricing Plans & Offers Section */}
       <ErrorBoundary name="PricingSection">
         <PricingSection />
+      </ErrorBoundary>
+
+      {/* 14. Agent CTA */}
+      <ErrorBoundary name="AgentCTA">
+        <AgentCTA />
+      </ErrorBoundary>
+
+      {/* 15. White Label CTA */}
+      <ErrorBoundary name="WhiteLabelCTA">
+        <WhiteLabelCTA />
       </ErrorBoundary>
     </div>
   )
