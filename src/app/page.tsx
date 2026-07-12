@@ -18,7 +18,7 @@ import { RealEstateSection } from '@/components/home/real-estate-section'
 import { TestimonialsSection } from '@/components/home/testimonials-section'
 import { PricingSection } from '@/components/home/pricing-section'
 import { NewsSection } from '@/components/home/news-section'
-import { DailySpinSection } from '@/components/home/daily-spin-section'
+import SpinWheel from '@/components/spin-wheel'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
 import { AnnouncementTicker } from '@/components/home/announcement-ticker'
 
@@ -155,7 +155,7 @@ function HomeView() {
       )}
       <ErrorBoundary name="WhatsAppCommunitySection"><WhatsAppCommunitySection /></ErrorBoundary>
       {config.enableSpinAndWin && (
-        <ErrorBoundary name="DailySpinSection"><DailySpinSection /></ErrorBoundary>
+        <ErrorBoundary name="SpinWheel"><SpinWheel /></ErrorBoundary>
       )}
       {config.enableListings && (
         <>

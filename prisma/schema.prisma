@@ -71,6 +71,8 @@ model User {
   locationId       String? // Links to Location for agents/city_admins
   subscriptionTier String   @default("free") // free, pro, premium
   coinsBalance     Int      @default(0)
+  walletCoins      Int      @default(0)
+  lastSpinDate     DateTime?
   whatsappNumber   String?
   avatarUrl        String?
   bio              String?

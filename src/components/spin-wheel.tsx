@@ -1,319 +1,276 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Sparkles, Award, Ticket, Copy, Loader2 } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { useAppStore } from '@/lib/store'
-import { useCouponActions } from '@/hooks/use-coupon-store'
+import { useState, useEffect, useRef } from 'react'
+import { Coins, Gift, AlertTriangle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth-context'
 
-interface SpinSegment {
-  id?: string
-  label: string
-  value: number
-  color: string
-  type: 'coins' | 'coupon' | 'discount' | 'free_listing' | 'none'
-  probability: number
-  couponDiscount?: number
-}
-
-// Fallback segments if API fails
-const FALLBACK_SEGMENTS: SpinSegment[] = [
-  { label: '5 Coins', value: 5, color: '#D4AF37', type: 'coins', probability: 0.2 },
-  { label: '10% Off', value: 0, color: '#E74C3C', type: 'coupon', couponDiscount: 10, probability: 0.1 },
-  { label: 'Try Again', value: 0, color: '#9E9E9E', type: 'none', probability: 0.5 },
-  { label: '50 Coins', value: 50, color: '#FF6B35', type: 'coins', probability: 0.1 },
-  { label: '25% Off', value: 0, color: '#9B59B6', type: 'coupon', couponDiscount: 25, probability: 0.05 },
-  { label: 'Jackpot', value: 500, color: '#8E24AA', type: 'coins', probability: 0.05 },
+const REWARDS = [50, 20, 10, 5, 2, 1] // Corresponding to 6 segments of 60deg each
+const COLORS = [
+  '#4169E1', // Royal Blue
+  '#E6C229', // Gold-ish Yellow
+  '#3155C1', // Medium Blue
+  '#D4AF37', // Gold
+  '#25449C', // Dark Royal Blue
+  '#F3E5AB', // Pale Yellow
 ]
 
 export default function SpinWheel() {
-  const showSpinWheel = useAppStore((s) => s.showSpinWheel)
-  const setShowSpinWheel = useAppStore((s) => s.setShowSpinWheel)
-  const currentUser = useAppStore((s) => s.currentUser)
-  const setCurrentUser = useAppStore((s) => s.setCurrentUser)
-  const { addCoupon } = useCouponActions()
-
-  const [segments, setSegments] = useState<SpinSegment[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSpinning, setIsSpinning] = useState(false)
+  const { isAuthenticated, setShowLoginModal } = useAuth()
+  const [spinning, setSpinning] = useState(false)
+  const [walletCoins, setWalletCoins] = useState<number>(0)
+  const [timeLeft, setTimeLeft] = useState<number>(0)
+  const [loading, setLoading] = useState(true)
   const [rotation, setRotation] = useState(0)
-  const [result, setResult] = useState<SpinSegment | null>(null)
-  const [wonCouponCode, setWonCouponCode] = useState<string | null>(null)
+  const [wonReward, setWonReward] = useState<number | null>(null)
 
-  // Fetch prizes on mount
+  const wheelRef = useRef<HTMLDivElement>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fetch current spin status
   useEffect(() => {
-    setIsLoading(true)
-    fetch('/api/admin/spin-prizes')
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setSegments(data.map(p => ({
-            id: p.id,
-            label: p.label,
-            value: p.prizeValue,
-            color: p.color || '#D4AF37',
-            type: p.prizeType,
-            probability: p.probability || 0.1,
-            couponDiscount: p.prizeType === 'discount' ? p.prizeValue : undefined
-          })))
-        } else {
-          setSegments(FALLBACK_SEGMENTS)
-        }
-      })
-      .catch(() => setSegments(FALLBACK_SEGMENTS))
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  const handleCopyCoupon = (code: string) => {
-    navigator.clipboard.writeText(code).then(() => {
-      toast.success('Coupon code copied to clipboard!', { description: `Use ${code} at checkout` })
-    }).catch(() => {
-      toast.info(`Your coupon code: ${code}`)
-    })
-  }
-
-  const handleSpin = async () => {
-    if (isSpinning || segments.length === 0) return
-    if (!currentUser) {
-      toast.error('Please login to spin the wheel!')
+    if (!isAuthenticated) {
+      setLoading(false)
       return
     }
-    
-    setIsSpinning(true)
-    setResult(null)
-    setWonCouponCode(null)
 
-    const totalProb = segments.reduce((sum, s) => sum + s.probability, 0) || 1
-    let random = Math.random() * totalProb
-    let winningIndex = 0
-    let currentProbSum = 0
-
-    for (let i = 0; i < segments.length; i++) {
-      currentProbSum += segments[i].probability
-      if (random <= currentProbSum) {
-        winningIndex = i
-        break
+    async function fetchState() {
+      try {
+        const res = await fetch('/api/spin')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.authenticated) {
+            setWalletCoins(data.walletCoins)
+            setTimeLeft(data.timeLeft)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching spin state:', err)
+      } finally {
+        setLoading(false)
       }
     }
-    const winningSegment = segments[winningIndex]
 
-    // Calculate rotation to make the winning segment land at 270 degrees (top pointer)
-    let angleSum = 0
-    for(let i = 0; i < winningIndex; i++){
-       angleSum += (segments[i].probability / totalProb) * 360
+    fetchState()
+  }, [isAuthenticated])
+
+  // Timer countdown hook
+  useEffect(() => {
+    if (timeLeft <= 0) return
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1000) {
+          if (timerRef.current) clearInterval(timerRef.current)
+          return 0
+        }
+        return prev - 1000
+      })
+    }, 1000)
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
     }
-    const sliceAngle = (winningSegment.probability / totalProb) * 360
-    const targetAngle = 270 - (angleSum + sliceAngle / 2)
-    const fullSpins = 5 + Math.floor(Math.random() * 3)
-    const totalRotation = fullSpins * 360 + targetAngle
+  }, [timeLeft])
 
-    setRotation((prev) => prev + totalRotation)
+  // Spin trigger
+  const handleSpin = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
 
-    setTimeout(async () => {
-      setIsSpinning(false)
-      setResult(winningSegment)
+    if (spinning || timeLeft > 0) return
 
-      if (winningSegment.type === 'coins' && winningSegment.value > 0) {
-        setCurrentUser({
-          ...currentUser,
-          coinsBalance: (currentUser.coinsBalance || 0) + winningSegment.value,
-        })
-        toast.success(`You won ${winningSegment.value} coins!`)
-      } else if ((winningSegment.type === 'coupon' || winningSegment.type === 'discount' || winningSegment.type === 'free_listing') && winningSegment.value > 0) {
-        const newCoupon = addCoupon({
-          discountType: 'percentage',
-          discountValue: winningSegment.value,
-          minimumPurchase: 0,
-          expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          maxUsage: 1,
-          isActive: true,
-          description: `Spin & Win: ${winningSegment.label}`,
-        })
-        setWonCouponCode(newCoupon.code)
-        toast.success(`🎉 You won a discount coupon!`, {
-          description: `Code: ${newCoupon.code} — copied to clipboard!`,
+    setSpinning(true)
+    setWonReward(null)
+
+    try {
+      const res = await fetch('/api/spin', {
+        method: 'POST',
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        if (res.status === 403 && errorData.timeLeft) {
+          setTimeLeft(errorData.timeLeft)
+          toast.warning('24 గంటల పరిమితి సక్రియంగా ఉంది.')
+        } else {
+          toast.error(errorData.error || 'స్పిన్ విఫలమైంది')
+        }
+        setSpinning(false)
+        return
+      }
+
+      const data = await res.json()
+      const rewardValue = data.reward
+      const rewardIndex = REWARDS.indexOf(rewardValue)
+
+      // Calculate target rotation degrees
+      // 360 * 5 (5 full spins) + segment offset
+      const segmentAngle = 60
+      const extraAngle = 360 - (rewardIndex * segmentAngle + segmentAngle / 2)
+      const targetRotation = rotation + 360 * 5 + extraAngle - (rotation % 360)
+      
+      setRotation(targetRotation)
+
+      // Wait for the animation to finish (4s)
+      setTimeout(() => {
+        setSpinning(false)
+        setWonReward(rewardValue)
+        setWalletCoins(data.walletCoins)
+        setTimeLeft(24 * 60 * 60 * 1000) // Set cooldown lock immediately
+        toast.success(`అభినందనలు! మీరు ${rewardValue} కాయిన్స్ గెలుచుకున్నారు! 🥳`, {
           duration: 5000,
         })
-        try { await navigator.clipboard.writeText(newCoupon.code) } catch { /* non-critical */ }
-      } else if (winningSegment.type === 'none') {
-        toast.info('Better luck next time! Spin again tomorrow.')
-      }
+      }, 4000)
 
-      try {
-        await fetch('/api/spin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.id }),
-        })
-      } catch { /* API not available */ }
-    }, 4000)
+    } catch (err) {
+      console.error('Spin execution error:', err)
+      toast.error('సాంకేతిక సమస్య సంభవించింది.')
+      setSpinning(false)
+    }
   }
 
-  // SVG parameters
-  const size = 360
-  const center = size / 2
-  const radius = center - 10
-  const totalProb = segments.reduce((sum, s) => sum + s.probability, 0) || 1
+  // Format time remaining: HH:MM:SS
+  const formatTime = (ms: number) => {
+    const totalSecs = Math.floor(ms / 1000)
+    const hours = Math.floor(totalSecs / 3600)
+    const minutes = Math.floor((totalSecs % 3600) / 60)
+    const seconds = totalSecs % 60
+
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center justify-center min-h-[300px]">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
+        <p className="text-sm text-gray-500 font-medium">ఫీచర్‌ లోడ్ అవుతోంది...</p>
+      </div>
+    )
+  }
 
   return (
-    <Dialog open={showSpinWheel} onOpenChange={setShowSpinWheel}>
-      <DialogContent className="bg-gradient-to-br from-blue-600 to-purple-600 border border-purple-400/50 shadow-2xl shadow-purple-500/50 sm:rounded-2xl rounded-2xl max-w-sm overflow-hidden z-[60] p-6 mx-auto w-[95vw]">
-        <DialogHeader className="text-center mb-2">
-          <DialogTitle className="flex items-center justify-center gap-2 text-3xl font-extrabold text-white drop-shadow-md">
-            <Sparkles className="size-7 text-[#FFD700]" />
-            Spin & Win!
-          </DialogTitle>
-          <DialogDescription className="text-purple-100 font-medium text-base">
-            Spin daily to win amazing rewards!
-          </DialogDescription>
-        </DialogHeader>
+    <div className="bg-white rounded-2xl border border-gray-150 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-center gap-6 md:gap-8 max-w-3xl mx-auto my-4 overflow-hidden relative">
+      {/* Background patterns */}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/5 rounded-full blur-2xl" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-600/5 rounded-full blur-2xl" />
 
-        <div className="relative flex flex-col items-center py-2 min-h-[300px] justify-center">
-          {isLoading || segments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-4">
-              <Loader2 className="size-12 animate-spin text-white opacity-80" />
-              <p className="text-white/80 font-medium">Loading prizes...</p>
-            </div>
-          ) : (
-            <>
-              {/* Pointer */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
-                <div className="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-[#FFD700] drop-shadow-xl" style={{ filter: "drop-shadow(0px 4px 4px rgba(0,0,0,0.5))" }} />
-              </div>
+      {/* Left side: The Wheel UI */}
+      <div className="relative flex-shrink-0 w-52 h-52 sm:w-60 sm:h-60 flex items-center justify-center">
+        {/* Pointer Indicator */}
+        <div className="absolute top-0 z-30 -translate-y-2 flex flex-col items-center">
+          <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-red-500 filter drop-shadow-md" />
+          <div className="w-3.5 h-3.5 rounded-full bg-red-600 -mt-1 border border-white" />
+        </div>
 
-              <div className="relative mt-4">
-                <div
-                  className="rounded-full overflow-hidden aspect-square shadow-[0_0_25px_rgba(0,0,0,0.4)] bg-white/10 border-2 border-white/20 w-full max-w-[340px]"
+        {/* The Wheel */}
+        <div
+          ref={wheelRef}
+          className="w-full h-full rounded-full border-[6px] border-white shadow-xl relative overflow-hidden transition-transform duration-[4000ms] ease-[cubic-bezier(0.1,0.8,0.3,1)]"
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            backgroundImage: `conic-gradient(${COLORS.map(
+              (color, idx) => `${color} ${idx * 60}deg ${(idx + 1) * 60}deg`
+            ).join(', ')})`,
+          }}
+        >
+          {/* Numbers overlay */}
+          {REWARDS.map((val, idx) => {
+            const angle = idx * 60 + 30
+            return (
+              <div
+                key={idx}
+                className="absolute inset-0 flex items-start justify-center origin-center py-2"
+                style={{
+                  transform: `rotate(${angle}deg)`,
+                }}
+              >
+                <div 
+                  className="text-white font-black text-base sm:text-lg flex flex-col items-center filter drop-shadow-sm select-none"
                   style={{
-                    transform: `rotate(${rotation}deg)`,
-                    transition: isSpinning ? 'transform 4s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+                    transform: 'rotate(180deg) translateY(4px)', // Face numbers outwards nicely
                   }}
                 >
-                  <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="rounded-full overflow-hidden block">
-                    {(() => {
-                      let currentAngle = 0;
-                      return segments.map((segment, index) => {
-                        const sliceAngle = (segment.probability / totalProb) * 2 * Math.PI;
-                        const startAngle = currentAngle;
-                        const endAngle = currentAngle + sliceAngle;
-
-                        const x1 = center + radius * Math.cos(startAngle);
-                        const y1 = center + radius * Math.sin(startAngle);
-                        const x2 = center + radius * Math.cos(endAngle);
-                        const y2 = center + radius * Math.sin(endAngle);
-                        const largeArcFlag = sliceAngle > Math.PI ? 1 : 0;
-
-                        // A line from center to start, arc to end, line back to center
-                        const pathData = `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-
-                        const textAngle = startAngle + sliceAngle / 2;
-                        const textAngleDeg = (textAngle * 180) / Math.PI;
-
-                        currentAngle += sliceAngle;
-
-                        return (
-                          <g key={index}>
-                            <path d={pathData} fill={segment.color} stroke="rgba(255,255,255,0.4)" strokeWidth="2" />
-                            <g transform={`translate(${center}, ${center}) rotate(${textAngleDeg})`}>
-                              <text
-                                x={radius - 20}
-                                y={5}
-                                fill="#FFFFFF"
-                                fontSize="14"
-                                fontWeight="bold"
-                                textAnchor="end"
-                                style={{ filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.8))' }}
-                              >
-                                {segment.label}
-                              </text>
-                            </g>
-                          </g>
-                        );
-                      });
-                    })()}
-                    {/* Inner Center Circle */}
-                    <circle cx={center} cy={center} r="28" fill="#FFFFFF" stroke="#D4AF37" strokeWidth="4" />
-                    <text
-                      x={center}
-                      y={center + 1}
-                      fill="#D4AF37"
-                      fontSize="14"
-                      fontWeight="900"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      SPIN
-                    </text>
-                  </svg>
+                  <span className="leading-none">{val}</span>
+                  <Coins className="w-3 h-3 mt-0.5 opacity-90" />
                 </div>
               </div>
+            )
+          })}
 
-              <div className="mt-8 relative z-20 -top-6">
-                <Button
-                  onClick={handleSpin}
-                  disabled={isSpinning || segments.length === 0}
-                  className={`bg-gradient-to-r from-[#FFD700] to-[#F59E0B] hover:from-[#FDE047] hover:to-[#F59E0B] text-amber-950 font-extrabold text-2xl px-10 py-7 rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.5)] disabled:opacity-60 transition-all ${isSpinning ? '' : 'animate-bounce'}`}
-                >
-                  {isSpinning ? 'SPINNING...' : 'SPIN NOW!'}
-                </Button>
-              </div>
+          {/* Center Hub */}
+          <div className="absolute inset-0 m-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-4 border-gray-100 flex items-center justify-center shadow-lg z-20">
+            <Gift className="w-5 h-5 text-yellow-500 animate-pulse" />
+          </div>
+        </div>
+      </div>
 
-              {result && !isSpinning && (
-                <div className="mt-2 text-center w-full z-30">
-                  {result.type === 'coins' && result.value > 0 ? (
-                    <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white shadow-xl border-2 border-[#D4AF37]">
-                      <Award className="size-6 text-[#D4AF37]" />
-                      <span className="font-bold text-gray-900 text-lg">You won {result.value} coins!</span>
-                    </div>
-                  ) : (result.type === 'coupon' || result.type === 'discount' || result.type === 'free_listing') && wonCouponCode ? (
-                    <div className="rounded-2xl border-2 border-[#E74C3C] bg-white shadow-xl p-5">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Ticket className="size-6 text-[#E74C3C]" />
-                        <span className="font-extrabold text-gray-900 text-lg">You won {result.label}!</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2 mb-3">
-                        <code className="px-4 py-2 rounded-xl bg-[#4169E1]/10 text-[#4169E1] font-mono font-bold text-base tracking-widest border border-[#4169E1]/20">
-                          {wonCouponCode}
-                        </code>
-                        <button
-                          onClick={() => handleCopyCoupon(wonCouponCode)}
-                          className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
-                          title="Copy code"
-                        >
-                          <Copy className="w-5 h-5 text-gray-600" />
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-600 font-medium">Valid for 7 days · Apply at checkout</p>
-                      <Button
-                        onClick={() => {
-                          setShowSpinWheel(false)
-                          toast.info('Apply your coupon on the Pricing Plans section!', { duration: 4000 })
-                        }}
-                        variant="default"
-                        className="mt-3 w-full bg-[#4169E1] hover:bg-blue-700 text-white font-bold rounded-xl"
-                      >
-                        Apply on Checkout →
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/90 backdrop-blur-sm border-2 border-white shadow-xl">
-                      <span className="font-bold text-gray-800 text-lg">{result.label || 'Better luck next time!'}</span>
-                    </div>
-                  )}
-                </div>
+      {/* Right side: Texts & Trigger Controls */}
+      <div className="flex-1 flex flex-col justify-center text-center md:text-left">
+        <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+          <Coins className="w-6 h-6 text-yellow-500 animate-bounce" />
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+            స్పిన్ అండ్ విన్!
+          </h2>
+        </div>
+        
+        <p className="text-sm text-gray-600 font-medium leading-relaxed mb-4">
+          ప్రతిరోజూ స్పిన్ చేయండి, కాయిన్స్ మరియు రివార్డ్స్ గెలుచుకోండి!
+        </p>
+
+        {/* Display Current Coin Balance if Logged In */}
+        {isAuthenticated && (
+          <div className="inline-flex items-center justify-center md:justify-start gap-1.5 mb-5 text-sm text-gray-700 bg-gray-50 border border-gray-150 px-3 py-1.5 rounded-full w-fit mx-auto md:mx-0">
+            <span className="font-medium">మీ వాలెట్ బ్యాలెన్స్:</span>
+            <span className="font-bold text-blue-600 flex items-center gap-0.5">
+              {walletCoins}
+              <Coins className="w-3.5 h-3.5 text-yellow-500" />
+            </span>
+          </div>
+        )}
+
+        {/* Action Button & Lock Info */}
+        <div className="w-full flex flex-col gap-2.5 items-center md:items-start">
+          {timeLeft > 0 ? (
+            <div className="w-full max-w-xs flex flex-col items-center">
+              <button
+                disabled
+                className="w-full bg-gray-100 text-gray-400 font-bold py-3 rounded-xl border border-gray-200 cursor-not-allowed flex items-center justify-center gap-1.5 text-sm"
+              >
+                తదుపరి స్పిన్ సిద్ధంగా లేదు
+              </button>
+              <p className="text-xs text-red-500 mt-2 font-semibold flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                మళ్ళీ స్పిన్ చేయడానికి {formatTime(timeLeft)} వేచి ఉండండి.
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleSpin}
+              disabled={spinning}
+              className="w-full max-w-xs bg-gradient-to-r from-blue-600 to-yellow-500 text-white font-bold py-3 px-6 rounded-xl hover:opacity-95 active:scale-[0.98] transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-2 text-sm disabled:opacity-70"
+            >
+              {spinning ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  తిరుగుతోంది...
+                </>
+              ) : (
+                'స్పిన్ చేయండి 🎯'
               )}
-            </>
+            </button>
+          )}
+
+          {wonReward !== null && !spinning && (
+            <p className="text-xs text-green-600 font-bold mt-2 animate-bounce">
+              🎉 అభినందనలు! +{wonReward} కాయిన్స్ మీ వాలెట్కు యాడ్ అయ్యాయి!
+            </p>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }
