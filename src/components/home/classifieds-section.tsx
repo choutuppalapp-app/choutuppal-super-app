@@ -26,7 +26,7 @@ export function ClassifiedsSection() {
   )
 
   const loading = !classifieds && !error
-  const items = classifieds?.slice(0, 3) || []
+  const items = Array.isArray(classifieds) ? classifieds.slice(0, 3) : [];
 
   return (
     <section className="px-4 py-4 space-y-4 bg-white rounded-2xl border border-gray-150 shadow-sm">
