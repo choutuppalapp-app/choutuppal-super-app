@@ -55,6 +55,15 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		keyframes: {
+  			marquee: {
+  				'0%': { transform: 'translateX(0%)' },
+  				'100%': { transform: 'translateX(-50%)' }
+  			}
+  		},
+  		animation: {
+  			marquee: 'marquee 25s linear infinite'
   		}
   	}
   },

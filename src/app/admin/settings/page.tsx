@@ -9,6 +9,8 @@ interface SiteSetting {
   id: string
   paymentsEnabled: boolean
   appName: string
+  announcementText?: string | null
+  isAnnouncementActive: boolean
 }
 
 export default function AdminSettingsPage() {
@@ -18,11 +20,15 @@ export default function AdminSettingsPage() {
   )
 
   const [paymentsEnabled, setPaymentsEnabled] = useState(false)
+  const [announcementText, setAnnouncementText] = useState('')
+  const [isAnnouncementActive, setIsAnnouncementActive] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (settings) {
       setPaymentsEnabled(settings.paymentsEnabled ?? false)
+      setAnnouncementText(settings.announcementText ?? '')
+      setIsAnnouncementActive(settings.isAnnouncementActive ?? false)
     }
   }, [settings])
 
@@ -36,6 +42,8 @@ export default function AdminSettingsPage() {
         },
         body: JSON.stringify({
           paymentsEnabled,
+          announcementText,
+          isAnnouncementActive,
         }),
       })
 
@@ -82,6 +90,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm space-y-6">
+        {/* Payment Toggle */}
         <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-gray-900">పేమెంట్ గేట్‌వే ఎనేబుల్ చేయండి (Payment Gateway Toggle)</h3>
@@ -99,6 +108,39 @@ export default function AdminSettingsPage() {
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
           </label>
+        </div>
+
+        {/* Announcement Ticker Settings */}
+        <div className="space-y-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-gray-900 font-telugu">ప్రకటనల బార్ ఎనేబుల్ చేయండి (Announcement Ticker)</h3>
+              <p className="text-xs text-gray-500 max-w-sm leading-normal">
+                హెడర్ పైన తిరిగే ప్రకటనల బార్‌ను ఆన్ లేదా ఆఫ్ చేయడానికి ఈ బటన్‌ను ఉపయోగించండి.
+              </p>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer mt-1 select-none">
+              <input 
+                type="checkbox" 
+                checked={isAnnouncementActive}
+                onChange={(e) => setIsAnnouncementActive(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700">ప్రకటన వచనం (Announcement Text)</label>
+            <textarea
+              value={announcementText}
+              onChange={(e) => setAnnouncementText(e.target.value)}
+              placeholder="ఉదాహరణ: ముఖ్య గమనిక: చౌటుప్పల్ సూపర్ యాప్ లో మీ వ్యాపారాన్ని ఉచితంగా నమోదు చేసుకోండి..."
+              className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              rows={3}
+            />
+          </div>
         </div>
 
         <button

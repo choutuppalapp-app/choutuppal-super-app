@@ -12,6 +12,7 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import NotificationBell from './notification-bell'
 import { useAuth } from '@/lib/auth-context'
+import AnnouncementTicker from './announcement-ticker'
 
 import { useAppConfig } from '@/hooks/use-app-config'
 import { usePathname, useRouter } from 'next/navigation'
@@ -105,6 +106,7 @@ export function Header({ className }: HeaderProps) {
     <header
       className={`sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm ${className || ''}`}
     >
+      <AnnouncementTicker />
       {/* ═══ DESKTOP HEADER ═══ */}
       <div className="hidden md:flex items-center justify-between h-14 px-6 max-w-7xl mx-auto">
         {/* Left: Logo + City */}
