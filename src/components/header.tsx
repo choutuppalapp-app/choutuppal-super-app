@@ -12,7 +12,6 @@ import { useAppStore } from '@/lib/store'
 import type { ViewType } from '@/lib/store'
 import NotificationBell from './notification-bell'
 import { useAuth } from '@/lib/auth-context'
-import AnnouncementTicker from './announcement-ticker'
 
 import { useAppConfig } from '@/hooks/use-app-config'
 import { usePathname, useRouter } from 'next/navigation'
@@ -316,7 +315,6 @@ export function Header({ className }: HeaderProps) {
           </div>
         </>
       )}
-      <AnnouncementTicker />
     </header>
   )
 }

@@ -5,6 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header";
+import AnnouncementTicker from "@/components/announcement-ticker";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { FloatingOverlays } from "@/components/floating-overlays";
 import { AuthProvider } from "@/lib/auth-context";
@@ -119,6 +120,9 @@ export default function RootLayout({
                 </ErrorBoundary>
                 <ErrorBoundary name="Header">
                   <Header className="flex-none" />
+                </ErrorBoundary>
+                <ErrorBoundary name="AnnouncementTicker">
+                  <AnnouncementTicker />
                 </ErrorBoundary>
 
                 <main className="flex-1 w-full max-w-7xl mx-auto flex flex-col pt-0 pb-16 md:pb-0 safe-bottom">
