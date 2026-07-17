@@ -17,9 +17,14 @@ export default function AnnouncementTicker() {
           const settings = await res.json()
           setAnnouncementText(settings.announcementText || '')
           setIsActive(settings.isAnnouncementActive ?? false)
+        } else {
+          setAnnouncementText('ముఖ్య గమనిక: చౌటుప్పల్ సూపర్ యాప్ లో మీ వ్యాపారాన్ని ఉచితంగా నమోదు చేసుకోండి...')
+          setIsActive(true)
         }
       } catch (err) {
         console.error('Failed to fetch settings', err)
+        setAnnouncementText('ముఖ్య గమనిక: చౌటుప్పల్ సూపర్ యాప్ లో మీ వ్యాపారాన్ని ఉచితంగా నమోదు చేసుకోండి...')
+        setIsActive(true)
       } finally {
         setReady(true)
       }

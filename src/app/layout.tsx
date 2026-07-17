@@ -49,8 +49,18 @@ export async function generateMetadata(): Promise<Metadata> {
   let settings: any = null;
   try {
     settings = await db.siteSetting.findFirst();
+    if (!settings) {
+      settings = {
+        announcementText: "ముఖ్య గమనిక: చౌటుప్పల్ సూపర్ యాప్ లో మీ వ్యాపారాన్ని ఉచితంగా నమోదు చేసుకోండి...",
+        isAnnouncementActive: true
+      };
+    }
   } catch (e) {
-    console.error('Failed to fetch settings for metadata:', e);
+    console.warn('Failed to fetch settings, using fallback settings object.', e);
+    settings = {
+      announcementText: "ముఖ్య గమనిక: చౌటుప్పల్ సూపర్ యాప్ లో మీ వ్యాపారాన్ని ఉచితంగా నమోదు చేసుకోండి...",
+      isAnnouncementActive: true
+    };
   }
 
   const faviconUrl = settings?.pwaIconUrl || settings?.faviconUrl || '/icons/icon-192x192.png?v=new';
