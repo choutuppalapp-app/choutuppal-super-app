@@ -1,6 +1,7 @@
 'use client'
 
 import { MapPin, Phone, Mail, Heart, Globe, ExternalLink, MessageCircle } from 'lucide-react'
+import Image from 'next/image'
 import { useAppStore } from '@/lib/store'
 import { getCityUrl } from '@/lib/subdomain'
 
@@ -15,7 +16,16 @@ export default function Footer() {
   const siteSettings = useAppStore((s) => s.siteSettings)
 
   const brandName = currentCity?.brandName || 'Choutuppal App'
-  const appLogoUrl = siteSettings?.appLogoUrl || siteSettings?.logoUrl || '/brand-logo.png'
+  let appLogoUrl = '/logo.png'
+  if (siteSettings?.appLogoUrl && !siteSettings.appLogoUrl.includes('.supabase.co/storage')) {
+    appLogoUrl = siteSettings.appLogoUrl
+  } else if (siteSettings?.logoUrl && !siteSettings.logoUrl.includes('.supabase.co/storage')) {
+    appLogoUrl = siteSettings.logoUrl
+  }
+  if (appLogoUrl === '/logo.png' || appLogoUrl === '/brand-logo.png') {
+    appLogoUrl = 'https://images.choutuppal.in/logo.png'
+  }
+
   const primary = themePrimary || '#4169E1'
   const secondary = themeSecondary || '#D4AF37'
   const currentSubdomain = currentCity?.subdomain || 'choutuppal'
@@ -27,7 +37,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
               <div className="flex items-center mb-3">
-                <img src={appLogoUrl} alt="Choutuppal App" className="h-12 w-auto object-contain" />
+                <Image src={appLogoUrl} alt="Choutuppal App" width={144} height={48} className="h-12 w-auto object-contain" />
               </div>
             <p className="text-sm text-gray-500 leading-relaxed">
               Your super app for {selectedCityName}. Discover businesses, news, services, and

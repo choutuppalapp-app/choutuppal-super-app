@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Crown, User as UserIcon, ChevronRight, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -60,20 +61,24 @@ export function FeaturedProfiles() {
               </div>
               
               {/* Cover Photo */}
-              <div className="h-24 w-full">
-                <img 
+              <div className="h-24 w-full relative">
+                <Image 
                   src={coverUrl} 
                   alt="Cover" 
-                  className="w-full h-full object-cover" 
+                  fill
+                  sizes="280px"
+                  className="object-cover" 
                 />
               </div>
 
               {/* Profile Photo */}
               <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/80 shadow-lg -mt-10 mx-auto overflow-hidden bg-gray-100 z-10">
-                <img 
+                <Image 
                   src={avatarUrl} 
                   alt={name} 
-                  className="w-full h-full object-cover" 
+                  fill
+                  sizes="96px"
+                  className="object-cover" 
                 />
               </div>
 

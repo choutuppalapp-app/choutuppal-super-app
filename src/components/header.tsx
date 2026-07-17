@@ -63,6 +63,9 @@ export function Header({ className }: HeaderProps) {
   if (appLogoUrl.includes('.supabase.co/storage')) {
     appLogoUrl = '/logo.png'
   }
+  if (appLogoUrl === '/logo.png') {
+    appLogoUrl = 'https://images.choutuppal.in/logo.png'
+  }
   const logoUrl = currentCity.logoUrl || null
   const primary = themePrimary || '#D4AF37'
   const secondary = themeSecondary || '#4169E1'

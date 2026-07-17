@@ -10,7 +10,6 @@ import { useAppConfig } from '@/hooks/use-app-config'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 // ─── Static imports (lightweight, needed immediately) ───────────────────
-import { StoriesSection } from '@/components/home/stories-section'
 import BannerSlider from '@/components/banner-slider'
 import { CategoriesSection } from '@/components/home/categories-section'
 import { FeaturedListings } from '@/components/home/featured-listings'
@@ -18,7 +17,6 @@ import { RealEstateSection } from '@/components/home/real-estate-section'
 import { TestimonialsSection } from '@/components/home/testimonials-section'
 import { PricingSection } from '@/components/home/pricing-section'
 import { NewsSection } from '@/components/home/news-section'
-import SpinWheel from '@/components/spin-wheel'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
 import AnnouncementTicker from '@/components/announcement-ticker'
 import SearchBar from '@/components/search-bar'
@@ -45,6 +43,16 @@ const DynamicHeroSection = dynamic(
       <div className="relative overflow-hidden max-h-[300px] mt-4 bg-gray-100 animate-pulse rounded-xl" />
     ),
   }
+)
+
+const StoriesSection = dynamic(
+  () => import('@/components/home/stories-section').then((m) => m.StoriesSection),
+  { ssr: false, loading: () => <div className="h-20 bg-gray-50 animate-pulse rounded-xl" /> }
+)
+
+const SpinWheel = dynamic(
+  () => import('@/components/spin-wheel'),
+  { ssr: false, loading: () => <div className="h-40 bg-gray-50 animate-pulse rounded-xl" /> }
 )
 
 // Views — lazy-loaded to reduce initial compilation memory

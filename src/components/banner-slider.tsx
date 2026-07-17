@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -64,12 +65,15 @@ export default function BannerSlider() {
         className="relative overflow-hidden rounded-xl border border-gray-150 bg-white shadow-sm aspect-video cursor-pointer group transition-all duration-300 hover:shadow-md"
       >
         <div className="absolute inset-0 z-0">
-          <img 
+          <Image 
             src={current.imageUrl || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&auto=format&fit=crop&q=60'} 
             alt={current.title} 
-            className="w-full aspect-video object-cover rounded-xl"
+            fill
+            sizes="(max-width: 768px) 100vw, 800px"
+            priority
+            className="object-cover rounded-xl"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-10" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full p-4">
