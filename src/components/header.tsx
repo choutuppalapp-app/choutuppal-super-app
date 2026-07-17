@@ -214,8 +214,6 @@ export function Header({ className }: HeaderProps) {
         </div>
       </div>
 
-      <AnnouncementTicker />
-
       {/* ═══ HAMBURGER DRAWER ═══ */}
       {isDrawerOpen && (
         <>
@@ -318,6 +316,7 @@ export function Header({ className }: HeaderProps) {
           </div>
         </>
       )}
+      <AnnouncementTicker />
     </header>
   )
 }
