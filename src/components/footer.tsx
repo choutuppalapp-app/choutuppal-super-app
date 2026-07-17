@@ -37,7 +37,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
               <div className="flex items-center mb-3">
-                <Image src={appLogoUrl} alt="Choutuppal App" width={144} height={48} className="h-12 w-auto object-contain" />
+                <Image src="/logo.png" alt="Choutuppal App" width={144} height={48} className="h-12 w-auto object-contain" />
               </div>
             <p className="text-sm text-gray-500 leading-relaxed">
               Your super app for {selectedCityName}. Discover businesses, news, services, and
