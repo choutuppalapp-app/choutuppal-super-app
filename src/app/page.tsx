@@ -18,7 +18,6 @@ import { TestimonialsSection } from '@/components/home/testimonials-section'
 import { PricingSection } from '@/components/home/pricing-section'
 import { NewsSection } from '@/components/home/news-section'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
-import AnnouncementTicker from '@/components/announcement-ticker'
 import SearchBar from '@/components/search-bar'
 import { ClassifiedsSection } from '@/components/home/classifieds-section'
 import AgentCTA from '@/components/agent-cta'
@@ -157,11 +156,6 @@ function HomeView() {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      {/* 2. Announcement Ticker */}
-      <ErrorBoundary name="AnnouncementTicker">
-        <AnnouncementTicker />
-      </ErrorBoundary>
-
       {/* 3. Stories / Your Story horizontal feed */}
       <ErrorBoundary name="StoriesSection">
         <StoriesSection />
