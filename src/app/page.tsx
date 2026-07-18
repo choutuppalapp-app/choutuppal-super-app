@@ -172,6 +172,13 @@ function HomeView() {
         <SearchBar />
       </ErrorBoundary>
 
+      {/* 6. Sponsored Weekly Mega Draw (Spin & Win) */}
+      {config.enableSpinAndWin && (
+        <ErrorBoundary name="SpinAndWin">
+          <SpinAndWin />
+        </ErrorBoundary>
+      )}
+
       {/* 7. Categories Grid */}
       {config.enableListings && (
         <ErrorBoundary name="CategoriesSection">
@@ -183,13 +190,6 @@ function HomeView() {
       {config.enableListings && (
         <ErrorBoundary name="FeaturedListings">
           <FeaturedListings />
-        </ErrorBoundary>
-      )}
-
-      {/* 6. Sponsored Weekly Mega Draw (Spin & Win) */}
-      {config.enableSpinAndWin && (
-        <ErrorBoundary name="SpinAndWin">
-          <SpinAndWin />
         </ErrorBoundary>
       )}
 
