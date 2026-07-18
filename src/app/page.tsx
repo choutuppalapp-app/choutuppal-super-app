@@ -18,6 +18,7 @@ import { TestimonialsSection } from '@/components/home/testimonials-section'
 import { PricingSection } from '@/components/home/pricing-section'
 import { NewsSection } from '@/components/home/news-section'
 import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-section'
+import PremiumBanners from '@/components/premium-banners'
 import SearchBar from '@/components/search-bar'
 import { ClassifiedsSection } from '@/components/home/classifieds-section'
 import AgentCTA from '@/components/agent-cta'
@@ -156,6 +157,11 @@ function HomeView() {
 
   return (
     <div className="space-y-4 md:space-y-8">
+      {/* Premium 9:16 Banners */}
+      <ErrorBoundary name="PremiumBanners">
+        <PremiumBanners />
+      </ErrorBoundary>
+
       {/* 3. Stories / Your Story horizontal feed */}
       <ErrorBoundary name="StoriesSection">
         <StoriesSection />

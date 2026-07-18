@@ -845,3 +845,13 @@ model Classified {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model Banner {
+  id         String   @id @default(cuid())
+  imageUrl   String
+  linkUrl    String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  uploadedBy String
+}
+
