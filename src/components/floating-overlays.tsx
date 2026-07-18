@@ -1,8 +1,5 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-
-const SpinWheel = dynamic(() => import('@/components/spin-wheel'), { ssr: false })
 import { LeadCaptureForm } from '@/components/lead-capture-form'
 import { VoiceSearchModal } from '@/components/voice-search-modal'
 
@@ -14,9 +11,9 @@ import { VoiceSearchModal } from '@/components/voice-search-modal'
 export function FloatingOverlays() {
   return (
     <>
-      <SpinWheel />
       <LeadCaptureForm />
       <VoiceSearchModal />
     </>
   )
 }
+

@@ -144,6 +144,8 @@ export default function DashboardView() {
 
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('listings')
+  const [isOpen, setIsOpen] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const { user, logout } = useAuth()
   const navigateTo = useAppStore((s) => s.navigateTo)
 
@@ -294,6 +296,14 @@ export default function DashboardView() {
 
   const handleTabChange = (key: string) => {
     setActiveTab(key)
+    setIsOpen(false)
+    setIsCreatingListing(false)
+    setEditingListingId(null)
+    setIsCreatingBanner(false)
+    setIsCreatingRealEstate(false)
+    setEditingRealEstateId(null)
+    setIsCreatingStory(false)
+
     if (notificationsSummary && (notificationsSummary as any)[key]) {
       authFetch(`/api/notifications/mark-read?type=${key}`, {
         method: 'POST',
@@ -426,36 +436,57 @@ export default function DashboardView() {
 
   // Upload helpers
   const compressAndUpload = async (file: File, folder: string) => {
-    let fileToUpload = file
-    if (file.type.startsWith('image/')) {
-      try {
-        const imageCompression = (await import('browser-image-compression')).default
-        const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true }
-        fileToUpload = await imageCompression(file, options)
-      } catch (err) {
-        console.error('Image compression error:', err)
+    setIsUploading(true)
+    try {
+      let fileToUpload = file
+      if (file.type.startsWith('image/')) {
+        try {
+          const imageCompression = (await import('browser-image-compression')).default
+          const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true }
+          fileToUpload = await imageCompression(file, options)
+        } catch (err) {
+          console.error('Image compression error:', err)
+        }
       }
-    }
-    
-    const { data, error } = await supabase.storage
-      .from('listing-images')
-      .upload(`${folder}/${Date.now()}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, fileToUpload, { cacheControl: '3600', upsert: false });
 
-    if (error) {
-      console.error('Upload error:', error);
-      toast.error('Image upload failed: ' + error.message);
-      throw new Error('Upload failed');
+      let apiFolder = 'listings'
+      if (folder.includes('banner')) {
+        apiFolder = 'banners'
+      } else if (folder.includes('stories')) {
+        apiFolder = 'stories'
+      } else if (folder.includes('avatars')) {
+        apiFolder = 'avatars'
+      }
+
+      const formData = new FormData()
+      formData.append('file', fileToUpload)
+      formData.append('folder', apiFolder)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        console.error('Upload API failure:', errorData)
+        toast.error('Image upload failed: ' + (errorData.error || 'Unknown error'))
+        throw new Error('Upload failed')
+      }
+
+      const data = await res.json()
+      return { url: data.url }
+    } finally {
+      setIsUploading(false)
     }
-    const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(data.path);
-    return { url: urlData.publicUrl };
   }
 
   const handleListingFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    toast.info('Compressing image...')
+    toast.info('Uploading image...')
     try {
-      const data = await compressAndUpload(files[0], 'choutuppal/listings')
+      const data = await compressAndUpload(files[0], 'listings')
       setFormData(prev => ({ ...prev, coverImage: data.url }))
       toast.success('Cover banner uploaded successfully')
     } catch {
@@ -465,9 +496,9 @@ export default function DashboardView() {
   }
 
   const handleExtraUpload = async (file: File) => {
-    toast.info('Compressing image...')
+    toast.info('Uploading image...')
     try {
-      const data = await compressAndUpload(file, 'choutuppal/listings')
+      const data = await compressAndUpload(file, 'listings')
       setFormData(prev => ({ ...prev, logoUrl: data.url }))
       toast.success('Uploaded logo successfully')
     } catch {
@@ -481,19 +512,14 @@ export default function DashboardView() {
     if (!files.length) return;
     toast.info('Uploading images...');
     try {
-      const { default: imageCompression } = await import('browser-image-compression');
-      const compressedFiles = await Promise.all(files.map(file => imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })));
-      const uploadPromises = compressedFiles.map(async (file) => {
-        const fileName = `gallery/${Date.now()}-${file.name}`;
-        console.log('Uploading file...', fileName);
-        const { data, error } = await supabase.storage.from('listing-images').upload(fileName, file);
-        if (error) {
-          console.error('Upload error:', error);
-          toast.error('Upload failed: ' + error.message);
-          return null;
+      const uploadPromises = files.map(async (file) => {
+        try {
+          const res = await compressAndUpload(file, 'listings')
+          return res.url
+        } catch {
+          return null
         }
-        return supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl;
-      });
+      })
       const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
       
       // Gallery state MUST use:
@@ -501,7 +527,7 @@ export default function DashboardView() {
       toast.success('Gallery uploaded successfully');
     } catch (error: any) {
       console.error('Gallery upload error:', error);
-      toast.error('Upload failed: ' + (error?.message || 'Unknown error'));
+      toast.error('Upload failed');
     }
     e.target.value = ''
   };
@@ -509,9 +535,9 @@ export default function DashboardView() {
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    toast.info('Compressing image...')
+    toast.info('Uploading image...')
     try {
-      const data = await compressAndUpload(files[0], 'choutuppal/banners')
+      const data = await compressAndUpload(files[0], 'banners')
       setBannerData(prev => ({ ...prev, imageUrl: data.url }))
       toast.success('Uploaded banner successfully')
     } catch {
@@ -611,6 +637,7 @@ export default function DashboardView() {
     if (!currentUser || !bannerData.title || !bannerData.imageUrl) return
     setUploading(true)
     try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       const res = await authFetch('/api/banners', {
         method: 'POST',
         credentials: 'include',
@@ -624,6 +651,7 @@ export default function DashboardView() {
           linkUrl: bannerData.linkUrl || null,
           imageUrl: bannerData.imageUrl || null,
           isActive: true,
+          expiresAt,
         }),
       })
       if (res.ok) {
@@ -678,16 +706,10 @@ export default function DashboardView() {
   const handleReCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    toast.info('Compressing cover image...')
+    toast.info('Uploading cover image...')
     try {
-      const { default: imageCompression } = await import('browser-image-compression')
-      const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true })
-      const { data, error } = await supabase.storage.from('listing-images').upload(
-        `choutuppal/realestate/${Date.now()}_${compressed.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, compressed, { cacheControl: '3600', upsert: false }
-      )
-      if (error) throw error
-      const url = supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl
-      setReForm(p => ({ ...p, coverImage: url }))
+      const res = await compressAndUpload(file, 'listings')
+      setReForm(p => ({ ...p, coverImage: res.url }))
       toast.success('Cover photo uploaded!')
     } catch { toast.error('Upload failed') }
     e.target.value = ''
@@ -699,14 +721,12 @@ export default function DashboardView() {
     if (reForm.gallery.length + files.length > 5) { toast.error('Max 5 gallery photos allowed'); return }
     toast.info('Uploading gallery...')
     try {
-      const { default: imageCompression } = await import('browser-image-compression')
       const urls: string[] = []
       for (const file of files) {
-        const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true })
-        const { data, error } = await supabase.storage.from('listing-images').upload(
-          `choutuppal/realestate/gallery/${Date.now()}_${compressed.name.replace(/[^a-zA-Z0-9.-]/g, '')}`, compressed, { cacheControl: '3600', upsert: false }
-        )
-        if (!error) urls.push(supabase.storage.from('listing-images').getPublicUrl(data.path).data.publicUrl)
+        try {
+          const res = await compressAndUpload(file, 'listings')
+          urls.push(res.url)
+        } catch {}
       }
       setReForm(p => ({ ...p, gallery: [...p.gallery, ...urls] }))
       toast.success(`${urls.length} photo(s) uploaded!`)
@@ -2184,8 +2204,14 @@ export default function DashboardView() {
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-                  <Button onClick={submitBanner} disabled={uploading || !bannerData.title || !bannerData.imageUrl} className="w-full max-w-lg mx-auto h-13 text-lg font-extrabold rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md border-none">
-                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publish Banner'}
+                  <Button onClick={submitBanner} disabled={uploading || isUploading || !bannerData.title || !bannerData.imageUrl} className="w-full max-w-lg mx-auto h-13 text-lg font-extrabold rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md border-none">
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : isUploading ? (
+                      'Uploading...'
+                    ) : (
+                      'Publish Banner'
+                    )}
                   </Button>
                 </div>
               </div>
