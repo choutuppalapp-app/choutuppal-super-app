@@ -139,23 +139,13 @@ export default function PremiumBanners() {
 
   return (
     <section className="px-4 py-4 w-full flex flex-col items-center">
-      <div className="w-full max-w-xl flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-blue-600 animate-pulse" />
-          <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider font-telugu">
-            ప్రీమియం రాయల్ ప్రకటనలు (Premium Ads)
-          </h2>
-        </div>
-        <span className="text-[10px] bg-yellow-50 text-yellow-750 font-bold px-2 py-0.5 rounded-full border border-yellow-100 animate-bounce">
-          16:9 Royal
-        </span>
-      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">ప్రత్యేక ప్రకటనలు</h2>
 
       <div
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="relative w-full max-w-xl aspect-[16/9] bg-gradient-to-r from-blue-900 to-yellow-500 p-[3px] rounded-3xl shadow-2xl hover:scale-[1.02] transition-transform duration-300 overflow-hidden cursor-pointer group"
+        className="relative w-full h-auto aspect-[16/9] md:aspect-auto md:h-[450px] md:max-w-none bg-gradient-to-r from-blue-900 to-yellow-500 p-[3px] rounded-3xl shadow-2xl hover:scale-[1.02] transition-transform duration-300 overflow-hidden cursor-pointer group"
       >
         <div className="relative w-full h-full bg-white rounded-[21px] overflow-hidden flex flex-col">
           <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -296,6 +286,12 @@ export default function PremiumBanners() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="flex justify-center mt-6">
+        <button className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          మీ ప్రకటన ఇక్కడ ఇవ్వండి
+        </button>
       </div>
     </section>
   )
