@@ -50,8 +50,8 @@ const StoriesSection = dynamic(
   { ssr: false, loading: () => <div className="h-20 bg-gray-50 animate-pulse rounded-xl" /> }
 )
 
-const SpinWheel = dynamic(
-  () => import('@/components/spin-wheel'),
+const SpinAndWin = dynamic(
+  () => import('@/components/spin-and-win'),
   { ssr: false, loading: () => <div className="h-40 bg-gray-50 animate-pulse rounded-xl" /> }
 )
 
@@ -172,13 +172,6 @@ function HomeView() {
         <SearchBar />
       </ErrorBoundary>
 
-      {/* 6. Spin & Win! Banner */}
-      {config.enableSpinAndWin && (
-        <ErrorBoundary name="SpinWheel">
-          <SpinWheel />
-        </ErrorBoundary>
-      )}
-
       {/* 7. Categories Grid */}
       {config.enableListings && (
         <ErrorBoundary name="CategoriesSection">
@@ -190,6 +183,13 @@ function HomeView() {
       {config.enableListings && (
         <ErrorBoundary name="FeaturedListings">
           <FeaturedListings />
+        </ErrorBoundary>
+      )}
+
+      {/* 6. Sponsored Weekly Mega Draw (Spin & Win) */}
+      {config.enableSpinAndWin && (
+        <ErrorBoundary name="SpinAndWin">
+          <SpinAndWin />
         </ErrorBoundary>
       )}
 

@@ -39,7 +39,7 @@ export async function GET(req: Request) {
     let timeLeft = 0
     if (user.lastSpinDate) {
       const lastSpinTime = new Date(user.lastSpinDate).getTime()
-      const cooldown = 24 * 60 * 60 * 1000
+      const cooldown = 24 * 60 * 60 * 1000 // 24-hour limit
       const nextAvailableTime = lastSpinTime + cooldown
       timeLeft = Math.max(0, nextAvailableTime - Date.now())
     }
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     // Check if user has spun in the last 24 hours
     if (user.lastSpinDate) {
       const lastSpinTime = new Date(user.lastSpinDate).getTime()
-      const cooldown = 24 * 60 * 60 * 1000 // 24 hours
+      const cooldown = 24 * 60 * 60 * 1000
       const nextAvailableTime = lastSpinTime + cooldown
       const timeLeft = nextAvailableTime - Date.now()
 
@@ -100,24 +100,23 @@ export async function POST(req: Request) {
       }
     }
 
-    // Generate random coin reward (1, 2, 5, 10, 20, or 50)
-    const rewards = [1, 2, 5, 10, 20, 50]
-    const randomReward = rewards[Math.floor(Math.random() * rewards.length)]
+    // Pick a random reward index from [0, 1, 2, 3, 4, 5]
+    const rewardIndex = Math.floor(Math.random() * 6)
 
-    // Update User walletCoins and lastSpinDate
+    // Update User lastSpinDate and increment coins if they won a cash prize (index 3)
     const updatedUser = await db.user.update({
       where: { id: user.id },
       data: {
-        walletCoins: {
-          increment: randomReward,
-        },
         lastSpinDate: new Date(),
+        walletCoins: {
+          increment: rewardIndex === 3 ? 50 : 5, // Cash Reward gives 50 coins, others give 5 entry coins
+        },
       },
     })
 
     return NextResponse.json({
       success: true,
-      reward: randomReward,
+      rewardIndex,
       walletCoins: updatedUser.walletCoins,
       lastSpinDate: updatedUser.lastSpinDate,
     })

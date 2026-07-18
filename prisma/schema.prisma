@@ -855,3 +855,13 @@ model Banner {
   uploadedBy String
 }
 
+model SpinCampaign {
+  id           String   @id @default(cuid())
+  sponsorName  String
+  offerDetails String
+  totalWinners Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+
