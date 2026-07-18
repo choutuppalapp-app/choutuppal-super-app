@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Trash2, Calendar, ImageIcon, UploadCloud, ArrowLeft, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Calendar, ImageIcon, UploadCloud, ArrowLeft, Loader2, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
@@ -13,24 +13,21 @@ export default function UserBannersPage() {
   const [isCreatingBanner, setIsCreatingBanner] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [cities, setCities] = useState<any[]>([])
 
   const [bannerData, setBannerData] = useState({
-    title: '',
-    shopName: '',
-    offerText: '',
     linkUrl: '',
-    imageUrl: '',
-    cityId: ''
+    imageUrl: ''
   })
 
   const fetchBanners = async () => {
     if (!user) return
     try {
-      const res = await fetch(`/api/banners?userId=${user.id}&all=true`)
+      const res = await fetch('/api/banners/portrait?all=true')
       if (res.ok) {
         const data = await res.json()
-        setBanners(data)
+        // Filter by user.id
+        const userBanners = data.filter((b: any) => b.uploadedBy === user.id)
+        setBanners(userBanners)
       }
     } catch (err) {
       console.error('Error fetching banners:', err)
@@ -39,22 +36,9 @@ export default function UserBannersPage() {
     }
   }
 
-  const fetchCities = async () => {
-    try {
-      const res = await fetch('/api/cities')
-      if (res.ok) {
-        const data = await res.json()
-        setCities(data)
-      }
-    } catch (err) {
-      console.error('Error fetching cities:', err)
-    }
-  }
-
   useEffect(() => {
     if (user) {
       fetchBanners()
-      fetchCities()
     }
   }, [user])
 
@@ -98,11 +82,11 @@ export default function UserBannersPage() {
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    toast.info('Uploading image...')
+    toast.info('Uploading image to storage...')
     try {
       const data = await compressAndUpload(files[0], 'banners')
       setBannerData(prev => ({ ...prev, imageUrl: data.url }))
-      toast.success('Uploaded banner successfully')
+      toast.success('Image uploaded successfully!')
     } catch {
       toast.error('Failed to upload image')
     }
@@ -110,34 +94,27 @@ export default function UserBannersPage() {
   }
 
   const submitBanner = async () => {
-    if (!user || !bannerData.title || !bannerData.imageUrl) return
+    if (!user || !bannerData.imageUrl) return
     setUploading(true)
     try {
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      const res = await fetch('/api/banners', {
+      const res = await fetch('/api/banners/portrait', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,
-          cityId: bannerData.cityId || cities[0]?.id || 'default',
-          title: bannerData.title,
-          shopName: bannerData.shopName || '',
-          offerText: bannerData.offerText || null,
+          imageUrl: bannerData.imageUrl,
           linkUrl: bannerData.linkUrl || null,
-          imageUrl: bannerData.imageUrl || null,
-          isActive: true,
-          expiresAt,
+          uploadedBy: user.id
         }),
       })
       if (res.ok) {
-        toast.success('Banner created successfully!')
+        toast.success('Banner Published Successfully!')
         setIsCreatingBanner(false)
-        setBannerData({ title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: '' })
+        setBannerData({ linkUrl: '', imageUrl: '' })
         fetchBanners()
       } else {
-        const errData = await res.text()
+        const errData = await res.json()
         console.error('Banner submit API error:', errData)
-        toast.error('Failed to create banner')
+        toast.error('Failed to publish banner: ' + (errData.error || ''))
       }
     } catch {
       toast.error('Something went wrong')
@@ -151,7 +128,7 @@ export default function UserBannersPage() {
     if (!confirmed) return
 
     try {
-      const res = await fetch(`/api/banners?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/banners/portrait?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
         toast.success('Banner deleted successfully!')
         fetchBanners()
@@ -190,7 +167,7 @@ export default function UserBannersPage() {
                 My Banner Ads
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                Display promotional banners to Choutuppal residents on the homepage. Banners expire automatically after 24 hours.
+                Display 16:9 promotional banners to Choutuppal residents on the homepage. Banners expire automatically after 24 hours.
               </p>
             </div>
             <button
@@ -230,13 +207,13 @@ export default function UserBannersPage() {
                     key={banner.id} 
                     className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition duration-300 relative"
                   >
-                    <div className="h-40 relative bg-gray-100">
+                    <div className="aspect-[16/9] relative bg-gray-100">
                       {banner.imageUrl && (
-                        <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+                        <img src={banner.imageUrl} alt="Banner ad" className="w-full h-full object-cover" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/35" />
                       
-                      <div className="absolute top-3 right-3 z-10 flex gap-2">
+                      <div className="absolute top-3 right-3 z-10">
                         <button
                           onClick={() => handleDelete(banner.id)}
                           className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow transition-all hover:scale-105"
@@ -246,26 +223,27 @@ export default function UserBannersPage() {
                         </button>
                       </div>
 
-                      <div className="absolute bottom-3 left-4 z-10">
-                        <h4 className="font-extrabold text-white text-lg drop-shadow">{banner.title}</h4>
-                        {banner.shopName && (
-                          <p className="text-xs text-gray-300 font-semibold">{banner.shopName}</p>
-                        )}
-                      </div>
+                      {banner.linkUrl && (
+                        <a 
+                          href={banner.linkUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="absolute bottom-3 left-3 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" /> Visit Link
+                        </a>
+                      )}
                     </div>
 
                     <div className="p-4 flex flex-col justify-between flex-1 gap-3 bg-white">
-                      {banner.offerText && (
-                        <p className="text-gray-700 text-sm font-semibold">{banner.offerText}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50 text-[11px] text-gray-500 font-bold">
+                      <div className="flex items-center justify-between mt-auto text-[11px] text-gray-500 font-bold">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
                           Created {formatDistanceToNow(new Date(banner.createdAt))} ago
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full uppercase tracking-wider text-[9px] font-black ${
                           isExpired 
-                            ? 'bg-red-55/60 text-red-600' 
+                            ? 'bg-red-50 text-red-600' 
                             : 'bg-green-50 text-green-600'
                         }`}>
                           {isExpired ? 'Expired' : 'Active'}
@@ -293,50 +271,17 @@ export default function UserBannersPage() {
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Banner Image *</span>
-              <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-36 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
+              <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-44 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
                 {bannerData.imageUrl ? (
                   <img src={bannerData.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="flex flex-col items-center gap-1.5">
-                    <UploadCloud className="w-7 h-7 text-blue-900" />
+                    <UploadCloud className="w-8 h-8 text-blue-900" />
                     <span className="font-bold text-xs text-gray-500">Upload 16:9 Banner Image</span>
                   </div>
                 )}
                 <input type="file" accept="image/*" className="hidden" onChange={handleBannerFileChange} />
               </label>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Internal title *</span>
-              <input 
-                type="text" 
-                placeholder="E.g., Special Diwali Offer" 
-                value={bannerData.title} 
-                onChange={e => setBannerData({...bannerData, title: e.target.value})} 
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Shop Name</span>
-              <input 
-                type="text" 
-                placeholder="E.g., Sri Laxmi Traders" 
-                value={bannerData.shopName} 
-                onChange={e => setBannerData({...bannerData, shopName: e.target.value})} 
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Offer Text / Tagline</span>
-              <input 
-                type="text" 
-                placeholder="E.g., Flat 20% off on all clothing items!" 
-                value={bannerData.offerText} 
-                onChange={e => setBannerData({...bannerData, offerText: e.target.value})} 
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -350,19 +295,21 @@ export default function UserBannersPage() {
               />
             </div>
 
-            <button
-              onClick={submitBanner}
-              disabled={uploading || isUploading || !bannerData.title || !bannerData.imageUrl}
-              className="w-full py-3 bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {uploading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : isUploading ? (
-                'Uploading...'
-              ) : (
-                'Publish Banner'
-              )}
-            </button>
+            <div className="flex justify-center mt-8 w-full">
+              <button
+                onClick={submitBanner}
+                disabled={uploading || isUploading || !bannerData.imageUrl}
+                className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold text-lg py-3 px-10 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 disabled:opacity-70 disabled:hover:scale-100"
+              >
+                {uploading || isUploading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" /> Publishing...
+                  </span>
+                ) : (
+                  'Publish Banner'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
