@@ -139,15 +139,15 @@ export default function PremiumBanners() {
 
   return (
     <section className="px-4 py-4 w-full flex flex-col items-center">
-      <div className="w-full max-w-sm flex items-center justify-between mb-2">
+      <div className="w-full max-w-xl flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-4 h-4 text-blue-600 animate-pulse" />
           <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider font-telugu">
-            ప్రత్యేక ప్రకటనలు (Premium Ads)
+            ప్రీమియం రాయల్ ప్రకటనలు (Premium Ads)
           </h2>
         </div>
-        <span className="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full border border-blue-100">
-          9:16 Portrait
+        <span className="text-[10px] bg-yellow-50 text-yellow-750 font-bold px-2 py-0.5 rounded-full border border-yellow-100 animate-bounce">
+          16:9 Royal
         </span>
       </div>
 
@@ -155,9 +155,9 @@ export default function PremiumBanners() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="relative w-full max-w-sm aspect-[9/16] bg-gradient-to-r from-blue-900 to-yellow-500 p-[2px] rounded-2xl shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl overflow-hidden cursor-pointer group"
+        className="relative w-full max-w-xl aspect-[16/9] bg-gradient-to-r from-blue-900 to-yellow-500 p-[3px] rounded-3xl shadow-2xl hover:scale-[1.02] transition-transform duration-300 overflow-hidden cursor-pointer group"
       >
-        <div className="relative w-full h-full bg-white rounded-[14px] overflow-hidden flex flex-col">
+        <div className="relative w-full h-full bg-white rounded-[21px] overflow-hidden flex flex-col">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             <motion.div
               key={currentIndex}
@@ -170,52 +170,52 @@ export default function PremiumBanners() {
               className="absolute inset-0 w-full h-full flex flex-col justify-between"
             >
               {isFallback ? (
-                // Modern Tailwind Custom Infographics for Empty state
+                // Modern Tailwind Custom 16:9 Landscape Infographics
                 <div
-                  className={`w-full h-full bg-gradient-to-br ${(currentSlide as any).gradient} text-white p-6 flex flex-col justify-between select-none relative`}
+                  className={`w-full h-full bg-gradient-to-br ${(currentSlide as any).gradient} text-white p-5 md:p-6 flex flex-col justify-between select-none relative`}
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-10 text-[120px] pointer-events-none select-none">
+                  <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-10 text-[100px] md:text-[140px] pointer-events-none select-none">
                     {(currentSlide as any).icon}
                   </div>
 
                   {/* Header info */}
-                  <div className="flex flex-col gap-2 relative z-10">
-                    <span className="self-start text-[10px] font-extrabold tracking-wider bg-white/20 backdrop-blur-md px-3 py-1 rounded-full uppercase">
-                      {(currentSlide as any).badge}
-                    </span>
-                    <h3 className="text-2xl font-black font-telugu leading-snug mt-2">
-                      {(currentSlide as any).title}
-                    </h3>
-                    <p className="text-xs font-bold text-yellow-400 font-telugu">
-                      {(currentSlide as any).subtitle}
-                    </p>
-                  </div>
-
-                  {/* Icon & Details */}
-                  <div className="flex flex-col items-center justify-center py-6 text-6xl relative z-10">
-                    {(currentSlide as any).icon}
+                  <div className="flex justify-between items-start gap-4 relative z-10">
+                    <div className="flex flex-col gap-1">
+                      <span className="self-start text-[9px] font-extrabold tracking-wider bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full uppercase">
+                        {(currentSlide as any).badge}
+                      </span>
+                      <h3 className="text-lg md:text-xl font-black font-telugu leading-snug mt-1">
+                        {(currentSlide as any).title}
+                      </h3>
+                      <p className="text-[10px] md:text-xs font-bold text-yellow-400 font-telugu">
+                        {(currentSlide as any).subtitle}
+                      </p>
+                    </div>
+                    <div className="text-4xl shrink-0">
+                      {(currentSlide as any).icon}
+                    </div>
                   </div>
 
                   {/* Footer description & button */}
-                  <div className="flex flex-col gap-4 relative z-10">
-                    <p className="text-xs text-gray-200 leading-relaxed font-telugu text-center">
+                  <div className="flex items-center justify-between gap-4 mt-auto relative z-10">
+                    <p className="text-[10px] md:text-xs text-gray-200 leading-relaxed font-telugu max-w-[70%]">
                       {(currentSlide as any).desc}
                     </p>
-                    <div className="w-full bg-white text-blue-900 font-black text-center py-3 rounded-xl shadow-md text-xs hover:bg-yellow-400 hover:text-black transition duration-200">
+                    <div className="bg-white text-blue-900 font-black text-center px-4 py-2 rounded-xl shadow-md text-[10px] md:text-xs hover:bg-yellow-400 hover:text-black transition duration-200 shrink-0">
                       మరిన్ని వివరాలు ➔
                     </div>
                   </div>
                 </div>
               ) : (
-                // Live Cloudflare R2 Uploaded Ads
+                // Live Cloudflare R2 Uploaded Ads (16:9)
                 <div className="w-full h-full relative group">
                   <Image
                     src={(currentSlide as any).imageUrl}
-                    alt="Premium Banner Ad"
+                    alt="Premium Royal Ad"
                     fill
-                    sizes="(max-width: 768px) 100vw, 384px"
+                    sizes="(max-width: 768px) 100vw, 576px"
                     priority
-                    className="object-cover w-full h-full rounded-[14px]"
+                    className="object-cover w-full h-full rounded-[21px]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10 pointer-events-none" />
                   
@@ -225,24 +225,24 @@ export default function PremiumBanners() {
                       e.stopPropagation()
                       if (navigator.share) {
                         navigator.share({
-                          title: 'Choutuppal App Premium Ad',
+                          title: 'Choutuppal App Premium Royal Ad',
                           url: (currentSlide as any).linkUrl || window.location.href
                         })
                       }
                     }}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition z-25"
+                    className="absolute top-3 right-3 p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition z-25"
                   >
-                    <Share2 className="w-4 h-4" />
+                    <Share2 className="w-3.5 h-3.5" />
                   </button>
 
                   {/* Click trigger overlay */}
                   {(currentSlide as any).linkUrl && (
-                    <div className="absolute bottom-6 left-6 right-6 z-20">
+                    <div className="absolute bottom-4 left-4 right-4 z-20 flex justify-end">
                       <a 
                         href={(currentSlide as any).linkUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full bg-gradient-to-r from-blue-600 to-yellow-500 text-white font-extrabold text-center py-3 rounded-xl shadow-lg text-xs"
+                        className="bg-gradient-to-r from-blue-600 to-yellow-500 text-white font-extrabold text-center px-5 py-2.5 rounded-xl shadow-lg text-[10px] md:text-xs"
                       >
                         మరింత సమాచారం ➔
                       </a>
@@ -261,25 +261,25 @@ export default function PremiumBanners() {
                   e.stopPropagation()
                   handlePrev()
                 }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition z-30 opacity-0 group-hover:opacity-100 duration-300"
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition z-30 opacity-0 group-hover:opacity-100 duration-300"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   handleNext()
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition z-30 opacity-0 group-hover:opacity-100 duration-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition z-30 opacity-0 group-hover:opacity-100 duration-300"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </>
           )}
 
           {/* Slides Indicator dots */}
           {slides.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
               {slides.map((_, idx) => (
                 <button
                   key={idx}
@@ -289,7 +289,7 @@ export default function PremiumBanners() {
                     setCurrentIndex(idx)
                   }}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx === currentIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
+                    idx === currentIndex ? 'w-3.5 bg-white' : 'w-1.5 bg-white/50'
                   }`}
                 />
               ))}

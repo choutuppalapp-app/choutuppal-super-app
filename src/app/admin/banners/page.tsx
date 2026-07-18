@@ -42,7 +42,7 @@ export default function AdminBannersPage() {
     (url) => fetch(url).then((res) => res.json())
   )
 
-  // Upload Form State (for Portrait Banners)
+  // Upload Form State (for 16:9 Royal Banners)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [linkUrl, setLinkUrl] = useState<string>('')
@@ -52,7 +52,7 @@ export default function AdminBannersPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Explicitly validate portrait (9:16) dimensions before uploading to prevent distortion
+    // Explicitly validate landscape (16:9) dimensions before uploading to prevent distortion
     const img = window.document.createElement('img')
     img.src = URL.createObjectURL(file)
     img.onload = () => {
@@ -60,9 +60,9 @@ export default function AdminBannersPage() {
       const height = img.height
       const ratio = width / height
 
-      // Ideal 9:16 ratio is 0.5625. Allow margin (0.45 to 0.65)
-      if (ratio > 0.65 || ratio < 0.45) {
-        toast.error('దయచేసి 9:16 నిలువు (Portrait) నిష్పత్తి గల చిత్రాన్ని మాత్రమే అప్‌లోడ్ చేయండి. (ఉదా: 1080x1920)')
+      // Ideal 16:9 ratio is 1.777. Allow margin (1.5 to 2.0)
+      if (ratio > 2.0 || ratio < 1.5) {
+        toast.error('దయచేసి 16:9 అడ్డ (Landscape) నిష్పత్తి గల చిత్రాన్ని మాత్రమే అప్‌లోడ్ చేయండి. (ఉదా: 1920x1080)')
         return
       }
 
@@ -95,7 +95,7 @@ export default function AdminBannersPage() {
 
       const { url } = await uploadRes.json()
 
-      // Save to portrait banners database table
+      // Save to portrait/landscape banners database table
       const saveRes = await fetch('/api/banners/portrait', {
         method: 'POST',
         headers: {
@@ -109,7 +109,7 @@ export default function AdminBannersPage() {
       })
 
       if (saveRes.ok) {
-        toast.success('ప్రీమియం నిలువు బ్యానర్ విజయవంతంగా అప్‌లోడ్ చేయబడింది!')
+        toast.success('ప్రీమియం రాయల్ బ్యానర్ విజయవంతంగా అప్‌లోడ్ చేయబడింది!')
         setSelectedFile(null)
         setPreviewUrl('')
         setLinkUrl('')
@@ -146,7 +146,7 @@ export default function AdminBannersPage() {
   }
 
   const handleDeletePortrait = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this premium portrait banner?')) return
+    if (!confirm('Are you sure you want to delete this premium banner?')) return
 
     try {
       const res = await fetch(`/api/banners/portrait?id=${id}`, {
@@ -188,7 +188,7 @@ export default function AdminBannersPage() {
           }`}
         >
           <Sparkles className="w-4 h-4" />
-          నిలువు బ్యానర్లు (9:16 Portrait) [Premium]
+          రాయల్ బ్యానర్లు (16:9 Landscape) [Premium]
         </button>
         <button
           onClick={() => setActiveTab('landscape')}
@@ -199,25 +199,25 @@ export default function AdminBannersPage() {
           }`}
         >
           <ImageIcon className="w-4 h-4" />
-          అడ్డ బ్యానర్లు (16:9 Landscape)
+          అడ్డ బ్యానర్లు (16:9 Landscape - Legacy)
         </button>
       </div>
 
       {activeTab === 'portrait' ? (
-        // PORTRAIT BANNERS TAB
+        // PREMIUM ROYAL 16:9 BANNERS TAB
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Form */}
           <div className="bg-white border border-gray-150 p-6 rounded-2xl shadow-sm h-fit">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-1.5">
               <Plus className="w-5 h-5 text-blue-600" />
-              నిలువు బ్యానర్ అప్‌లోడ్
+              రాయల్ బ్యానర్ అప్‌లోడ్
             </h2>
             <form onSubmit={handleUploadSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-700">ప్రకటన ఇమేజ్ (9:16 Portrait)</label>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 relative min-h-[220px]">
+                <label className="text-xs font-bold text-gray-700">ప్రకటన ఇమేజ్ (16:9 Landscape)</label>
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 relative min-h-[180px]">
                   {previewUrl ? (
-                    <div className="relative w-full aspect-[9/16] max-h-[250px] overflow-hidden rounded-lg">
+                    <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg">
                       <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
@@ -234,7 +234,7 @@ export default function AdminBannersPage() {
                     <label className="cursor-pointer flex flex-col items-center justify-center p-6 text-center select-none w-full h-full">
                       <Upload className="w-8 h-8 text-gray-400 mb-2" />
                       <span className="text-xs text-gray-600 font-bold">ఇమేజ్ ఎంచుకోండి</span>
-                      <span className="text-[10px] text-gray-400 mt-1">9:16 నిష్పత్తి మాత్రమే (ఉదా: 1080x1920)</span>
+                      <span className="text-[10px] text-gray-400 mt-1">16:9 నిష్పత్తి మాత్రమే (ఉదా: 1920x1080)</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -277,12 +277,12 @@ export default function AdminBannersPage() {
             </form>
           </div>
 
-          {/* List of active portrait banners */}
+          {/* List of active premium banners */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-1 bg-blue-50 text-blue-800 p-3 rounded-xl border border-blue-100 text-xs leading-normal">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>
-                నిలువు ప్రీమియం బ్యానర్లు అప్‌లోడ్ చేసిన సమయం నుండి <strong>ఖచ్చితంగా 24 గంటలు</strong> మాత్రమే యాప్‌లో కనిపిస్తాయి. ఆ తర్వాత స్వయంచాలకంగా అదృశ్యమవుతాయి.
+                రాయల్ ప్రీమియం బ్యానర్లు అప్‌లోడ్ చేసిన సమయం నుండి <strong>ఖచ్చితంగా 24 గంటలు</strong> మాత్రమే యాప్‌లో కనిపిస్తాయి. ఆ తర్వాత స్వయంచాలకంగా అదృశ్యమవుతాయి.
               </span>
             </div>
 
@@ -292,23 +292,23 @@ export default function AdminBannersPage() {
               </div>
             ) : portraitBanners.length === 0 ? (
               <div className="p-12 text-center text-gray-500 bg-white border border-gray-150 rounded-2xl shadow-sm">
-                ఎటువంటి ప్రీమియం నిలువు బ్యానర్లు అప్‌లోడ్ చేయబడలేదు. Fallback ప్రకటనలు ప్రదర్శించబడుతున్నాయి.
+                ఎటువంటి రాయల్ బ్యానర్లు అప్‌లోడ్ చేయబడలేదు. Fallback ప్రకటనలు ప్రదర్శించబడుతున్నాయి.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {portraitBanners.map((banner) => {
                   const isExpired = new Date(banner.expiresAt) < new Date()
                   return (
                     <div
                       key={banner.id}
-                      className="bg-white border border-gray-150 p-4 rounded-2xl shadow-sm flex gap-4 hover:shadow-md transition relative overflow-hidden"
+                      className="bg-white border border-gray-150 p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-4 hover:shadow-md transition relative overflow-hidden"
                     >
                       {isExpired && (
                         <div className="absolute top-2 right-2 bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase border border-red-200 z-10">
                           Expired
                         </div>
                       )}
-                      <div className="w-20 aspect-[9/16] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden relative shrink-0">
+                      <div className="w-full sm:w-40 aspect-[16/9] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden relative shrink-0">
                         <img src={banner.imageUrl} alt="Ad" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col justify-between py-1 flex-1">
@@ -331,7 +331,7 @@ export default function AdminBannersPage() {
                           )}
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 mt-4 sm:mt-0">
                           <div className="text-[10px] text-gray-500 flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             <span>Expiry: {new Date(banner.expiresAt).toLocaleString()}</span>
@@ -339,7 +339,7 @@ export default function AdminBannersPage() {
 
                           <button
                             onClick={() => handleDeletePortrait(banner.id)}
-                            className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-red-200 text-red-650 hover:bg-red-50 text-xs font-bold transition"
+                            className="w-full sm:w-auto px-4 py-2 flex items-center justify-center gap-1 rounded-xl border border-red-200 text-red-650 hover:bg-red-50 text-xs font-bold transition"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             తొలగించండి
@@ -354,7 +354,7 @@ export default function AdminBannersPage() {
           </div>
         </div>
       ) : (
-        // LANDSCAPE BANNERS TAB
+        // LANDSCAPE LEGACY BANNERS TAB
         <div className="bg-white border border-gray-150 rounded-2xl overflow-hidden shadow-sm">
           {!landscapeBanners ? (
             <div className="flex items-center justify-center p-12">

@@ -1,6 +1,6 @@
 {
   "name": "choutuppal2",
-  "version": "2.0.38",
+  "version": "2.0.39",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",

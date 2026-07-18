@@ -157,19 +157,14 @@ function HomeView() {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      {/* Premium 9:16 Banners */}
-      <ErrorBoundary name="PremiumBanners">
-        <PremiumBanners />
-      </ErrorBoundary>
-
       {/* 3. Stories / Your Story horizontal feed */}
       <ErrorBoundary name="StoriesSection">
         <StoriesSection />
       </ErrorBoundary>
 
-      {/* 4. BannerSlider (16:9 Premium Ads) */}
-      <ErrorBoundary name="BannerSlider">
-        <BannerSlider />
+      {/* Premium 16:9 Banners */}
+      <ErrorBoundary name="PremiumBanners">
+        <PremiumBanners />
       </ErrorBoundary>
 
       {/* 5. SearchBar (Advanced search with Telugu placeholder and filter pills) */}
