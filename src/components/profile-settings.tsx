@@ -346,8 +346,8 @@ export default function ProfileSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
             <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Tell the community about yourself..." className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
           </div>
-          <button type="submit" disabled={updatingProfile || usernameStatus === 'taken' || usernameStatus === 'invalid'} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition flex justify-center items-center gap-2 disabled:opacity-50">
-            {updatingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Changes'}
+          <button type="submit" disabled={updatingProfile || usernameStatus === 'taken' || usernameStatus === 'invalid'} className="w-full py-2.5 bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold rounded-xl shadow-md hover:scale-105 transition-transform flex justify-center items-center gap-2 disabled:opacity-50">
+            {updatingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Profile'}
           </button>
         </form>
       </div>
