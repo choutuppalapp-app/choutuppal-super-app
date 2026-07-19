@@ -121,26 +121,23 @@ export async function POST(request: Request) {
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-    const banner = await db.bannerAd.create({
-      data: {
-        title: title.trim(),
-        imageUrl: imageUrl || null,
-        shopName: shopName || '',
-        offerText: offerText || null,
-        linkUrl: linkUrl || null,
-        phoneNumber: phoneNumber || null,
-        cityId: cityId || null,
-        userId: userId || null,
-        isActive: true,
-        status: 'APPROVED',
-        expiresAt,
-      },
-    })
-
-    return NextResponse.json(banner, { status: 201 })
-  } catch (error) {
+    try {
+      const banner = await db.banner.create({
+        data: {
+          imageUrl: imageUrl || '',
+          linkUrl: linkUrl || null,
+          uploadedBy: userId || 'User',
+          expiresAt,
+        },
+      })
+      return NextResponse.json(banner, { status: 201 })
+    } catch (error: any) {
+      console.error("DB Error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+  } catch (error: any) {
     console.error('Error creating banner ad:', error)
-    return NextResponse.json({ error: 'Failed to create banner ad' }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 

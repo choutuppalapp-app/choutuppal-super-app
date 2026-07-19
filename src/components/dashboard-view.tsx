@@ -244,6 +244,8 @@ export default function DashboardView() {
   const [bannerData, setBannerData] = useState({
     title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: ''
   })
+  const [selectedBannerFile, setSelectedBannerFile] = useState<File | null>(null)
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>('')
 
   const fetcher = (url: string) => authFetch(url).then(res => res.json())
 
@@ -535,14 +537,9 @@ export default function DashboardView() {
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    toast.info('Uploading image...')
-    try {
-      const data = await compressAndUpload(files[0], 'banners')
-      setBannerData(prev => ({ ...prev, imageUrl: data.url }))
-      toast.success('Uploaded banner successfully')
-    } catch {
-      toast.error('Failed to upload image')
-    }
+    const file = files[0]
+    setSelectedBannerFile(file)
+    setBannerPreviewUrl(URL.createObjectURL(file))
     e.target.value = ''
   }
 
@@ -634,37 +631,59 @@ export default function DashboardView() {
   }
 
   const submitBanner = async () => {
-    if (!currentUser || !bannerData.title || !bannerData.imageUrl) return
+    if (!currentUser || (!selectedBannerFile && !bannerData.imageUrl)) {
+      toast.error('Please select an image first')
+      return
+    }
     setUploading(true)
     try {
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      let uploadedUrl = bannerData.imageUrl
+
+      if (selectedBannerFile) {
+        toast.info('Uploading image to storage...')
+        const uploadResult = await compressAndUpload(selectedBannerFile, 'banners')
+        uploadedUrl = uploadResult.url
+        setBannerData(prev => ({ ...prev, imageUrl: uploadedUrl }))
+      }
+
+      if (!uploadedUrl) {
+        toast.error('Image upload failed')
+        setUploading(false)
+        return
+      }
+
+      toast.info('Publishing banner to database...')
       const res = await authFetch('/api/banners', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUser.id,
-          cityId: bannerData.cityId || cities[0]?.id || 'default',
-          title: bannerData.title,
-          shopName: bannerData.shopName || '',
-          offerText: bannerData.offerText || null,
           linkUrl: bannerData.linkUrl || null,
-          imageUrl: bannerData.imageUrl || null,
-          isActive: true,
-          expiresAt,
+          imageUrl: uploadedUrl
         }),
       })
+
       if (res.ok) {
-        toast.success('Banner created successfully!')
-        setIsCreatingBanner(false)
-        setBannerData({ title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: '' })
-        fetchBanners()
+        const data = await res.json()
+        if (data.error) {
+          toast.error('Failed to publish banner: ' + data.error)
+        } else {
+          toast.success('Banner Published Successfully!')
+          alert('Banner Published Successfully!')
+          setIsCreatingBanner(false)
+          setBannerData({ title: '', shopName: '', offerText: '', linkUrl: '', imageUrl: '', cityId: '' })
+          setSelectedBannerFile(null)
+          setBannerPreviewUrl('')
+          fetchBanners()
+        }
       } else {
         const errData = await res.text()
         console.error('Banner submit API error:', errData)
         toast.error('Failed to create banner')
       }
-    } catch {
+    } catch (err: any) {
+      console.error('Submit error:', err)
       toast.error('Something went wrong')
     } finally {
       setUploading(false)
@@ -2179,8 +2198,8 @@ export default function DashboardView() {
                     <div className="flex flex-col gap-2">
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Banner Image *</span>
                       <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
-                        {bannerData.imageUrl ? (
-                          <img src={bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                        {bannerPreviewUrl || bannerData.imageUrl ? (
+                          <img src={bannerPreviewUrl || bannerData.imageUrl} alt="Banner" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                         ) : (
                           <div className="flex flex-col items-center gap-1">
                             <UploadCloud className="w-6 h-6 text-purple-500" />
@@ -2192,11 +2211,6 @@ export default function DashboardView() {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Internal title *</span>
-                      <Input placeholder="E.g., Special Offer Banner" value={bannerData.title} onChange={e => setBannerData({...bannerData, title: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Target Website/Link URL</span>
                       <Input placeholder="https://..." value={bannerData.linkUrl} onChange={e => setBannerData({...bannerData, linkUrl: e.target.value})} className="bg-white border-gray-200 h-11 rounded-xl" />
                     </div>
@@ -2204,15 +2218,15 @@ export default function DashboardView() {
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-                  <Button onClick={submitBanner} disabled={uploading || isUploading || !bannerData.title || !bannerData.imageUrl} className="w-full max-w-lg mx-auto h-13 text-lg font-extrabold rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md border-none">
-                    {uploading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    ) : isUploading ? (
-                      'Uploading...'
-                    ) : (
-                      'Publish Banner'
-                    )}
-                  </Button>
+                  <div className="w-full flex justify-center mt-6">
+                    <button
+                      onClick={submitBanner}
+                      disabled={uploading || isUploading || (!selectedBannerFile && !bannerData.imageUrl)}
+                      className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50"
+                    >
+                      {uploading || isUploading ? 'Publishing...' : 'Publish Banner'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
