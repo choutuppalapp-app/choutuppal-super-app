@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
     '*.z.ai',
     'space-z.ai',
     'z.ai',
+    'localhost:*',
+    '127.0.0.1:*',
+    '0.0.0.0:*',
+    '192.168.*',
+    '10.*',
+    '172.*',
   ],
   images: {
     remotePatterns: [
