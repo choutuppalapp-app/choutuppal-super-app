@@ -8,6 +8,8 @@ if (!process.env.DATABASE_URL) {
   console.warn('⚠️ WARNING: DATABASE_URL environment variable is missing!')
 }
 
+console.log("Initializing Prisma Client with updated DB credentials...");
+
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
