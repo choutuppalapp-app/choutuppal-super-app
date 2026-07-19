@@ -118,15 +118,24 @@ export async function POST(request: Request) {
       }
     }
 
+    const origin = request.headers.get('origin') || '*'
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    }
+
     if (!resolvedUserId) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
+      console.error("Auth Failure: No valid session cookie found for this request origin.");
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401, headers: corsHeaders })
     }
 
     const body = await request.json()
     const { imageUrl, linkUrl } = body
 
     if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.trim()) {
-      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
+      return NextResponse.json({ error: 'Image URL is required' }, { status: 400, headers: corsHeaders })
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -140,15 +149,28 @@ export async function POST(request: Request) {
           expiresAt,
         },
       })
-      return NextResponse.json(banner, { status: 201 })
+      return NextResponse.json(banner, { status: 201, headers: corsHeaders })
     } catch (error: any) {
       console.error("DB Create Error:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders })
     }
   } catch (error: any) {
     console.error('Error creating banner ad:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin') || '*'
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  })
 }
 
 // PUT /api/banners â€” Update a banner ad

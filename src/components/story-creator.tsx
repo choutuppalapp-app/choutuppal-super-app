@@ -93,13 +93,22 @@ export default function StoryCreator({
         body: formData,
       })
 
+      console.log("R2 Upload Response Status:", response.status);
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Upload failed')
+        const errorText = await response.text()
+        console.error('Upload API failure details:', errorText)
+        alert("Image Upload to Cloudflare R2 Failed. Please try again.")
+        throw new Error(errorText || 'Upload failed')
       }
 
       const uploadResult = await response.json()
       const mediaUrl = uploadResult.url
+
+      if (!mediaUrl) {
+        alert("Image Upload to Cloudflare R2 Failed. Please try again.")
+        throw new Error('Upload returned null URL')
+      }
 
       const res = await fetch('/api/stories', {
         method: 'POST',

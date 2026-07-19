@@ -481,10 +481,13 @@ export default function DashboardView() {
         body: formData
       })
 
+      console.log("R2 Upload Response Status:", res.status);
+
       if (!res.ok) {
-        const errorData = await res.json()
-        console.error('Upload API failure:', errorData)
-        toast.error('Image upload failed: ' + (errorData.error || 'Unknown error'))
+        const errorText = await res.text()
+        console.error('Upload API failure details:', errorText)
+        alert("Image Upload to Cloudflare R2 Failed. Please try again.")
+        toast.error('Image upload failed')
         throw new Error('Upload failed')
       }
 
@@ -664,6 +667,7 @@ export default function DashboardView() {
       }
 
       if (!uploadedUrl) {
+        alert("Image Upload to Cloudflare R2 Failed. Please try again.")
         toast.error('Image upload failed')
         setUploading(false)
         return

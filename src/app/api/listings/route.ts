@@ -219,8 +219,17 @@ export async function POST(request: Request) {
       console.error('API routes auth session helper error:', err)
     }
 
+    const origin = request.headers.get('origin') || '*'
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    }
+
     if (!resolvedUserId) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
+      console.error("Auth Failure: No valid session cookie found for this request origin.");
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401, headers: corsHeaders })
     }
     
     const slug = body.slug || await generateUniqueSlug(body.name)
@@ -284,10 +293,10 @@ export async function POST(request: Request) {
           },
         },
       })
-      return NextResponse.json(listing, { status: 201 })
+      return NextResponse.json(listing, { status: 201, headers: corsHeaders })
     } catch (dbError: any) {
       console.error("DB Create Error:", dbError)
-      return NextResponse.json({ error: dbError.message }, { status: 500 })
+      return NextResponse.json({ error: dbError.message }, { status: 500, headers: corsHeaders })
     }
   } catch (error) {
     console.error('Error creating listing:', error)
@@ -296,4 +305,17 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin') || '*'
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  })
 }

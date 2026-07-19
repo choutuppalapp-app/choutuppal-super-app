@@ -73,8 +73,17 @@ export async function POST(request: Request) {
       console.error('API routes auth session helper error:', err)
     }
 
+    const origin = request.headers.get('origin') || '*'
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    }
+
     if (!resolvedUserId) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
+      console.error("Auth Failure: No valid session cookie found for this request origin.");
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401, headers: corsHeaders })
     }
 
     try {
@@ -87,15 +96,28 @@ export async function POST(request: Request) {
           expiresAt,
         },
       })
-      return NextResponse.json({ success: true, banner })
+      return NextResponse.json({ success: true, banner }, { status: 200, headers: corsHeaders })
     } catch (dbError: any) {
       console.error("DB Create Error:", dbError)
-      return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
+      return NextResponse.json({ success: false, error: dbError.message }, { status: 500, headers: corsHeaders })
     }
   } catch (error: any) {
     console.error('Error creating portrait banner in API:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin') || '*'
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  })
 }
 
 export async function DELETE(request: Request) {

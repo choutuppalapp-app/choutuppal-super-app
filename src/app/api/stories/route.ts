@@ -118,14 +118,23 @@ export async function POST(request: Request) {
       }
     }
 
+    const origin = request.headers.get('origin') || '*'
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    }
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
+      console.error("Auth Failure: No valid session cookie found for this request origin.");
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401, headers: corsHeaders })
     }
 
     if (!cityId || !mediaUrl) {
       return NextResponse.json(
         { error: 'Missing required fields: cityId, mediaUrl' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -156,10 +165,10 @@ export async function POST(request: Request) {
           },
         },
       })
-      return NextResponse.json(story, { status: 201 })
+      return NextResponse.json(story, { status: 201, headers: corsHeaders })
     } catch (dbError: any) {
       console.error("DB Create Error:", dbError)
-      return NextResponse.json({ error: dbError.message }, { status: 500 })
+      return NextResponse.json({ error: dbError.message }, { status: 500, headers: corsHeaders })
     }
   } catch (error) {
     console.error('Error creating story:', error)
@@ -168,4 +177,17 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin') || '*'
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  })
 }
