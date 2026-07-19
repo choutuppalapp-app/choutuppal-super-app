@@ -118,7 +118,8 @@ export default function StoryCreator({
       })
 
       if (res.ok) {
-        toast.success('Story posted!')
+        toast.success('Successfully Published!')
+        alert('Successfully Published!')
         onStoryCreated()
         onClose()
       } else {
@@ -205,17 +206,17 @@ export default function StoryCreator({
                 }}
               />
 
-              {/* Send Button with Blue-to-Gold gradient */}
               <button
                 onClick={handlePost}
                 disabled={posting}
-                className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-yellow-500 text-white hover:opacity-95 active:scale-95 transition-all flex items-center justify-center shadow-lg shadow-blue-500/20 disabled:opacity-70"
-                aria-label="Post story"
+                className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center"
               >
                 {posting ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 text-white animate-spin" /> Submitting...
+                  </span>
                 ) : (
-                  <Send className="w-5 h-5 text-white translate-x-0.5 -translate-y-0.5" />
+                  'Post Story'
                 )}
               </button>
             </div>

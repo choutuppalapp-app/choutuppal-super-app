@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       })
       return NextResponse.json({ success: true, banner })
     } catch (dbError: any) {
-      console.error("DB Error:", dbError)
+      console.error("DB Create Error:", dbError)
       return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
     }
   } catch (error: any) {

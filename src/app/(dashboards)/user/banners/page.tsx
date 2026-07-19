@@ -128,8 +128,8 @@ export default function UserBannersPage() {
       if (res.ok) {
         const data = await res.json()
         if (data.success) {
-          toast.success('Banner Published Successfully!')
-          alert('Banner Published Successfully!')
+          toast.success('Successfully Published!')
+          alert('Successfully Published!')
           setIsCreatingBanner(false)
           setBannerData({ linkUrl: '', imageUrl: '' })
           setSelectedFile(null)
@@ -331,7 +331,7 @@ export default function UserBannersPage() {
               >
                 {uploading || isUploading ? (
                   <span className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" /> Publishing...
+                    <Loader2 className="w-5 h-5 animate-spin" /> Submitting...
                   </span>
                 ) : (
                   'Publish Banner'

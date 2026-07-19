@@ -194,56 +194,60 @@ export async function POST(request: Request) {
       galleryString = typeof rawGallery === 'string' ? rawGallery : JSON.stringify(rawGallery);
     }
 
-    const listing = await db.listing.create({
-      data: {
-        userId: body.userId,
-        cityId: body.cityId,
-        slug: slug,
-        name: sanitizedName,
-        category: sanitizedCategory,
-        description: sanitizedDescription,
-        services: body.services ? JSON.stringify(body.services) : null,
-        images: galleryString,
-        coverImage: body.coverImage || null,
-        logoUrl: body.logoUrl || null,
-        gallery: galleryString,
-        instagramUrl: body.instagramUrl || null,
-        instagramUsername: body.instagramUsername || null,
-        facebookUrl: body.facebookUrl || null,
-        youtubeUrl: body.youtubeUrl || null,
-        phoneNumber: body.phoneNumber || null,
-        whatsappNumber: body.whatsappNumber || null,
-        secondaryPhone: body.secondaryPhone || null,
-        address: body.address || null,
-        ownerName: body.ownerName || null,
-        establishedYear: body.establishedYear || null,
-        latitude: body.latitude || null,
-        longitude: body.longitude || null,
-        isApproved: false,
-        status: 'APPROVED',
-        isPremium: body.isPremium || false,
-        isFeatured: body.isFeatured || false,
-        operatingHours: body.operatingHours || null,
-        referredByAgentId: body.referredByAgentId || null,
-        rating: body.rating ? parseFloat(body.rating) : 5,
-        villageId: body.villageId || null,
-        subCategoryId: body.subCategoryId || null,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            phone: true,
+    try {
+      const listing = await db.listing.create({
+        data: {
+          userId: body.userId,
+          cityId: body.cityId,
+          slug: slug,
+          name: sanitizedName,
+          category: sanitizedCategory,
+          description: sanitizedDescription,
+          services: body.services ? JSON.stringify(body.services) : null,
+          images: galleryString,
+          coverImage: body.coverImage || null,
+          logoUrl: body.logoUrl || null,
+          gallery: galleryString,
+          instagramUrl: body.instagramUrl || null,
+          instagramUsername: body.instagramUsername || null,
+          facebookUrl: body.facebookUrl || null,
+          youtubeUrl: body.youtubeUrl || null,
+          phoneNumber: body.phoneNumber || null,
+          whatsappNumber: body.whatsappNumber || null,
+          secondaryPhone: body.secondaryPhone || null,
+          address: body.address || null,
+          ownerName: body.ownerName || null,
+          establishedYear: body.establishedYear || null,
+          latitude: body.latitude || null,
+          longitude: body.longitude || null,
+          isApproved: false,
+          status: 'APPROVED',
+          isPremium: body.isPremium || false,
+          isFeatured: body.isFeatured || false,
+          operatingHours: body.operatingHours || null,
+          referredByAgentId: body.referredByAgentId || null,
+          rating: body.rating ? parseFloat(body.rating) : 5,
+          villageId: body.villageId || null,
+          subCategoryId: body.subCategoryId || null,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              phone: true,
+            },
+          },
+          city: {
+            select: { id: true, name: true, slug: true },
           },
         },
-        city: {
-          select: { id: true, name: true, slug: true },
-        },
-      },
-    })
-
-    return NextResponse.json(listing, { status: 201 })
+      })
+      return NextResponse.json(listing, { status: 201 })
+    } catch (dbError: any) {
+      console.error("DB Create Error:", dbError)
+      return NextResponse.json({ error: dbError.message }, { status: 500 })
+    }
   } catch (error) {
     console.error('Error creating listing:', error)
     return NextResponse.json(

@@ -132,7 +132,7 @@ export async function POST(request: Request) {
       })
       return NextResponse.json(banner, { status: 201 })
     } catch (error: any) {
-      console.error("DB Error:", error)
+      console.error("DB Create Error:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
   } catch (error: any) {

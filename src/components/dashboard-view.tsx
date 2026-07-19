@@ -247,6 +247,18 @@ export default function DashboardView() {
   const [selectedBannerFile, setSelectedBannerFile] = useState<File | null>(null)
   const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>('')
 
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string>('')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('')
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([])
+  const [galleryPreviewUrls, setGalleryPreviewUrls] = useState<string[]>([])
+
+  const [reCoverFile, setReCoverFile] = useState<File | null>(null)
+  const [reCoverPreviewUrl, setReCoverPreviewUrl] = useState<string>('')
+  const [reGalleryFiles, setReGalleryFiles] = useState<File[]>([])
+  const [reGalleryPreviewUrls, setReGalleryPreviewUrls] = useState<string[]>([])
+
   const fetcher = (url: string) => authFetch(url).then(res => res.json())
 
   // SWR Hook integrations
@@ -486,53 +498,24 @@ export default function DashboardView() {
   const handleListingFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    toast.info('Uploading image...')
-    try {
-      const data = await compressAndUpload(files[0], 'listings')
-      setFormData(prev => ({ ...prev, coverImage: data.url }))
-      toast.success('Cover banner uploaded successfully')
-    } catch {
-      toast.error('Failed to upload cover')
-    }
+    const file = files[0]
+    setCoverFile(file)
+    setCoverPreviewUrl(URL.createObjectURL(file))
     e.target.value = ''
   }
 
   const handleExtraUpload = async (file: File) => {
-    toast.info('Uploading image...')
-    try {
-      const data = await compressAndUpload(file, 'listings')
-      setFormData(prev => ({ ...prev, logoUrl: data.url }))
-      toast.success('Uploaded logo successfully')
-    } catch {
-      toast.error('Upload failed')
-    }
+    setLogoFile(file)
+    setLogoPreviewUrl(URL.createObjectURL(file))
   }
 
-  // Gallery uploads (MUST use correct images state updater)
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    toast.info('Uploading images...');
-    try {
-      const uploadPromises = files.map(async (file) => {
-        try {
-          const res = await compressAndUpload(file, 'listings')
-          return res.url
-        } catch {
-          return null
-        }
-      })
-      const urls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
-      
-      // Gallery state MUST use:
-      setFormData(prev => ({ ...prev, images: [...(prev.images || []), ...urls] }));
-      toast.success('Gallery uploaded successfully');
-    } catch (error: any) {
-      console.error('Gallery upload error:', error);
-      toast.error('Upload failed');
-    }
+    setGalleryFiles(prev => [...prev, ...files])
+    setGalleryPreviewUrls(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
     e.target.value = ''
-  };
+  }
 
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -548,11 +531,38 @@ export default function DashboardView() {
     if (!currentUser || !formData.name || !formData.category) return
     setUploading(true)
     try {
+      let coverUrl = formData.coverImage
+      let logoUrl = formData.logoUrl
+      let galleryUrls = formData.images || []
+
+      if (coverFile) {
+        toast.info('Uploading cover image...')
+        const res = await compressAndUpload(coverFile, 'listings')
+        coverUrl = res.url
+      }
+      if (logoFile) {
+        toast.info('Uploading logo image...')
+        const res = await compressAndUpload(logoFile, 'listings')
+        logoUrl = res.url
+      }
+      if (galleryFiles.length > 0) {
+        toast.info('Uploading gallery images...')
+        const uploaded: string[] = []
+        for (const file of galleryFiles) {
+          try {
+            const res = await compressAndUpload(file, 'listings')
+            uploaded.push(res.url)
+          } catch (e) {
+            console.error('Gallery file upload failed', e)
+          }
+        }
+        galleryUrls = [...galleryUrls, ...uploaded]
+      }
+
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
       let url = editingListingId ? `/api/listings/${editingListingId}` : '/api/listings'
       const method = editingListingId ? 'PUT' : 'POST'
       
-      const rawImages = formData.images
       let body: any = {
         userId: currentUser.id,
         cityId: formData.cityId || cities[0]?.id || 'default',
@@ -566,10 +576,10 @@ export default function DashboardView() {
         address: formData.address || null,
         ownerName: formData.ownerName || null,
         establishedYear: formData.establishedYear || null,
-        coverImage: formData.coverImage || null,
-        logoUrl: formData.logoUrl || null,
-        images: rawImages.length > 0 ? rawImages : null,
-        gallery: rawImages.length > 0 ? rawImages : null,
+        coverImage: coverUrl || null,
+        logoUrl: logoUrl || null,
+        images: galleryUrls.length > 0 ? galleryUrls : null,
+        gallery: galleryUrls.length > 0 ? galleryUrls : null,
         services: formData.services.length > 0 ? formData.services : null,
         instagramUrl: formData.instagramUrl || null,
         instagramUsername: formData.instagramUsername || null,
@@ -585,7 +595,7 @@ export default function DashboardView() {
 
       if (formData.category === 'Real Estate') {
         url = editingListingId ? `/api/realestate/${editingListingId}` : '/api/realestate'
-        const imagesArr = formData.coverImage ? [formData.coverImage, ...rawImages] : rawImages
+        const imagesArr = coverUrl ? [coverUrl, ...galleryUrls] : galleryUrls
         body = {
           userId: currentUser.id,
           cityId: formData.cityId || cities[0]?.id || 'default',
@@ -605,7 +615,8 @@ export default function DashboardView() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
-        toast.success(editingListingId ? 'Listing updated successfully!' : 'Listing created successfully!')
+        toast.success('Successfully Published!')
+        alert('Successfully Published!')
         setIsCreatingListing(false)
         setEditingListingId(null)
         fetchListings()
@@ -617,6 +628,12 @@ export default function DashboardView() {
           coverImage: '', logoUrl: '', images: [], instagramUrl: '', instagramUsername: '', facebookUrl: '', youtubeUrl: '', price: '', bedroomCount: '', area: '', rating: 5, operatingHours: '9:00 AM - 9:00 PM', googleMapsUrl: '',
           services: [], isFeatured: false
         })
+        setCoverFile(null)
+        setCoverPreviewUrl('')
+        setLogoFile(null)
+        setLogoPreviewUrl('')
+        setGalleryFiles([])
+        setGalleryPreviewUrls([])
       } else {
         const errData = await res.text()
         console.error('Submit API error:', errData)
@@ -725,31 +742,17 @@ export default function DashboardView() {
   const handleReCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    toast.info('Uploading cover image...')
-    try {
-      const res = await compressAndUpload(file, 'listings')
-      setReForm(p => ({ ...p, coverImage: res.url }))
-      toast.success('Cover photo uploaded!')
-    } catch { toast.error('Upload failed') }
+    setReCoverFile(file)
+    setReCoverPreviewUrl(URL.createObjectURL(file))
     e.target.value = ''
   }
 
   const handleReGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
-    if (reForm.gallery.length + files.length > 5) { toast.error('Max 5 gallery photos allowed'); return }
-    toast.info('Uploading gallery...')
-    try {
-      const urls: string[] = []
-      for (const file of files) {
-        try {
-          const res = await compressAndUpload(file, 'listings')
-          urls.push(res.url)
-        } catch {}
-      }
-      setReForm(p => ({ ...p, gallery: [...p.gallery, ...urls] }))
-      toast.success(`${urls.length} photo(s) uploaded!`)
-    } catch { toast.error('Gallery upload failed') }
+    if (reGalleryFiles.length + files.length > 5) { toast.error('Max 5 gallery photos allowed'); return }
+    setReGalleryFiles(prev => [...prev, ...files])
+    setReGalleryPreviewUrls(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
     e.target.value = ''
   }
 
@@ -760,7 +763,29 @@ export default function DashboardView() {
     }
     setUploading(true)
     try {
-      const allImages = reForm.coverImage ? [reForm.coverImage, ...reForm.gallery] : reForm.gallery
+      let coverUrl = reForm.coverImage
+      let galleryUrls = reForm.gallery || []
+
+      if (reCoverFile) {
+        toast.info('Uploading cover image...')
+        const res = await compressAndUpload(reCoverFile, 'listings')
+        coverUrl = res.url
+      }
+      if (reGalleryFiles.length > 0) {
+        toast.info('Uploading gallery images...')
+        const uploaded: string[] = []
+        for (const file of reGalleryFiles) {
+          try {
+            const res = await compressAndUpload(file, 'listings')
+            uploaded.push(res.url)
+          } catch (e) {
+            console.error('Gallery file upload failed', e)
+          }
+        }
+        galleryUrls = [...galleryUrls, ...uploaded]
+      }
+
+      const allImages = coverUrl ? [coverUrl, ...galleryUrls] : galleryUrls
       const body = {
         userId: currentUser.id,
         cityId: reForm.cityId || cities[0]?.id || 'default',
@@ -781,16 +806,24 @@ export default function DashboardView() {
       const method = editingRealEstateId ? 'PUT' : 'POST'
       const res = await authFetch(url, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (res.ok) {
-        toast.success(editingRealEstateId ? 'Property updated!' : 'Property submitted for approval!')
+        toast.success('Successfully Published!')
+        alert('Successfully Published!')
         setIsCreatingRealEstate(false)
         setEditingRealEstateId(null)
         resetReForm()
+        setReCoverFile(null)
+        setReCoverPreviewUrl('')
+        setReGalleryFiles([])
+        setReGalleryPreviewUrls([])
         fetchRealEstate()
       } else {
         const err = await res.json()
         toast.error(err.error || 'Failed to submit property')
       }
-    } catch { toast.error('Something went wrong') }
+    } catch (err: any) {
+      console.error('Submit error:', err)
+      toast.error('Something went wrong')
+    }
     finally { setUploading(false) }
   }
 
@@ -1715,10 +1748,10 @@ export default function DashboardView() {
                       <div className="sm:col-span-1 flex flex-col gap-2">
                         <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Logo / Photo</span>
                         <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
-                          {formData.logoUrl ? (
+                          {logoPreviewUrl || formData.logoUrl ? (
                             <>
-                              <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                              <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
+                              <img src={logoPreviewUrl || formData.logoUrl} alt="Logo" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                              <button type="button" onClick={(e) => { e.preventDefault(); setLogoFile(null); setLogoPreviewUrl(''); setFormData(p => ({...p, logoUrl: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
                             </>
                           ) : (
                             <div className="flex flex-col items-center gap-1">
@@ -1734,10 +1767,10 @@ export default function DashboardView() {
                       <div className="sm:col-span-2 flex flex-col gap-2">
                         <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Cover banner *</span>
                         <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-32 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative group">
-                          {formData.coverImage ? (
+                          {coverPreviewUrl || formData.coverImage ? (
                             <>
-                              <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                              <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
+                              <img src={coverPreviewUrl || formData.coverImage} alt="Cover" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                              <button type="button" onClick={(e) => { e.preventDefault(); setCoverFile(null); setCoverPreviewUrl(''); setFormData(p => ({...p, coverImage: ''})) }} className="absolute top-1.5 right-1.5 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
                             </>
                           ) : (
                             <div className="flex flex-col items-center gap-1">
@@ -1754,16 +1787,22 @@ export default function DashboardView() {
                     <div className="flex flex-col gap-2">
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex justify-between">
                         <span>Gallery Photos (Max 5)</span>
-                        <span className="text-[#4169E1] font-black">{formData.images.length}/5</span>
+                        <span className="text-[#4169E1] font-black">{(formData.images?.length || 0) + galleryPreviewUrls.length}/5</span>
                       </span>
                       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-                        {formData.images.map((img, i) => (
-                          <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                        {(formData.images || []).map((img, i) => (
+                          <div key={`exist-${i}`} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
                             <img src={img} alt="Gallery item" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <button type="button" onClick={(e) => { e.preventDefault(); setFormData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)})) }} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
                           </div>
                         ))}
-                        {formData.images.length < 5 && (
+                        {galleryPreviewUrls.map((img, i) => (
+                          <div key={`local-${i}`} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                            <img src={img} alt="Gallery preview" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                            <button type="button" onClick={(e) => { e.preventDefault(); setGalleryFiles(p => p.filter((_, idx) => idx !== i)); setGalleryPreviewUrls(p => p.filter((_, idx) => idx !== i)) }} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition"><Trash2 className="size-3.5" /></button>
+                          </div>
+                        ))}
+                        {((formData.images?.length || 0) + galleryPreviewUrls.length) < 5 && (
                           <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
                             <Plus className="w-6 h-6 text-gray-400" />
                             <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />
@@ -1994,13 +2033,21 @@ export default function DashboardView() {
 
                 {/* Sticky Footer */}
                 <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-                  <Button 
-                    onClick={submitListing} 
-                    disabled={uploading || !formData.name || !formData.category}
-                    className="w-full max-w-lg mx-auto h-13 rounded-2xl bg-gradient-to-r from-[#4169E1] to-[#1E3A8A] text-white font-bold text-lg shadow-md transition-transform hover:scale-[1.01] active:scale-95 flex items-center justify-center border-none"
-                  >
-                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingListingId ? 'Update and Save' : 'Publish Listing Now')}
-                  </Button>
+                  <div className="w-full flex justify-center mt-2">
+                    <button 
+                      onClick={submitListing} 
+                      disabled={uploading || !formData.name || !formData.category}
+                      className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin text-white" /> Submitting...
+                        </>
+                      ) : (
+                        editingListingId ? 'Update and Save' : 'Publish Listing Now'
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -2040,10 +2087,10 @@ export default function DashboardView() {
                     <div className="flex flex-col gap-2">
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Cover Photo (16:9) *</span>
                       <label className="flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-100 transition overflow-hidden relative" style={{ aspectRatio: '16/9' }}>
-                        {reForm.coverImage ? (
+                        {reCoverPreviewUrl || reForm.coverImage ? (
                           <>
-                            <img loading="lazy" decoding="async" src={reForm.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                            <button type="button" onClick={(e) => { e.preventDefault(); setReForm(p => ({ ...p, coverImage: '' })) }} className="absolute top-2 right-2 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
+                            <img loading="lazy" decoding="async" src={reCoverPreviewUrl || reForm.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            <button type="button" onClick={(e) => { e.preventDefault(); setReCoverFile(null); setReCoverPreviewUrl(''); setReForm(p => ({ ...p, coverImage: '' })) }} className="absolute top-2 right-2 p-1.5 bg-white/95 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
                               <Trash2 className="size-3.5" />
                             </button>
                           </>
@@ -2062,18 +2109,26 @@ export default function DashboardView() {
                     <div className="flex flex-col gap-2">
                       <span className="text-gray-800 font-bold text-xs uppercase tracking-wide flex justify-between">
                         <span>Gallery Photos (Max 5)</span>
-                        <span className="text-[#4169E1] font-black">{reForm.gallery.length}/5</span>
+                        <span className="text-[#4169E1] font-black">{(reForm.gallery?.length || 0) + reGalleryPreviewUrls.length}/5</span>
                       </span>
                       <div className="flex gap-3 overflow-x-auto pb-2">
-                        {reForm.gallery.map((img, i) => (
-                          <div key={i} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                        {(reForm.gallery || []).map((img, i) => (
+                          <div key={`exist-${i}`} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                             <img src={img} alt="Gallery" className="w-full h-full object-cover" loading="lazy" />
                             <button type="button" onClick={() => setReForm(p => ({ ...p, gallery: p.gallery.filter((_, idx) => idx !== i) }))} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
                               <Trash2 className="size-3" />
                             </button>
                           </div>
                         ))}
-                        {reForm.gallery.length < 5 && (
+                        {reGalleryPreviewUrls.map((img, i) => (
+                          <div key={`local-${i}`} className="w-24 h-24 shrink-0 relative rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                            <img src={img} alt="Gallery preview" className="w-full h-full object-cover" loading="lazy" />
+                            <button type="button" onClick={() => { setReGalleryFiles(p => p.filter((_, idx) => idx !== i)); setReGalleryPreviewUrls(p => p.filter((_, idx) => idx !== i)) }} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition">
+                              <Trash2 className="size-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {((reForm.gallery?.length || 0) + reGalleryPreviewUrls.length) < 5 && (
                           <label className="w-24 h-24 shrink-0 flex flex-col items-center justify-center gap-1 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition">
                             <Plus className="w-6 h-6" />
                             <input type="file" multiple accept="image/*" className="hidden" onChange={handleReGalleryUpload} />
@@ -2164,13 +2219,21 @@ export default function DashboardView() {
 
                 {/* Sticky Footer */}
                 <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pb-safe-bottom z-30">
-                  <Button
-                    onClick={submitRealEstate}
-                    disabled={uploading || !reForm.title || !reForm.price || !reForm.phoneNumber}
-                    className="w-full max-w-lg mx-auto h-13 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#4169E1] text-white font-bold text-lg shadow-md border-none"
-                  >
-                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : (editingRealEstateId ? 'Update Property' : 'Submit for Approval')}
-                  </Button>
+                  <div className="w-full flex justify-center mt-2">
+                    <button
+                      onClick={submitRealEstate}
+                      disabled={uploading || !reForm.title || !reForm.price || !reForm.phoneNumber}
+                      className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin text-white" /> Submitting...
+                        </>
+                      ) : (
+                        editingRealEstateId ? 'Update Property' : 'Submit for Approval'
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

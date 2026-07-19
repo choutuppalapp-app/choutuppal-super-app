@@ -132,31 +132,35 @@ export async function POST(request: Request) {
     // Set expiresAt to 24 hours from now
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-    const story = await db.story.create({
-      data: {
-        userId: resolvedUserId,
-        cityId,
-        mediaType: mediaType || 'IMAGE',
-        mediaUrl,
-        text: text || null,
-        ctaLink: ctaLink || null,
-        title: text || 'Story', // Fallback for title column
-        musicId: musicId || null,
-        musicName: musicName || null,
-        isPremium: isPremium || false,
-        expiresAt,
-      },
-      include: {
-        user: {
-          select: { id: true, fullName: true, avatarUrl: true, subscriptionTier: true },
+    try {
+      const story = await db.story.create({
+        data: {
+          userId: resolvedUserId,
+          cityId,
+          mediaType: mediaType || 'IMAGE',
+          mediaUrl,
+          text: text || null,
+          ctaLink: ctaLink || null,
+          title: text || 'Story', // Fallback for title column
+          musicId: musicId || null,
+          musicName: musicName || null,
+          isPremium: isPremium || false,
+          expiresAt,
         },
-        music: {
-          select: { id: true, name: true, audioUrl: true, artist: true },
+        include: {
+          user: {
+            select: { id: true, fullName: true, avatarUrl: true, subscriptionTier: true },
+          },
+          music: {
+            select: { id: true, name: true, audioUrl: true, artist: true },
+          },
         },
-      },
-    })
-
-    return NextResponse.json(story, { status: 201 })
+      })
+      return NextResponse.json(story, { status: 201 })
+    } catch (dbError: any) {
+      console.error("DB Create Error:", dbError)
+      return NextResponse.json({ error: dbError.message }, { status: 500 })
+    }
   } catch (error) {
     console.error('Error creating story:', error)
     return NextResponse.json(
