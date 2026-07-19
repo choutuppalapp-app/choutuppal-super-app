@@ -26,8 +26,8 @@ export async function createBanner(data: {
   uploadedBy: string
 }) {
   try {
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // Exactly 24 hours from now
-    return await db.banner.create({
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const banner = await db.banner.create({
       data: {
         imageUrl: data.imageUrl,
         linkUrl: data.linkUrl || null,
@@ -35,9 +35,10 @@ export async function createBanner(data: {
         expiresAt,
       },
     })
-  } catch (error) {
-    console.error('Error creating banner:', error)
-    throw new Error('Failed to create banner')
+    return { success: true, banner }
+  } catch (error: any) {
+    console.error("DB Error:", error)
+    return { success: false, error: error.message }
   }
 }
 

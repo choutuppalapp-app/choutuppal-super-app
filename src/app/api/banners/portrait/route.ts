@@ -36,17 +36,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
     }
 
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // Exactly 24 hours from now
-    const banner = await db.banner.create({
-      data: {
-        imageUrl,
-        linkUrl: linkUrl || null,
-        uploadedBy: uploadedBy || 'Admin',
-        expiresAt,
-      },
-    })
-
-    return NextResponse.json({ success: true, banner })
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      const banner = await db.banner.create({
+        data: {
+          imageUrl,
+          linkUrl: linkUrl || null,
+          uploadedBy: uploadedBy || 'User',
+          expiresAt,
+        },
+      })
+      return NextResponse.json({ success: true, banner })
+    } catch (dbError: any) {
+      console.error("DB Error:", dbError)
+      return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
+    }
   } catch (error: any) {
     console.error('Error creating portrait banner in API:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

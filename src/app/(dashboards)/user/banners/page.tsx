@@ -14,6 +14,8 @@ export default function UserBannersPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploading, setUploading] = useState(false)
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
   const [bannerData, setBannerData] = useState({
     linkUrl: '',
     imageUrl: ''
@@ -82,41 +84,67 @@ export default function UserBannersPage() {
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    toast.info('Uploading image to storage...')
-    try {
-      const data = await compressAndUpload(files[0], 'banners')
-      setBannerData(prev => ({ ...prev, imageUrl: data.url }))
-      toast.success('Image uploaded successfully!')
-    } catch {
-      toast.error('Failed to upload image')
-    }
+    const file = files[0]
+    setSelectedFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
     e.target.value = ''
   }
 
   const submitBanner = async () => {
-    if (!user || !bannerData.imageUrl) return
+    if (!user || (!selectedFile && !bannerData.imageUrl)) {
+      toast.error('Please select an image first')
+      return
+    }
     setUploading(true)
     try {
+      let uploadedUrl = bannerData.imageUrl
+
+      // Upload file to Cloudflare R2 if selected
+      if (selectedFile) {
+        toast.info('Uploading image to storage...')
+        const uploadResult = await compressAndUpload(selectedFile, 'banners')
+        uploadedUrl = uploadResult.url
+        setBannerData(prev => ({ ...prev, imageUrl: uploadedUrl }))
+      }
+
+      if (!uploadedUrl) {
+        toast.error('Image upload failed')
+        setUploading(false)
+        return
+      }
+
+      // Publish record to Prisma database
+      toast.info('Publishing banner to database...')
       const res = await fetch('/api/banners/portrait', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageUrl: bannerData.imageUrl,
+          imageUrl: uploadedUrl,
           linkUrl: bannerData.linkUrl || null,
           uploadedBy: user.id
         }),
       })
+
       if (res.ok) {
-        toast.success('Banner Published Successfully!')
-        setIsCreatingBanner(false)
-        setBannerData({ linkUrl: '', imageUrl: '' })
-        fetchBanners()
+        const data = await res.json()
+        if (data.success) {
+          toast.success('Banner Published Successfully!')
+          alert('Banner Published Successfully!')
+          setIsCreatingBanner(false)
+          setBannerData({ linkUrl: '', imageUrl: '' })
+          setSelectedFile(null)
+          setPreviewUrl('')
+          fetchBanners()
+        } else {
+          toast.error('Failed to publish banner: ' + (data.error || ''))
+        }
       } else {
         const errData = await res.json()
         console.error('Banner submit API error:', errData)
         toast.error('Failed to publish banner: ' + (errData.error || ''))
       }
-    } catch {
+    } catch (err: any) {
+      console.error('Submit error:', err)
       toast.error('Something went wrong')
     } finally {
       setUploading(false)
@@ -243,7 +271,7 @@ export default function UserBannersPage() {
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full uppercase tracking-wider text-[9px] font-black ${
                           isExpired 
-                            ? 'bg-red-50 text-red-600' 
+                            ? 'bg-red-55/60 text-red-650' 
                             : 'bg-green-50 text-green-600'
                         }`}>
                           {isExpired ? 'Expired' : 'Active'}
@@ -272,8 +300,8 @@ export default function UserBannersPage() {
             <div className="flex flex-col gap-2">
               <span className="text-gray-800 font-bold text-xs uppercase tracking-wide">Banner Image *</span>
               <label className="flex items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-300 text-gray-500 rounded-2xl h-44 cursor-pointer hover:bg-gray-100 transition overflow-hidden relative">
-                {bannerData.imageUrl ? (
-                  <img src={bannerData.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                {previewUrl || bannerData.imageUrl ? (
+                  <img src={previewUrl || bannerData.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="flex flex-col items-center gap-1.5">
                     <UploadCloud className="w-8 h-8 text-blue-900" />
@@ -295,11 +323,11 @@ export default function UserBannersPage() {
               />
             </div>
 
-            <div className="flex justify-center mt-8 w-full">
+            <div className="w-full flex justify-center mt-6">
               <button
                 onClick={submitBanner}
-                disabled={uploading || isUploading || !bannerData.imageUrl}
-                className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold text-lg py-3 px-10 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 disabled:opacity-70 disabled:hover:scale-100"
+                disabled={uploading || isUploading || (!selectedFile && !bannerData.imageUrl)}
+                className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50"
               >
                 {uploading || isUploading ? (
                   <span className="flex items-center gap-2">
