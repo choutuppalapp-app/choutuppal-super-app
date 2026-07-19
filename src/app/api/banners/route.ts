@@ -118,7 +118,12 @@ export async function POST(request: Request) {
       }
     }
 
-    const origin = request.headers.get('origin') || '*'
+    let origin = request.headers.get('origin')
+    if (!origin) {
+      const host = request.headers.get('host')
+      const proto = request.headers.get('x-forwarded-proto') || 'http'
+      origin = host ? `${proto}://${host}` : '*'
+    }
     const corsHeaders = {
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
@@ -161,7 +166,12 @@ export async function POST(request: Request) {
 }
 
 export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin') || '*'
+  let origin = request.headers.get('origin')
+  if (!origin) {
+    const host = request.headers.get('host')
+    const proto = request.headers.get('x-forwarded-proto') || 'http'
+    origin = host ? `${proto}://${host}` : '*'
+  }
   return new NextResponse(null, {
     status: 204,
     headers: {
