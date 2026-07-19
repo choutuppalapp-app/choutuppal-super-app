@@ -112,7 +112,7 @@ export default function AdminStoriesPage() {
 
                 <button
                   onClick={() => handleDelete(story.id)}
-                  className="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-red-50 text-red-650 hover:bg-red-100 text-xs font-bold transition border border-red-100"
+                  className="w-full bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-1.5 text-xs"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   తొలగించండి

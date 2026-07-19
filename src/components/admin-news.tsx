@@ -172,9 +172,9 @@ export default function AdminNews() {
       {/* News Management */}
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <h2 className="text-xl font-bold text-gray-800">Local News Articles</h2>
-        <Button onClick={() => setIsCreating(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
-          <Plus className="w-4 h-4 mr-2" /> Add News
-        </Button>
+        <button onClick={() => setIsCreating(true)} className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform flex items-center gap-1.5 text-sm">
+          <Plus className="w-4 h-4" /> Add News
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,14 +211,12 @@ export default function AdminNews() {
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                  <button 
+                    className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform flex items-center justify-center p-2 text-xs"
                     onClick={() => handleDelete(article.id)}
                   >
                     <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -303,9 +301,9 @@ export default function AdminNews() {
 
               <div className="pt-4 border-t border-gray-100 flex gap-3">
                 <Button type="button" variant="outline" onClick={resetForm} className="flex-1 rounded-xl h-12">Cancel</Button>
-                <Button type="submit" disabled={savingNews} className="flex-1 rounded-xl h-12 bg-blue-600 hover:bg-blue-700 text-white">
+                <button type="submit" disabled={savingNews} className="flex-1 bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform flex items-center justify-center h-12 text-sm disabled:opacity-50">
                   {savingNews ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : (isEditing ? 'Update Article' : 'Publish Article')}
-                </Button>
+                </button>
               </div>
             </form>
           </div>

@@ -141,7 +141,7 @@ export default function AdminListingsPage() {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleDelete(listing.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-650 hover:bg-red-50 text-xs font-bold transition"
+                        className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform inline-flex items-center gap-1.5 text-xs"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         తొలగించండి

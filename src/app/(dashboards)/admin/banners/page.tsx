@@ -260,7 +260,7 @@ export default function AdminBannersPage() {
               <button
                 type="submit"
                 disabled={isUploading || !selectedFile}
-                className="w-full bg-gradient-to-r from-blue-600 to-yellow-500 text-white font-bold py-3 rounded-xl hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 text-xs shadow-md"
+                className="w-full bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-1.5 text-xs disabled:opacity-50"
               >
                 {isUploading ? (
                   <>
@@ -339,7 +339,7 @@ export default function AdminBannersPage() {
 
                           <button
                             onClick={() => handleDeletePortrait(banner.id)}
-                            className="w-full sm:w-auto px-4 py-2 flex items-center justify-center gap-1 rounded-xl border border-red-200 text-red-650 hover:bg-red-50 text-xs font-bold transition"
+                            className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-1.5 text-xs w-full sm:w-auto"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             తొలగించండి
@@ -430,7 +430,7 @@ export default function AdminBannersPage() {
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDeleteLandscape(banner.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-650 hover:bg-red-50 text-xs font-bold transition"
+                          className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:scale-105 transition-transform inline-flex items-center gap-1.5 text-xs"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           తొలగించండి
