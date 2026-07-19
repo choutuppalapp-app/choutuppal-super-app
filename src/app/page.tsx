@@ -21,8 +21,7 @@ import { WhatsAppCommunitySection } from '@/components/home/whatsapp-community-s
 import PremiumBanners from '@/components/premium-banners'
 import SearchBar from '@/components/search-bar'
 import { ClassifiedsSection } from '@/components/home/classifieds-section'
-import AgentCTA from '@/components/agent-cta'
-import WhiteLabelCTA from '@/components/white-label-cta'
+import AgentWhiteLabel from '@/components/agent-whitelabel'
 
 import { FeaturedProfiles } from '@/components/home/featured-profiles'
 import { ForbiddenPage } from '@/components/auth/forbidden-page'
@@ -222,14 +221,9 @@ function HomeView() {
         <PricingSection />
       </ErrorBoundary>
 
-      {/* 14. Agent CTA */}
-      <ErrorBoundary name="AgentCTA">
-        <AgentCTA />
-      </ErrorBoundary>
-
-      {/* 15. White Label CTA */}
-      <ErrorBoundary name="WhiteLabelCTA">
-        <WhiteLabelCTA />
+      {/* 14. Agent & White Label Section */}
+      <ErrorBoundary name="AgentWhiteLabel">
+        <AgentWhiteLabel />
       </ErrorBoundary>
     </div>
   )
