@@ -3,6 +3,8 @@ export const revalidate = 0;
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 async function generateUniqueSlug(baseName: string) {
   let slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -175,11 +177,50 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    if (!body.userId || !body.cityId || !body.name || !body.category) {
+    if (!body.cityId || !body.name || !body.category) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, cityId, name, category' },
+        { error: 'Missing required fields: cityId, name, category' },
         { status: 400 }
       )
+    }
+
+    let resolvedUserId = body.userId || null
+
+    try {
+      const cookieStore = await cookies()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll()
+            },
+            setAll(cookiesToSet) {
+              try {
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  cookieStore.set(name, value, options)
+                )
+              } catch {}
+            },
+          },
+        }
+      )
+      const { data: { user: sbUser } } = await supabase.auth.getUser()
+      if (sbUser && sbUser.email) {
+        const user = await db.user.findFirst({
+          where: { email: sbUser.email }
+        })
+        if (user) {
+          resolvedUserId = user.id
+        }
+      }
+    } catch (err) {
+      console.error('API routes auth session helper error:', err)
+    }
+
+    if (!resolvedUserId) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
     }
     
     const slug = body.slug || await generateUniqueSlug(body.name)
@@ -197,7 +238,7 @@ export async function POST(request: Request) {
     try {
       const listing = await db.listing.create({
         data: {
-          userId: body.userId,
+          userId: resolvedUserId,
           cityId: body.cityId,
           slug: slug,
           name: sanitizedName,

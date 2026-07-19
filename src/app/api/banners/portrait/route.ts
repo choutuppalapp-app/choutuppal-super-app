@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,13 +38,52 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
     }
 
+    let resolvedUserId = uploadedBy || null
+
+    try {
+      const cookieStore = await cookies()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll()
+            },
+            setAll(cookiesToSet) {
+              try {
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  cookieStore.set(name, value, options)
+                )
+              } catch {}
+            },
+          },
+        }
+      )
+      const { data: { user: sbUser } } = await supabase.auth.getUser()
+      if (sbUser && sbUser.email) {
+        const user = await db.user.findFirst({
+          where: { email: sbUser.email }
+        })
+        if (user) {
+          resolvedUserId = user.id
+        }
+      }
+    } catch (err) {
+      console.error('API routes auth session helper error:', err)
+    }
+
+    if (!resolvedUserId) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
+    }
+
     try {
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
       const banner = await db.banner.create({
         data: {
           imageUrl,
           linkUrl: linkUrl || null,
-          uploadedBy: uploadedBy || 'User',
+          uploadedBy: resolvedUserId,
           expiresAt,
         },
       })

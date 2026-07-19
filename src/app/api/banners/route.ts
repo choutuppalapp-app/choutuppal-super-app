@@ -107,16 +107,26 @@ export async function POST(request: Request) {
       session = sessionData?.session;
     }
 
-    if (!session) {
-      console.error('Session failed to parse in API: ' + (request?.url || '/api/settings'))
+    let resolvedUserId: string | null = null
+    const userSessionObj = authUser || session?.user
+    if (userSessionObj && userSessionObj.email) {
+      const dbUser = await db.user.findFirst({
+        where: { email: userSessionObj.email }
+      })
+      if (dbUser) {
+        resolvedUserId = dbUser.id
+      }
     }
 
+    if (!resolvedUserId) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid user' }, { status: 401 })
+    }
 
     const body = await request.json()
-    const { title, imageUrl, shopName, offerText, linkUrl, phoneNumber, cityId, isActive, userId } = body
+    const { imageUrl, linkUrl } = body
 
-    if (!title || typeof title !== 'string' || !title.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.trim()) {
+      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -124,9 +134,9 @@ export async function POST(request: Request) {
     try {
       const banner = await db.banner.create({
         data: {
-          imageUrl: imageUrl || '',
+          imageUrl: imageUrl.trim(),
           linkUrl: linkUrl || null,
-          uploadedBy: userId || 'User',
+          uploadedBy: resolvedUserId,
           expiresAt,
         },
       })
