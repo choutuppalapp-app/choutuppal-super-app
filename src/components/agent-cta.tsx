@@ -1,39 +1,36 @@
 'use client'
 
 import { ShieldCheck, ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 export default function AgentCTA() {
-  const router = useRouter()
-
-  const handleClick = () => {
-    router.push('/dashboard?tab=agent')
-  }
+  const whatsappUrl = `https://wa.me/918790083706?text=${encodeURIComponent(
+    'నమస్తే, నేను చౌటుప్పల్ సూపర్ యాప్ ఏజెంట్ గా చేరాలనుకుంటున్నాను. దయచేసి రిజిస్ట్రేషన్ మరియు కమీషన్ వివరాలను పంపగలరు.'
+  )}`
 
   return (
-    <section className="px-4 py-4 w-full">
-      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center gap-4">
-        <div className="flex flex-col items-center gap-2">
-          <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 shrink-0">
-            <ShieldCheck className="w-5 h-5" />
+    <section className="px-4 py-6 w-full">
+      <div className="bg-white border border-gray-150 rounded-2xl p-6 md:p-8 shadow-sm flex flex-col items-center justify-center text-center gap-5 max-w-2xl mx-auto">
+        <div className="flex flex-col items-center gap-3">
+          <span className="p-3 rounded-full bg-blue-50 text-blue-900 shrink-0">
+            <ShieldCheck className="w-8 h-8" />
           </span>
-          <h3 className="font-extrabold text-sm text-gray-900 leading-snug">
+          <h3 className="font-extrabold text-lg text-gray-900 leading-snug">
             ఏజెంట్ అవ్వండి (Become an Agent)
           </h3>
-          <p className="text-xs text-gray-600 leading-relaxed max-w-sm whitespace-pre-line">
-            చౌటుప్పల్ యాప్ ఏజెంట్ గా మారండి -<br />
-            మీ ఊరిలో వ్యాపారాలను యాడ్ చేస్తూ<br />
-            కమీషన్ సంపాదించండి.
+          <p className="text-sm text-gray-650 leading-relaxed max-w-md">
+            చౌటుప్పల్ సూపర్ యాప్ అధికారిక ఏజెంట్ గా మారండి. మీ ప్రాంతంలోని దుకాణాలు, వ్యాపారాలు మరియు స్థానిక సేవలను యాప్ లో నమోదు చేస్తూ ప్రతి నెలా ఆకర్షణీయమైన కమీషన్లు మరియు ఆదాయాన్ని సంపాదించుకోండి.
           </p>
         </div>
 
-        <button
-          onClick={handleClick}
-          className="bg-gradient-to-r from-blue-600 to-yellow-500 text-white font-bold py-2.5 px-6 rounded-xl hover:opacity-95 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-1.5 text-xs"
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-gradient-to-r from-blue-900 to-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-2 text-sm"
         >
-          ఏజెంట్ గా నమోదు చేసుకోండి
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+          <span>ఏజెంట్ రిజిస్ట్రేషన్ కోసం వాట్సాప్ చేయండి</span>
+          <ArrowRight className="w-4 h-4" />
+        </a>
       </div>
     </section>
   )
